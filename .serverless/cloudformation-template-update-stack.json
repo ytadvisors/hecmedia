@@ -55,36 +55,23 @@
             {
               "Effect": "Allow",
               "Principal": {
-                "Service": [
-                  "lambda.amazonaws.com"
-                ]
+                "Service": ["lambda.amazonaws.com"]
               },
-              "Action": [
-                "sts:AssumeRole"
-              ]
+              "Action": ["sts:AssumeRole"]
             }
           ]
         },
         "Policies": [
           {
             "PolicyName": {
-              "Fn::Join": [
-                "-",
-                [
-                  "dev",
-                  "hecmedia",
-                  "lambda"
-                ]
-              ]
+              "Fn::Join": ["-", ["dev", "hecmedia", "lambda"]]
             },
             "PolicyDocument": {
               "Version": "2012-10-17",
               "Statement": [
                 {
                   "Effect": "Allow",
-                  "Action": [
-                    "logs:CreateLogStream"
-                  ],
+                  "Action": ["logs:CreateLogStream"],
                   "Resource": [
                     {
                       "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/hecmedia-dev*:*"
@@ -93,9 +80,7 @@
                 },
                 {
                   "Effect": "Allow",
-                  "Action": [
-                    "logs:PutLogEvents"
-                  ],
+                  "Action": ["logs:PutLogEvents"],
                   "Resource": [
                     {
                       "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/hecmedia-dev*:*:*"
@@ -129,33 +114,27 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566765241959-2019-08-25T20:34:01.959Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566766480912-2019-08-25T20:54:40.912Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-notFoundErrorPage",
         "Handler": "sls-next-build/_error.render",
         "MemorySize": 1024,
         "Role": {
-          "Fn::GetAtt": [
-            "IamRoleLambdaExecution",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
         },
         "Runtime": "nodejs10.x",
         "Timeout": 6
       },
-      "DependsOn": [
-        "NotFoundErrorPageLogGroup",
-        "IamRoleLambdaExecution"
-      ]
+      "DependsOn": ["NotFoundErrorPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "NotFoundErrorPageLambdaVersionX2VaCUXYl4HIEWnRv1229xtQHRhKdOde4zvLBz71A": {
+    "NotFoundErrorPageLambdaVersionYQPzLsuIsYgo8vm9QXKUoDxBczU1mTZEUNA0iHWwaR4": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "NotFoundErrorPageLambdaFunction"
         },
-        "CodeSha256": "PdPMyZdM6eKuvNyzZ+i2E6hvTPPcGPXmL9QXKm0blkg="
+        "CodeSha256": "4bFiVX+X8r0/sBuBeXklDiacGYPar1atbs+2zcPqiX4="
       }
     },
     "AboutPageLambdaFunction": {
@@ -165,33 +144,27 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566765241959-2019-08-25T20:34:01.959Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566766480912-2019-08-25T20:54:40.912Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-aboutPage",
         "Handler": "sls-next-build/about.render",
         "MemorySize": 1024,
         "Role": {
-          "Fn::GetAtt": [
-            "IamRoleLambdaExecution",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
         },
         "Runtime": "nodejs10.x",
         "Timeout": 6
       },
-      "DependsOn": [
-        "AboutPageLogGroup",
-        "IamRoleLambdaExecution"
-      ]
+      "DependsOn": ["AboutPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "AboutPageLambdaVersioneM5gGL7sUduWxc0RpsP3YDLpGoePiBjf8oOseL2550": {
+    "AboutPageLambdaVersionBqKXjgFBsoXKwvjMIE5Sj2dnNLoUzM8Ck1bxVnJsJPc": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AboutPageLambdaFunction"
         },
-        "CodeSha256": "PdPMyZdM6eKuvNyzZ+i2E6hvTPPcGPXmL9QXKm0blkg="
+        "CodeSha256": "4bFiVX+X8r0/sBuBeXklDiacGYPar1atbs+2zcPqiX4="
       }
     },
     "IndexPageLambdaFunction": {
@@ -201,33 +174,27 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566765241959-2019-08-25T20:34:01.959Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566766480912-2019-08-25T20:54:40.912Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-indexPage",
         "Handler": "sls-next-build/index.render",
         "MemorySize": 1024,
         "Role": {
-          "Fn::GetAtt": [
-            "IamRoleLambdaExecution",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
         },
         "Runtime": "nodejs10.x",
         "Timeout": 6
       },
-      "DependsOn": [
-        "IndexPageLogGroup",
-        "IamRoleLambdaExecution"
-      ]
+      "DependsOn": ["IndexPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "IndexPageLambdaVersionrIXbknvF2ACtxsYEcdt8yu0FYu0lOoifA86162yQvko": {
+    "IndexPageLambdaVersionsR7EMYlgpsvOlU8zifcNNdSLTzExgCDAIbYEXsnndk": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "IndexPageLambdaFunction"
         },
-        "CodeSha256": "PdPMyZdM6eKuvNyzZ+i2E6hvTPPcGPXmL9QXKm0blkg="
+        "CodeSha256": "4bFiVX+X8r0/sBuBeXklDiacGYPar1atbs+2zcPqiX4="
       }
     },
     "PostPageLambdaFunction": {
@@ -237,33 +204,27 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566765241959-2019-08-25T20:34:01.959Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566766480912-2019-08-25T20:54:40.912Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-postPage",
         "Handler": "sls-next-build/post.render",
         "MemorySize": 1024,
         "Role": {
-          "Fn::GetAtt": [
-            "IamRoleLambdaExecution",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
         },
         "Runtime": "nodejs10.x",
         "Timeout": 6
       },
-      "DependsOn": [
-        "PostPageLogGroup",
-        "IamRoleLambdaExecution"
-      ]
+      "DependsOn": ["PostPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "PostPageLambdaVersionkNlRtfaZzKBKTK1T2oAFwGng9wYq9lcot5DACJEMA0": {
+    "PostPageLambdaVersion0CtoKW2h3iwsXpYY1A7y7jJ4GIgs9x9WLQaFW2UH4": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "PostPageLambdaFunction"
         },
-        "CodeSha256": "PdPMyZdM6eKuvNyzZ+i2E6hvTPPcGPXmL9QXKm0blkg="
+        "CodeSha256": "4bFiVX+X8r0/sBuBeXklDiacGYPar1atbs+2zcPqiX4="
       }
     },
     "DosPageLambdaFunction": {
@@ -273,33 +234,27 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566765241959-2019-08-25T20:34:01.959Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566766480912-2019-08-25T20:54:40.912Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-dosPage",
         "Handler": "sls-next-build/categories/uno/dos.render",
         "MemorySize": 1024,
         "Role": {
-          "Fn::GetAtt": [
-            "IamRoleLambdaExecution",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
         },
         "Runtime": "nodejs10.x",
         "Timeout": 6
       },
-      "DependsOn": [
-        "DosPageLogGroup",
-        "IamRoleLambdaExecution"
-      ]
+      "DependsOn": ["DosPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "DosPageLambdaVersionRoX8lcvC8IDZhLcxAnXoT0FRLOMLb8yAOxMOZkdlMw": {
+    "DosPageLambdaVersionT5FRRwwh8RmKzipa8BBSMEOxYh52htqDPQSnLuAg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "DosPageLambdaFunction"
         },
-        "CodeSha256": "PdPMyZdM6eKuvNyzZ+i2E6hvTPPcGPXmL9QXKm0blkg="
+        "CodeSha256": "4bFiVX+X8r0/sBuBeXklDiacGYPar1atbs+2zcPqiX4="
       }
     },
     "ApiGatewayRestApi": {
@@ -307,9 +262,7 @@
       "Properties": {
         "Name": "dev-hecmedia",
         "EndpointConfiguration": {
-          "Types": [
-            "EDGE"
-          ]
+          "Types": ["EDGE"]
         }
       }
     },
@@ -317,10 +270,7 @@
       "Type": "AWS::ApiGateway::Resource",
       "Properties": {
         "ParentId": {
-          "Fn::GetAtt": [
-            "ApiGatewayRestApi",
-            "RootResourceId"
-          ]
+          "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
         },
         "PathPart": "{proxy+}",
         "RestApiId": {
@@ -332,10 +282,7 @@
       "Type": "AWS::ApiGateway::Resource",
       "Properties": {
         "ParentId": {
-          "Fn::GetAtt": [
-            "ApiGatewayRestApi",
-            "RootResourceId"
-          ]
+          "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
         },
         "PathPart": "about",
         "RestApiId": {
@@ -347,10 +294,7 @@
       "Type": "AWS::ApiGateway::Resource",
       "Properties": {
         "ParentId": {
-          "Fn::GetAtt": [
-            "ApiGatewayRestApi",
-            "RootResourceId"
-          ]
+          "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
         },
         "PathPart": "post",
         "RestApiId": {
@@ -374,10 +318,7 @@
       "Type": "AWS::ApiGateway::Resource",
       "Properties": {
         "ParentId": {
-          "Fn::GetAtt": [
-            "ApiGatewayRestApi",
-            "RootResourceId"
-          ]
+          "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
         },
         "PathPart": "categories",
         "RestApiId": {
@@ -439,10 +380,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "NotFoundErrorPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["NotFoundErrorPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -482,10 +420,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "NotFoundErrorPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["NotFoundErrorPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -525,10 +460,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "AboutPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["AboutPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -568,10 +500,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "AboutPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["AboutPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -587,10 +516,7 @@
         "HttpMethod": "GET",
         "RequestParameters": {},
         "ResourceId": {
-          "Fn::GetAtt": [
-            "ApiGatewayRestApi",
-            "RootResourceId"
-          ]
+          "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
         },
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
@@ -614,10 +540,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "IndexPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["IndexPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -633,10 +556,7 @@
         "HttpMethod": "HEAD",
         "RequestParameters": {},
         "ResourceId": {
-          "Fn::GetAtt": [
-            "ApiGatewayRestApi",
-            "RootResourceId"
-          ]
+          "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
         },
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
@@ -660,10 +580,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "IndexPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["IndexPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -705,10 +622,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "PostPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["PostPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -750,10 +664,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "PostPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["PostPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -793,10 +704,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "DosPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["DosPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -836,10 +744,7 @@
                 },
                 ":lambda:path/2015-03-31/functions/",
                 {
-                  "Fn::GetAtt": [
-                    "DosPageLambdaFunction",
-                    "Arn"
-                  ]
+                  "Fn::GetAtt": ["DosPageLambdaFunction", "Arn"]
                 },
                 "/invocations"
               ]
@@ -849,7 +754,7 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1566765228871": {
+    "ApiGatewayDeployment1566766447952": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -874,10 +779,7 @@
       "Type": "AWS::Lambda::Permission",
       "Properties": {
         "FunctionName": {
-          "Fn::GetAtt": [
-            "NotFoundErrorPageLambdaFunction",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["NotFoundErrorPageLambdaFunction", "Arn"]
         },
         "Action": "lambda:InvokeFunction",
         "Principal": "apigateway.amazonaws.com",
@@ -911,10 +813,7 @@
       "Type": "AWS::Lambda::Permission",
       "Properties": {
         "FunctionName": {
-          "Fn::GetAtt": [
-            "AboutPageLambdaFunction",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["AboutPageLambdaFunction", "Arn"]
         },
         "Action": "lambda:InvokeFunction",
         "Principal": "apigateway.amazonaws.com",
@@ -948,10 +847,7 @@
       "Type": "AWS::Lambda::Permission",
       "Properties": {
         "FunctionName": {
-          "Fn::GetAtt": [
-            "IndexPageLambdaFunction",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["IndexPageLambdaFunction", "Arn"]
         },
         "Action": "lambda:InvokeFunction",
         "Principal": "apigateway.amazonaws.com",
@@ -985,10 +881,7 @@
       "Type": "AWS::Lambda::Permission",
       "Properties": {
         "FunctionName": {
-          "Fn::GetAtt": [
-            "PostPageLambdaFunction",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["PostPageLambdaFunction", "Arn"]
         },
         "Action": "lambda:InvokeFunction",
         "Principal": "apigateway.amazonaws.com",
@@ -1022,10 +915,7 @@
       "Type": "AWS::Lambda::Permission",
       "Properties": {
         "FunctionName": {
-          "Fn::GetAtt": [
-            "DosPageLambdaFunction",
-            "Arn"
-          ]
+          "Fn::GetAtt": ["DosPageLambdaFunction", "Arn"]
         },
         "Action": "lambda:InvokeFunction",
         "Principal": "apigateway.amazonaws.com",
@@ -1062,18 +952,10 @@
         "CorsConfiguration": {
           "CorsRules": [
             {
-              "AllowedHeaders": [
-                "*"
-              ],
-              "AllowedMethods": [
-                "GET"
-              ],
-              "AllowedOrigins": [
-                "*"
-              ],
-              "ExposedHeaders": [
-                "Date"
-              ],
+              "AllowedHeaders": ["*"],
+              "AllowedMethods": ["GET"],
+              "AllowedOrigins": ["*"],
+              "ExposedHeaders": ["Date"],
               "Id": "NextStaticAssetsS3BucketId1",
               "MaxAge": "3600"
             }
@@ -1097,31 +979,31 @@
     "NotFoundErrorPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "NotFoundErrorPageLambdaVersionX2VaCUXYl4HIEWnRv1229xtQHRhKdOde4zvLBz71A"
+        "Ref": "NotFoundErrorPageLambdaVersionYQPzLsuIsYgo8vm9QXKUoDxBczU1mTZEUNA0iHWwaR4"
       }
     },
     "AboutPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AboutPageLambdaVersioneM5gGL7sUduWxc0RpsP3YDLpGoePiBjf8oOseL2550"
+        "Ref": "AboutPageLambdaVersionBqKXjgFBsoXKwvjMIE5Sj2dnNLoUzM8Ck1bxVnJsJPc"
       }
     },
     "IndexPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "IndexPageLambdaVersionrIXbknvF2ACtxsYEcdt8yu0FYu0lOoifA86162yQvko"
+        "Ref": "IndexPageLambdaVersionsR7EMYlgpsvOlU8zifcNNdSLTzExgCDAIbYEXsnndk"
       }
     },
     "PostPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "PostPageLambdaVersionkNlRtfaZzKBKTK1T2oAFwGng9wYq9lcot5DACJEMA0"
+        "Ref": "PostPageLambdaVersion0CtoKW2h3iwsXpYY1A7y7jJ4GIgs9x9WLQaFW2UH4"
       }
     },
     "DosPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "DosPageLambdaVersionRoX8lcvC8IDZhLcxAnXoT0FRLOMLb8yAOxMOZkdlMw"
+        "Ref": "DosPageLambdaVersionT5FRRwwh8RmKzipa8BBSMEOxYh52htqDPQSnLuAg"
       }
     },
     "ServiceEndpoint": {
@@ -1149,10 +1031,7 @@
     },
     "NextStaticAssetsS3BucketWebsiteURL": {
       "Value": {
-        "Fn::GetAtt": [
-          "NextStaticAssetsS3Bucket",
-          "WebsiteURL"
-        ]
+        "Fn::GetAtt": ["NextStaticAssetsS3Bucket", "WebsiteURL"]
       },
       "Description": "URL for the S3 website hosting the static assets"
     },
@@ -1163,10 +1042,7 @@
           [
             "https://",
             {
-              "Fn::GetAtt": [
-                "NextStaticAssetsS3Bucket",
-                "DomainName"
-              ]
+              "Fn::GetAtt": ["NextStaticAssetsS3Bucket", "DomainName"]
             }
           ]
         ]

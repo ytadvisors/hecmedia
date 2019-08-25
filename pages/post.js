@@ -1,11 +1,15 @@
+import React from "react";
+
 class Post extends React.Component {
   static async getInitialProps({ query }) {
     return {
       slug: query.slug
     };
   }
+
   render() {
-    return <h1>Post page: {this.props.slug}</h1>;
+    const { slug } = this.props;
+    return <h1>Post page: {slug}</h1>;
   }
 }
 

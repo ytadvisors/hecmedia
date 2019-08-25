@@ -5,7 +5,7 @@ import "../../styles/home.css";
 function CategoriesUnoDos() {
   return (
     <div className="homePage">
-      <div>Awesome! Nested routes ⚡</div>
+      <div>Awesome! Nested routes </div>
     </div>
   );
 }
