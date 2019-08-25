@@ -15,12 +15,18 @@ custom:
   serverless-nextjs:
     cloudFront: true
     routes:
-      - src: post
-        path: post/{slug}
+      - src: posts
+        path: posts/{slug}
         request:
           parameters:
             paths:
               slug: true
+      - src: category
+        path: category/{proxy+}
+        request:
+          parameters:
+            paths:
+              proxy: true
 
 package:
   # exclude everything
