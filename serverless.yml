@@ -1,0 +1,29 @@
+service: hecmedia
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  region: us-east-2
+  profile: eb-cli2
+  stage: dev
+
+plugins:
+  - serverless-nextjs-plugin
+  - serverless-offline
+
+custom:
+  serverless-nextjs:
+    cloudFront: true
+    routes:
+      - src: post
+        path: post/{slug}
+        request:
+          parameters:
+            paths:
+              slug: true
+
+package:
+  # exclude everything
+  # page handlers are automatically included by the plugin
+  exclude:
+    - ./**
