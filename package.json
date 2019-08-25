@@ -1,23 +1,23 @@
 {
-  "name": "app-basic",
+  "name": "HEC Media ReactJS application",
   "version": "1.0.0",
-  "description": "Example nextjs serverless app using the serverless-nextjs-plugin",
+  "description": "HEC Media ReactJS application setup to run with nextjs and serverless",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/danielcondemarin/serverless-nextjs-plugin.git"
+    "url": "git@github.com:ytadvisors/hecmedia.git"
   },
   "keywords": [
     "serverless",
     "nextjs",
     "lambda"
   ],
-  "author": "Daniel Conde Marin <danielconde9@gmail.com>",
+  "author": "YT Advisors <admin@ytadvisors.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/danielcondemarin/serverless-nextjs-plugin/issues"
+    "url": "https://github.com/ytadvisors/hecmedia/issues"
   },
-  "homepage": "https://github.com/danielcondemarin/serverless-nextjs-plugin#readme",
+  "homepage": "https://github.com/ytadvisors/hecmedia#readme",
   "scripts": {
     "dev": "next",
     "build": "next build",
