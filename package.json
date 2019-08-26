@@ -45,14 +45,27 @@
     "deploy": "yarn build && sls deploy"
   },
   "dependencies": {
-    "@zeit/next-css": "^1.0.1",
+    "@zeit/next-css": "1.0.1",
     "@zeit/next-sass": "1.0.1",
+    "bootstrap": "4.3.1",
     "cowsay-browser": "^1.1.8",
     "next": "^8.0.3",
     "next-aws-lambda": "^2.0.5-alpha.0",
     "node-sass": "4.12.0",
     "react": "^16.8.4",
-    "react-dom": "^16.8.4"
+    "react-bootstrap": "1.0.0-beta.12",
+    "react-datepicker": "2.8.0",
+    "react-dates": "20.3.0",
+    "react-dom": "^16.8.4",
+    "react-google-maps": "9.4.5",
+    "react-icons": "3.7.0",
+    "react-lazyload": "2.6.2",
+    "react-player": "1.12.0",
+    "react-recaptcha": "2.3.10",
+    "react-select": "3.0.4",
+    "react-share": "3.0.0",
+    "slick-carousel": "1.8.1",
+    "validator": "11.1.0"
   },
   "devDependencies": {
     "@babel/preset-env": "7.5.5",

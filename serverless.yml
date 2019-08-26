@@ -21,6 +21,12 @@ custom:
           parameters:
             paths:
               slug: true
+      - src: magazine
+        path: magazine/{slug}
+        request:
+          parameters:
+            paths:
+              slug: true
       - src: category
         path: category/{proxy+}
         request:

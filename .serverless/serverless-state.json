@@ -43,16 +43,70 @@
               "LogGroupName": "/aws/lambda/hecmedia-dev-aboutPage"
             }
           },
+          "ArticlesPageLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/hecmedia-dev-articlesPage"
+            }
+          },
+          "CategoryPageLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/hecmedia-dev-categoryPage"
+            }
+          },
+          "EventPageLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/hecmedia-dev-eventPage"
+            }
+          },
+          "EventsPageLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/hecmedia-dev-eventsPage"
+            }
+          },
           "IndexPageLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/hecmedia-dev-indexPage"
             }
           },
+          "MagazinePageLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/hecmedia-dev-magazinePage"
+            }
+          },
+          "MagazinesPageLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/hecmedia-dev-magazinesPage"
+            }
+          },
+          "PagesPageLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/hecmedia-dev-pagesPage"
+            }
+          },
           "PostPageLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/hecmedia-dev-postPage"
+            }
+          },
+          "PostsPageLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/hecmedia-dev-postsPage"
+            }
+          },
+          "SearchPageLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/hecmedia-dev-searchPage"
             }
           },
           "DosPageLogGroup": {
@@ -129,7 +183,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/hecmedia/dev/1566769413039-2019-08-25T21:43:33.039Z/hecmedia.zip"
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
               },
               "FunctionName": "hecmedia-dev-notFoundErrorPage",
               "Handler": "sls-next-build/_error.render",
@@ -142,14 +196,14 @@
             },
             "DependsOn": ["NotFoundErrorPageLogGroup", "IamRoleLambdaExecution"]
           },
-          "NotFoundErrorPageLambdaVersionLmZi2JXv0a9FFjMdmq6wjA8Ak6SGELGpxa2tCDCGJE": {
+          "NotFoundErrorPageLambdaVersionOWQKp4kYREfppSow0Yx9eFKF70BLUvZ2xjRUCOeVcM": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "NotFoundErrorPageLambdaFunction"
               },
-              "CodeSha256": "Lo+XgV9GIFQnBUmBLZ+klzoEdePuOhKX9zNMps2aFos="
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
             }
           },
           "AboutPageLambdaFunction": {
@@ -159,7 +213,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/hecmedia/dev/1566769413039-2019-08-25T21:43:33.039Z/hecmedia.zip"
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
               },
               "FunctionName": "hecmedia-dev-aboutPage",
               "Handler": "sls-next-build/about.render",
@@ -172,14 +226,134 @@
             },
             "DependsOn": ["AboutPageLogGroup", "IamRoleLambdaExecution"]
           },
-          "AboutPageLambdaVersionws6Z9nrf4T65VoazYTmZCWQnQjpqD1KZnGcQmikU": {
+          "AboutPageLambdaVersionuvaujB6QcY78sWhsLQA9UviKziJ0KlNOwBH3eXU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AboutPageLambdaFunction"
               },
-              "CodeSha256": "Lo+XgV9GIFQnBUmBLZ+klzoEdePuOhKX9zNMps2aFos="
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+            }
+          },
+          "ArticlesPageLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+              },
+              "FunctionName": "hecmedia-dev-articlesPage",
+              "Handler": "sls-next-build/articles.render",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
+              },
+              "Runtime": "nodejs10.x",
+              "Timeout": 6
+            },
+            "DependsOn": ["ArticlesPageLogGroup", "IamRoleLambdaExecution"]
+          },
+          "ArticlesPageLambdaVersionfhfwsScn2DTgyD3NjcUCMQIFIk9CmnynMQExqwA3c": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ArticlesPageLambdaFunction"
+              },
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+            }
+          },
+          "CategoryPageLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+              },
+              "FunctionName": "hecmedia-dev-categoryPage",
+              "Handler": "sls-next-build/category.render",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
+              },
+              "Runtime": "nodejs10.x",
+              "Timeout": 6
+            },
+            "DependsOn": ["CategoryPageLogGroup", "IamRoleLambdaExecution"]
+          },
+          "CategoryPageLambdaVersionLIE4nhhhR6WPpxouqYy0DAhCJB1ubN3qZwphyEDm5gg": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "CategoryPageLambdaFunction"
+              },
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+            }
+          },
+          "EventPageLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+              },
+              "FunctionName": "hecmedia-dev-eventPage",
+              "Handler": "sls-next-build/event.render",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
+              },
+              "Runtime": "nodejs10.x",
+              "Timeout": 6
+            },
+            "DependsOn": ["EventPageLogGroup", "IamRoleLambdaExecution"]
+          },
+          "EventPageLambdaVersion4gwguXEWJpT6CGNF14VBA420OPqHaJeesFOYRnVL4A": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "EventPageLambdaFunction"
+              },
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+            }
+          },
+          "EventsPageLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+              },
+              "FunctionName": "hecmedia-dev-eventsPage",
+              "Handler": "sls-next-build/events.render",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
+              },
+              "Runtime": "nodejs10.x",
+              "Timeout": 6
+            },
+            "DependsOn": ["EventsPageLogGroup", "IamRoleLambdaExecution"]
+          },
+          "EventsPageLambdaVersion9dRgsNNKcE18eTfwqgTPSo0Px8K7YY5tOsPqokk6M": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "EventsPageLambdaFunction"
+              },
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
             }
           },
           "IndexPageLambdaFunction": {
@@ -189,7 +363,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/hecmedia/dev/1566769413039-2019-08-25T21:43:33.039Z/hecmedia.zip"
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
               },
               "FunctionName": "hecmedia-dev-indexPage",
               "Handler": "sls-next-build/index.render",
@@ -202,14 +376,104 @@
             },
             "DependsOn": ["IndexPageLogGroup", "IamRoleLambdaExecution"]
           },
-          "IndexPageLambdaVersionkrGZRqXETKH8xYGTTmqqsCxfc1BLsDu7dNBsuVRBc": {
+          "IndexPageLambdaVersionsNyEm7RJFBKIY55KtMrAginf30wejjd9meW0jmiU6xA": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "IndexPageLambdaFunction"
               },
-              "CodeSha256": "Lo+XgV9GIFQnBUmBLZ+klzoEdePuOhKX9zNMps2aFos="
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+            }
+          },
+          "MagazinePageLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+              },
+              "FunctionName": "hecmedia-dev-magazinePage",
+              "Handler": "sls-next-build/magazine.render",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
+              },
+              "Runtime": "nodejs10.x",
+              "Timeout": 6
+            },
+            "DependsOn": ["MagazinePageLogGroup", "IamRoleLambdaExecution"]
+          },
+          "MagazinePageLambdaVersionI0zIAnOh7GXRK8pg2hyeSItAVr7kCn4KBQXaiugqDk": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "MagazinePageLambdaFunction"
+              },
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+            }
+          },
+          "MagazinesPageLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+              },
+              "FunctionName": "hecmedia-dev-magazinesPage",
+              "Handler": "sls-next-build/magazines.render",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
+              },
+              "Runtime": "nodejs10.x",
+              "Timeout": 6
+            },
+            "DependsOn": ["MagazinesPageLogGroup", "IamRoleLambdaExecution"]
+          },
+          "MagazinesPageLambdaVersionfO87myD2JbsECe16Dr74BD8QacF0GbLHMVzDgphXYQ": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "MagazinesPageLambdaFunction"
+              },
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+            }
+          },
+          "PagesPageLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+              },
+              "FunctionName": "hecmedia-dev-pagesPage",
+              "Handler": "sls-next-build/pages.render",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
+              },
+              "Runtime": "nodejs10.x",
+              "Timeout": 6
+            },
+            "DependsOn": ["PagesPageLogGroup", "IamRoleLambdaExecution"]
+          },
+          "PagesPageLambdaVersion2r3EH0sOH9qXuuKkgUv8Uvm84VfTfTneqS0UuQI3U": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "PagesPageLambdaFunction"
+              },
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
             }
           },
           "PostPageLambdaFunction": {
@@ -219,7 +483,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/hecmedia/dev/1566769413039-2019-08-25T21:43:33.039Z/hecmedia.zip"
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
               },
               "FunctionName": "hecmedia-dev-postPage",
               "Handler": "sls-next-build/post.render",
@@ -232,14 +496,74 @@
             },
             "DependsOn": ["PostPageLogGroup", "IamRoleLambdaExecution"]
           },
-          "PostPageLambdaVersionYLjgAv3GXIbdLapt4egRXVbYtyboDz31Fj2m5Nnhs": {
+          "PostPageLambdaVersionfN2IVTRiFYwc5c2Q6kiRnmPUHe1NoJGo5G5RQgvhsRU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "PostPageLambdaFunction"
               },
-              "CodeSha256": "Lo+XgV9GIFQnBUmBLZ+klzoEdePuOhKX9zNMps2aFos="
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+            }
+          },
+          "PostsPageLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+              },
+              "FunctionName": "hecmedia-dev-postsPage",
+              "Handler": "sls-next-build/posts.render",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
+              },
+              "Runtime": "nodejs10.x",
+              "Timeout": 6
+            },
+            "DependsOn": ["PostsPageLogGroup", "IamRoleLambdaExecution"]
+          },
+          "PostsPageLambdaVersionQW8qf1NisfwgcxJEBVVedtqp8kyShqUNg4SnKWkAts": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "PostsPageLambdaFunction"
+              },
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+            }
+          },
+          "SearchPageLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+              },
+              "FunctionName": "hecmedia-dev-searchPage",
+              "Handler": "sls-next-build/search.render",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": ["IamRoleLambdaExecution", "Arn"]
+              },
+              "Runtime": "nodejs10.x",
+              "Timeout": 6
+            },
+            "DependsOn": ["SearchPageLogGroup", "IamRoleLambdaExecution"]
+          },
+          "SearchPageLambdaVersionkAaCAo2WChSmssbhk2XFYGIVMtpLVo7CriCqrvO0Y": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "SearchPageLambdaFunction"
+              },
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
             }
           },
           "DosPageLambdaFunction": {
@@ -249,7 +573,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/hecmedia/dev/1566769413039-2019-08-25T21:43:33.039Z/hecmedia.zip"
+                "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
               },
               "FunctionName": "hecmedia-dev-dosPage",
               "Handler": "sls-next-build/categories/uno/dos.render",
@@ -262,14 +586,14 @@
             },
             "DependsOn": ["DosPageLogGroup", "IamRoleLambdaExecution"]
           },
-          "DosPageLambdaVersionR5AYbvpxk74WVn3a0bkWJbpc9YDBbFy1JWloq2eE4": {
+          "DosPageLambdaVersioneXByjwan0oXU624w8A0CG4aW2pckf83P5jOFYTc": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "DosPageLambdaFunction"
               },
-              "CodeSha256": "Lo+XgV9GIFQnBUmBLZ+klzoEdePuOhKX9zNMps2aFos="
+              "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
             }
           },
           "ApiGatewayRestApi": {
@@ -305,6 +629,102 @@
               }
             }
           },
+          "ApiGatewayResourceArticles": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
+              },
+              "PathPart": "articles",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceCategory": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
+              },
+              "PathPart": "category",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceCategoryProxyVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceCategory"
+              },
+              "PathPart": "{proxy+}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceEvent": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
+              },
+              "PathPart": "event",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceEvents": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
+              },
+              "PathPart": "events",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceMagazine": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
+              },
+              "PathPart": "magazine",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceMagazines": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
+              },
+              "PathPart": "magazines",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourcePages": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
+              },
+              "PathPart": "pages",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
           "ApiGatewayResourcePost": {
             "Type": "AWS::ApiGateway::Resource",
             "Properties": {
@@ -317,13 +737,37 @@
               }
             }
           },
-          "ApiGatewayResourcePostSlugVar": {
+          "ApiGatewayResourcePosts": {
             "Type": "AWS::ApiGateway::Resource",
             "Properties": {
               "ParentId": {
-                "Ref": "ApiGatewayResourcePost"
+                "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
+              },
+              "PathPart": "posts",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourcePostsSlugVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourcePosts"
               },
               "PathPart": "{slug}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceSearch": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
+              },
+              "PathPart": "search",
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
@@ -525,6 +969,330 @@
               "MethodResponses": []
             }
           },
+          "ApiGatewayMethodArticlesGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceArticles"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["ArticlesPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodArticlesHead": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "HEAD",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceArticles"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["ArticlesPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodCategoryProxyVarGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {
+                "method.request.path.proxy": true
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceCategoryProxyVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["CategoryPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodCategoryProxyVarHead": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "HEAD",
+              "RequestParameters": {
+                "method.request.path.proxy": true
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceCategoryProxyVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["CategoryPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodEventGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceEvent"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["EventPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodEventHead": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "HEAD",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceEvent"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["EventPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodEventsGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceEvents"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["EventsPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodEventsHead": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "HEAD",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceEvents"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["EventsPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
           "ApiGatewayMethodGet": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
@@ -605,15 +1373,253 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayMethodPostSlugVarGet": {
+          "ApiGatewayMethodMagazineGet": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
               "HttpMethod": "GET",
-              "RequestParameters": {
-                "method.request.path.slug": true
-              },
+              "RequestParameters": {},
               "ResourceId": {
-                "Ref": "ApiGatewayResourcePostSlugVar"
+                "Ref": "ApiGatewayResourceMagazine"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["MagazinePageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodMagazineHead": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "HEAD",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceMagazine"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["MagazinePageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodMagazinesGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceMagazines"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["MagazinesPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodMagazinesHead": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "HEAD",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceMagazines"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["MagazinesPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodPagesGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourcePages"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["PagesPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodPagesHead": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "HEAD",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourcePages"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["PagesPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodPostGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourcePost"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -647,15 +1653,13 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayMethodPostSlugVarHead": {
+          "ApiGatewayMethodPostHead": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
               "HttpMethod": "HEAD",
-              "RequestParameters": {
-                "method.request.path.slug": true
-              },
+              "RequestParameters": {},
               "ResourceId": {
-                "Ref": "ApiGatewayResourcePostSlugVar"
+                "Ref": "ApiGatewayResourcePost"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -680,6 +1684,170 @@
                       ":lambda:path/2015-03-31/functions/",
                       {
                         "Fn::GetAtt": ["PostPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodPostsSlugVarGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {
+                "method.request.path.slug": true
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourcePostsSlugVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["PostsPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodPostsSlugVarHead": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "HEAD",
+              "RequestParameters": {
+                "method.request.path.slug": true
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourcePostsSlugVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["PostsPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodSearchGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceSearch"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["SearchPageLambdaFunction", "Arn"]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            }
+          },
+          "ApiGatewayMethodSearchHead": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "HEAD",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceSearch"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": ["SearchPageLambdaFunction", "Arn"]
                       },
                       "/invocations"
                     ]
@@ -769,7 +1937,7 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayDeployment1566769382841": {
+          "ApiGatewayDeployment1566776884756": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -782,10 +1950,28 @@
               "ApiGatewayMethodProxyVarHead",
               "ApiGatewayMethodAboutGet",
               "ApiGatewayMethodAboutHead",
+              "ApiGatewayMethodArticlesGet",
+              "ApiGatewayMethodArticlesHead",
+              "ApiGatewayMethodCategoryProxyVarGet",
+              "ApiGatewayMethodCategoryProxyVarHead",
+              "ApiGatewayMethodEventGet",
+              "ApiGatewayMethodEventHead",
+              "ApiGatewayMethodEventsGet",
+              "ApiGatewayMethodEventsHead",
               "ApiGatewayMethodGet",
               "ApiGatewayMethodHead",
-              "ApiGatewayMethodPostSlugVarGet",
-              "ApiGatewayMethodPostSlugVarHead",
+              "ApiGatewayMethodMagazineGet",
+              "ApiGatewayMethodMagazineHead",
+              "ApiGatewayMethodMagazinesGet",
+              "ApiGatewayMethodMagazinesHead",
+              "ApiGatewayMethodPagesGet",
+              "ApiGatewayMethodPagesHead",
+              "ApiGatewayMethodPostGet",
+              "ApiGatewayMethodPostHead",
+              "ApiGatewayMethodPostsSlugVarGet",
+              "ApiGatewayMethodPostsSlugVarHead",
+              "ApiGatewayMethodSearchGet",
+              "ApiGatewayMethodSearchHead",
               "ApiGatewayMethodCategoriesUnoDosGet",
               "ApiGatewayMethodCategoriesUnoDosHead"
             ]
@@ -858,6 +2044,142 @@
               }
             }
           },
+          "ArticlesPageLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": ["ArticlesPageLambdaFunction", "Arn"]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "CategoryPageLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": ["CategoryPageLambdaFunction", "Arn"]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "EventPageLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": ["EventPageLambdaFunction", "Arn"]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "EventsPageLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": ["EventsPageLambdaFunction", "Arn"]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
           "IndexPageLambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
             "Properties": {
@@ -892,11 +2214,181 @@
               }
             }
           },
+          "MagazinePageLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": ["MagazinePageLambdaFunction", "Arn"]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "MagazinesPageLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": ["MagazinesPageLambdaFunction", "Arn"]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "PagesPageLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": ["PagesPageLambdaFunction", "Arn"]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
           "PostPageLambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
             "Properties": {
               "FunctionName": {
                 "Fn::GetAtt": ["PostPageLambdaFunction", "Arn"]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "PostsPageLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": ["PostsPageLambdaFunction", "Arn"]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "SearchPageLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": ["SearchPageLambdaFunction", "Arn"]
               },
               "Action": "lambda:InvokeFunction",
               "Principal": "apigateway.amazonaws.com",
@@ -994,31 +2486,85 @@
           "NotFoundErrorPageLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "NotFoundErrorPageLambdaVersionLmZi2JXv0a9FFjMdmq6wjA8Ak6SGELGpxa2tCDCGJE"
+              "Ref": "NotFoundErrorPageLambdaVersionOWQKp4kYREfppSow0Yx9eFKF70BLUvZ2xjRUCOeVcM"
             }
           },
           "AboutPageLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AboutPageLambdaVersionws6Z9nrf4T65VoazYTmZCWQnQjpqD1KZnGcQmikU"
+              "Ref": "AboutPageLambdaVersionuvaujB6QcY78sWhsLQA9UviKziJ0KlNOwBH3eXU"
+            }
+          },
+          "ArticlesPageLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ArticlesPageLambdaVersionfhfwsScn2DTgyD3NjcUCMQIFIk9CmnynMQExqwA3c"
+            }
+          },
+          "CategoryPageLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "CategoryPageLambdaVersionLIE4nhhhR6WPpxouqYy0DAhCJB1ubN3qZwphyEDm5gg"
+            }
+          },
+          "EventPageLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "EventPageLambdaVersion4gwguXEWJpT6CGNF14VBA420OPqHaJeesFOYRnVL4A"
+            }
+          },
+          "EventsPageLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "EventsPageLambdaVersion9dRgsNNKcE18eTfwqgTPSo0Px8K7YY5tOsPqokk6M"
             }
           },
           "IndexPageLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "IndexPageLambdaVersionkrGZRqXETKH8xYGTTmqqsCxfc1BLsDu7dNBsuVRBc"
+              "Ref": "IndexPageLambdaVersionsNyEm7RJFBKIY55KtMrAginf30wejjd9meW0jmiU6xA"
+            }
+          },
+          "MagazinePageLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "MagazinePageLambdaVersionI0zIAnOh7GXRK8pg2hyeSItAVr7kCn4KBQXaiugqDk"
+            }
+          },
+          "MagazinesPageLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "MagazinesPageLambdaVersionfO87myD2JbsECe16Dr74BD8QacF0GbLHMVzDgphXYQ"
+            }
+          },
+          "PagesPageLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "PagesPageLambdaVersion2r3EH0sOH9qXuuKkgUv8Uvm84VfTfTneqS0UuQI3U"
             }
           },
           "PostPageLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "PostPageLambdaVersionYLjgAv3GXIbdLapt4egRXVbYtyboDz31Fj2m5Nnhs"
+              "Ref": "PostPageLambdaVersionfN2IVTRiFYwc5c2Q6kiRnmPUHe1NoJGo5G5RQgvhsRU"
+            }
+          },
+          "PostsPageLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "PostsPageLambdaVersionQW8qf1NisfwgcxJEBVVedtqp8kyShqUNg4SnKWkAts"
+            }
+          },
+          "SearchPageLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "SearchPageLambdaVersionkAaCAo2WChSmssbhk2XFYGIVMtpLVo7CriCqrvO0Y"
             }
           },
           "DosPageLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "DosPageLambdaVersionR5AYbvpxk74WVn3a0bkWJbpc9YDBbFy1JWloq2eE4"
+              "Ref": "DosPageLambdaVersioneXByjwan0oXU624w8A0CG4aW2pckf83P5jOFYTc"
             }
           },
           "ServiceEndpoint": {
@@ -1144,11 +2690,20 @@
         "cloudFront": true,
         "routes": [
           {
-            "src": "post",
-            "path": "post/{slug}",
+            "src": "posts",
+            "path": "posts/{slug}",
             "request": {
               "parameters": {
                 "method.request.path.slug": true
+              }
+            }
+          },
+          {
+            "src": "category",
+            "path": "category/{proxy+}",
+            "request": {
+              "parameters": {
+                "method.request.path.proxy": true
               }
             }
           }
@@ -1208,6 +2763,114 @@
         "runtime": "nodejs10.x",
         "vpc": {}
       },
+      "articlesPage": {
+        "handler": "sls-next-build/articles.render",
+        "events": [
+          {
+            "http": {
+              "path": "articles",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          },
+          {
+            "http": {
+              "path": "articles",
+              "method": "head",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "hecmedia-dev-articlesPage",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {}
+      },
+      "categoryPage": {
+        "handler": "sls-next-build/category.render",
+        "events": [
+          {
+            "http": {
+              "method": "get",
+              "path": "category/{proxy+}",
+              "request": {
+                "$ref": "$[\"service\"][\"custom\"][\"serverless-nextjs\"][\"routes\"][1][\"request\"]"
+              },
+              "integration": "AWS_PROXY"
+            }
+          },
+          {
+            "http": {
+              "method": "head",
+              "path": "category/{proxy+}",
+              "request": {
+                "parameters": {
+                  "method.request.path.proxy": true
+                }
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "hecmedia-dev-categoryPage",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {}
+      },
+      "eventPage": {
+        "handler": "sls-next-build/event.render",
+        "events": [
+          {
+            "http": {
+              "path": "event",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          },
+          {
+            "http": {
+              "path": "event",
+              "method": "head",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "hecmedia-dev-eventPage",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {}
+      },
+      "eventsPage": {
+        "handler": "sls-next-build/events.render",
+        "events": [
+          {
+            "http": {
+              "path": "events",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          },
+          {
+            "http": {
+              "path": "events",
+              "method": "head",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "hecmedia-dev-eventsPage",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {}
+      },
       "indexPage": {
         "handler": "sls-next-build/index.render",
         "events": [
@@ -1233,13 +2896,113 @@
         "runtime": "nodejs10.x",
         "vpc": {}
       },
+      "magazinePage": {
+        "handler": "sls-next-build/magazine.render",
+        "events": [
+          {
+            "http": {
+              "path": "magazine",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          },
+          {
+            "http": {
+              "path": "magazine",
+              "method": "head",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "hecmedia-dev-magazinePage",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {}
+      },
+      "magazinesPage": {
+        "handler": "sls-next-build/magazines.render",
+        "events": [
+          {
+            "http": {
+              "path": "magazines",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          },
+          {
+            "http": {
+              "path": "magazines",
+              "method": "head",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "hecmedia-dev-magazinesPage",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {}
+      },
+      "pagesPage": {
+        "handler": "sls-next-build/pages.render",
+        "events": [
+          {
+            "http": {
+              "path": "pages",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          },
+          {
+            "http": {
+              "path": "pages",
+              "method": "head",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "hecmedia-dev-pagesPage",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {}
+      },
       "postPage": {
         "handler": "sls-next-build/post.render",
         "events": [
           {
             "http": {
+              "path": "post",
               "method": "get",
-              "path": "post/{slug}",
+              "integration": "AWS_PROXY"
+            }
+          },
+          {
+            "http": {
+              "path": "post",
+              "method": "head",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "hecmedia-dev-postPage",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {}
+      },
+      "postsPage": {
+        "handler": "sls-next-build/posts.render",
+        "events": [
+          {
+            "http": {
+              "method": "get",
+              "path": "posts/{slug}",
               "request": {
                 "$ref": "$[\"service\"][\"custom\"][\"serverless-nextjs\"][\"routes\"][0][\"request\"]"
               },
@@ -1249,7 +3012,7 @@
           {
             "http": {
               "method": "head",
-              "path": "post/{slug}",
+              "path": "posts/{slug}",
               "request": {
                 "parameters": {
                   "method.request.path.slug": true
@@ -1259,7 +3022,32 @@
             }
           }
         ],
-        "name": "hecmedia-dev-postPage",
+        "name": "hecmedia-dev-postsPage",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {}
+      },
+      "searchPage": {
+        "handler": "sls-next-build/search.render",
+        "events": [
+          {
+            "http": {
+              "path": "search",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          },
+          {
+            "http": {
+              "path": "search",
+              "method": "head",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "hecmedia-dev-searchPage",
         "package": {},
         "memory": 1024,
         "timeout": 6,
@@ -1347,7 +3135,7 @@
     "artifact": "/home/yomi/Projects/hecmedia/.serverless/hecmedia.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/hecmedia/dev/1566769413039-2019-08-25T21:43:33.039Z",
+    "artifactDirectoryName": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z",
     "artifact": "hecmedia.zip"
   }
 }

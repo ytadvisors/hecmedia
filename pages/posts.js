@@ -1,6 +1,6 @@
-import React from "react";
+import React, { Component } from "react";
 
-class Posts extends React.Component {
+export default class Posts extends Component {
   static async getInitialProps({ query }) {
     return {
       slug: query.slug
@@ -12,5 +12,3 @@ class Posts extends React.Component {
     return <h1>Post page: {slug}</h1>;
   }
 }
-
-export default Posts;

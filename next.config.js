@@ -1,8 +1,9 @@
-const withCSS = require("@zeit/next-sass");
+const withSASS = require("@zeit/next-sass");
+const withCSS = require("@zeit/next-css");
 
 const config = {
   target: "serverless",
   assetPrefix: "https://s3.amazonaws.com/live.hecmedia.org"
 };
 
-module.exports = withCSS(config);
+module.exports = withSASS(withCSS(config));
