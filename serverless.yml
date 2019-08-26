@@ -5,14 +5,16 @@ provider:
   runtime: nodejs10.x
   region: us-east-2
   profile: eb-cli2
-  stage: dev
+  stage: ${opt:stage}
 
 plugins:
   - serverless-nextjs-plugin
   - serverless-offline
 
 custom:
+  stage: ${opt:stage, self:provider.stage}
   serverless-nextjs:
+    createAssetBucket: false
     cloudFront: true
     routes:
       - src: posts

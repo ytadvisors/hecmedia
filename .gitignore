@@ -18,3 +18,5 @@ yarn-error.log*
 # Environment Files
 env.yml
 .env
+.env.development
+.env.production
