@@ -168,7 +168,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-notFoundErrorPage",
         "Handler": "sls-next-build/_error.render",
@@ -181,14 +181,14 @@
       },
       "DependsOn": ["NotFoundErrorPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "NotFoundErrorPageLambdaVersionOWQKp4kYREfppSow0Yx9eFKF70BLUvZ2xjRUCOeVcM": {
+    "NotFoundErrorPageLambdaVersionDGsWd30KSnnJEZJx8qZMegMhjHwqXvsyIzhkorTndjc": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "NotFoundErrorPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "AboutPageLambdaFunction": {
@@ -198,7 +198,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-aboutPage",
         "Handler": "sls-next-build/about.render",
@@ -211,14 +211,14 @@
       },
       "DependsOn": ["AboutPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "AboutPageLambdaVersionuvaujB6QcY78sWhsLQA9UviKziJ0KlNOwBH3eXU": {
+    "AboutPageLambdaVersion7CzFOopDj5tVdVKNojYmkbl2zZIw1wR6e1VOlZD465c": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AboutPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "ArticlesPageLambdaFunction": {
@@ -228,7 +228,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-articlesPage",
         "Handler": "sls-next-build/articles.render",
@@ -241,14 +241,14 @@
       },
       "DependsOn": ["ArticlesPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "ArticlesPageLambdaVersionfhfwsScn2DTgyD3NjcUCMQIFIk9CmnynMQExqwA3c": {
+    "ArticlesPageLambdaVersionUt6GGk5MLO2Wsl67TxKrFxxytG0d1CChUHPdUhT1A": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "ArticlesPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "CategoryPageLambdaFunction": {
@@ -258,7 +258,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-categoryPage",
         "Handler": "sls-next-build/category.render",
@@ -271,14 +271,14 @@
       },
       "DependsOn": ["CategoryPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "CategoryPageLambdaVersionLIE4nhhhR6WPpxouqYy0DAhCJB1ubN3qZwphyEDm5gg": {
+    "CategoryPageLambdaVersionQ6qzO45nlmqwrplHEL5fgkjCK5NFcrJ6NY7Q5lPKbU": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CategoryPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "EventPageLambdaFunction": {
@@ -288,7 +288,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-eventPage",
         "Handler": "sls-next-build/event.render",
@@ -301,14 +301,14 @@
       },
       "DependsOn": ["EventPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "EventPageLambdaVersion4gwguXEWJpT6CGNF14VBA420OPqHaJeesFOYRnVL4A": {
+    "EventPageLambdaVersionrKOCxx3qW4Vr6hTa5HUc2KhhwTlDpvKkTb2HiS0HCaI": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "EventPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "EventsPageLambdaFunction": {
@@ -318,7 +318,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-eventsPage",
         "Handler": "sls-next-build/events.render",
@@ -331,14 +331,14 @@
       },
       "DependsOn": ["EventsPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "EventsPageLambdaVersion9dRgsNNKcE18eTfwqgTPSo0Px8K7YY5tOsPqokk6M": {
+    "EventsPageLambdaVersion0uUmSsPllwYvwJt8jSi1dCeddSAVEd13WzPl8NBubG0": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "EventsPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "IndexPageLambdaFunction": {
@@ -348,7 +348,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-indexPage",
         "Handler": "sls-next-build/index.render",
@@ -361,14 +361,14 @@
       },
       "DependsOn": ["IndexPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "IndexPageLambdaVersionsNyEm7RJFBKIY55KtMrAginf30wejjd9meW0jmiU6xA": {
+    "IndexPageLambdaVersionkKxUG3Tao5qNVYAQWX1OpCQhxtq4zo4ZMscgZ5lzQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "IndexPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "MagazinePageLambdaFunction": {
@@ -378,7 +378,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-magazinePage",
         "Handler": "sls-next-build/magazine.render",
@@ -391,14 +391,14 @@
       },
       "DependsOn": ["MagazinePageLogGroup", "IamRoleLambdaExecution"]
     },
-    "MagazinePageLambdaVersionI0zIAnOh7GXRK8pg2hyeSItAVr7kCn4KBQXaiugqDk": {
+    "MagazinePageLambdaVersionRqyIFOExT5NM7TeMrADOym4iGoprepNcEn2GbW0shk": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "MagazinePageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "MagazinesPageLambdaFunction": {
@@ -408,7 +408,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-magazinesPage",
         "Handler": "sls-next-build/magazines.render",
@@ -421,14 +421,14 @@
       },
       "DependsOn": ["MagazinesPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "MagazinesPageLambdaVersionfO87myD2JbsECe16Dr74BD8QacF0GbLHMVzDgphXYQ": {
+    "MagazinesPageLambdaVersionsAve27PjCIXe1uUtJA8zY6OycrmwJFA4Gg7RDamMxI": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "MagazinesPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "PagesPageLambdaFunction": {
@@ -438,7 +438,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-pagesPage",
         "Handler": "sls-next-build/pages.render",
@@ -451,14 +451,14 @@
       },
       "DependsOn": ["PagesPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "PagesPageLambdaVersion2r3EH0sOH9qXuuKkgUv8Uvm84VfTfTneqS0UuQI3U": {
+    "PagesPageLambdaVersion2VJ1s8acETHPsyAQGrfXMjUgVHZHqw1XNNs2zxCLM": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "PagesPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "PostPageLambdaFunction": {
@@ -468,7 +468,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-postPage",
         "Handler": "sls-next-build/post.render",
@@ -481,14 +481,14 @@
       },
       "DependsOn": ["PostPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "PostPageLambdaVersionfN2IVTRiFYwc5c2Q6kiRnmPUHe1NoJGo5G5RQgvhsRU": {
+    "PostPageLambdaVersion86vIOv6XWsPKKUvy6iQ5NT29uUcwgqATzuAq0E85Tg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "PostPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "PostsPageLambdaFunction": {
@@ -498,7 +498,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-postsPage",
         "Handler": "sls-next-build/posts.render",
@@ -511,14 +511,14 @@
       },
       "DependsOn": ["PostsPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "PostsPageLambdaVersionQW8qf1NisfwgcxJEBVVedtqp8kyShqUNg4SnKWkAts": {
+    "PostsPageLambdaVersionmUAcH16u1OJCkjtiVl0X9RGIt9lbSD7tht2409kIYUg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "PostsPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "SearchPageLambdaFunction": {
@@ -528,7 +528,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-searchPage",
         "Handler": "sls-next-build/search.render",
@@ -541,14 +541,14 @@
       },
       "DependsOn": ["SearchPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "SearchPageLambdaVersionkAaCAo2WChSmssbhk2XFYGIVMtpLVo7CriCqrvO0Y": {
+    "SearchPageLambdaVersiongZKuh3KHGwZf2IonWsSiIfdgKbYjeKuLh8PqciIgY": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SearchPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "DosPageLambdaFunction": {
@@ -558,7 +558,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hecmedia/dev/1566776915227-2019-08-25T23:48:35.227Z/hecmedia.zip"
+          "S3Key": "serverless/hecmedia/dev/1566780724214-2019-08-26T00:52:04.214Z/hecmedia.zip"
         },
         "FunctionName": "hecmedia-dev-dosPage",
         "Handler": "sls-next-build/categories/uno/dos.render",
@@ -571,14 +571,14 @@
       },
       "DependsOn": ["DosPageLogGroup", "IamRoleLambdaExecution"]
     },
-    "DosPageLambdaVersioneXByjwan0oXU624w8A0CG4aW2pckf83P5jOFYTc": {
+    "DosPageLambdaVersionwfVd2XAfA0MnftRZMTar2DVQtbvPPBoXGhFTuD16jBA": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "DosPageLambdaFunction"
         },
-        "CodeSha256": "BMZqvyxB5kds4ew2kyIonJyBrKZKTIBOtXN6lFuGHQ4="
+        "CodeSha256": "1b5N4y2A+Fdud5ubsAnMKTDLc7KBCeBVm4FeG1j7M0w="
       }
     },
     "ApiGatewayRestApi": {
@@ -681,6 +681,18 @@
           "Fn::GetAtt": ["ApiGatewayRestApi", "RootResourceId"]
         },
         "PathPart": "magazine",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayResourceMagazineSlugVar": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "ApiGatewayResourceMagazine"
+        },
+        "PathPart": "{slug}",
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
         }
@@ -1358,13 +1370,15 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayMethodMagazineGet": {
+    "ApiGatewayMethodMagazineSlugVarGet": {
       "Type": "AWS::ApiGateway::Method",
       "Properties": {
         "HttpMethod": "GET",
-        "RequestParameters": {},
+        "RequestParameters": {
+          "method.request.path.slug": true
+        },
         "ResourceId": {
-          "Ref": "ApiGatewayResourceMagazine"
+          "Ref": "ApiGatewayResourceMagazineSlugVar"
         },
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
@@ -1398,13 +1412,15 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayMethodMagazineHead": {
+    "ApiGatewayMethodMagazineSlugVarHead": {
       "Type": "AWS::ApiGateway::Method",
       "Properties": {
         "HttpMethod": "HEAD",
-        "RequestParameters": {},
+        "RequestParameters": {
+          "method.request.path.slug": true
+        },
         "ResourceId": {
-          "Ref": "ApiGatewayResourceMagazine"
+          "Ref": "ApiGatewayResourceMagazineSlugVar"
         },
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
@@ -1922,7 +1938,7 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1566776884756": {
+    "ApiGatewayDeployment1566780681493": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -1945,8 +1961,8 @@
         "ApiGatewayMethodEventsHead",
         "ApiGatewayMethodGet",
         "ApiGatewayMethodHead",
-        "ApiGatewayMethodMagazineGet",
-        "ApiGatewayMethodMagazineHead",
+        "ApiGatewayMethodMagazineSlugVarGet",
+        "ApiGatewayMethodMagazineSlugVarHead",
         "ApiGatewayMethodMagazinesGet",
         "ApiGatewayMethodMagazinesHead",
         "ApiGatewayMethodPagesGet",
@@ -2471,85 +2487,85 @@
     "NotFoundErrorPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "NotFoundErrorPageLambdaVersionOWQKp4kYREfppSow0Yx9eFKF70BLUvZ2xjRUCOeVcM"
+        "Ref": "NotFoundErrorPageLambdaVersionDGsWd30KSnnJEZJx8qZMegMhjHwqXvsyIzhkorTndjc"
       }
     },
     "AboutPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AboutPageLambdaVersionuvaujB6QcY78sWhsLQA9UviKziJ0KlNOwBH3eXU"
+        "Ref": "AboutPageLambdaVersion7CzFOopDj5tVdVKNojYmkbl2zZIw1wR6e1VOlZD465c"
       }
     },
     "ArticlesPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "ArticlesPageLambdaVersionfhfwsScn2DTgyD3NjcUCMQIFIk9CmnynMQExqwA3c"
+        "Ref": "ArticlesPageLambdaVersionUt6GGk5MLO2Wsl67TxKrFxxytG0d1CChUHPdUhT1A"
       }
     },
     "CategoryPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CategoryPageLambdaVersionLIE4nhhhR6WPpxouqYy0DAhCJB1ubN3qZwphyEDm5gg"
+        "Ref": "CategoryPageLambdaVersionQ6qzO45nlmqwrplHEL5fgkjCK5NFcrJ6NY7Q5lPKbU"
       }
     },
     "EventPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "EventPageLambdaVersion4gwguXEWJpT6CGNF14VBA420OPqHaJeesFOYRnVL4A"
+        "Ref": "EventPageLambdaVersionrKOCxx3qW4Vr6hTa5HUc2KhhwTlDpvKkTb2HiS0HCaI"
       }
     },
     "EventsPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "EventsPageLambdaVersion9dRgsNNKcE18eTfwqgTPSo0Px8K7YY5tOsPqokk6M"
+        "Ref": "EventsPageLambdaVersion0uUmSsPllwYvwJt8jSi1dCeddSAVEd13WzPl8NBubG0"
       }
     },
     "IndexPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "IndexPageLambdaVersionsNyEm7RJFBKIY55KtMrAginf30wejjd9meW0jmiU6xA"
+        "Ref": "IndexPageLambdaVersionkKxUG3Tao5qNVYAQWX1OpCQhxtq4zo4ZMscgZ5lzQ"
       }
     },
     "MagazinePageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "MagazinePageLambdaVersionI0zIAnOh7GXRK8pg2hyeSItAVr7kCn4KBQXaiugqDk"
+        "Ref": "MagazinePageLambdaVersionRqyIFOExT5NM7TeMrADOym4iGoprepNcEn2GbW0shk"
       }
     },
     "MagazinesPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "MagazinesPageLambdaVersionfO87myD2JbsECe16Dr74BD8QacF0GbLHMVzDgphXYQ"
+        "Ref": "MagazinesPageLambdaVersionsAve27PjCIXe1uUtJA8zY6OycrmwJFA4Gg7RDamMxI"
       }
     },
     "PagesPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "PagesPageLambdaVersion2r3EH0sOH9qXuuKkgUv8Uvm84VfTfTneqS0UuQI3U"
+        "Ref": "PagesPageLambdaVersion2VJ1s8acETHPsyAQGrfXMjUgVHZHqw1XNNs2zxCLM"
       }
     },
     "PostPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "PostPageLambdaVersionfN2IVTRiFYwc5c2Q6kiRnmPUHe1NoJGo5G5RQgvhsRU"
+        "Ref": "PostPageLambdaVersion86vIOv6XWsPKKUvy6iQ5NT29uUcwgqATzuAq0E85Tg"
       }
     },
     "PostsPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "PostsPageLambdaVersionQW8qf1NisfwgcxJEBVVedtqp8kyShqUNg4SnKWkAts"
+        "Ref": "PostsPageLambdaVersionmUAcH16u1OJCkjtiVl0X9RGIt9lbSD7tht2409kIYUg"
       }
     },
     "SearchPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SearchPageLambdaVersionkAaCAo2WChSmssbhk2XFYGIVMtpLVo7CriCqrvO0Y"
+        "Ref": "SearchPageLambdaVersiongZKuh3KHGwZf2IonWsSiIfdgKbYjeKuLh8PqciIgY"
       }
     },
     "DosPageLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "DosPageLambdaVersioneXByjwan0oXU624w8A0CG4aW2pckf83P5jOFYTc"
+        "Ref": "DosPageLambdaVersionwfVd2XAfA0MnftRZMTar2DVQtbvPPBoXGhFTuD16jBA"
       }
     },
     "ServiceEndpoint": {

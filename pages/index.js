@@ -1,11 +1,11 @@
 import React from "react";
-import "./styles/home.scss";
+import Layout from "../components/Layout";
 
 function Index() {
   return (
-    <div className="homePage">
+    <Layout>
       <div>Welcome to next.js serverless </div>
-    </div>
+    </Layout>
   );
 }
 
