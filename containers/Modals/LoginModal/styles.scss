@@ -1,0 +1,67 @@
+.login-modal {
+  .padded {
+    padding: 0.4em 0;
+  }
+  .heading {
+    font-size: 1.7em;
+    padding: 0.4em;
+  }
+
+  .signin-logo-container {
+    width: 100%;
+    background: whitesmoke;
+    .signin-logo {
+      width: 150px;
+      margin: auto;
+      .link-container {
+        padding: 0.5em 0.2em;
+      }
+    }
+  }
+  .connect-text {
+    color: #555;
+  }
+  .signup-buttons {
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: auto;
+      li {
+        display: inline-block;
+        padding: 0.25em;
+        button {
+          padding: 0.8em;
+        }
+      }
+    }
+  }
+  .register-option {
+    display: block;
+    padding: 0.4em 0 0.8em 0;
+    .btn {
+      display: inline-block;
+      padding: 0;
+      margin: 0;
+      text-transform: none;
+      color: inherit;
+      letter-spacing: inherit;
+      white-space: normal;
+      .blue-text {
+        color: #337ab7;
+        font-weight: bold;
+      }
+    }
+    .btn:hover {
+      background: transparent;
+    }
+  }
+  .tos {
+    border-top: 1px solid #ccc;
+    padding: 0.4em 0;
+    color: #777;
+    font-size: 85%;
+    a {
+      font-size: inherit;
+    }
+  }
+}

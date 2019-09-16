@@ -1,0 +1,16 @@
+.search-form {
+  padding-bottom: 1em;
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="tel"],
+  textarea,
+  select {
+    padding: 0 10px;
+    height: 40px;
+    border: 0;
+  }
+  .errors {
+    color: orangered;
+  }
+}

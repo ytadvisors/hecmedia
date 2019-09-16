@@ -1,0 +1,21 @@
+.checkbox-input {
+  .checkbox-container {
+    padding-bottom: 1em;
+    line-height: 1.5em;
+  }
+  .form-checkbox {
+    display: inline-block;
+    padding-right: 1em;
+    line-height: 2em;
+    input,
+    label {
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0;
+      font-size: 0.8em;
+    }
+    label {
+      padding-left: 2px;
+    }
+  }
+}

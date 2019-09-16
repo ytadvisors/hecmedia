@@ -10,11 +10,14 @@ provider:
 plugins:
   - serverless-nextjs-plugin
   - serverless-offline
+  - serverless-cloudfront-invalidate
 
 custom:
   stage: ${opt:stage, self:provider.stage}
+  environment: ${file(env.yml):${self:custom.stage}, file(env.yml):default}
   serverless-nextjs:
-    createAssetBucket: false
+    nextConfigDir: ./
+    assetsBucketName: "dev-cdn.hecmedia.org"
     cloudFront: true
     routes:
       - src: posts
@@ -29,12 +32,31 @@ custom:
           parameters:
             paths:
               slug: true
+      - src: event_filter
+        path: event_filter/{proxy+}
+        request:
+          parameters:
+            paths:
+              proxy: true
+      - src: event
+        path: event/{slug}
+        request:
+          parameters:
+            paths:
+              slug: true
       - src: category
         path: category/{proxy+}
         request:
           parameters:
             paths:
               proxy: true
+  serverless-offline:
+    babelOptions:
+      presets: ["es2015"]
+  cloudfrontInvalidate:
+    distributionId: ${self:custom.environment.DISTRIBUTION_ID}
+    items:
+      - "/*"
 
 package:
   # exclude everything

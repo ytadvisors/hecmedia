@@ -1,0 +1,33 @@
+.contact-form {
+  padding: 0 0 2em;
+  .next-btn {
+    width: 100px;
+    float: none !important;
+    margin: auto !important;
+    display: block !important;
+  }
+  .plan-info {
+    .user-link {
+      display: inline-block;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      .btn {
+        padding: 5px 15px;
+      }
+      .logout-btn {
+        display: inline-block;
+        color: #337ab7;
+        cursor: pointer;
+      }
+      li {
+        padding: 0.5em;
+        display: inline-block;
+        vertical-align: middle;
+        span {
+          padding: 0.5em 0 0.5em 0.3em;
+        }
+      }
+    }
+  }
+}

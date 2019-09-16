@@ -1,0 +1,117 @@
+import React from "react";
+import { graphql } from "react-apollo";
+import Link from "next/link";
+import gql from "graphql-tag";
+import _ from "lodash";
+import { getSocialMenuObject } from "../../lib/getFunctions";
+import SocialLinks from "../SocialLinks";
+
+import "./styles.scss";
+
+const Footer = ({ data: { footer, social } }) => {
+  const { node: { menuItems: { edges: footerList = [] } = {} } = {} } = footer
+    ? footer.edges[0]
+    : {};
+  const { node: { menuItems: { edges: socialList = [] } = {} } = {} } = social
+    ? social.edges[0]
+    : {};
+
+  const links = _.chunk(footerList, footerList.length / 2);
+  const linkMap = links.map((obj, x) => ({
+    id: x,
+    obj
+  }));
+  const largeSocialLinks = getSocialMenuObject(socialList, 30, "white");
+  const socialLinks = getSocialMenuObject(socialList, 25, "white");
+  const logo = "/static/assets/white_hec.png";
+
+  return (
+    <section className="footer">
+      <div className="container">
+        <div className="row">
+          <div className="text-center mobile">
+            <div className="social-container">
+              <SocialLinks links={largeSocialLinks} />
+            </div>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-xs-3 no-mobile">
+            <div className="logo">
+              <img src={logo} className="img-responsive" alt="logo" />
+            </div>
+            <div className="">
+              <div className="social-container">
+                <SocialLinks links={socialLinks} />
+              </div>
+            </div>
+          </div>
+          {linkMap.map(pageLinks => (
+            <div key={pageLinks.id} className="col-xs-6 col-sm-3 no-padding">
+              <ul>
+                {pageLinks.obj.map(link => (
+                  <li key={link.node.url}>
+                    <Link href={link.node.url.replace(/https?:\/\/[^/]+/, "")}>
+                      <a>{link.node.label}</a>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export const allFooters = gql`
+  query allFooters {
+    footer: menus(where: { slug: "footer" }) {
+      edges {
+        node {
+          menuItems {
+            edges {
+              node {
+                label
+                url
+                childItems {
+                  edges {
+                    node {
+                      url
+                      label
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    social: menus(where: { slug: "social" }) {
+      edges {
+        node {
+          menuItems {
+            edges {
+              node {
+                label
+                url
+                childItems {
+                  edges {
+                    node {
+                      url
+                      label
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export default graphql(allFooters)(Footer);

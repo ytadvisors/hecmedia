@@ -1,10 +1,12 @@
 import React, { Component } from "react";
 import moment from "moment";
 import Link from "next/link";
-import { getExcerpt, cleanUrl } from "../../lib/stringFunctions";
+import { getExcerpt, cleanUrl } from "../../lib/updateFunctions";
 import { isServer } from "../../lib/serverFunctions";
 
 import "./styles.scss";
+
+const playButton = "/static/assets/play-button.png";
 
 export default class Banner extends Component {
   constructor(props) {
@@ -34,7 +36,6 @@ export default class Banner extends Component {
   render() {
     const { liveVideos = [] } = this.props;
     const { isMobile } = this.state;
-    const playButton = "/static/assets/play-button.png";
 
     const { postTitle = "", acf: { startDate, url } = {} } =
       liveVideos.length > 0 ? liveVideos[0] : {};
@@ -70,7 +71,9 @@ export default class Banner extends Component {
                     </a>
                   ) : (
                     <Link href={formattedUrl}>
-                      <i>Watch</i>
+                      <a>
+                        <i>Watch</i>
+                      </a>
                     </Link>
                   )}
                 </li>
@@ -84,7 +87,9 @@ export default class Banner extends Component {
                       Live
                     </a>
                   ) : (
-                    <Link href={formattedUrl}>Live</Link>
+                    <Link href={formattedUrl}>
+                      <a>Live</a>
+                    </Link>
                   )}
                 </li>
                 <li className="play vcenter no-mobile">
@@ -113,7 +118,9 @@ export default class Banner extends Component {
                       {excerpt}{" "}
                     </a>
                   ) : (
-                    <Link href={formattedUrl}> {excerpt} </Link>
+                    <Link href={formattedUrl}>
+                      <a>{excerpt}</a>
+                    </Link>
                   )}
                 </li>
               </ul>

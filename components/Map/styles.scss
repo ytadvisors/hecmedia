@@ -1,0 +1,23 @@
+.contact-container {
+  clear: both;
+
+  .captcha-container {
+    width: 300px;
+    margin: auto;
+  }
+  .contact-heading {
+    padding: 1em 0;
+  }
+  .interactive-map {
+    padding: 0 0 2em;
+  }
+  .btn-container {
+    clear: both;
+    width: 120px;
+    margin: auto;
+    .contact-submit {
+      width: 120px;
+      text-align: center;
+    }
+  }
+}

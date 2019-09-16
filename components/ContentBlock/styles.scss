@@ -1,0 +1,46 @@
+.content-block {
+  padding: 15px;
+  margin-bottom: 1.5em;
+  .no-list,
+  .small-list {
+    list-style: none;
+    padding: 10px 0;
+    margin: 0;
+    li {
+      padding: 0 20px 0 0;
+    }
+  }
+  .small-list {
+    padding: 5px 0;
+    li {
+      padding: 0;
+    }
+  }
+  &.blue-block {
+    color: white;
+    background: #0065bc;
+    .sub-header {
+      color: #ccc;
+    }
+  }
+  &.white-block {
+    color: #111;
+    background: #fff;
+    .sub-header {
+      color: #111;
+    }
+  }
+  .content-header {
+    font-size: 1.4em;
+    padding-bottom: 1em;
+    .main-header {
+    }
+  }
+  .content-body {
+    font-size: 0.9em;
+    padding-bottom: 1em;
+  }
+  .content-footer {
+    font-size: 0.8em;
+  }
+}

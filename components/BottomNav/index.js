@@ -1,33 +1,61 @@
 import React from "react";
 import Link from "next/link";
-import PropTypes from "prop-types";
+import { graphql } from "react-apollo";
+import gql from "graphql-tag";
 
 import "./styles.scss";
 
-const BottomNav = ({ menus, title }) => (
-  <section className="post-bottom-nav">
-    <div className="row">
-      <div className="col-md-12">
-        {
-          <ul>
-            <li className="title">{title}</li>
-            {menus.map(menu => (
-              <li key={menu.url}>
-                <Link href={menu.url.replace(/https?:\/\/[^/]+/, "")}>
-                  {menu.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        }
+const BottomNav = ({ title, data: { bottomNav } }) => {
+  const {
+    node: { menuItems: { edges: bottomList = [] } = {} } = {}
+  } = bottomNav ? bottomNav.edges[0] : {};
+  return (
+    <section className="post-bottom-nav">
+      <div className="row">
+        <div className="col-md-12">
+          {
+            <ul>
+              <li className="title">{title}</li>
+              {bottomList.map(menu => (
+                <li key={menu.node.url}>
+                  <Link href={menu.node.url.replace(/https?:\/\/[^/]+/, "")}>
+                    <a>{menu.node.label}</a>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          }
+        </div>
       </div>
-    </div>
-  </section>
-);
-
-BottomNav.propTypes = {
-  menus: PropTypes.arrayOf(PropTypes.object).isRequired,
-  title: PropTypes.string.isRequired
+    </section>
+  );
 };
 
-export default BottomNav;
+export const allNavs = gql`
+  query allNavs {
+    bottomNav: menus(where: { slug: "bottomnav" }) {
+      edges {
+        node {
+          menuItems {
+            edges {
+              node {
+                label
+                url
+                childItems {
+                  edges {
+                    node {
+                      url
+                      label
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export default graphql(allNavs)(BottomNav);

@@ -1,0 +1,44 @@
+.footer {
+  background-color: #0065bc;
+  padding: 2em 0;
+
+  .logo {
+    width: 55%;
+  }
+  .copyright {
+    color: #fff;
+    padding: 0.5em;
+    font-size: 14px;
+  }
+  .social-container {
+    padding: 1em 0;
+  }
+  ul {
+    margin: 0;
+    padding: 0px;
+    li {
+      list-style: none;
+      a {
+        color: #fff;
+        display: block;
+        text-decoration: none;
+        line-height: 2em;
+      }
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .footer {
+    padding: 10px 0;
+    display: block;
+    .logo {
+      width: 100%;
+      margin-top: 20px;
+    }
+    ul {
+      margin: 0;
+      padding: 10px;
+    }
+  }
+}

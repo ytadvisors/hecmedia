@@ -1,0 +1,17 @@
+.template-1 {
+  .template-row {
+    padding-bottom: 2em;
+  }
+  .block-list {
+    article {
+      display: inline-block;
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 650px) {
+  .template-1 {
+    min-height: auto !important;
+  }
+}

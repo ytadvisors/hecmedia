@@ -1,9 +1,6 @@
 module.exports = {
   extends: ["airbnb", "prettier", "prettier/react"],
   parser: "babel-eslint",
-  env: {
-    jest: true
-  },
   parserOptions: {
     ecmaVersion: 2017,
     ecmaFeatures: {
@@ -25,13 +22,11 @@ module.exports = {
     "no-underscore-dangle": 0,
     "import/imports-first": ["error", "absolute-first"],
     "import/newline-after-import": "error",
-    "jsx-a11y/anchor-is-valid": [
-      "error",
-      {
-        components: ["Link"],
-        specialLink: ["to"]
-      }
-    ],
+    "jsx-a11y/anchor-is-valid": ["off"],
+    "react/jsx-props-no-spreading": ["off"],
+    "import/no-named-as-default": ["off"],
+    "react/static-property-placement": ["off"],
+    "react/forbid-prop-types": ["off"],
     "jsx-a11y/label-has-associated-control": [
       "error",
       {

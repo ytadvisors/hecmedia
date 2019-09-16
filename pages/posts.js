@@ -1,14 +1,226 @@
 import React, { Component } from "react";
+import { useRouter } from "next/router";
+import { useQuery } from "@apollo/react-hooks";
+import gql from "graphql-tag";
+import Layout from "../containers/Layout";
+import SEO from "../components/SEO";
+import SinglePost from "../components/SinglePost";
+import ListOfPosts from "../components/ListOfPosts";
 
-export default class Posts extends Component {
-  static async getInitialProps({ query }) {
-    return {
-      slug: query.slug
+const pageCategory = gql`
+  query categoryPost($categories: [ID]) {
+    categoryPosts: posts(
+      first: 3
+      where: { categoryIn: $categories, orderby: { field: DATE, order: DESC } }
+    ) {
+      edges {
+        relatedPost: node {
+          title(format: RENDERED)
+          postDetails {
+            videoImage {
+              medium: sourceUrl(size: MEDIUM)
+              large: sourceUrl(size: MEDIUM_LARGE)
+            }
+            postHeader {
+              medium: sourceUrl(size: MEDIUM)
+              large: sourceUrl(size: MEDIUM_LARGE)
+            }
+          }
+          link
+          categories(where: { shouldOutputInFlatList: true }) {
+            edges {
+              node {
+                link
+                name
+              }
+            }
+          }
+          postId
+          slug
+          excerpt(format: RENDERED)
+        }
+      }
+    }
+  }
+`;
+
+const pageInfo = gql`
+  query currentPost($slug: String!) {
+    post: postBy(slug: $slug) {
+      title
+      content
+      link
+      categories(where: { shouldOutputInFlatList: true }) {
+        edges {
+          node {
+            link
+            name
+            categoryId
+          }
+        }
+      }
+      postDetails {
+        youtubeId
+        showPodcasts
+        vimeoId
+        embedUrl
+        postHeader {
+          thumbnail: sourceUrl(size: MEDIUM_LARGE)
+        }
+        relatedPosts {
+          relatedPost {
+            ... on Post {
+              title(format: RENDERED)
+              postDetails {
+                videoImage {
+                  medium: sourceUrl(size: MEDIUM)
+                  large: sourceUrl(size: MEDIUM_LARGE)
+                }
+                postHeader {
+                  medium: sourceUrl(size: MEDIUM)
+                  large: sourceUrl(size: MEDIUM_LARGE)
+                }
+              }
+              link
+              categories(where: { shouldOutputInFlatList: true }) {
+                edges {
+                  node {
+                    link
+                    name
+                  }
+                }
+              }
+              postId
+              slug
+              excerpt(format: RENDERED)
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const PostList = ({ updateData }) => {
+  const loadPosts = variables => {
+    try {
+      const { loading, error, data, fetchMore } = useQuery(pageInfo, {
+        variables
+      });
+      if (loading) return <p>Loading Posts</p>;
+
+      if (error) {
+        return <p>Error loading posts</p>;
+      }
+
+      if (data.post) {
+        const {
+          post: { categories, postDetails: { relatedPosts } = {} }
+        } = data;
+
+        if (categories && categories.edges) {
+          const categoryList = categories.edges.map(obj => obj.node.categoryId);
+          if (!relatedPosts || relatedPosts.length < 3) {
+            fetchMore({
+              query: pageCategory,
+              variables: { categories: categoryList },
+              updateQuery: (prev, { fetchMoreResult }) => {
+                const result = { ...prev };
+                const { categoryPosts } = fetchMoreResult;
+                let currentPosts = prev.post.postDetails.relatedPosts || [];
+                if (categoryPosts && categoryPosts.edges) {
+                  currentPosts = [...currentPosts, ...categoryPosts.edges];
+                }
+                if (currentPosts)
+                  result.post.postDetails.relatedPosts = currentPosts;
+                updateData({
+                  data: result
+                });
+                return result;
+              }
+            });
+          }
+        }
+      }
+
+      data.post.postDetails.relatedPosts = data.post.postDetails.relatedPosts.filter(
+        n => (n.relatedPost ? n : null)
+      );
+      return data;
+    } catch (err) {
+      console.log(err.message);
+      return {};
+    }
+  };
+
+  const router = useRouter();
+  const {
+    query: { slug }
+  } = router;
+  const data = slug ? loadPosts({ slug }) : {};
+  const { post } = data;
+  const { postDetails: { relatedPosts } = {} } = post || {};
+  return (
+    <div>
+      {post && (
+        <SinglePost
+          {...{
+            post,
+            showShareIcons: true
+          }}
+        />
+      )}
+      {post && relatedPosts && (
+        <ListOfPosts
+          title="Related Posts"
+          posts={
+            (relatedPosts &&
+              relatedPosts.map(obj => obj.relatedPost).slice(0, 3)) ||
+            []
+          }
+          link={{ page: "posts" }}
+          numResults={0}
+          style={{
+            background: "#f9f9f9",
+            marginBottom: "20px",
+            border: "1px solid #ddd"
+          }}
+          design={{
+            defaultRowLayout: "3 Columns",
+            defaultDisplayType: "Post"
+          }}
+          loadMore={null}
+          resizeRows
+        />
+      )}
+    </div>
+  );
+};
+
+export default class extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      data: {}
     };
   }
 
+  updateData = data =>
+    this.setState({
+      data
+    });
+
   render() {
-    const { slug } = this.props;
-    return <h1>Post page: {slug}</h1>;
+    const { data } = this.state;
+    return (
+      <>
+        <SEO />
+        <Layout>
+          <div className="col-md-12" style={{ background: "#eee" }}>
+            <PostList updateData={this.updateData} data={data} />
+          </div>
+        </Layout>
+      </>
+    );
   }
 }

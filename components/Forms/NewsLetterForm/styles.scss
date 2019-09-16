@@ -1,0 +1,32 @@
+.newsletter-form {
+  padding-bottom: 2em;
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="tel"],
+  textarea,
+  select {
+    padding: 0 10px;
+    height: 40px;
+  }
+  .errors {
+    color: orangered;
+  }
+  #newsletter-captcha {
+    transform: scale(0.865);
+    -webkit-transform: scale(0.865);
+    transform-origin: 0 0;
+    -webkit-transform-origin: 0 0;
+  }
+}
+
+@media (max-width: 1170px) {
+  .newsletter-form {
+    #newsletter-captcha {
+      transform: scale(0.95);
+      -webkit-transform: scale(0.95);
+      transform-origin: 0 0;
+      -webkit-transform-origin: 0 0;
+    }
+  }
+}

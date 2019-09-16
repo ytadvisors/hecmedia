@@ -1,0 +1,61 @@
+.podcast-links {
+  ul {
+    list-style: none;
+    padding: 1em 0 0 0;
+    li {
+      display: inline-block;
+      vertical-align: middle;
+      padding: 0 15px 0 0;
+      &.subscribe-label {
+        width: auto;
+        font-weight: bold;
+        line-height: 29px;
+        text-transform: uppercase;
+        color: #777;
+      }
+      a {
+        background-size: 25px 29px;
+        width: 25px;
+        height: 29px;
+        display: block;
+      }
+    }
+  }
+  .apple-link {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/apple-black.png");
+  }
+  .apple-link:hover {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/apple-gray.png");
+  }
+  .stitcher-link {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/stitcher-black.png");
+  }
+  .stitcher-link:hover {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/stitcher-gray.png");
+  }
+  .google-link {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/google-black.png");
+  }
+  .google-link:hover {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/google-gray.png");
+  }
+  .tunein-link {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/tunein-black.png");
+  }
+  .tunein-link:hover {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/tunein-gray.png");
+  }
+  .spotify-link {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/spotify-black.png");
+  }
+  .spotify-link:hover {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/spotify-gray.png");
+  }
+  .rss-link {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/rss-black.png");
+  }
+
+  .rss-link:hover {
+    background-image: url("https://s3-us-east-2.amazonaws.com/prd-hectv-wp-media/wp-content/uploads/2019/07/rss-gray.png");
+  }
+}

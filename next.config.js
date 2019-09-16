@@ -8,12 +8,20 @@ const { parsed: localEnv } = require("dotenv").config({
   path: envFile
 });
 
-const { CDN } = process.env;
+const { CDN_URL } = process.env;
 
 const config = {
   target: "serverless",
-  assetPrefix: `https://s3.amazonaws.com/${CDN}`,
-  env: localEnv
+  env: localEnv,
+  webpack: data => {
+    const { ...conf } = data;
+    conf.node = {
+      fs: "empty"
+    };
+    return conf;
+  }
 };
 
-module.exports = withSASS(withCSS(config));
+if (CDN_URL) config.assetPrefix = CDN_URL;
+
+module.exports = withCSS(withSASS(config));
