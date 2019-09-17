@@ -129,7 +129,7 @@ class Header extends Component {
       );
     }
     return (
-      <Link href={`/${page}`} as={cleanUrl}>
+      <Link href={page} as={cleanUrl}>
         <a
           dangerouslySetInnerHTML={{
             __html: label
