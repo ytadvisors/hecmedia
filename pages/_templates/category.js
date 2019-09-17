@@ -1,5 +1,4 @@
 import React from "react";
-import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import ListOfPosts from "../../components/ListOfPosts";
@@ -55,7 +54,7 @@ const pageInfo = gql`
   }
 `;
 
-export default () => {
+export default props => {
   const loadPosts = variables => {
     try {
       const { loading, error, data } = useQuery(pageInfo, {
@@ -71,12 +70,7 @@ export default () => {
     }
   };
 
-  const router = useRouter();
-  const {
-    query: { proxy }
-  } = router;
-  const categories = proxy.split("/");
-  const category = categories[categories.length - 1];
+  const { category } = props;
   const { postData } = category ? loadPosts({ category }) : {};
   return (
     <>

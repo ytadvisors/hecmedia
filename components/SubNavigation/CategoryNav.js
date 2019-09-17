@@ -3,6 +3,8 @@ import Link from "next/link";
 import { graphql } from "react-apollo";
 import { useRouter } from "next/router";
 import gql from "graphql-tag";
+import { getHref } from "../../lib/getFunctions";
+import { cleanUrl } from "../../lib/updateFunctions";
 import "./styles.scss";
 
 const { WP_HOST } = process.env;
@@ -46,6 +48,9 @@ export const CategoryNav = props => {
 
     if (categoryList.node) {
       const subcategories = categoryList.node.children.edges;
+      const url = cleanUrl(categoryList.node.link);
+      const numParams = url.split("/").filter(n => n).length - 1;
+      const actualLink = getHref(url, numParams < 0 ? 0 : numParams);
       return (
         <section className="sub-navigation">
           <div className="row heading">
@@ -53,12 +58,7 @@ export const CategoryNav = props => {
               <div className="pull-left">
                 {categoryList.node.link && (
                   <h2>
-                    <Link
-                      href={categoryList.node.link.replace(
-                        /https?:\/\/[^/]+/,
-                        ""
-                      )}
-                    >
+                    <Link as={url} href={actualLink}>
                       <a
                         dangerouslySetInnerHTML={{
                           __html: categoryList.node.name
@@ -73,15 +73,16 @@ export const CategoryNav = props => {
           <ul className="link-list">
             {subcategories.map(subcategory => {
               const isActive = link === subcategory.node.link ? "active" : "";
+              const subUrl = cleanUrl(subcategory.node.link);
+              const numSubParams = subUrl.split("/").filter(n => n).length - 2;
+              const actualSubLink = getHref(
+                subUrl,
+                numSubParams < 0 ? 0 : numSubParams
+              );
               return (
                 <li key={subcategory.node.link}>
                   {!isActive && (
-                    <Link
-                      href={subcategory.node.link.replace(
-                        /https?:\/\/[^/]+/,
-                        ""
-                      )}
-                    >
+                    <Link as={subUrl} href={actualSubLink}>
                       <a
                         dangerouslySetInnerHTML={{
                           __html: subcategory.node.name

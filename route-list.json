@@ -1,26 +1,47 @@
 {
-  "category": {
-    "page": "category/[proxy]",
-    "pattern": "/category/:proxy+"
-  },
-  "event": {
-    "page": "event/[slug]",
-    "pattern": "/event/:slug"
-  },
-  "event_filter": {
-    "page": "event_filter/[category]/[day]",
-    "pattern": "/event_filter/:category/:day"
-  },
-  "magazines": {
-    "page": "magazines",
-    "pattern": "/magazines"
-  },
-  "posts": {
-    "page": "posts/[slug]",
-    "pattern": "/posts/:slug"
-  },
-  "": {
-    "page": "[page]",
-    "pattern": "/[page]"
-  }
+  "category": [
+    {
+      "page": "category/[pid]/",
+      "regex": "category/?pid]",
+      "pattern": "/category/:pid"
+    },
+    {
+      "page": "category/[pid]/[id]/",
+      "pattern": "/category/:pid/:id"
+    },
+    {
+      "page": "category/[pid]/[id]/[cid]/",
+      "pattern": "/category/:pid/:id/:cid"
+    }
+  ],
+  "event": [
+    {
+      "page": "event/[slug]/",
+      "pattern": "/event/:slug"
+    }
+  ],
+  "event_filter": [
+    {
+      "page": "event_filter/[category]/[day]/",
+      "pattern": "/event_filter/:category/:day"
+    }
+  ],
+  "magazines": [
+    {
+      "page": "magazines/",
+      "pattern": "/magazines"
+    }
+  ],
+  "posts": [
+    {
+      "page": "posts/[slug]/",
+      "pattern": "/posts/:slug"
+    }
+  ],
+  "": [
+    {
+      "page": "[page]/",
+      "pattern": "/[page]"
+    }
+  ]
 }
