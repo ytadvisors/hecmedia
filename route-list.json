@@ -1,0 +1,38 @@
+{
+  "category": {
+    "page": "category/[proxy]",
+    "pattern": "/category/:proxy+"
+  },
+  "event": {
+    "page": "event/[slug]",
+    "pattern": "/event/:slug"
+  },
+  "event_filter": {
+    "page": "event_filter/[category]/[day]",
+    "pattern": "/event_filter/:category/:day"
+  },
+  "posts": {
+    "page": "posts/[slug]",
+    "pattern": "/posts/:slug"
+  },
+  "events": {
+    "page": "events",
+    "pattern": "/events"
+  },
+  "magazines": {
+    "page": "magazines",
+    "pattern": "/magazines"
+  },
+  "pages": {
+    "page": "pages",
+    "pattern": "/pages"
+  },
+  "articles": {
+    "page": "articles",
+    "pattern": "/articles"
+  },
+  "search": {
+    "page": "search/[query]",
+    "pattern": "/search/:query+"
+  }
+}

@@ -12,7 +12,8 @@ import SocialLinks from "../SocialLinks";
 import NavWrap from "../NavWrap";
 import {
   getHeaderMenuObject,
-  getSocialMenuObject
+  getSocialMenuObject,
+  getHref
 } from "../../lib/getFunctions";
 import { isServer } from "../../lib/serverFunctions";
 import "./styles.scss";
@@ -103,6 +104,7 @@ class Header extends Component {
     const { url, label, buttonClick } = link;
     const cleanUrl = url && url.replace(/https?:\/\/[^/]+/, "");
     const isRedirect = url && url.match(/^\/\//);
+    const page = getHref(cleanUrl);
     if (buttonClick) {
       return (
         <Button
@@ -127,7 +129,7 @@ class Header extends Component {
       );
     }
     return (
-      <Link href={cleanUrl}>
+      <Link href={`/${page}`} as={cleanUrl}>
         <a
           dangerouslySetInnerHTML={{
             __html: label
