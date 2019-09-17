@@ -1,47 +1,16 @@
-service: hecmedia
-
-provider:
-  name: aws
-  runtime: nodejs10.x
-  region: us-east-2
-  profile: eb-cli2
-  stage: ${opt:stage}
-
 plugins:
-  - serverless-nextjs-plugin
   - serverless-offline
   - serverless-cloudfront-invalidate
-
+nextApp:
+  component: "serverless-next.js"
+  inputs:
+    domain: ["development", "hecmedia.org"]
 custom:
   stage: ${opt:stage, self:provider.stage}
-  environment: ${file(env.yml):${self:custom.stage}, file(env.yml):default}
-  serverless-nextjs:
-    nextConfigDir: ./
-    assetsBucketName: "dev-cdn.hecmedia.org"
-    cloudFront: true
-    routes:
-      - src: search
-        path: search/{slug}
-        request:
-          parameters:
-            paths:
-              slug: true
-      - src: category
-        path: category/{proxy+}
-        request:
-          parameters:
-            paths:
-              proxy: true
   serverless-offline:
     babelOptions:
       presets: ["es2015"]
   cloudfrontInvalidate:
-    distributionId: ${self:custom.environment.DISTRIBUTION_ID}
+    distributionId: "E2YGA1YXN52HBY"
     items:
       - "/*"
-
-package:
-  # exclude everything
-  # page handlers are automatically included by the plugin
-  exclude:
-    - ./**

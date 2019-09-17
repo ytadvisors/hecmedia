@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import { graphql } from "react-apollo";
-import Link from "next/link";
 import gql from "graphql-tag";
 import $ from "jquery";
 import { FaSearch } from "react-icons/fa";
@@ -12,8 +11,7 @@ import SocialLinks from "../SocialLinks";
 import NavWrap from "../NavWrap";
 import {
   getHeaderMenuObject,
-  getSocialMenuObject,
-  getHref
+  getSocialMenuObject
 } from "../../lib/getFunctions";
 import { isServer } from "../../lib/serverFunctions";
 import "./styles.scss";
@@ -104,7 +102,6 @@ class Header extends Component {
     const { url, label, buttonClick } = link;
     const cleanUrl = url && url.replace(/https?:\/\/[^/]+/, "");
     const isRedirect = url && url.match(/^\/\//);
-    const page = getHref(cleanUrl);
     if (buttonClick) {
       return (
         <Button
@@ -118,24 +115,27 @@ class Header extends Component {
     if (isRedirect) {
       return (
         <a
+          aria-labelledby="redirect"
           href={cleanUrl}
-          dangerouslySetInnerHTML={{
-            __html: label
-          }}
-          alt="redirect"
           target="_blank"
           rel="noopener noreferrer"
-        />
+        >
+          <span
+            dangerouslySetInnerHTML={{
+              __html: label
+            }}
+          />
+        </a>
       );
     }
     return (
-      <Link href={page} as={cleanUrl}>
-        <a
+      <a href={cleanUrl}>
+        <span
           dangerouslySetInnerHTML={{
             __html: label
           }}
         />
-      </Link>
+      </a>
     );
   };
 
@@ -251,11 +251,9 @@ class Header extends Component {
             <div className="top-logo">
               <Navbar.Brand className="navbar-brand-class">
                 <div className="navbar-brand-class navbar-brand">
-                  <Link href="/" as="/">
-                    <a>
-                      <img src={logo} alt="HECTV logo" />
-                    </a>
-                  </Link>
+                  <a href="/">
+                    <img src={logo} alt="HECTV logo" />
+                  </a>
                 </div>
               </Navbar.Brand>
             </div>

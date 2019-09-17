@@ -20,3 +20,5 @@ env.yml
 .env
 .env.development
 .env.production
+.env.local
+.serverless_nextjs/

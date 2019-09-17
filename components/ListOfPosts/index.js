@@ -1,11 +1,10 @@
 import React, { Component } from "react";
-import Link from "next/link";
 import _ from "lodash";
 import { MdLocationOn } from "react-icons/md";
 import { IoIosCalendar } from "react-icons/io";
 import LazyLoad from "react-lazyload";
 import { isServer } from "../../lib/serverFunctions";
-import { getEventDate, getHref } from "../../lib/getFunctions";
+import { getEventDate } from "../../lib/getFunctions";
 
 import "./styles.scss";
 
@@ -77,15 +76,13 @@ export default class ListOfPosts extends Component {
     if (category.node.link) {
       const url = category.node.link.replace(/https?:\/\/[^/]+/, "");
       return (
-        <Link as={url} href={getHref(url)}>
-          <a>
-            <span
-              dangerouslySetInnerHTML={{
-                __html: category.node.name
-              }}
-            />
-          </a>
-        </Link>
+        <a href={url}>
+          <span
+            dangerouslySetInnerHTML={{
+              __html: category.node.name
+            }}
+          />
+        </a>
       );
     }
     return "";
@@ -119,16 +116,14 @@ export default class ListOfPosts extends Component {
     }
     return (
       <p>
-        <Link as={link} href={getHref(link)}>
-          <a>
-            <span
-              className={`blog-title ${postType}`}
-              dangerouslySetInnerHTML={{
-                __html: title
-              }}
-            />
-          </a>
-        </Link>
+        <a href={link}>
+          <span
+            className={`blog-title ${postType}`}
+            dangerouslySetInnerHTML={{
+              __html: title
+            }}
+          />
+        </a>
       </p>
     );
   };
@@ -272,18 +267,13 @@ export default class ListOfPosts extends Component {
                   <div className="content">{content}</div>
                 </a>
               )) || (
-                <Link
-                  as={this.getLink(post)}
-                  href={getHref(this.getLink(post))}
-                >
-                  <a>
-                    <span>
-                      <div className="gradient" />
-                      <div className="texture" />
-                      <div className="content">{content}</div>
-                    </span>
-                  </a>
-                </Link>
+                <a href={this.getLink(post)}>
+                  <span>
+                    <div className="gradient" />
+                    <div className="texture" />
+                    <div className="content">{content}</div>
+                  </span>
+                </a>
               )}
             </div>
           </td>
@@ -323,15 +313,13 @@ export default class ListOfPosts extends Component {
             )})`
           }}
         >
-          <Link as={this.getLink(post)} href={getHref(this.getLink(post))}>
-            <a>
-              <span>
-                <div className="gradient" />
-                <div className="texture" />
-                <div className="content">{content}</div>
-              </span>
-            </a>
-          </Link>
+          <a href={this.getLink(post)}>
+            <span>
+              <div className="gradient" />
+              <div className="texture" />
+              <div className="content">{content}</div>
+            </span>
+          </a>
         </div>
       </div>
     );
@@ -355,15 +343,13 @@ export default class ListOfPosts extends Component {
       className="wallpaper"
       style={{ backgroundImage: `url(${this.getImgSrc(post)})` }}
     >
-      <Link as={this.getLink(post)} href={getHref(this.getLink(post))}>
-        <a>
-          <span>
-            <div className="gradient" />
-            <div className="texture" />
-            <div className="content">{content}</div>
-          </span>
-        </a>
-      </Link>
+      <a href={this.getLink(post)}>
+        <span>
+          <div className="gradient" />
+          <div className="texture" />
+          <div className="content">{content}</div>
+        </span>
+      </a>
     </div>
   );
 

@@ -1,6 +1,5 @@
 import React from "react";
 import moment from "moment";
-import Link from "next/link";
 import { graphql } from "react-apollo";
 import gql from "graphql-tag";
 
@@ -31,9 +30,7 @@ const ListOfEvents = ({ data: { events } }) => (
                     __html: `${x + 1}. ${title}. `
                   }}
                 />
-                <Link href={link.replace(/https?:\/\/[^/]+/, "")}>
-                  <a>Read More</a>
-                </Link>
+                <a href={link.replace(/https?:\/\/[^/]+/, "")}>Read More</a>
               </li>
             )
           );

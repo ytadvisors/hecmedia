@@ -1,9 +1,7 @@
 import React from "react";
 import { graphql } from "react-apollo";
-import Link from "next/link";
 import gql from "graphql-tag";
 import LazyLoad from "react-lazyload";
-import { getHref } from "../../lib/getFunctions";
 
 import "./styles.scss";
 
@@ -12,9 +10,7 @@ export const ListOfMagazines = ({ data: { magazines } }) => (
     <div className="title">
       <div>
         <b>
-          <Link href="/magazines">
-            <a>HEC-TV Magazine</a>
-          </Link>
+          <a href="/magazines">HEC-TV Magazine</a>
         </b>
       </div>
     </div>
@@ -34,25 +30,23 @@ export const ListOfMagazines = ({ data: { magazines } }) => (
 
             return (
               <li key={link}>
-                <Link href={getHref(url)} as={url}>
-                  <a>
-                    <div className="row">
-                      <div className="magazine-img col-xs-4 ">
-                        <LazyLoad height={150}>
-                          <img
-                            src={sourceUrl.replace(/^https?:\/\//, "https://")}
-                            className="img-responsive"
-                            alt="cover"
-                          />
-                        </LazyLoad>
-                      </div>
-                      <div
-                        className="magazine-info col-xs-8"
-                        dangerouslySetInnerHTML={{ __html: title }}
-                      />
+                <a href={url}>
+                  <div className="row">
+                    <div className="magazine-img col-xs-4 ">
+                      <LazyLoad height={150}>
+                        <img
+                          src={sourceUrl.replace(/^https?:\/\//, "https://")}
+                          className="img-responsive"
+                          alt="cover"
+                        />
+                      </LazyLoad>
                     </div>
-                  </a>
-                </Link>
+                    <div
+                      className="magazine-info col-xs-8"
+                      dangerouslySetInnerHTML={{ __html: title }}
+                    />
+                  </div>
+                </a>
               </li>
             );
           }
