@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { useRouter } from "next/router";
 
-import "../../node_modules/react-datepicker/dist/react-datepicker.css";
+import "../../lib/cssDependencies";
 import "./styles.scss";
 import ProgramViewer from "../../components/ProgramViewer";
 import Header from "../../components/Header";

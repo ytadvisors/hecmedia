@@ -7,13 +7,13 @@ const routes = require("next-routes");
 
 // Name   Page      Pattern
 module.exports = routes()
-  .add("articles")
-  .add("category", "/category/:proxy+")
-  .add("event_filter", "/event_filter/:proxy+")
-  .add("event", "/event/:slug")
+  .add("category/[proxy]", "/category/:proxy+")
+  .add("event/[slug]", "/event/:slug")
+  .add("event_filter/[category]/[day]", "/event_filter/:category/:day")
+  .add("magazine/[slug]", "/magazine/:slug")
+  .add("posts/[slug]", "/posts/:slug")
   .add("events", "/events")
-  .add("magazine", "/magazine/:slug")
-  .add("magazines")
-  .add("pages")
-  .add("posts", "/posts/:slug")
-  .add("search", "/search/:query");
+  .add("magazines", "/magazines")
+  .add("pages", "/pages")
+  .add("articles", "/articles")
+  .add("search/[query]", "/search/:query+");

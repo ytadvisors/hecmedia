@@ -249,7 +249,7 @@ class Header extends Component {
             <div className="top-logo">
               <Navbar.Brand className="navbar-brand-class">
                 <div className="navbar-brand-class navbar-brand">
-                  <Link href="/">
+                  <Link href="/" as="/">
                     <a>
                       <img src={logo} alt="HECTV logo" />
                     </a>

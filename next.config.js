@@ -24,4 +24,4 @@ const config = {
 
 if (CDN_URL) config.assetPrefix = CDN_URL;
 
-module.exports = withCSS(withSASS(config));
+module.exports = withSASS(withCSS(config));

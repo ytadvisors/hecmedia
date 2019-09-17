@@ -2,13 +2,13 @@ import React from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import moment from "moment";
-import { Router } from "../routes";
-import ListOfPosts from "../components/ListOfPosts";
-import EventNav from "../components/SubNavigation/EventNav";
-import Layout from "../containers/Layout";
-import SEO from "../components/SEO";
-import { getArrayUnion } from "../lib/updateFunctions";
+import { Router } from "../../../routes";
+import ListOfPosts from "../../../components/ListOfPosts";
+import EventNav from "../../../components/SubNavigation/EventNav";
+import Layout from "../../../containers/Layout";
+import SEO from "../../../components/SEO";
+import { getArrayUnion } from "../../../lib/updateFunctions";
+import { getFormattedDate } from "../../../lib/getFunctions";
 
 export const eventInfo = gql`
   query eventInfo(
@@ -81,15 +81,6 @@ export const eventInfo = gql`
 `;
 
 export default () => {
-  const mDay = moment(new Date());
-  const currentDay = moment(mDay).format("YYYY-MM-DD");
-  const router = useRouter();
-  const {
-    query: { proxy = "" }
-  } = router;
-  const proxyData = proxy.split("/");
-  const [eCategory = "All", eDate = currentDay] = proxyData;
-
   const getIncrVariables = (variables, adder = 1) => {
     const { keyEnd: endKey } = variables;
     const incr =
@@ -106,13 +97,21 @@ export default () => {
   };
 
   const changeDate = newDate => {
-    Router.pushRoute(
-      `/event_filter/${eCategory}/${newDate.format("YYYY-MM-DD")}`
-    );
+    const router = useRouter();
+    const {
+      query: { category }
+    } = router;
+
+    router.pushRoute(`/event_filter/${category}/${getFormattedDate(newDate)}`);
   };
 
   const changeCategory = newCategory => {
-    Router.pushRoute(`/event_filter/${newCategory}/${eDate}`);
+    const router = useRouter();
+    const {
+      query: { day }
+    } = router;
+
+    Router.pushRoute(`/event_filter/${newCategory}/${day}`);
   };
 
   const runFetch = async (fetchMore, args) => {

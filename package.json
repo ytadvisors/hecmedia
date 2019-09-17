@@ -40,7 +40,6 @@
   "homepage": "https://github.com/ytadvisors/hecmedia#readme",
   "scripts": {
     "dev": "node server.js",
-    "local": "next",
     "build": "next build",
     "start": "next start",
     "deploy-dev": "ACTIVE_ENV=development sls deploy -s dev",
@@ -87,7 +86,7 @@
     "react": "^16.8.4",
     "react-apollo": "3.0.1",
     "react-bootstrap": "^0.32.1",
-    "react-datepicker": "^1.5.0",
+    "react-datepicker": "2.9.6",
     "react-dates": "20.3.0",
     "react-dom": "^16.8.4",
     "react-google-maps": "9.4.5",

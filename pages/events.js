@@ -8,6 +8,7 @@ import EventNav from "../components/SubNavigation/EventNav";
 import Layout from "../containers/Layout";
 import SEO from "../components/SEO";
 import { getArrayUnion } from "../lib/updateFunctions";
+import { getFormattedDate } from "../lib/getFunctions";
 
 const eventInfo = gql`
   query eventInfo(
@@ -81,7 +82,6 @@ const eventInfo = gql`
 
 export default () => {
   const mDay = moment(new Date());
-  const currentDay = moment(mDay).format("YYYY-MM-DD");
 
   const getIncrVariables = (variables, adder = 1) => {
     const { keyEnd: endKey } = variables;
@@ -99,11 +99,11 @@ export default () => {
   };
 
   const changeDate = newDate => {
-    Router.pushRoute(`/event_filter/All/${newDate.format("YYYY-MM-DD")}`);
+    Router.pushRoute(`/event_filter/All/${getFormattedDate(newDate)}`);
   };
 
   const changeCategory = newCategory => {
-    Router.pushRoute(`/event_filter/${newCategory}/${currentDay}`);
+    Router.pushRoute(`/event_filter/${newCategory}/${getFormattedDate(mDay)}`);
   };
 
   const runFetch = async (fetchMore, args) => {
@@ -151,6 +151,7 @@ export default () => {
   };
 
   const incr = 0;
+  /* const currentDay = moment(mDay).format("YYYY-MM-DD"); */
   const compareStart = `2019-08-04 00:00:00`;
   const compareEnd = `2019-09-04 24:00:00`;
 

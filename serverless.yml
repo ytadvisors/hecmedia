@@ -20,26 +20,8 @@ custom:
     assetsBucketName: "dev-cdn.hecmedia.org"
     cloudFront: true
     routes:
-      - src: posts
-        path: posts/{slug}
-        request:
-          parameters:
-            paths:
-              slug: true
-      - src: magazine
-        path: magazine/{slug}
-        request:
-          parameters:
-            paths:
-              slug: true
-      - src: event_filter
-        path: event_filter/{proxy+}
-        request:
-          parameters:
-            paths:
-              proxy: true
-      - src: event
-        path: event/{slug}
+      - src: search
+        path: search/{query+}
         request:
           parameters:
             paths:

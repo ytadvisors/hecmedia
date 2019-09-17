@@ -2,10 +2,10 @@ import React from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import ListOfPosts from "../components/ListOfPosts";
-import CategoryNav from "../components/SubNavigation/CategoryNav";
-import Layout from "../containers/Layout";
-import SEO from "../components/SEO";
+import ListOfPosts from "../../components/ListOfPosts";
+import CategoryNav from "../../components/SubNavigation/CategoryNav";
+import Layout from "../../containers/Layout";
+import SEO from "../../components/SEO";
 
 const pageInfo = gql`
   query pageInfo($category: String!) {
