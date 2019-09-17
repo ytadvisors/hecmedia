@@ -11,28 +11,16 @@
     "page": "event_filter/[category]/[day]",
     "pattern": "/event_filter/:category/:day"
   },
-  "posts": {
-    "page": "posts/[slug]",
-    "pattern": "/posts/:slug"
-  },
-  "events": {
-    "page": "events",
-    "pattern": "/events"
-  },
   "magazines": {
     "page": "magazines",
     "pattern": "/magazines"
   },
-  "pages": {
-    "page": "pages",
-    "pattern": "/pages"
+  "posts": {
+    "page": "posts/[slug]",
+    "pattern": "/posts/:slug"
   },
-  "articles": {
-    "page": "articles",
-    "pattern": "/articles"
-  },
-  "search": {
-    "page": "search/[query]",
-    "pattern": "/search/:query+"
+  "": {
+    "page": "[page]",
+    "pattern": "/[page]"
   }
 }

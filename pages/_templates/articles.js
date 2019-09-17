@@ -1,10 +1,10 @@
 import React from "react";
 import { graphql } from "react-apollo";
 import gql from "graphql-tag";
-import DefaultNav from "../components/SubNavigation/DefaultNav";
-import Layout from "../containers/Layout";
-import ListOfPosts from "../components/ListOfPosts";
-import SEO from "../components/SEO";
+import DefaultNav from "../../components/SubNavigation/DefaultNav";
+import Layout from "../../containers/Layout";
+import ListOfPosts from "../../components/ListOfPosts";
+import SEO from "../../components/SEO";
 
 const pageInfo = gql`
   query pageInfo {

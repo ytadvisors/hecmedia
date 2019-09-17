@@ -2,13 +2,13 @@ import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import moment from "moment";
-import { Router } from "../routes";
-import ListOfPosts from "../components/ListOfPosts";
-import EventNav from "../components/SubNavigation/EventNav";
-import Layout from "../containers/Layout";
-import SEO from "../components/SEO";
-import { getArrayUnion } from "../lib/updateFunctions";
-import { getFormattedDate } from "../lib/getFunctions";
+import { Router } from "../../routes";
+import ListOfPosts from "../../components/ListOfPosts";
+import EventNav from "../../components/SubNavigation/EventNav";
+import Layout from "../../containers/Layout";
+import SEO from "../../components/SEO";
+import { getArrayUnion } from "../../lib/updateFunctions";
+import { getFormattedDate } from "../../lib/getFunctions";
 
 const eventInfo = gql`
   query eventInfo(
