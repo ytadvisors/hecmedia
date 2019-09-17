@@ -5,7 +5,7 @@ import { MdLocationOn } from "react-icons/md";
 import { IoIosCalendar } from "react-icons/io";
 import LazyLoad from "react-lazyload";
 import { isServer } from "../../lib/serverFunctions";
-import { getEventDate } from "../../lib/getFunctions";
+import { getEventDate, getHref } from "../../lib/getFunctions";
 
 import "./styles.scss";
 
@@ -73,18 +73,23 @@ export default class ListOfPosts extends Component {
     return currentImg && currentImg.large;
   };
 
-  getCategoryHelper = category =>
-    category.node.link && (
-      <Link href={category.node.link.replace(/https?:\/\/[^/]+/, "")}>
-        <a>
-          <span
-            dangerouslySetInnerHTML={{
-              __html: category.node.name
-            }}
-          />
-        </a>
-      </Link>
-    );
+  getCategoryHelper = category => {
+    if (category.node.link) {
+      const url = category.node.link.replace(/https?:\/\/[^/]+/, "");
+      return (
+        <Link as={url} href={getHref(url)}>
+          <a>
+            <span
+              dangerouslySetInnerHTML={{
+                __html: category.node.name
+              }}
+            />
+          </a>
+        </Link>
+      );
+    }
+    return "";
+  };
 
   getCategories = categoryArray =>
     categoryArray &&
@@ -114,7 +119,7 @@ export default class ListOfPosts extends Component {
     }
     return (
       <p>
-        <Link href={link}>
+        <Link as={link} href={getHref(link)}>
           <a>
             <span
               className={`blog-title ${postType}`}
@@ -267,7 +272,10 @@ export default class ListOfPosts extends Component {
                   <div className="content">{content}</div>
                 </a>
               )) || (
-                <Link href={this.getLink(post)}>
+                <Link
+                  as={this.getLink(post)}
+                  href={getHref(this.getLink(post))}
+                >
                   <a>
                     <span>
                       <div className="gradient" />
@@ -315,7 +323,7 @@ export default class ListOfPosts extends Component {
             )})`
           }}
         >
-          <Link href={this.getLink(post)}>
+          <Link as={this.getLink(post)} href={getHref(this.getLink(post))}>
             <a>
               <span>
                 <div className="gradient" />
@@ -347,7 +355,7 @@ export default class ListOfPosts extends Component {
       className="wallpaper"
       style={{ backgroundImage: `url(${this.getImgSrc(post)})` }}
     >
-      <Link href={this.getLink(post)}>
+      <Link as={this.getLink(post)} href={getHref(this.getLink(post))}>
         <a>
           <span>
             <div className="gradient" />

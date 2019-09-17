@@ -3,7 +3,7 @@ import { graphql } from "react-apollo";
 import Link from "next/link";
 import gql from "graphql-tag";
 import _ from "lodash";
-import { getSocialMenuObject } from "../../lib/getFunctions";
+import { getSocialMenuObject, getHref } from "../../lib/getFunctions";
 import SocialLinks from "../SocialLinks";
 
 import "./styles.scss";
@@ -49,13 +49,16 @@ const Footer = ({ data: { footer, social } }) => {
           {linkMap.map(pageLinks => (
             <div key={pageLinks.id} className="col-xs-6 col-sm-3 no-padding">
               <ul>
-                {pageLinks.obj.map(link => (
-                  <li key={link.node.url}>
-                    <Link href={link.node.url.replace(/https?:\/\/[^/]+/, "")}>
-                      <a>{link.node.label}</a>
-                    </Link>
-                  </li>
-                ))}
+                {pageLinks.obj.map(link => {
+                  const url = link.node.url.replace(/https?:\/\/[^/]+/, "");
+                  return (
+                    <li key={link.node.url}>
+                      <Link href={getHref(url)} as={url}>
+                        <a>{link.node.label}</a>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
