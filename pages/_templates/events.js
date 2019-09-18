@@ -177,7 +177,10 @@ export default props => {
         {!eventData ||
           (eventData.edges.length <= 0 && (
             <div className="col-md-12">
-              <p>No Events to display. Change the date above to find events.</p>
+              <p>
+                No Events to display. You can change the date above to find
+                events.
+              </p>
             </div>
           ))}
       </Layout>

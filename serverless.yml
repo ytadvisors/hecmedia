@@ -1,16 +1,4 @@
-plugins:
-  - serverless-offline
-  - serverless-cloudfront-invalidate
 nextApp:
   component: "serverless-next.js"
   inputs:
     domain: ["development", "hecmedia.org"]
-custom:
-  stage: ${opt:stage, self:provider.stage}
-  serverless-offline:
-    babelOptions:
-      presets: ["es2015"]
-  cloudfrontInvalidate:
-    distributionId: "E2YGA1YXN52HBY"
-    items:
-      - "/*"

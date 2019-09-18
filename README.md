@@ -1,35 +1,21 @@
-## app-basic
+## hecmedia
 
-### Running the example
-
-```shell
-git clone https://github.com/danielcondemarin/serverless-nextjs-plugin
-cd serverless-nextjs-plugin/examples/basic-next-serverless-app
-```
+HECMedia NextJS application, using ApolloJS for graphql, and Serverless for deployments
 
 #### Install dependencies
 
 ```shell
-npm install
+yarn install
 ```
 
-Configure nextjs to use a CDN to host the static assets in the bucket:
+#### Local Testing
 
-Replace _BUCKET_NAME_ with your own bucket name. Don't manually create the bucket, the plugin will do that for you.
-
-_next.config.js_
-
-```js
-module.exports = {
-  ...
-  assetPrefix: "https://s3.amazonaws.com/BUCKET_NAME"
-};
+```shell
+yarn dev
 ```
 
-Alternatively, remove `assetPrefix` and the bucket won't be provisioned.
+#### Deploy to staging
 
-#### Deploy
-
-`serverless deploy`
-
-After deployment is finished, go to the API GW provisioned by serverless and you should be able to hit `dev/home` and `dev/about` pages.
+```shell
+yarn deploy-dev
+```
