@@ -7,10 +7,10 @@ import { getHref } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
 import "./styles.scss";
 
-const { WP_HOST } = process.env;
-let cursor = "";
-
 export const CategoryNav = props => {
+  const { WP_HOST } = process.env;
+  let cursor = "";
+
   const {
     data: { categories, fetchMore }
   } = props;
@@ -133,5 +133,5 @@ export const allCategories = gql`
 `;
 
 export default graphql(allCategories, {
-  options: { variables: { cursor } }
+  options: { variables: { cursor: "" } }
 })(CategoryNav);

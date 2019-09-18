@@ -10,9 +10,8 @@ import { getArrayUnion } from "../../lib/updateFunctions";
 import { getFormattedDate } from "../../lib/getFunctions";
 import "./styles.scss";
 
-let cursor = "";
-
 export const EventNav = props => {
+  let cursor = "";
   const {
     link,
     title,
@@ -130,5 +129,5 @@ export const allCategories = gql`
 `;
 
 export default graphql(allCategories, {
-  options: { variables: { cursor } }
+  options: { variables: { cursor: "" } }
 })(EventNav);

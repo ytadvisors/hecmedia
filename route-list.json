@@ -15,6 +15,10 @@
   ],
   "events": [
     {
+      "events": "[page]/",
+      "pattern": "/:page"
+    },
+    {
       "page": "events/[category]/[day]",
       "pattern": "/events/:category/:day"
     }

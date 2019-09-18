@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import Link from "next/link";
 import { graphql } from "react-apollo";
 import gql from "graphql-tag";
 import $ from "jquery";
@@ -11,7 +12,8 @@ import SocialLinks from "../SocialLinks";
 import NavWrap from "../NavWrap";
 import {
   getHeaderMenuObject,
-  getSocialMenuObject
+  getSocialMenuObject,
+  getHref
 } from "../../lib/getFunctions";
 import { isServer } from "../../lib/serverFunctions";
 import "./styles.scss";
@@ -102,6 +104,10 @@ class Header extends Component {
     const { url, label, buttonClick } = link;
     const cleanUrl = url && url.replace(/https?:\/\/[^/]+/, "");
     const isRedirect = url && url.match(/^\/\//);
+
+    const numParams = cleanUrl.split("/").filter(n => n).length - 2;
+    const actualLink = getHref(cleanUrl, numParams < 0 ? 0 : numParams);
+
     if (buttonClick) {
       return (
         <Button
@@ -129,13 +135,15 @@ class Header extends Component {
       );
     }
     return (
-      <a href={cleanUrl}>
-        <span
-          dangerouslySetInnerHTML={{
-            __html: label
-          }}
-        />
-      </a>
+      <Link href={actualLink} as={cleanUrl}>
+        <a>
+          <span
+            dangerouslySetInnerHTML={{
+              __html: label
+            }}
+          />
+        </a>
+      </Link>
     );
   };
 
@@ -251,9 +259,9 @@ class Header extends Component {
             <div className="top-logo">
               <Navbar.Brand className="navbar-brand-class">
                 <div className="navbar-brand-class navbar-brand">
-                  <a href="/">
+                  <Link as="/" href="/">
                     <img src={logo} alt="HECTV logo" />
-                  </a>
+                  </Link>
                 </div>
               </Navbar.Brand>
             </div>

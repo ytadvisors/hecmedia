@@ -6,8 +6,6 @@ import ListOfPosts from "../components/ListOfPosts";
 import SEO from "../components/SEO";
 import { removeDuplicates } from "../lib/updateFunctions";
 
-const uri = "home";
-
 export const pageInfo = gql`
   query pageInfo($uri: String!) {
     pageData: pageBy(uri: $uri) {
@@ -118,5 +116,5 @@ const Index = ({ data: { pageData, postData } }) => {
 };
 
 export default graphql(pageInfo, {
-  options: { variables: { uri } }
+  options: { variables: { uri: "home" } }
 })(Index);
