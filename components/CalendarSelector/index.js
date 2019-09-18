@@ -7,8 +7,9 @@ import "./styles.scss";
 export default class CalendarSelector extends Component {
   constructor(props) {
     super(props);
+    const { currentDate = new Date() } = props;
     this.state = {
-      startDate: new Date()
+      startDate: currentDate
     };
   }
 

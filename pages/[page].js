@@ -11,7 +11,6 @@ export default props => {
   const {
     query: { page }
   } = router;
-
   let content = <></>;
   switch (page) {
     case "articles":

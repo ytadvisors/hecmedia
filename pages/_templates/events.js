@@ -2,20 +2,18 @@ import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import moment from "moment";
-import { Router } from "../../routes";
 import ListOfPosts from "../../components/ListOfPosts";
 import EventNav from "../../components/SubNavigation/EventNav";
 import Layout from "../../containers/Layout";
 import SEO from "../../components/SEO";
 import { getArrayUnion } from "../../lib/updateFunctions";
-import { getFormattedDate } from "../../lib/getFunctions";
 
 const eventInfo = gql`
   query eventInfo(
-    $keyStart: String!
     $keyEnd: String!
-    $compareStart: String!
     $compareEnd: String!
+    $keyStart: String!
+    $compareStart: String!
     $after: String
   ) {
     eventData: events(
@@ -25,14 +23,14 @@ const eventInfo = gql`
           relation: AND
           metaArray: [
             {
-              compare: LESS_THAN_OR_EQUAL_TO
-              type: DATETIME
+              compare: GREATER_THAN_OR_EQUAL_TO
+              type: DATE
               value: $compareEnd
               key: $keyEnd
             }
             {
-              compare: GREATER_THAN_OR_EQUAL_TO
-              type: DATETIME
+              compare: LESS_THAN_OR_EQUAL_TO
+              type: DATE
               value: $compareStart
               key: $keyStart
             }
@@ -80,9 +78,7 @@ const eventInfo = gql`
   }
 `;
 
-export default () => {
-  const mDay = moment(new Date());
-
+export default props => {
   const getIncrVariables = (variables, adder = 1) => {
     const { keyEnd: endKey } = variables;
     const incr =
@@ -96,14 +92,6 @@ export default () => {
       keyStart,
       keyEnd
     };
-  };
-
-  const changeDate = newDate => {
-    Router.pushRoute(`/event_filter/All/${getFormattedDate(newDate)}`);
-  };
-
-  const changeCategory = newCategory => {
-    Router.pushRoute(`/event_filter/${newCategory}/${getFormattedDate(mDay)}`);
   };
 
   const runFetch = async (fetchMore, args) => {
@@ -150,17 +138,19 @@ export default () => {
     }
   };
 
+  const { currentCategory = "All", currentDate = "" } = props;
   const incr = 0;
-  /* const currentDay = moment(mDay).format("YYYY-MM-DD"); */
-  const compareStart = `2019-08-04 00:00:00`;
-  const compareEnd = `2019-09-04 24:00:00`;
+  const mDay = currentDate ? new Date(`${currentDate} 00:00:00`) : new Date();
+  const currentDay = moment(mDay).format("YYYY-MM-DD");
+  const compareStart = `${currentDay} 00:00:00`;
+  const compareEnd = `${currentDay} 24:00:00`;
 
   const keyStart = `event_dates_${incr}_start_time`;
   const keyEnd = `event_dates_${incr}_end_time`;
   const after = "";
   const variables = { keyStart, keyEnd, compareStart, compareEnd, after };
-  const props = loadEvents(variables);
-  const { eventData, pageData: { feedDesign } = {} } = props;
+  const values = loadEvents(variables);
+  const { eventData, pageData: { feedDesign } = {} } = values;
   return (
     <>
       <SEO />
@@ -168,20 +158,28 @@ export default () => {
         <div className="col-md-12">
           <EventNav
             link="/events"
-            changeDate={changeDate}
-            changeCategory={changeCategory}
+            currentDate={mDay}
+            currentCategory={currentCategory}
             selectTitle="Filter Events"
             title="Events"
           />
         </div>
-        <ListOfPosts
-          posts={eventData ? eventData.edges.map(obj => obj.node) : []}
-          link={{ page: "events" }}
-          numResults={0}
-          design={feedDesign}
-          loadMore={null}
-          resizeRows
-        />
+        {eventData && eventData.edges.length > 0 && (
+          <ListOfPosts
+            posts={eventData ? eventData.edges.map(obj => obj.node) : []}
+            link={{ page: "events" }}
+            numResults={0}
+            design={feedDesign}
+            loadMore={null}
+            resizeRows
+          />
+        )}
+        {!eventData ||
+          (eventData.edges.length <= 0 && (
+            <div className="col-md-12">
+              <p>No Events to display. Change the date above to find events.</p>
+            </div>
+          ))}
       </Layout>
     </>
   );

@@ -2,7 +2,6 @@
   "category": [
     {
       "page": "category/[pid]/",
-      "regex": "category/?pid]",
       "pattern": "/category/:pid"
     },
     {
@@ -14,22 +13,10 @@
       "pattern": "/category/:pid/:id/:cid"
     }
   ],
-  "event": [
+  "events": [
     {
-      "page": "event/[slug]/",
-      "pattern": "/event/:slug"
-    }
-  ],
-  "event_filter": [
-    {
-      "page": "event_filter/[category]/[day]/",
-      "pattern": "/event_filter/:category/:day"
-    }
-  ],
-  "magazines": [
-    {
-      "page": "magazines/",
-      "pattern": "/magazines"
+      "page": "events/[category]/[day]",
+      "pattern": "/events/:category/:day"
     }
   ],
   "posts": [
@@ -41,7 +28,7 @@
   "": [
     {
       "page": "[page]/",
-      "pattern": "/[page]"
+      "pattern": "/:page"
     }
   ]
 }

@@ -8,11 +8,12 @@ const _ = require("lodash");
 const routeList = require("./route-list.json");
 
 const routesMap = routes();
-_.values(routeList).map(paths =>
-  paths.map(newRoute => {
+_.keys(routeList).map(key => {
+  const values = routeList[key];
+  return values.map(newRoute => {
     if (newRoute.page && newRoute.pattern)
-      routesMap.add(newRoute.page, newRoute.pattern);
+      routesMap.add(newRoute.page, key, newRoute.pattern);
     return false;
-  })
-);
+  });
+});
 module.exports = routesMap;
