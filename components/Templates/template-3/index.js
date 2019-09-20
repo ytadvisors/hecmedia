@@ -4,13 +4,11 @@ import ContactForm from "../../Forms/ContactForm";
 import "./styles.scss";
 
 export default ({
-  pageContent: {
-    phoneNumber,
-    address,
-    faxNumber,
-    directions,
-    opportunities
-  } = {},
+  phoneNumber,
+  address,
+  faxNumber,
+  directions,
+  opportunities,
   children,
   callbackFunc
 } = {}) => (

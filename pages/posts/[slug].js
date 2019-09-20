@@ -7,7 +7,7 @@ import SEO from "../../components/SEO";
 import SinglePost from "../../components/SinglePost";
 import ListOfPosts from "../../components/ListOfPosts";
 
-const pageCategory = gql`
+const GET_PAGE_CATEGORY = gql`
   query categoryPost($categories: [ID]) {
     categoryPosts: posts(
       first: 3
@@ -44,7 +44,7 @@ const pageCategory = gql`
   }
 `;
 
-const pageInfo = gql`
+const GET_PAGE_INFO = gql`
   query currentPost($slug: String!) {
     post: postBy(slug: $slug) {
       title
@@ -104,7 +104,7 @@ const pageInfo = gql`
 const PostList = ({ updateData }) => {
   const loadPosts = variables => {
     try {
-      const { loading, error, data, fetchMore } = useQuery(pageInfo, {
+      const { loading, error, data, fetchMore } = useQuery(GET_PAGE_INFO, {
         variables
       });
       if (loading) return <p>Loading Posts</p>;
@@ -122,7 +122,7 @@ const PostList = ({ updateData }) => {
           const categoryList = categories.edges.map(obj => obj.node.categoryId);
           if (!relatedPosts || relatedPosts.length < 3) {
             fetchMore({
-              query: pageCategory,
+              query: GET_PAGE_CATEGORY,
               variables: { categories: categoryList },
               updateQuery: (prev, { fetchMoreResult }) => {
                 const result = { ...prev };

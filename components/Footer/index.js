@@ -1,8 +1,9 @@
 import React from "react";
 import { graphql } from "react-apollo";
+import Link from "next/link";
 import gql from "graphql-tag";
 import _ from "lodash";
-import { getSocialMenuObject } from "../../lib/getFunctions";
+import { getSocialMenuObject, getHref } from "../../lib/getFunctions";
 import SocialLinks from "../SocialLinks";
 
 import "./styles.scss";
@@ -52,7 +53,9 @@ const Footer = ({ data: { footer, social } }) => {
                   const url = link.node.url.replace(/https?:\/\/[^/]+/, "");
                   return (
                     <li key={link.node.url}>
-                      <a href={url}>{link.node.label}</a>
+                      <Link href={getHref(url)} as={url}>
+                        <a>{link.node.label}</a>
+                      </Link>
                     </li>
                   );
                 })}

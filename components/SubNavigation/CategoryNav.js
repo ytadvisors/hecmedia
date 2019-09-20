@@ -35,7 +35,7 @@ export const CategoryNav = props => {
     if (!categoryList.node)
       fetchMore({
         variables: {
-          cursor
+          cursor: cursor || ""
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
@@ -49,8 +49,7 @@ export const CategoryNav = props => {
     if (categoryList.node) {
       const subcategories = categoryList.node.children.edges;
       const url = cleanUrl(categoryList.node.link);
-      const numParams = url.split("/").filter(n => n).length - 1;
-      const actualLink = getHref(url, numParams < 0 ? 0 : numParams);
+      const actualLink = getHref(url);
       return (
         <section className="sub-navigation">
           <div className="row heading">
@@ -74,11 +73,7 @@ export const CategoryNav = props => {
             {subcategories.map(subcategory => {
               const isActive = link === subcategory.node.link ? "active" : "";
               const subUrl = cleanUrl(subcategory.node.link);
-              const numSubParams = subUrl.split("/").filter(n => n).length - 2;
-              const actualSubLink = getHref(
-                subUrl,
-                numSubParams < 0 ? 0 : numSubParams
-              );
+              const actualSubLink = getHref(subUrl);
               return (
                 <li key={subcategory.node.link}>
                   {!isActive && (

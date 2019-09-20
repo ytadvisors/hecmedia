@@ -7,7 +7,7 @@ import SEO from "../../components/SEO";
 import SinglePost from "../../components/SinglePost";
 import ListOfPosts from "../../components/ListOfPosts";
 
-const magazineInfo = gql`
+const GET_MAGAZINE_INFO = gql`
   query magazineInfo($slug: String!) {
     magazine: magazineBy(slug: $slug) {
       magazineId
@@ -68,7 +68,7 @@ const magazineInfo = gql`
 export default () => {
   const loadMagazines = variables => {
     try {
-      const { loading, error, data } = useQuery(magazineInfo, {
+      const { loading, error, data } = useQuery(GET_MAGAZINE_INFO, {
         variables
       });
 

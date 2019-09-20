@@ -1,13 +1,11 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import Layout from "../../containers/Layout";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
-import SEO from "../../components/SEO";
 import ListOfPosts from "../../components/ListOfPosts";
 
-const magazineList = gql`
-  query magazineList {
+const GET_MAGAZINES = gql`
+  query MagazineList {
     magazines {
       edges {
         node {
@@ -40,7 +38,7 @@ const magazineList = gql`
 export default () => {
   const loadMagazines = variables => {
     try {
-      const { loading, error, data } = useQuery(magazineList, {
+      const { loading, error, data } = useQuery(GET_MAGAZINES, {
         variables
       });
 
@@ -59,19 +57,16 @@ export default () => {
 
   return (
     <>
-      <SEO />
-      <Layout>
-        <div className="col-md-12">
-          <DefaultNav title="Magazines" link="/magazines" />
-        </div>
-        <ListOfPosts
-          posts={magazines ? magazines.edges.map(obj => obj.node) : []}
-          link={{ page: "magazine" }}
-          numResults={0}
-          design={feedDesign}
-          loadMore={null}
-        />
-      </Layout>
+      <div className="col-md-12">
+        <DefaultNav title="Magazines" link="/magazines" />
+      </div>
+      <ListOfPosts
+        posts={magazines ? magazines.edges.map(obj => obj.node) : []}
+        link={{ page: "magazine" }}
+        numResults={0}
+        design={feedDesign}
+        loadMore={null}
+      />
     </>
   );
 };

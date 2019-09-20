@@ -5,6 +5,8 @@ import Router from "next/router";
 import createStore from "../store";
 import withApollo from "../lib/withApollo";
 
+import "../lib/cssDependencies";
+
 class MyApp extends App {
   constructor() {
     super();
@@ -14,7 +16,7 @@ class MyApp extends App {
           'link[href*="/_next/static/css/styles.chunk.css"]'
         );
         const timestamp = new Date().valueOf();
-        els[0].href = `/_next/static/css/styles.chunk.css?v=${  timestamp}`;
+        els[0].href = `/_next/static/css/styles.chunk.css?v=${timestamp}`;
       }
     });
   }

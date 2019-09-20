@@ -4,12 +4,10 @@ import gql from "graphql-tag";
 import moment from "moment";
 import ListOfPosts from "../../components/ListOfPosts";
 import EventNav from "../../components/SubNavigation/EventNav";
-import Layout from "../../containers/Layout";
-import SEO from "../../components/SEO";
 import { getArrayUnion } from "../../lib/updateFunctions";
 
-const eventInfo = gql`
-  query eventInfo(
+const GET_EVENT_INFO = gql`
+  query EventInfo(
     $keyEnd: String!
     $compareEnd: String!
     $keyStart: String!
@@ -96,7 +94,7 @@ export default props => {
 
   const runFetch = async (fetchMore, args) => {
     await fetchMore({
-      query: eventInfo,
+      query: GET_EVENT_INFO,
       variables: args,
       updateQuery: (prev, updateProps) => {
         const { fetchMoreResult } = updateProps;
@@ -117,7 +115,7 @@ export default props => {
 
   const loadEvents = variables => {
     try {
-      const { loading, error, data, fetchMore } = useQuery(eventInfo, {
+      const { loading, error, data, fetchMore } = useQuery(GET_EVENT_INFO, {
         variables
       });
 
@@ -153,37 +151,34 @@ export default props => {
   const { eventData, pageData: { feedDesign } = {} } = values;
   return (
     <>
-      <SEO />
-      <Layout>
-        <div className="col-md-12">
-          <EventNav
-            link="/events"
-            currentDate={mDay}
-            currentCategory={currentCategory}
-            selectTitle="Filter Events"
-            title="Events"
-          />
-        </div>
-        {eventData && eventData.edges.length > 0 && (
-          <ListOfPosts
-            posts={eventData ? eventData.edges.map(obj => obj.node) : []}
-            link={{ page: "events" }}
-            numResults={0}
-            design={feedDesign}
-            loadMore={null}
-            resizeRows
-          />
-        )}
-        {!eventData ||
-          (eventData.edges.length <= 0 && (
-            <div className="col-md-12">
-              <p>
-                No Events to display. You can change the date above to find
-                events.
-              </p>
-            </div>
-          ))}
-      </Layout>
+      <div className="col-md-12">
+        <EventNav
+          link="/events"
+          currentDate={mDay}
+          currentCategory={currentCategory}
+          selectTitle="Filter Events"
+          title="Events"
+        />
+      </div>
+      {eventData && eventData.edges.length > 0 && (
+        <ListOfPosts
+          posts={eventData ? eventData.edges.map(obj => obj.node) : []}
+          link={{ page: "events" }}
+          numResults={0}
+          design={feedDesign}
+          loadMore={null}
+          resizeRows
+        />
+      )}
+      {!eventData ||
+        (eventData.edges.length <= 0 && (
+          <div className="col-md-12">
+            <p>
+              No Events to display. You can change the date above to find
+              events.
+            </p>
+          </div>
+        ))}
     </>
   );
 };

@@ -104,9 +104,7 @@ class Header extends Component {
     const { url, label, buttonClick } = link;
     const cleanUrl = url && url.replace(/https?:\/\/[^/]+/, "");
     const isRedirect = url && url.match(/^\/\//);
-
-    const numParams = cleanUrl.split("/").filter(n => n).length - 2;
-    const actualLink = getHref(cleanUrl, numParams < 0 ? 0 : numParams);
+    const actualLink = getHref(cleanUrl);
 
     if (buttonClick) {
       return (

@@ -2,12 +2,10 @@ import React from "react";
 import { graphql } from "react-apollo";
 import gql from "graphql-tag";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
-import Layout from "../../containers/Layout";
 import ListOfPosts from "../../components/ListOfPosts";
-import SEO from "../../components/SEO";
 
-const pageInfo = gql`
-  query pageInfo {
+const GET_PAGE_INFO = gql`
+  query PageInfo {
     postData: posts(
       where: {
         orderby: { field: DATE, order: DESC }
@@ -55,21 +53,18 @@ const Articles = ({ data: { postData } }) => {
   }
   return (
     <>
-      <SEO />
-      <Layout>
-        <div className="col-md-12">
-          <DefaultNav title="Articles" link="/articles" />
-        </div>
-        <ListOfPosts
-          posts={pagePosts}
-          link={{ page: "posts" }}
-          numResults={0}
-          loadMore={null}
-          resizeRows
-        />
-      </Layout>
+      <div className="col-md-12">
+        <DefaultNav title="Articles" link="/articles" />
+      </div>
+      <ListOfPosts
+        posts={pagePosts}
+        link={{ page: "posts" }}
+        numResults={0}
+        loadMore={null}
+        resizeRows
+      />
     </>
   );
 };
 
-export default graphql(pageInfo)(Articles);
+export default graphql(GET_PAGE_INFO)(Articles);

@@ -3,11 +3,9 @@ import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import ListOfPosts from "../../components/ListOfPosts";
 import CategoryNav from "../../components/SubNavigation/CategoryNav";
-import Layout from "../../containers/Layout";
-import SEO from "../../components/SEO";
 
-const pageInfo = gql`
-  query pageInfo($category: String!) {
+const GET_PAGE_INFO = gql`
+  query PageInfo($category: String!) {
     postData: posts(
       where: {
         taxQuery: {
@@ -57,7 +55,7 @@ const pageInfo = gql`
 export default props => {
   const loadPosts = variables => {
     try {
-      const { loading, error, data } = useQuery(pageInfo, {
+      const { loading, error, data } = useQuery(GET_PAGE_INFO, {
         variables
       });
       if (loading) return <p>Loading Category</p>;
@@ -74,17 +72,14 @@ export default props => {
   const { postData } = category ? loadPosts({ category }) : {};
   return (
     <>
-      <SEO />
-      <Layout>
-        <CategoryNav />
-        <ListOfPosts
-          posts={postData ? postData.edges.map(obj => obj.node) : []}
-          link={{ page: "posts" }}
-          numResults={0}
-          loadMore={null}
-          resizeRows
-        />
-      </Layout>
+      <CategoryNav />
+      <ListOfPosts
+        posts={postData ? postData.edges.map(obj => obj.node) : []}
+        link={{ page: "posts" }}
+        numResults={0}
+        loadMore={null}
+        resizeRows
+      />
     </>
   );
 };
