@@ -122,7 +122,7 @@ export default props => {
         result = <Search {...props} />;
         break;
       default:
-        result = getTemplates();
+        result = getTemplates(page);
     }
   }
 
