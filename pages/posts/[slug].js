@@ -96,6 +96,32 @@ const GET_PAGE_INFO = gql`
             }
           }
         }
+        postEvents {
+          relatedEvent {
+            ... on Event {
+              id
+              title
+              eventDetails {
+                eventDates {
+                  endTime
+                  startTime
+                }
+                eventImage {
+                  medium: sourceUrl(size: MEDIUM)
+                  large: sourceUrl(size: MEDIUM_LARGE)
+                }
+                venue
+                webAddress
+                eventPrice
+                externalImage
+              }
+              link
+              eventId
+              slug
+              excerpt(format: RENDERED)
+            }
+          }
+        }
       }
     }
   }
@@ -159,7 +185,7 @@ const PostList = ({ updateData }) => {
   } = router;
   const data = slug ? loadPosts({ slug }) : {};
   const { post } = data;
-  const { postDetails: { relatedPosts } = {} } = post || {};
+  const { postDetails: { relatedPosts, postEvents } = {} } = post || {};
   return (
     <div>
       {post && (
@@ -191,6 +217,18 @@ const PostList = ({ updateData }) => {
           }}
           loadMore={null}
           resizeRows
+        />
+      )}
+      {post && postEvents && (
+        <ListOfPosts
+          title="Related Events"
+          posts={(postEvents && postEvents.map(obj => obj.relatedEvent)) || []}
+          link={{ page: "event" }}
+          numResults={0}
+          design={{
+            defaultRowLayout: "Single Column",
+            defaultDisplayType: "Wallpaper"
+          }}
         />
       )}
     </div>

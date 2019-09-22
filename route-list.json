@@ -15,8 +15,12 @@
   ],
   "events": [
     {
-      "events": "[page]/",
-      "pattern": "/:page"
+      "page": "events/",
+      "pattern": "/events"
+    },
+    {
+      "page": "events/[category]/",
+      "pattern": "/events/:category"
     },
     {
       "page": "events/[category]/[day]",

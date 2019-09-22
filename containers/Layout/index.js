@@ -1,5 +1,4 @@
 import React from "react";
-import { connect } from "react-redux";
 import { useRouter } from "next/router";
 import "./styles.scss";
 import ProgramViewer from "../../components/ProgramViewer";
@@ -35,11 +34,4 @@ const Layout = props => {
   );
 };
 
-const mapStateToProps = state => ({
-  pageForm: state.form,
-  post: state.postReducers.post,
-  liveVideos: state.postReducers.liveVideos,
-  categoryPosts: state.postReducers.categoryPosts
-});
-
-export default connect(mapStateToProps)(Layout);
+export default Layout;
