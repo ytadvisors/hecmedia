@@ -162,7 +162,7 @@ export default props => {
       </div>
       {eventData && eventData.edges.length > 0 && (
         <ListOfPosts
-          posts={eventData ? eventData.edges.map(obj => obj && obj.node) : []}
+          posts={eventData ? eventData.edges.map(obj => obj.node) : []}
           link={{ page: "events" }}
           numResults={0}
           design={feedDesign}

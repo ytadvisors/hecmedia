@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import ListOfPosts from "../../components/ListOfPosts";
 import CategoryNav from "../../components/SubNavigation/CategoryNav";
 
 const GET_CATEGORY_INFO = gql`
-  query PostCategories($category: String!) {
+  query PostCategories($category: String!, $cursor: String!) {
     postData: posts(
+      after: $cursor
       where: {
         taxQuery: {
           relation: OR
@@ -49,36 +50,62 @@ const GET_CATEGORY_INFO = gql`
           excerpt(format: RENDERED)
         }
       }
+      pageInfo {
+        endCursor
+      }
     }
   }
 `;
 
-const loadPosts = variables => {
-  try {
-    const { loading, error, data } = useQuery(GET_CATEGORY_INFO, {
-      variables
-    });
-    if (loading) return <p>Loading Category</p>;
-    if (error) {
-      return <p>Error loading Category</p>;
-    }
-    return data;
-  } catch (err) {
-    return {};
-  }
-};
-
 export default props => {
+  let loadMore = () => {};
+  let posts = [];
+  const [cursor, setCursor] = useState("");
+  const loadPosts = variables => {
+    try {
+      const { loading, error, data, fetchMore } = useQuery(GET_CATEGORY_INFO, {
+        variables
+      });
+      if (loading) return <p>Loading Category</p>;
+      if (error) {
+        return <p>Error loading Category</p>;
+      }
+
+      if (data.postData && data.postData.pageInfo) {
+        loadMore = async () => {
+          const { category } = props;
+          await fetchMore({
+            variables: { category, cursor },
+            updateQuery: (prev, { fetchMoreResult }) => {
+              const result = { ...fetchMoreResult };
+              const { postData } = prev;
+              setCursor(postData.pageInfo.endCursor);
+              result.postData.edges = [
+                ...postData.edges,
+                ...result.postData.edges
+              ];
+              return result;
+            }
+          });
+        };
+      }
+      const { postData } = data;
+      return postData ? postData.edges.map(obj => obj && obj.node) : [];
+    } catch (err) {
+      return [];
+    }
+  };
+
   const { category } = props;
-  const { postData } = category ? loadPosts({ category }) : {};
+  posts = loadPosts({ category, cursor: "" });
   return (
     <>
       <CategoryNav />
       <ListOfPosts
-        posts={postData ? postData.edges.map(obj => obj && obj.node) : []}
+        posts={posts}
         link={{ page: "posts" }}
         numResults={0}
-        loadMore={null}
+        loadMore={loadMore}
         resizeRows
       />
     </>

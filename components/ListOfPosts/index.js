@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import _ from "lodash";
+import { Button } from "react-bootstrap";
 import { MdLocationOn } from "react-icons/md";
 import { IoIosCalendar } from "react-icons/io";
 import LazyLoad from "react-lazyload";
@@ -446,16 +447,7 @@ export default class ListOfPosts extends Component {
     let defaultLayout = "Single Column";
     let displayType = "Post";
     let numColumns = 1;
-    const {
-      numPages,
-      currentPage,
-      urlPrefix,
-      posts,
-      title,
-      design,
-      style,
-      resizeRows
-    } = this.props;
+    const { posts, title, design, style, loadMore, resizeRows } = this.props;
     const { isMobile } = this.state;
     if (posts.length > 0) {
       const postsClone = [...posts.filter(n => n)];
@@ -530,28 +522,14 @@ export default class ListOfPosts extends Component {
           {title ? <div className="title">{title}</div> : ""}
           {mainContent}
           {remainingPosts}
-          {numPages && currentPage && (
-            <div className="row clearfix">
-              <ul className="post-pages">
-                <li className="post-page-label">Pages</li>
-                {_.range(numPages).map(page => {
-                  const displayPage = page + 1;
-                  const pageUrl =
-                    displayPage > 1
-                      ? `${urlPrefix}page/${displayPage}`
-                      : urlPrefix;
-                  return (
-                    <li key={page}>
-                      <a
-                        href={pageUrl}
-                        className={currentPage === displayPage ? "active" : ""}
-                      >
-                        {displayPage}
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
+          {loadMore && (
+            <div className="load-more-container ">
+              <Button
+                className="btn-primary btn-load-more"
+                onClick={() => loadMore()}
+              >
+                LOAD MORE
+              </Button>
             </div>
           )}
         </section>
