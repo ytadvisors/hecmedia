@@ -6,7 +6,6 @@ import $ from "jquery";
 import { FaSearch } from "react-icons/fa";
 import shortid from "shortid";
 import { Navbar, Nav, NavDropdown, Button } from "react-bootstrap";
-import { useRouter } from "next/router";
 import SearchForm from "../Forms/SearchForm";
 import SocialLinks from "../SocialLinks";
 import NavWrap from "../NavWrap";
@@ -72,13 +71,6 @@ class Header extends Component {
   closeNav = () => {
     if (this.mounted) {
       this.setState({ navExpanded: false });
-    }
-  };
-
-  searchFunc = values => {
-    if (values && values.search) {
-      const router = useRouter();
-      router.pushRoute(`/search/?q=${values.search}`);
     }
   };
 

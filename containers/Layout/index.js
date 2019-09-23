@@ -1,5 +1,6 @@
 import React from "react";
-import { useRouter } from "next/router";
+import { connect } from "react-redux";
+import { Router } from "../../routes";
 import "./styles.scss";
 import ProgramViewer from "../../components/ProgramViewer";
 import Header from "../../components/Header";
@@ -8,13 +9,10 @@ import Footer from "../../components/Footer";
 import BottomNav from "../../components/BottomNav/index";
 
 const Layout = props => {
-  const router = useRouter();
-
   const searchFunc = () => {
     const { pageForm: { search: { values } = {} } = {} } = props;
-
     if (values && values.search) {
-      router.pushRoute(`/search/?q=${values.search}`);
+      Router.pushRoute(`/search/${values.search}`);
     }
   };
 
@@ -34,4 +32,8 @@ const Layout = props => {
   );
 };
 
-export default Layout;
+const mapStateToProps = state => ({
+  pageForm: state.form
+});
+
+export default connect(mapStateToProps)(Layout);
