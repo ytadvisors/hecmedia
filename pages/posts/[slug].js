@@ -143,7 +143,7 @@ const PostList = ({ updateData }) => {
       }
 
       const { post } = data;
-      const { categories, postDetails } = post;
+      const { categories, postDetails } = post || {};
       const { relatedPosts } = postDetails || {};
       if (postDetails) {
         if (categories && categories.edges) {
