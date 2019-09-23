@@ -109,7 +109,7 @@ export default () => {
               title="Related Posts"
               posts={
                 (eventPosts &&
-                  eventPosts.map(obj => obj.eventPost).slice(0, 3)) ||
+                  eventPosts.map(obj => obj && obj.eventPost).slice(0, 3)) ||
                 []
               }
               link={{ page: "posts" }}

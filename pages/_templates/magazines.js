@@ -61,7 +61,7 @@ export default () => {
         <DefaultNav title="Magazines" link="/magazines" />
       </div>
       <ListOfPosts
-        posts={magazines ? magazines.edges.map(obj => obj.node) : []}
+        posts={magazines ? magazines.edges.map(obj => obj && obj.node) : []}
         link={{ page: "magazine" }}
         numResults={0}
         design={feedDesign}

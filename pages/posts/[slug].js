@@ -203,7 +203,7 @@ const PostList = ({ updateData }) => {
           title="Related Posts"
           posts={
             (relatedPosts &&
-              relatedPosts.map(obj => obj.relatedPost).slice(0, 3)) ||
+              relatedPosts.map(obj => obj && obj.relatedPost).slice(0, 3)) ||
             []
           }
           link={{ page: "posts" }}
@@ -224,7 +224,9 @@ const PostList = ({ updateData }) => {
       {post && postEvents && (
         <ListOfPosts
           title="Related Events"
-          posts={(postEvents && postEvents.map(obj => obj.relatedEvent)) || []}
+          posts={
+            (postEvents && postEvents.map(obj => obj && obj.relatedEvent)) || []
+          }
           link={{ page: "events" }}
           numResults={0}
           design={{

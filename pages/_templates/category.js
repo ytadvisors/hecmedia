@@ -75,7 +75,7 @@ export default props => {
     <>
       <CategoryNav />
       <ListOfPosts
-        posts={postData ? postData.edges.map(obj => obj.node) : []}
+        posts={postData ? postData.edges.map(obj => obj && obj.node) : []}
         link={{ page: "posts" }}
         numResults={0}
         loadMore={null}
