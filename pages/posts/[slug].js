@@ -142,11 +142,10 @@ const PostList = ({ updateData }) => {
         return <p>Error loading posts</p>;
       }
 
-      if (data.post) {
-        const {
-          post: { categories, postDetails: { relatedPosts } = {} }
-        } = data;
-
+      const { post } = data;
+      const { categories, postDetails } = post;
+      const { relatedPosts } = postDetails || {};
+      if (postDetails) {
         if (categories && categories.edges) {
           const categoryList = categories.edges.map(obj => obj.node.categoryId);
           if (!relatedPosts || relatedPosts.length < 3) {
@@ -170,11 +169,11 @@ const PostList = ({ updateData }) => {
             });
           }
         }
-      }
 
-      data.post.postDetails.relatedPosts = data.post.postDetails.relatedPosts.filter(
-        n => (n.relatedPost ? n : null)
-      );
+        data.post.postDetails.relatedPosts = data.post.postDetails.relatedPosts.filter(
+          n => (n.relatedPost ? n : null)
+        );
+      }
       return data;
     } catch (err) {
       console.log(err.message);
