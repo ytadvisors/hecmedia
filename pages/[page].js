@@ -7,7 +7,6 @@ import SEO from "../components/SEO";
 import Articles from "./_templates/articles";
 import Events from "./_templates/events";
 import Magazines from "./_templates/magazines";
-import Search from "./_templates/search";
 import Template1 from "./_templates/template-1";
 import Template2 from "./_templates/template-2";
 import Template3 from "./_templates/template-3";
@@ -117,9 +116,6 @@ export default props => {
         break;
       case "magazines":
         result = <Magazines {...props} />;
-        break;
-      case "search":
-        result = <Search {...props} />;
         break;
       default:
         result = getTemplates(page);
