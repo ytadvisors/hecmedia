@@ -64,8 +64,10 @@ const GET_PAGE_INFO = gql`
         showPodcasts
         vimeoId
         embedUrl
+        isVideo
         postHeader {
-          thumbnail: sourceUrl(size: MEDIUM_LARGE)
+          medium: sourceUrl(size: MEDIUM)
+          large: sourceUrl(size: MEDIUM_LARGE)
         }
         relatedPosts {
           relatedPost {
@@ -80,6 +82,7 @@ const GET_PAGE_INFO = gql`
                   medium: sourceUrl(size: MEDIUM)
                   large: sourceUrl(size: MEDIUM_LARGE)
                 }
+                isVideo
               }
               link
               categories(where: { shouldOutputInFlatList: true }) {
@@ -223,7 +226,7 @@ const PostList = ({ updateData }) => {
         <ListOfPosts
           title="Related Events"
           posts={(postEvents && postEvents.map(obj => obj.relatedEvent)) || []}
-          link={{ page: "event" }}
+          link={{ page: "events" }}
           numResults={0}
           design={{
             defaultRowLayout: "Single Column",

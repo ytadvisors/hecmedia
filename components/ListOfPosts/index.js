@@ -221,7 +221,9 @@ export default class ListOfPosts extends Component {
   };
 
   getSingleColumnPost = (post, content) => {
-    const isVideo = post.acf && post.acf.isVideo;
+    const { postDetails } = post;
+
+    const isVideo = postDetails && postDetails.isVideo;
 
     return (
       <table className="no-spacing">
@@ -283,7 +285,9 @@ export default class ListOfPosts extends Component {
   );
 
   getFeaturedPost = (post, content) => {
-    const isVideo = post.acf && post.acf.isVideo;
+    const { postDetails } = post;
+
+    const isVideo = postDetails && postDetails.isVideo;
 
     const { isMobile } = this.state;
 
@@ -326,7 +330,9 @@ export default class ListOfPosts extends Component {
   };
 
   getPost = (layout, post, content) => {
-    const isVideo = post.acf && post.acf.isVideo;
+    const { postDetails } = post;
+
+    const isVideo = postDetails && postDetails.isVideo;
 
     return (
       <div>

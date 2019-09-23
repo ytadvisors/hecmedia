@@ -23,6 +23,7 @@ export const pageInfo = gql`
                   medium: sourceUrl(size: MEDIUM)
                   large: sourceUrl(size: MEDIUM_LARGE)
                 }
+                isVideo
               }
               link
               categories(where: { shouldOutputInFlatList: true }) {
@@ -66,6 +67,7 @@ export const pageInfo = gql`
               medium: sourceUrl(size: MEDIUM)
               large: sourceUrl(size: MEDIUM_LARGE)
             }
+            isVideo
           }
           link
           categories(where: { shouldOutputInFlatList: true }) {
