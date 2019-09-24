@@ -1,7 +1,6 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import { css } from "@emotion/core";
 import { ScaleLoader } from "react-spinners";
 import ListOfPosts from "../../components/ListOfPosts";
 import CategoryNav from "../../components/SubNavigation/CategoryNav";
@@ -60,12 +59,6 @@ const GET_CATEGORY_INFO = gql`
   }
 `;
 
-const override = css`
-  display: block;
-  margin: 0 auto;
-  border-color: blue;
-`;
-
 export default props => {
   const cursor = "";
   const { category } = props;
@@ -78,7 +71,6 @@ export default props => {
     return (
       <div className="loading">
         <ScaleLoader
-          css={override}
           sizeUnit="px"
           size={150}
           color="#0065bc"

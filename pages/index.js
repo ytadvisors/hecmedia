@@ -1,12 +1,13 @@
 import React from "react";
-import { graphql } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
+import { ScaleLoader } from "react-spinners";
 import Layout from "../containers/Layout";
 import ListOfPosts from "../components/ListOfPosts";
 import SEO from "../components/SEO";
 import { removeDuplicates } from "../lib/updateFunctions";
 
-export const pageInfo = gql`
+export const GET_HOME_PAGE = gql`
   query pageInfo($uri: String!) {
     pageData: pageBy(uri: $uri) {
       requiredPosts {
@@ -88,7 +89,36 @@ export const pageInfo = gql`
   }
 `;
 
-const Index = ({ data: { pageData, postData } }) => {
+const getContent = () => {
+  const variables = { uri: "home" };
+  const { loading, error, data } = useQuery(GET_HOME_PAGE, {
+    variables
+  });
+
+  if (loading)
+    return (
+      <Layout>
+        <div className="loading">
+          <ScaleLoader
+            sizeUnit="px"
+            size={150}
+            color="#0065bc"
+            loading
+            height={55}
+            width={10}
+          />
+        </div>
+      </Layout>
+    );
+  if (error) {
+    return (
+      <Layout>
+        <p>Error loading Page</p>
+      </Layout>
+    );
+  }
+
+  const { pageData, postData } = data || {};
   const { requiredPosts: { postList = [] } = {}, feedDesign } = pageData || {};
   let pagePosts = [];
   if (postData && postData.edges) {
@@ -100,23 +130,23 @@ const Index = ({ data: { pageData, postData } }) => {
     pagePosts = removeDuplicates(pagePosts, "postId");
     pagePosts = pagePosts.splice(0, 10);
   }
+
   return (
-    <>
-      <SEO />
-      <Layout showBottomNav>
-        <ListOfPosts
-          posts={pagePosts}
-          link={{ page: "posts" }}
-          numResults={0}
-          design={feedDesign}
-          loadMore={null}
-          resizeRows
-        />
-      </Layout>
-    </>
+    <Layout showBottomNav>
+      <ListOfPosts
+        posts={pagePosts}
+        link={{ page: "posts" }}
+        numResults={0}
+        design={feedDesign}
+        loadMore={null}
+        resizeRows
+      />
+    </Layout>
   );
 };
 
-export default graphql(pageInfo, {
-  options: { variables: { uri: "home" } }
-})(Index);
+export default () => (
+  <>
+    <SEO /> {getContent()}
+  </>
+);
