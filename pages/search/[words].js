@@ -45,8 +45,7 @@ const GET_SEARCH_RESULTS = gql`
 const loadResults = variables => {
   try {
     const { loading, error, data } = useQuery(GET_SEARCH_RESULTS, {
-      variables,
-      fetchPolicy: "cache-and-network"
+      variables
     });
 
     if (loading) return <p>Loading Events</p>;

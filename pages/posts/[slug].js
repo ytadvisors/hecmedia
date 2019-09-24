@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
+import { ScaleLoader } from "react-spinners";
 import Layout from "../../containers/Layout";
 import SEO from "../../components/SEO";
 import SinglePost from "../../components/SinglePost";
@@ -131,79 +132,85 @@ const GET_PAGE_INFO = gql`
 `;
 
 const PostList = ({ updateData }) => {
-  const loadPosts = variables => {
-    try {
-      const { loading, error, data, fetchMore } = useQuery(GET_PAGE_INFO, {
-        variables
-      });
-      if (loading) return <p>Loading Posts</p>;
-
-      if (error) {
-        return <p>Error loading posts</p>;
-      }
-
-      const { post } = data;
-      const { categories, postDetails } = post || {};
-      const { relatedPosts } = postDetails || {};
-      if (postDetails) {
-        if (categories && categories.edges) {
-          const categoryList = categories.edges.map(obj => obj.node.categoryId);
-          if (!relatedPosts || relatedPosts.length < 3) {
-            fetchMore({
-              query: GET_PAGE_CATEGORY,
-              variables: { categories: categoryList },
-              updateQuery: (prev, { fetchMoreResult }) => {
-                const result = { ...prev };
-                const { categoryPosts } = fetchMoreResult;
-                let currentPosts = prev.post.postDetails.relatedPosts || [];
-                if (categoryPosts && categoryPosts.edges) {
-                  currentPosts = [...currentPosts, ...categoryPosts.edges];
-                }
-                if (currentPosts)
-                  result.post.postDetails.relatedPosts = currentPosts;
-                updateData({
-                  data: result
-                });
-                return result;
-              }
-            });
-          }
-        }
-
-        data.post.postDetails.relatedPosts = data.post.postDetails.relatedPosts.filter(
-          n => (n.relatedPost ? n : null)
-        );
-      }
-      return data;
-    } catch (err) {
-      console.log(err.message);
-      return {};
-    }
-  };
-
   const router = useRouter();
   const {
     query: { slug }
   } = router;
-  const data = slug ? loadPosts({ slug }) : {};
+  const variables = { slug };
+
+  const { loading, error, data, fetchMore } = useQuery(GET_PAGE_INFO, {
+    variables
+  });
+
+  if (loading)
+    return (
+      <div className="loading">
+        <ScaleLoader
+          sizeUnit="px"
+          size={150}
+          color="#0065bc"
+          loading
+          height={55}
+          width={10}
+        />
+      </div>
+    );
+  if (error) {
+    return <p>Error loading Category</p>;
+  }
+
   const { post } = data;
-  const { postDetails: { relatedPosts, postEvents } = {} } = post || {};
+  const { categories, postDetails } = post || {};
+  const { relatedPosts } = postDetails || {};
+  if (postDetails) {
+    if (categories && categories.edges) {
+      const categoryList = categories.edges.map(obj => obj.node.categoryId);
+      if (!relatedPosts || relatedPosts.length < 3) {
+        fetchMore({
+          query: GET_PAGE_CATEGORY,
+          variables: { categories: categoryList },
+          updateQuery: (prev, { fetchMoreResult }) => {
+            const result = { ...prev };
+            const { categoryPosts } = fetchMoreResult;
+            let currentPosts = prev.post.postDetails.relatedPosts || [];
+            if (categoryPosts && categoryPosts.edges) {
+              currentPosts = [...currentPosts, ...categoryPosts.edges];
+            }
+            if (currentPosts)
+              result.post.postDetails.relatedPosts = currentPosts;
+            updateData({
+              data: result
+            });
+            return result;
+          }
+        });
+      }
+    }
+
+    if (data.post.postDetails.relatedPosts)
+      data.post.postDetails.relatedPosts = data.post.postDetails.relatedPosts.filter(
+        n => (n.relatedPost ? n : null)
+      );
+  }
+
   return (
-    <div>
-      {post && (
+    <div className="col-md-12" style={{ background: "#eee" }}>
+      {data.post && (
         <SinglePost
           {...{
-            post,
+            post: data.post,
             showShareIcons: true
           }}
         />
       )}
-      {post && relatedPosts && (
+      {data.post && data.post.postDetails.relatedPosts && (
         <ListOfPosts
           title="Related Posts"
           posts={
-            (relatedPosts &&
-              relatedPosts.map(obj => obj && obj.relatedPost).slice(0, 3)) ||
+            (data.post.postDetails.relatedPosts &&
+              data.post.postDetails.relatedPosts
+                .map(obj => obj && obj.relatedPost)
+                .slice(0, 3)) ||
             []
           }
           link={{ page: "posts" }}
@@ -221,11 +228,15 @@ const PostList = ({ updateData }) => {
           resizeRows
         />
       )}
-      {post && postEvents && (
+      {data.post && data.post.postDetails.postEvents && (
         <ListOfPosts
           title="Related Events"
           posts={
-            (postEvents && postEvents.map(obj => obj && obj.relatedEvent)) || []
+            (data.post.postDetails.postEvents &&
+              data.post.postDetails.postEvents.map(
+                obj => obj && obj.relatedEvent
+              )) ||
+            []
           }
           link={{ page: "events" }}
           numResults={0}
@@ -258,9 +269,7 @@ export default class extends Component {
       <>
         <SEO />
         <Layout>
-          <div className="col-md-12" style={{ background: "#eee" }}>
-            <PostList updateData={this.updateData} data={data} />
-          </div>
+          <PostList updateData={this.updateData} data={data} />
         </Layout>
       </>
     );
