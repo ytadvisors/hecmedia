@@ -2,6 +2,7 @@ import React from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
+import { ScaleLoader } from "react-spinners";
 import Layout from "../containers/Layout";
 import SEO from "../components/SEO";
 import Articles from "./_templates/articles";
@@ -45,24 +46,31 @@ const GET_PAGE_TEMPLATE = gql`
 `;
 
 export default props => {
-  const loadPageTemplate = variables => {
-    try {
-      const { loading, error, data } = useQuery(GET_PAGE_TEMPLATE, {
-        variables,
-        fetchPolicy: "cache-and-network"
-      });
-      if (loading) return <p>Loading Page Template</p>;
-      if (error) {
-        return <p>Error Page Template</p>;
-      }
-      return data;
-    } catch (err) {
-      return {};
-    }
-  };
-
   const getTemplates = page => {
-    const { pageInfo } = loadPageTemplate({ uri: page });
+    const variables = { uri: page };
+    const { loading, error, data } = useQuery(GET_PAGE_TEMPLATE, {
+      variables,
+      fetchPolicy: "cache-and-network"
+    });
+
+    if (loading)
+      return (
+        <div className="loading">
+          <ScaleLoader
+            sizeUnit="px"
+            size={150}
+            color="#0065bc"
+            loading
+            height={55}
+            width={10}
+          />
+        </div>
+      );
+    if (error) {
+      return <p>Error loading Category</p>;
+    }
+
+    const { pageInfo } = data;
     const { pageTemplate, title, link, content, contact, about } =
       pageInfo || {};
     let result = "";
