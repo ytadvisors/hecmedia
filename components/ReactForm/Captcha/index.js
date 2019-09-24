@@ -16,9 +16,7 @@ export default props => {
     change(name, true);
   };
 
-  const callback = () => {
-    console.log("Done!!!!");
-  };
+  const callback = () => {};
 
   return (
     <div className="captcha">

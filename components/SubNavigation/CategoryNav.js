@@ -37,6 +37,7 @@ export const CategoryNav = props => {
         variables: {
           cursor: cursor || ""
         },
+        fetchPolicy: "cache-and-network",
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           return {

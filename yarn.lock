@@ -986,7 +986,29 @@
     "@emotion/utils" "0.11.2"
     "@emotion/weak-memoize" "0.2.3"
 
-"@emotion/core@^10.0.10", "@emotion/core@^10.0.9":
+"@emotion/cache@^10.0.17":
+  version "10.0.19"
+  resolved "https://registry.yarnpkg.com/@emotion/cache/-/cache-10.0.19.tgz#d258d94d9c707dcadaf1558def968b86bb87ad71"
+  integrity sha512-BoiLlk4vEsGBg2dAqGSJu0vJl/PgVtCYLBFJaEO8RmQzPugXewQCXZJNXTDFaRlfCs0W+quesayav4fvaif5WQ==
+  dependencies:
+    "@emotion/sheet" "0.9.3"
+    "@emotion/stylis" "0.8.4"
+    "@emotion/utils" "0.11.2"
+    "@emotion/weak-memoize" "0.2.4"
+
+"@emotion/core@10.0.17", "@emotion/core@^10.0.15":
+  version "10.0.17"
+  resolved "https://registry.yarnpkg.com/@emotion/core/-/core-10.0.17.tgz#3367376709721f4ee2068cff54ba581d362789d8"
+  integrity sha512-gykyjjr0sxzVuZBVTVK4dUmYsorc2qLhdYgSiOVK+m7WXgcYTKZevGWZ7TLAgTZvMelCTvhNq8xnf8FR1IdTbg==
+  dependencies:
+    "@babel/runtime" "^7.5.5"
+    "@emotion/cache" "^10.0.17"
+    "@emotion/css" "^10.0.14"
+    "@emotion/serialize" "^0.11.10"
+    "@emotion/sheet" "0.9.3"
+    "@emotion/utils" "0.11.2"
+
+"@emotion/core@^10.0.9":
   version "10.0.16"
   resolved "https://registry.yarnpkg.com/@emotion/core/-/core-10.0.16.tgz#e43630b65c84e31e81f34db3286eab584b08cfaa"
   integrity sha512-whbiiA7FfPreBY4BqWky2qRfAZvq+4dKQ1WNJuiYQwPCNmb0pEYDgNheSbZoNKtGTtfPaM28hBbZAKWD5EZXmQ==
@@ -1012,6 +1034,11 @@
   resolved "https://registry.yarnpkg.com/@emotion/hash/-/hash-0.7.2.tgz#53211e564604beb9befa7a4400ebf8147473eeef"
   integrity sha512-RMtr1i6E8MXaBWwhXL3yeOU8JXRnz8GNxHvaUfVvwxokvayUY0zoBeWbKw1S9XkufmGEEdQd228pSZXFkAln8Q==
 
+"@emotion/hash@0.7.3":
+  version "0.7.3"
+  resolved "https://registry.yarnpkg.com/@emotion/hash/-/hash-0.7.3.tgz#a166882c81c0c6040975dd30df24fae8549bd96f"
+  integrity sha512-14ZVlsB9akwvydAdaEnVnvqu6J2P6ySv39hYyl/aoB6w/V+bXX0tay8cF6paqbgZsN2n5Xh15uF4pE+GvE+itw==
+
 "@emotion/is-prop-valid@0.8.2":
   version "0.8.2"
   resolved "https://registry.yarnpkg.com/@emotion/is-prop-valid/-/is-prop-valid-0.8.2.tgz#b9692080da79041683021fcc32f96b40c54c59dc"
@@ -1023,6 +1050,22 @@
   version "0.7.2"
   resolved "https://registry.yarnpkg.com/@emotion/memoize/-/memoize-0.7.2.tgz#7f4c71b7654068dfcccad29553520f984cc66b30"
   integrity sha512-hnHhwQzvPCW1QjBWFyBtsETdllOM92BfrKWbUTmh9aeOlcVOiXvlPsK4104xH8NsaKfg86PTFsWkueQeUfMA/w==
+
+"@emotion/memoize@0.7.3":
+  version "0.7.3"
+  resolved "https://registry.yarnpkg.com/@emotion/memoize/-/memoize-0.7.3.tgz#5b6b1c11d6a6dddf1f2fc996f74cf3b219644d78"
+  integrity sha512-2Md9mH6mvo+ygq1trTeVp2uzAKwE2P7In0cRpD/M9Q70aH8L+rxMLbb3JCN2JoSWsV2O+DdFjfbbXoMoLBczow==
+
+"@emotion/serialize@^0.11.10":
+  version "0.11.11"
+  resolved "https://registry.yarnpkg.com/@emotion/serialize/-/serialize-0.11.11.tgz#c92a5e5b358070a7242d10508143306524e842a4"
+  integrity sha512-YG8wdCqoWtuoMxhHZCTA+egL0RSGdHEc+YCsmiSBPBEDNuVeMWtjEWtGrhUterSChxzwnWBXvzSxIFQI/3sHLw==
+  dependencies:
+    "@emotion/hash" "0.7.3"
+    "@emotion/memoize" "0.7.3"
+    "@emotion/unitless" "0.7.4"
+    "@emotion/utils" "0.11.2"
+    csstype "^2.5.7"
 
 "@emotion/serialize@^0.11.8", "@emotion/serialize@^0.11.9":
   version "0.11.9"
@@ -1077,6 +1120,11 @@
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-0.2.3.tgz#dfa0c92efe44a1d1a7974fb49ffeb40ef2da5a27"
   integrity sha512-zVgvPwGK7c1aVdUVc9Qv7SqepOGRDrqCw7KZPSZziWGxSlbII3gmvGLPzLX4d0n0BMbamBacUrN22zOMyFFEkQ==
+
+"@emotion/weak-memoize@0.2.4":
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-0.2.4.tgz#622a72bebd1e3f48d921563b4b60a762295a81fc"
+  integrity sha512-6PYY5DVdAY1ifaQW6XYTnOMihmBVT27elqSjEoodchsGjzYlEsTQMcEhSud99kVawatyTZRTiVkJ/c6lwbQ7nA==
 
 "@jest/console@^24.7.1", "@jest/console@^24.9.0":
   version "24.9.0"
@@ -1290,17 +1338,10 @@
   dependencies:
     any-observable "^0.3.0"
 
-"@serverless/aws-api-gateway@^1.0.0", "@serverless/aws-api-gateway@^1.0.1":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@serverless/aws-api-gateway/-/aws-api-gateway-1.2.0.tgz#ea64b326c08de58811ed1f348dc62071ff989719"
-  integrity sha512-UAHe1TnzoUAiwFtif0VLySyrjIF6uso1cBIl2Pb1Xx9Zju/qwfxGdmDK+NcUdybNB5a260ovALTZvC5M0QE92Q==
-  dependencies:
-    "@serverless/core" "^1.0.0"
-    aws-sdk "^2.0.0"
-
-"@serverless/aws-cloudfront@git://github.com/danielcondemarin/aws-cloudfront.git#add-allowed-http-methods":
-  version "3.0.0"
-  resolved "git://github.com/danielcondemarin/aws-cloudfront.git#c829f3727740748e9356b12c957eb786056806a9"
+"@serverless/aws-cloudfront@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@serverless/aws-cloudfront/-/aws-cloudfront-3.2.0.tgz#047e637be56d7f9f33066243b84f740ec9224a0f"
+  integrity sha512-4YPqPznvE1BKLdc1x3WTGfRrEW5y91igEX1KJ3Uhu/L8KZDpLXh/RfdicCMQoZmW+E0BkDPpjaYmjmPmVIsZlw==
   dependencies:
     "@serverless/core" "^1.0.0"
     aws-sdk "^2.499.0"
@@ -1328,24 +1369,10 @@
     globby "^9.2.0"
     ramda "^0.26.1"
 
-"@serverless/aws-lambda@^1.0.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@serverless/aws-lambda/-/aws-lambda-1.2.0.tgz#58cf345d10d040f50fe11259667abe86610c341c"
-  integrity sha512-wu/Zu4igGekQ8t5GnDo8ow6HF2uScekGSdlTa/qN8Md4ECQS2nUPeFYLPhc5LveZDqfybkVA8JCvz/1et/qWYA==
-  dependencies:
-    "@serverless/aws-iam-role" "^1.0.0"
-    "@serverless/aws-lambda-layer" "^1.0.0"
-    "@serverless/aws-s3" "^2.0.0"
-    "@serverless/core" "^1.0.0"
-    archiver "^3.0.0"
-    aws-sdk "^2.474.0"
-    fs-extra "^7.0.0"
-    globby "^9.2.0"
-    ramda "^0.26.0"
-
-"@serverless/aws-lambda@git://github.com/serverless-components/aws-lambda.git":
+"@serverless/aws-lambda@^3.0.0":
   version "3.0.0"
-  resolved "git://github.com/serverless-components/aws-lambda.git#c93277852f78f8839d8fa5a8d85d73c78847baef"
+  resolved "https://registry.yarnpkg.com/@serverless/aws-lambda/-/aws-lambda-3.0.0.tgz#00745066a0394f26d3a6adeefd32412d38717e43"
+  integrity sha512-8jj2TpbnnH+FABoFQDValjJtf0AL9a34y9TUS9oVqnAsA0Rkgatn+L09oh5p9V2sETganQebLr5qG5qau+mMzA==
   dependencies:
     "@serverless/aws-iam-role" "^1.0.0"
     "@serverless/aws-lambda-layer" "^1.0.0"
@@ -1385,9 +1412,10 @@
     ramda "^0.26.1"
     s3-stream-upload "^2.0.2"
 
-"@serverless/aws-s3@git://github.com/serverless-components/aws-s3.git":
+"@serverless/aws-s3@^3.1.0":
   version "3.1.0"
-  resolved "git://github.com/serverless-components/aws-s3.git#07948b9d9f08e6bdca2ad1d1a449dc1bdb775f8f"
+  resolved "https://registry.yarnpkg.com/@serverless/aws-s3/-/aws-s3-3.1.0.tgz#ca7cd2555f2f09bdcbaf2810644842fa82643c9b"
+  integrity sha512-+cm5ztXH/3lBjLH0kxf+rml1Y8HBHCGWgRUDPLUAKOp4DckhpbxBHB830chNkCpBJQldBpbY75XP5APGGOCTZQ==
   dependencies:
     "@serverless/core" "^1.0.0"
     archiver "^3.0.0"
@@ -1397,17 +1425,6 @@
     mime-types "^2.1.22"
     ramda "^0.26.1"
     s3-stream-upload "^2.0.2"
-
-"@serverless/backend@^3.3.0":
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/@serverless/backend/-/backend-3.3.0.tgz#6bb37f4d867057f0a39291d0c58b51e7a3318f63"
-  integrity sha512-ioV3wdMxp6364X7/8eGfEAbfAw5n+b12Lp7+IQpeArZ3yGPlOLZT9OtTSkx6W99QoVMCGMy/XBbkVbmpiD43JA==
-  dependencies:
-    "@serverless/aws-api-gateway" "^1.0.0"
-    "@serverless/aws-lambda" "^1.0.0"
-    "@serverless/aws-s3" "^1.0.0"
-    "@serverless/core" "^1.0.0"
-    "@serverless/domain" "^2.0.0"
 
 "@serverless/cli@^1.0.3":
   version "1.0.3"
@@ -1443,17 +1460,10 @@
     ramda "^0.26.1"
     semver "^6.1.1"
 
-"@serverless/domain@^2.0.0":
-  version "2.0.10"
-  resolved "https://registry.yarnpkg.com/@serverless/domain/-/domain-2.0.10.tgz#d1ff54f96cbdcada3b6e0a359185bc56c964fb9d"
-  integrity sha512-TmmFfomGtDCloWCaBVbblFJKG3zTsZk6XSMdQKWgwj9+6fjwcsgUEqaFdPY2VdNKHYtNrLjQvmIMP8UOK1b3fA==
-  dependencies:
-    "@serverless/core" "^1.0.0"
-    aws-sdk "^2.499.0"
-
-"@serverless/domain@github:serverless-components/domain":
+"@serverless/domain@^5.0.0":
   version "5.0.0"
-  resolved "https://codeload.github.com/serverless-components/domain/tar.gz/e27259ff2446e71abb6480898e725d200436f6c2"
+  resolved "https://registry.yarnpkg.com/@serverless/domain/-/domain-5.0.0.tgz#2984223e6589bc3fcfc194bdc65fd828f70bfcae"
+  integrity sha512-Dn3A5Fwt0mhJN07sYAtkyaGBrk/fJzXvYbVA06F9P2xCkgBpqAEMRgoW4TejYD7htz2HhmEi0nOE/OYQfSBgvw==
   dependencies:
     "@serverless/core" "^1.0.0"
     aws-sdk "^2.499.0"
@@ -2412,7 +2422,7 @@ aws-sdk@2.517.0, aws-sdk@^2.509.0:
     uuid "3.3.2"
     xml2js "0.4.19"
 
-aws-sdk@^2.0.0, aws-sdk@^2.387.0, aws-sdk@^2.474.0, aws-sdk@^2.488.0, aws-sdk@^2.499.0:
+aws-sdk@^2.387.0, aws-sdk@^2.474.0, aws-sdk@^2.488.0, aws-sdk@^2.499.0:
   version "2.529.0"
   resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.529.0.tgz#97cc8017fd5d6e3c9270f141cb8efa24796fc9d7"
   integrity sha512-CtRxgI4ZVZ8cdFCddlIVIy06cEW5gzTJBpyouZ/ySgZ6BiYj+0e77LwoNsnQE2nUNWCbydTLn3dbz4ZZMDpuIg==
@@ -9419,6 +9429,13 @@ react-social-login@3.4.4:
     uuid "3.1.0"
     whatwg-fetch "2.0.3"
 
+react-spinners@0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/react-spinners/-/react-spinners-0.6.1.tgz#c4f31a1d0e4c85cdb1785a8bdbe17311cf269b0a"
+  integrity sha512-bMCOvwAlzuIDC6Zh69E1EbyKUbvWSl4sMzLXOgnsF4Q/kkAnCNaonWyskMFytbaJSYxBCCOiaeCH2moDJ5y5Pg==
+  dependencies:
+    "@emotion/core" "^10.0.15"
+
 react-stripe-elements@4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/react-stripe-elements/-/react-stripe-elements-4.0.1.tgz#89b52c909a80f17afc7907313c3b3c3f21fa125d"
@@ -10163,18 +10180,16 @@ serve-static@1.14.1:
     parseurl "~1.3.3"
     send "0.17.1"
 
-serverless-next.js@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/serverless-next.js/-/serverless-next.js-1.1.0.tgz#65ad6cdf782883b101c1e5d2d6ddf5060e385f7e"
-  integrity sha512-IchhgpBgF8/pF7aj4nnOUIioAGyIqVerAW2AhfHKbWwlc54BDUwDynu+bpPMXf1/SCw26XedW28/VkVUvSSuow==
+serverless-next.js@^1.1.0:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/serverless-next.js/-/serverless-next.js-1.2.2.tgz#fbb9bda58d574c8fbb3911e669bddf284b8ba9da"
+  integrity sha512-c5liE/lpbeJ7VEPG5OY/JT6wSQoCBmAF9mBP9oH3uZRBAAXCcEtFkcliTkmZDgbE0QmQjP2li9MzzeKNmSsUgw==
   dependencies:
-    "@serverless/aws-api-gateway" "^1.0.1"
-    "@serverless/aws-cloudfront" "git://github.com/danielcondemarin/aws-cloudfront.git#add-allowed-http-methods"
-    "@serverless/aws-lambda" "git://github.com/serverless-components/aws-lambda.git"
-    "@serverless/aws-s3" "git://github.com/serverless-components/aws-s3.git"
-    "@serverless/backend" "^3.3.0"
+    "@serverless/aws-cloudfront" "^3.2.0"
+    "@serverless/aws-lambda" "^3.0.0"
+    "@serverless/aws-s3" "^3.1.0"
     "@serverless/core" "^1.0.0"
-    "@serverless/domain" "github:serverless-components/domain"
+    "@serverless/domain" "^5.0.0"
     execa "^2.0.4"
     fs-extra "^8.1.0"
     next-aws-lambda "^2.3.2"

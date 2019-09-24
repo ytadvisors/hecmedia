@@ -48,7 +48,8 @@ export default props => {
   const loadPageTemplate = variables => {
     try {
       const { loading, error, data } = useQuery(GET_PAGE_TEMPLATE, {
-        variables
+        variables,
+        fetchPolicy: "cache-and-network"
       });
       if (loading) return <p>Loading Page Template</p>;
       if (error) {

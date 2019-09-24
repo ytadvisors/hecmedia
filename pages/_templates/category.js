@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
+import { css } from "@emotion/core";
+import { ScaleLoader } from "react-spinners";
 import ListOfPosts from "../../components/ListOfPosts";
 import CategoryNav from "../../components/SubNavigation/CategoryNav";
 
@@ -51,53 +53,66 @@ const GET_CATEGORY_INFO = gql`
         }
       }
       pageInfo {
+        hasNextPage
         endCursor
       }
     }
   }
 `;
 
+const override = css`
+  display: block;
+  margin: 0 auto;
+  border-color: blue;
+`;
+
 export default props => {
-  let loadMore = () => {};
-  let posts = [];
-  const [cursor, setCursor] = useState("");
-  const loadPosts = variables => {
-    try {
-      const { loading, error, data, fetchMore } = useQuery(GET_CATEGORY_INFO, {
-        variables
-      });
-      if (loading) return <p>Loading Category</p>;
-      if (error) {
-        return <p>Error loading Category</p>;
-      }
-
-      if (data.postData && data.postData.pageInfo) {
-        loadMore = async () => {
-          const { category } = props;
-          await fetchMore({
-            variables: { category, cursor },
-            updateQuery: (prev, { fetchMoreResult }) => {
-              const result = { ...fetchMoreResult };
-              const { postData } = prev;
-              setCursor(postData.pageInfo.endCursor);
-              result.postData.edges = [
-                ...postData.edges,
-                ...result.postData.edges
-              ];
-              return result;
-            }
-          });
-        };
-      }
-      const { postData } = data;
-      return postData ? postData.edges.map(obj => obj && obj.node) : [];
-    } catch (err) {
-      return [];
-    }
-  };
-
+  const cursor = "";
   const { category } = props;
-  posts = loadPosts({ category, cursor: "" });
+  const variables = { category, cursor };
+  const { loading, error, data, fetchMore } = useQuery(GET_CATEGORY_INFO, {
+    variables
+  });
+
+  if (loading)
+    return (
+      <div className="loading">
+        <ScaleLoader
+          css={override}
+          sizeUnit="px"
+          size={150}
+          color="#0065bc"
+          loading
+          height={55}
+          width={10}
+        />
+      </div>
+    );
+  if (error) {
+    return <p>Error loading Category</p>;
+  }
+
+  const { postData } = data;
+  const posts = postData ? postData.edges.map(obj => obj && obj.node) : [];
+  variables.cursor = postData.pageInfo.endCursor;
+
+  const loadMore = () =>
+    fetchMore({
+      variables,
+      updateQuery: (prev, { fetchMoreResult }) => {
+        if (!fetchMoreResult) {
+          return prev;
+        }
+
+        const results = { ...fetchMoreResult };
+        results.postData.edges = [
+          ...prev.postData.edges,
+          ...results.postData.edges
+        ];
+        return results;
+      }
+    });
+
   return (
     <>
       <CategoryNav />
@@ -105,7 +120,7 @@ export default props => {
         posts={posts}
         link={{ page: "posts" }}
         numResults={0}
-        loadMore={loadMore}
+        loadMore={variables.cursor !== null && loadMore}
         resizeRows
       />
     </>

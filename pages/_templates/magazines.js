@@ -39,7 +39,8 @@ export default () => {
   const loadMagazines = variables => {
     try {
       const { loading, error, data } = useQuery(GET_MAGAZINES, {
-        variables
+        variables,
+        fetchPolicy: "cache-and-network"
       });
 
       if (loading) return <p>Loading Magazines</p>;

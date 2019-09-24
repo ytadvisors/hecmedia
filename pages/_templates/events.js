@@ -116,7 +116,8 @@ export default props => {
   const loadEvents = variables => {
     try {
       const { loading, error, data, fetchMore } = useQuery(GET_EVENT_INFO, {
-        variables
+        variables,
+        fetchPolicy: "cache-and-network"
       });
 
       if (loading) return <p>Loading Events</p>;
