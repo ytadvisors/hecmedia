@@ -51,6 +51,17 @@ export default ({
       crossOrigin="anonymous"
     />
     <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.css"
+      crossOrigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.css"
+      crossOrigin="anonymous"
+    />
+
+    <link
       rel="apple-touch-icon"
       sizes="180x180"
       href="/static/favicons/apple-touch-icon.png"
