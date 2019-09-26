@@ -113,7 +113,7 @@ export default class SinglePost extends Component {
       moment(endDate, "MM/DD/YYYY h:mm a", true)
     );
 
-    const imgThumbnail = this.getImgSrc(post);
+    const imgThumbnail = post && this.getImgSrc(post);
 
     const isLiveVideo =
       isPlaying &&

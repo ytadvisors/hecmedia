@@ -103,21 +103,23 @@ export default () => {
               }
             }}
           />
-          <ListOfPosts
-            posts={magazinePost ? magazinePost.map(obj => obj.post) : []}
-            link={{ page: "posts" }}
-            numResults={0}
-            design={{
-              defaultRowLayout: "2 Columns",
-              defaultDisplayType: "Post"
-            }}
-            loadMore={null}
-            style={{
-              background: "#f9f9f9",
-              border: "1px solid #ddd"
-            }}
-            resizeRows
-          />
+          {magazinePost && (
+            <ListOfPosts
+              posts={magazinePost ? magazinePost.map(obj => obj.post) : []}
+              link={{ page: "posts" }}
+              numResults={0}
+              design={{
+                defaultRowLayout: "2 Columns",
+                defaultDisplayType: "Post"
+              }}
+              loadMore={null}
+              style={{
+                background: "#f9f9f9",
+                border: "1px solid #ddd"
+              }}
+              resizeRows
+            />
+          )}
         </div>
       </Layout>
     </>
