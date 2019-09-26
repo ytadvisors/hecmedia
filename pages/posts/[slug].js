@@ -137,7 +137,6 @@ const PostList = ({ updateData }) => {
     query: { slug }
   } = router;
   const variables = { slug };
-
   const { loading, error, data, fetchMore } = useQuery(GET_PAGE_INFO, {
     variables
   });

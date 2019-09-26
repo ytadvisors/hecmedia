@@ -52,7 +52,6 @@ const GET_CATEGORY_INFO = gql`
         }
       }
       pageInfo {
-        hasNextPage
         endCursor
       }
     }

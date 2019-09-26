@@ -33,6 +33,12 @@
       "pattern": "/posts/:slug"
     }
   ],
+  "magazine": [
+    {
+      "page": "magazine/[slug]/",
+      "pattern": "/magazine/:slug"
+    }
+  ],
   "search": [
     {
       "page": "search/[words]/",

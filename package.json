@@ -39,7 +39,7 @@
   },
   "homepage": "https://github.com/ytadvisors/hecmedia#readme",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "yarn install; yarn upgrade; node server.js",
     "build": "next build",
     "start": "next start",
     "deploy-dev": "ACTIVE_ENV=development serverless",

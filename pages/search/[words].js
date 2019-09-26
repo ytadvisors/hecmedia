@@ -2,14 +2,15 @@ import React from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
+import { ScaleLoader } from "react-spinners";
 import Layout from "../../containers/Layout";
 import SEO from "../../components/SEO";
 import ListOfPosts from "../../components/ListOfPosts";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 
 const GET_SEARCH_RESULTS = gql`
-  query PostCategories($search: String!) {
-    postData: posts(where: { search: $search }) {
+  query PostCategories($search: String!, $cursor: String!) {
+    postData: posts(after: $cursor, where: { search: $search }) {
       edges {
         node {
           title(format: RENDERED)
@@ -38,34 +39,60 @@ const GET_SEARCH_RESULTS = gql`
           excerpt(format: RENDERED)
         }
       }
+      pageInfo {
+        endCursor
+      }
     }
   }
 `;
-
-const loadResults = variables => {
-  try {
-    const { loading, error, data } = useQuery(GET_SEARCH_RESULTS, {
-      variables
-    });
-
-    if (loading) return <p>Loading Events</p>;
-    if (error) {
-      return <p>Error loading Events</p>;
-    }
-    return data;
-  } catch (err) {
-    console.log(err.message);
-    return {};
-  }
-};
 
 export default () => {
   const router = useRouter();
   const {
     query: { words }
   } = router;
-  const results = words ? loadResults({ search: words }) : [];
-  const { postData } = results || {};
+  const variables = { search: words, cursor: "" };
+  const { loading, error, data, fetchMore } = useQuery(GET_SEARCH_RESULTS, {
+    variables
+  });
+
+  if (loading)
+    return (
+      <div className="loading">
+        <ScaleLoader
+          sizeUnit="px"
+          size={150}
+          color="#0065bc"
+          loading
+          height={55}
+          width={10}
+        />
+      </div>
+    );
+  if (error) {
+    return <p>Error loading Category</p>;
+  }
+
+  const { postData } = data || {};
+  variables.cursor = postData.pageInfo.endCursor;
+
+  const loadMore = () =>
+    fetchMore({
+      variables,
+      updateQuery: (prev, { fetchMoreResult }) => {
+        if (!fetchMoreResult) {
+          return prev;
+        }
+
+        const results = { ...fetchMoreResult };
+        results.postData.edges = [
+          ...prev.postData.edges,
+          ...results.postData.edges
+        ];
+        return results;
+      }
+    });
+
   return (
     <>
       <SEO />
@@ -82,7 +109,7 @@ export default () => {
             link={{ page: "posts" }}
             numResults={0}
             design={null}
-            loadMore={null}
+            loadMore={variables.cursor !== null && loadMore}
             resizeRows
           />
         </div>
