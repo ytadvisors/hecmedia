@@ -6,6 +6,8 @@ import ProgramViewer from "../../components/ProgramViewer";
 import Header from "../../components/Header";
 import Banner from "../../components/Banner";
 import Footer from "../../components/Footer";
+
+import { BasicModal } from "../Modals";
 import BottomNav from "../../components/BottomNav/index";
 
 const Layout = props => {
@@ -28,11 +30,14 @@ const Layout = props => {
         {showBottomNav && <BottomNav title="more from" />}
       </ProgramViewer>
       <Footer />
+      <BasicModal {...props} />
     </div>
   );
 };
 
 const mapStateToProps = state => ({
+  overlaySettings: state.pageReducers.overlaySettings,
+  openOverlay: state.pageReducers.openOverlay,
   pageForm: state.form
 });
 
