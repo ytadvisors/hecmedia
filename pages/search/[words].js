@@ -109,7 +109,11 @@ export default () => {
             link={{ page: "posts" }}
             numResults={0}
             design={null}
-            loadMore={variables.cursor !== null && loadMore}
+            loadMore={
+              postData.edges.length % 10 === 0 &&
+              variables.cursor !== null &&
+              loadMore
+            }
             resizeRows
           />
         </div>

@@ -95,7 +95,11 @@ export default () => {
         link={{ page: "magazine" }}
         numResults={0}
         design={feedDesign}
-        loadMore={variables.cursor !== null && loadMore}
+        loadMore={
+          magazineData.edges.length % 10 === 0 &&
+          variables.cursor !== null &&
+          loadMore
+        }
       />
     </>
   );
