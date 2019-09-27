@@ -1,12 +1,14 @@
 import React from "react";
-import { graphql } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
+import { ScaleLoader } from "react-spinners";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import ListOfPosts from "../../components/ListOfPosts";
 
 const GET_PAGE_INFO = gql`
-  query PageInfo {
+  query PageInfo($cursor: String!) {
     postData: posts(
+      after: $cursor
       where: {
         orderby: { field: DATE, order: DESC }
         metaQuery: {
@@ -42,29 +44,70 @@ const GET_PAGE_INFO = gql`
           content(format: RENDERED)
         }
       }
+      pageInfo {
+        endCursor
+      }
     }
   }
 `;
 
-const Articles = ({ data: { postData } }) => {
-  let pagePosts = [];
-  if (postData && postData.edges) {
-    pagePosts = postData.edges.map(obj => obj.node);
+export default () => {
+  const cursor = "";
+  const variables = { cursor };
+  const { loading, error, data, fetchMore } = useQuery(GET_PAGE_INFO, {
+    variables
+  });
+
+  if (loading)
+    return (
+      <div className="loading">
+        <ScaleLoader
+          sizeUnit="px"
+          size={150}
+          color="#0065bc"
+          loading
+          height={55}
+          width={10}
+        />
+      </div>
+    );
+  if (error) {
+    return <p>Error loading Category</p>;
   }
+
+  const { postData } = data;
+  const posts = postData ? postData.edges.map(obj => obj && obj.node) : [];
+  variables.cursor = postData.pageInfo.endCursor;
+
+  const loadMore = () =>
+    fetchMore({
+      variables,
+      updateQuery: (prev, { fetchMoreResult }) => {
+        if (!fetchMoreResult) {
+          return prev;
+        }
+
+        const results = { ...fetchMoreResult };
+        results.postData.edges = [
+          ...prev.postData.edges,
+          ...results.postData.edges
+        ];
+        return results;
+      }
+    });
+
   return (
     <>
       <div className="col-md-12">
         <DefaultNav title="Articles" link="/articles" />
       </div>
       <ListOfPosts
-        posts={pagePosts}
+        posts={posts}
         link={{ page: "posts" }}
         numResults={0}
-        loadMore={null}
+        loadMore={variables.cursor !== null && loadMore}
         resizeRows
       />
     </>
   );
 };
-
-export default graphql(GET_PAGE_INFO)(Articles);

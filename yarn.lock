@@ -1575,9 +1575,9 @@
     "@types/istanbul-lib-report" "*"
 
 "@types/lodash@^4.14.123":
-  version "4.14.139"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.139.tgz#b7b8a00d014a7debb29dc2dae4f91d3d3c6d5ab3"
-  integrity sha512-Z6pbDYaWpluqcF8+6qgv6STPEl0jIlyQmpYGwTrzhgwqok8ltBh/p7GAmYnz81wUhxQRhEr8MBpQrB4fQ/hwIA==
+  version "4.14.141"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.141.tgz#d81f4d0c562abe28713406b571ffb27692a82ae6"
+  integrity sha512-v5NYIi9qEbFEUpCyikmnOYe4YlP8BMUdTcNCAquAKzu+FA7rZ1onj9x80mbnDdOW/K5bFf3Tv5kJplP33+gAbQ==
 
 "@types/minimatch@*":
   version "3.0.3"
@@ -2405,9 +2405,9 @@ aws-sdk@2.517.0:
     xml2js "0.4.19"
 
 aws-sdk@^2.387.0, aws-sdk@^2.474.0, aws-sdk@^2.488.0, aws-sdk@^2.499.0, aws-sdk@^2.535.0:
-  version "2.536.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.536.0.tgz#8ef8465607553408e79cdbe90d661941c32c5cb8"
-  integrity sha512-d91ASAgDtjP5Al8nRtdOhnS6m7XczqdmVfkyFtd7GlWJ2jy2NxQ+PI4QVp7n/74BNRSSLoyxmCqz2Ulqu3TOsQ==
+  version "2.537.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.537.0.tgz#e7b42ee4c431f5520f701dee3cf780e2b6f883c3"
+  integrity sha512-dYsy0+N5k8vEu0CupHo9sx5fYzm6LcbUB+O2Lr3Q+RJaygxNQIaqKL+JeSnYNWF55okDWkitw0K76pAF3m03ag==
   dependencies:
     buffer "4.9.1"
     events "1.1.1"
@@ -3787,9 +3787,9 @@ date-fns@^1.27.2:
   integrity sha512-hBSVCvSmWC+QypYObzwGOd9wqdDpOt+0wl0KbU+R+uuZBS1jN8VsD1ss3irQDknRj5NvxiTF6oj/nDRnN/UQNw==
 
 date-fns@^2.0.1:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.3.0.tgz#017eae725d0c46173b572da025fb5e4e534270fd"
-  integrity sha512-A8o+iXBVqQayl9Z39BHgb7m/zLOfhF7LK82t+n9Fq1adds1vaUn8ByVoADqWLe4OTc6BZYc/FdbdTwufNYqkJw==
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.4.0.tgz#e02d1d08ce80ae1db3de40a0028c9f54203d034b"
+  integrity sha512-xS547fK1omgCgOGbyU0fBY2pdeXQ9/WO/PMsVgX1jtF56dXNHrV3Z+GKWIOE7IG+UEeu+fTyTlnIvBKbxXxdSw==
 
 date-now@^0.1.4:
   version "0.1.4"
@@ -4174,9 +4174,9 @@ ee-first@1.1.1:
   integrity sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=
 
 electron-to-chromium@^1.3.247:
-  version "1.3.266"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.266.tgz#a33fb529c75f8d133e75ea7cbedb73a62f2158d2"
-  integrity sha512-UTuTZ4v8T0gLPHI7U75PXLQePWI65MTS3mckRrnLCkNljHvsutbYs+hn2Ua/RFul3Jt/L3Ht2rLP+dU/AlBfrQ==
+  version "1.3.267"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.267.tgz#7745ff9d447fd2a9802e1c6dfa518631e0cf5357"
+  integrity sha512-9Q2ixAJC+oHjWNtJV0MQ4vJMCWSowIrC6V6vcr+bwPddTDHj2ddv9xxXCzf4jT/fy6HP7maPoW0gifXkRxCttQ==
 
 elegant-spinner@^1.0.1:
   version "1.0.1"
@@ -5629,9 +5629,9 @@ gud@^1.0.0:
   integrity sha512-zGEOVKFM5sVPPrYs7J5/hYEw2Pof8KCyOwyhG8sAF26mCAeUFAcYPu1mwB7hhpIP29zOIBaDqwuHdLp0jvZXjw==
 
 handlebars@^4.1.2:
-  version "4.3.1"
-  resolved "https://registry.yarnpkg.com/handlebars/-/handlebars-4.3.1.tgz#6febc1890851f62a8932d495cc88d29390fa850d"
-  integrity sha512-c0HoNHzDiHpBt4Kqe99N8tdLPKAnGCQ73gYMPWtAYM4PwGnf7xl8PBUHJqh9ijlzt2uQKaSRxbXRt+rZ7M2/kA==
+  version "4.3.3"
+  resolved "https://registry.yarnpkg.com/handlebars/-/handlebars-4.3.3.tgz#56dd05fe33d6bd8a7d797351c39a0cdcfd576be5"
+  integrity sha512-VupOxR91xcGojfINrzMqrvlyYbBs39sXIrWa7YdaQWeBudOlvKEGvCczMfJPgnuwHE/zyH1M6J+IUP6cgDVyxg==
   dependencies:
     neo-async "^2.6.0"
     optimist "^0.6.1"
