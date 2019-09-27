@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
+import { ScaleLoader } from "react-spinners";
 import { useRouter } from "next/router";
 import Layout from "../../containers/Layout";
 import SEO from "../../components/SEO";
@@ -65,63 +66,70 @@ const GET_MAGAZINE_INFO = gql`
   }
 `;
 
-export default () => {
-  const loadMagazines = variables => {
-    try {
-      const { loading, error, data } = useQuery(GET_MAGAZINE_INFO, {
-        variables
-      });
-
-      if (loading) return <p>Loading Magazine</p>;
-      if (error) {
-        return <p>Error loading Magazine</p>;
-      }
-      return data;
-    } catch (err) {
-      console.log(err.message);
-      return {};
-    }
-  };
+const getContent = () => {
   const router = useRouter();
   const {
     query: { slug }
   } = router;
+  const variables = { slug };
+  const { loading, error, data } = useQuery(GET_MAGAZINE_INFO, {
+    variables
+  });
 
-  const { magazine } = loadMagazines({ slug });
+  if (loading)
+    return (
+      <div className="loading">
+        <ScaleLoader
+          sizeUnit="px"
+          size={150}
+          color="#0065bc"
+          loading
+          height={55}
+          width={10}
+        />
+      </div>
+    );
+  if (error) {
+    return <p>Error loading Category</p>;
+  }
+
+  const { magazine } = data;
   const { magazineDetail: { magazinePost } = {} } = magazine || {};
   return (
-    <>
-      <SEO />
-      <Layout style={{ background: "#eee" }}>
-        <div className="col-md-12" style={{ background: "#eee" }}>
-          <SinglePost
-            {...{
-              post: magazine,
-              classes: {
-                thumbnail: "col-md-2 pull-right",
-                content: "col-md-10 no-padding"
-              }
-            }}
-          />
-          {magazinePost && (
-            <ListOfPosts
-              posts={magazinePost ? magazinePost.map(obj => obj.post) : []}
-              link={{ page: "posts" }}
-              numResults={0}
-              design={{
-                defaultRowLayout: "2 Columns",
-                defaultDisplayType: "Post"
-              }}
-              loadMore={null}
-              style={{
-                background: "#f9f9f9",
-                border: "1px solid #ddd"
-              }}
-              resizeRows
-            />
-          )}
-        </div>
-      </Layout>
-    </>
+    <div className="col-md-12" style={{ background: "#eee" }}>
+      <SinglePost
+        {...{
+          post: magazine,
+          classes: {
+            thumbnail: "col-md-2 pull-right",
+            content: "col-md-10 no-padding"
+          }
+        }}
+      />
+      {magazinePost && (
+        <ListOfPosts
+          posts={magazinePost ? magazinePost.map(obj => obj.post) : []}
+          link={{ page: "posts" }}
+          numResults={0}
+          design={{
+            defaultRowLayout: "2 Columns",
+            defaultDisplayType: "Post"
+          }}
+          loadMore={null}
+          style={{
+            background: "#f9f9f9",
+            border: "1px solid #ddd"
+          }}
+          resizeRows
+        />
+      )}
+    </div>
   );
 };
+
+export default () => (
+  <>
+    <SEO />
+    <Layout style={{ background: "#eee" }}>{getContent()}</Layout>
+  </>
+);

@@ -46,7 +46,7 @@ const GET_SEARCH_RESULTS = gql`
   }
 `;
 
-export default () => {
+const getContent = () => {
   const router = useRouter();
   const {
     query: { words }
@@ -95,29 +95,33 @@ export default () => {
 
   return (
     <>
-      <SEO />
-      <Layout>
-        <div className="col-md-12">
-          <DefaultNav
-            title={`Results: ${decodeURI(words)}`}
-            link={`/search/${words}`}
-          />
-        </div>
-        <div className="col-md-12">
-          <ListOfPosts
-            posts={postData ? postData.edges.map(obj => obj.node) : []}
-            link={{ page: "posts" }}
-            numResults={0}
-            design={null}
-            loadMore={
-              postData.edges.length % 10 === 0 &&
-              variables.cursor !== null &&
-              loadMore
-            }
-            resizeRows
-          />
-        </div>
-      </Layout>
+      <div className="col-md-12">
+        <DefaultNav
+          title={`Results: ${decodeURI(words)}`}
+          link={`/search/${words}`}
+        />
+      </div>
+      <div className="col-md-12">
+        <ListOfPosts
+          posts={postData ? postData.edges.map(obj => obj.node) : []}
+          link={{ page: "posts" }}
+          numResults={0}
+          design={null}
+          loadMore={
+            postData.edges.length % 10 === 0 &&
+            variables.cursor !== null &&
+            loadMore
+          }
+          resizeRows
+        />
+      </div>
     </>
   );
 };
+
+export default () => (
+  <>
+    <SEO />
+    <Layout>{getContent()}</Layout>
+  </>
+);
