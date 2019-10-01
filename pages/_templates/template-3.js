@@ -2,6 +2,8 @@ import React from "react";
 import { connect } from "react-redux";
 import { sendContactEmail } from "../../store/actions/accountActions";
 import { openOverlayAction } from "../../store/actions/pageActions";
+import SEO from "../../components/SEO";
+import Layout from "../../containers/Layout";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import Template3 from "../../components/Templates/template-3/index";
 import Map from "../../components/Map";
@@ -32,18 +34,24 @@ const contactUs = props => {
   dispatch(openOverlayAction("basic", { content: getSuccessMsg() }));
 };
 
-const Template = props => {
+const Page = props => {
   const { title, link, pageContent } = props;
   const { GOOGLE_API_KEY } = process.env;
 
   return (
     <>
-      <div className="col-md-12">
-        <DefaultNav title={title} link={link} />
-      </div>
-      <Template3 {...{ ...pageContent, callbackFunc: () => contactUs(props) }}>
-        <Map mapKey={GOOGLE_API_KEY} />
-      </Template3>
+      <SEO />
+      <Layout>
+        <div className="col-md-12">
+          <DefaultNav title={title} link={link} />
+        </div>
+
+        <Template3
+          {...{ ...pageContent, callbackFunc: () => contactUs(props) }}
+        >
+          <Map mapKey={GOOGLE_API_KEY} />
+        </Template3>
+      </Layout>
     </>
   );
 };
@@ -52,4 +60,4 @@ const mapStateToProps = state => ({
   pageForm: state.form
 });
 
-export default connect(mapStateToProps)(Template);
+export default connect(mapStateToProps)(Page);

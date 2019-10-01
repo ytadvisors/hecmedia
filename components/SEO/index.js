@@ -7,14 +7,14 @@ export default ({
   description,
   image,
   title,
-  siteName,
+  siteName = "hecmedia.org",
   pathname,
-  twitterHandle,
+  twitterHandle = "@hec_tv",
   categories,
   url
 }) => (
   <Head>
-    <title>{title || "HEC-TV | Home"}</title>
+    <title>{title ? decodeHTML(title) : "HEC-TV | Home"}</title>
     <meta
       name="description"
       content={description || "On Demand Arts, Culture & Education Programming"}
@@ -88,13 +88,18 @@ export default ({
     <meta name="msapplication-TileColor" content="#da532c" />
     <meta name="theme-color" content="#ffffff" />
     {categories && (
-      <script type="text/javascript">{`
+      <script
+        type="text/javascript"
+        dangerouslySetInnerHTML={{
+          __html: `
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         pageCategory: ${JSON.stringify(categories)},
         event : "postCategory"
       });
-    `}</script>
+    `
+        }}
+      />
     )}
     <script type="text/javascript">{`function onloadCallback() {}`}</script>
   </Head>

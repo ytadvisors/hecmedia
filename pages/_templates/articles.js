@@ -1,83 +1,23 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
-import { ScaleLoader } from "react-spinners";
+import SEO from "../../components/SEO";
+import Layout from "../../containers/Layout";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import ListOfPosts from "../../components/ListOfPosts";
+import { GET_ARTICLES } from "../../lib/graphql";
+import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
 
-const GET_PAGE_INFO = gql`
-  query PageInfo($cursor: String!) {
-    postData: posts(
-      after: $cursor
-      where: {
-        orderby: { field: DATE, order: DESC }
-        metaQuery: {
-          metaArray: [{ key: "is_video", value: "0", compare: EQUAL_TO }]
-        }
-      }
-    ) {
-      edges {
-        node {
-          title(format: RENDERED)
-          postDetails {
-            videoImage {
-              medium: sourceUrl(size: MEDIUM)
-              large: sourceUrl(size: MEDIUM_LARGE)
-            }
-            postHeader {
-              medium: sourceUrl(size: MEDIUM)
-              large: sourceUrl(size: MEDIUM_LARGE)
-            }
-          }
-          link
-          categories(where: { shouldOutputInFlatList: true }) {
-            edges {
-              node {
-                link
-                name
-              }
-            }
-          }
-          postId
-          slug
-          excerpt(format: RENDERED)
-          content(format: RENDERED)
-        }
-      }
-      pageInfo {
-        endCursor
-      }
-    }
-  }
-`;
-
-export default () => {
+export default props => {
   const cursor = "";
   const variables = { cursor };
-  const { loading, error, data, fetchMore } = useQuery(GET_PAGE_INFO, {
+  const { data, fetchMore } = useQuery(GET_ARTICLES, {
     variables
   });
 
-  if (loading)
-    return (
-      <div className="loading">
-        <ScaleLoader
-          sizeUnit="px"
-          size={150}
-          color="#0065bc"
-          loading
-          height={55}
-          width={10}
-        />
-      </div>
-    );
-  if (error) {
-    return <p>Error loading Category</p>;
-  }
-
+  const { title, link, content } = props || {};
   const { postData } = data;
   const posts = postData ? postData.edges.map(obj => obj && obj.node) : [];
-  variables.cursor = postData.pageInfo.endCursor;
+  variables.cursor = postData ? postData.pageInfo.endCursor : "";
 
   const loadMore = () =>
     fetchMore({
@@ -96,20 +36,35 @@ export default () => {
       }
     });
 
+  const description =
+    content || "On Demand Arts, Culture & Education Programming";
+
   return (
     <>
-      <div className="col-md-12">
-        <DefaultNav title="Articles" link="/articles" />
-      </div>
-      <ListOfPosts
-        posts={posts}
-        link={{ page: "posts" }}
-        numResults={0}
-        loadMore={
-          posts.length % 10 === 0 && variables.cursor !== null && loadMore
-        }
-        resizeRows
+      <SEO
+        {...{
+          title: `HEC-TV | ${title}`,
+          image: getPostImgSrc(posts[0]),
+          description: getExcerpt(description, 320),
+          url: process.env.SITE_HOST,
+          fbAppId: process.env.FACEBOOK_APP_ID,
+          pathname: link && link.replace(/https?:\/\/[^/]+/, "")
+        }}
       />
+      <Layout>
+        <div className="col-md-12">
+          <DefaultNav title="Articles" link="/articles" />
+        </div>
+        <ListOfPosts
+          posts={posts}
+          link={{ page: "posts" }}
+          numResults={0}
+          loadMore={
+            posts.length % 10 === 0 && variables.cursor !== null && loadMore
+          }
+          resizeRows
+        />
+      </Layout>
     </>
   );
 };

@@ -58,3 +58,8 @@ export const setPageOperation = operation => ({
 export const closeOverlayAction = () => ({
   type: types.CLOSE_OVERLAY
 });
+
+export const setData = data => ({
+  type: types.SET_DATA,
+  data
+});

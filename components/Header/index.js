@@ -1,7 +1,5 @@
 import React, { Component } from "react";
 import Link from "next/link";
-import { graphql } from "react-apollo";
-import gql from "graphql-tag";
 import $ from "jquery";
 import { FaSearch } from "react-icons/fa";
 import shortid from "shortid";
@@ -19,7 +17,7 @@ import "./styles.scss";
 
 const logo = "/static/assets/white_hec.png";
 
-class Header extends Component {
+export default class Header extends Component {
   constructor(props) {
     super(props);
     this.mounted = true;
@@ -178,9 +176,7 @@ class Header extends Component {
     );
 
   render() {
-    const {
-      data: { header, social }
-    } = this.props;
+    const { header, social } = this.props;
     const { navExpanded, isMobile } = this.state;
     const style = isMobile
       ? { width: `${window.innerWidth - 50}px`, right: "12px" }
@@ -285,54 +281,3 @@ class Header extends Component {
     );
   }
 }
-
-export const allHeaders = gql`
-  query allHeaders {
-    header: menus(where: { slug: "header" }) {
-      edges {
-        node {
-          menuItems {
-            edges {
-              node {
-                label
-                url
-                childItems {
-                  edges {
-                    node {
-                      url
-                      label
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    social: menus(where: { slug: "social" }) {
-      edges {
-        node {
-          menuItems {
-            edges {
-              node {
-                label
-                url
-                childItems {
-                  edges {
-                    node {
-                      url
-                      label
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-export default graphql(allHeaders)(Header);

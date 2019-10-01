@@ -1,70 +1,12 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
-import { ScaleLoader } from "react-spinners";
 import { useRouter } from "next/router";
 import Layout from "../../containers/Layout";
 import SEO from "../../components/SEO";
 import SinglePost from "../../components/SinglePost";
 import ListOfPosts from "../../components/ListOfPosts";
-
-const GET_MAGAZINE_INFO = gql`
-  query magazineInfo($slug: String!) {
-    magazine: magazineBy(slug: $slug) {
-      magazineId
-      link
-      slug
-      title
-      content
-      magazineDetail {
-        coverImage {
-          medium: sourceUrl(size: MEDIUM)
-          large: sourceUrl(size: MEDIUM_LARGE)
-        }
-        magazinePost {
-          post {
-            ... on Post {
-              id
-              title(format: RENDERED)
-              postDetails {
-                videoImage {
-                  medium: sourceUrl(size: MEDIUM)
-                  large: sourceUrl(size: MEDIUM_LARGE)
-                }
-                postHeader {
-                  medium: sourceUrl(size: MEDIUM)
-                  large: sourceUrl(size: MEDIUM_LARGE)
-                }
-              }
-              link
-              categories(where: { shouldOutputInFlatList: true }) {
-                edges {
-                  node {
-                    link
-                    name
-                  }
-                }
-              }
-              postId
-              slug
-              excerpt(format: RENDERED)
-            }
-          }
-        }
-      }
-    }
-    pageData: pageBy(uri: "magazines") {
-      feedDesign {
-        newRowLayout {
-          rowLayout
-          displayType
-        }
-        defaultDisplayType
-        defaultRowLayout
-      }
-    }
-  }
-`;
+import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
+import { GET_MAGAZINE_INFO } from "../../lib/graphql";
 
 const getContent = () => {
   const router = useRouter();
@@ -72,31 +14,28 @@ const getContent = () => {
     query: { slug }
   } = router;
   const variables = { slug };
-  const { loading, error, data } = useQuery(GET_MAGAZINE_INFO, {
+  const { data } = useQuery(GET_MAGAZINE_INFO, {
     variables
   });
 
-  if (loading)
-    return (
-      <div className="loading">
-        <ScaleLoader
-          sizeUnit="px"
-          size={150}
-          color="#0065bc"
-          loading
-          height={55}
-          width={10}
-        />
-      </div>
-    );
-  if (error) {
-    return <p>Error loading Category</p>;
-  }
+  const { magazine } = data || {};
+  const { title, link, content, magazineDetail: { magazinePost } = {} } =
+    magazine || {};
+  const description =
+    content || "On Demand Arts, Culture & Education Programming";
 
-  const { magazine } = data;
-  const { magazineDetail: { magazinePost } = {} } = magazine || {};
   return (
     <div className="col-md-12" style={{ background: "#eee" }}>
+      <SEO
+        {...{
+          title,
+          image: getPostImgSrc(magazine),
+          description: getExcerpt(description, 320),
+          url: process.env.SITE_HOST,
+          fbAppId: process.env.FACEBOOK_APP_ID,
+          pathname: link && link.replace(/https?:\/\/[^/]+/, "")
+        }}
+      />
       <SinglePost
         {...{
           post: magazine,
@@ -129,7 +68,6 @@ const getContent = () => {
 
 export default () => (
   <>
-    <SEO />
     <Layout style={{ background: "#eee" }}>{getContent()}</Layout>
   </>
 );

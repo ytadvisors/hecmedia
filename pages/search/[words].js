@@ -1,50 +1,12 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
-import { ScaleLoader } from "react-spinners";
 import Layout from "../../containers/Layout";
 import SEO from "../../components/SEO";
 import ListOfPosts from "../../components/ListOfPosts";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
-
-const GET_SEARCH_RESULTS = gql`
-  query PostCategories($search: String!, $cursor: String!) {
-    postData: posts(after: $cursor, where: { search: $search }) {
-      edges {
-        node {
-          title(format: RENDERED)
-          postDetails {
-            videoImage {
-              medium: sourceUrl(size: MEDIUM)
-              large: sourceUrl(size: MEDIUM_LARGE)
-            }
-            postHeader {
-              medium: sourceUrl(size: MEDIUM)
-              large: sourceUrl(size: MEDIUM_LARGE)
-            }
-            isVideo
-          }
-          link
-          categories(where: { shouldOutputInFlatList: true }) {
-            edges {
-              node {
-                link
-                name
-              }
-            }
-          }
-          postId
-          slug
-          excerpt(format: RENDERED)
-        }
-      }
-      pageInfo {
-        endCursor
-      }
-    }
-  }
-`;
+import { getExcerpt } from "../../lib/getFunctions";
+import { GET_SEARCH_RESULTS } from "../../lib/graphql";
 
 const getContent = () => {
   const router = useRouter();
@@ -52,29 +14,12 @@ const getContent = () => {
     query: { words }
   } = router;
   const variables = { search: words, cursor: "" };
-  const { loading, error, data, fetchMore } = useQuery(GET_SEARCH_RESULTS, {
+  const { data, fetchMore } = useQuery(GET_SEARCH_RESULTS, {
     variables
   });
 
-  if (loading)
-    return (
-      <div className="loading">
-        <ScaleLoader
-          sizeUnit="px"
-          size={150}
-          color="#0065bc"
-          loading
-          height={55}
-          width={10}
-        />
-      </div>
-    );
-  if (error) {
-    return <p>Error loading Category</p>;
-  }
-
   const { postData } = data || {};
-  variables.cursor = postData.pageInfo.endCursor;
+  variables.cursor = postData ? postData.pageInfo.endCursor : "";
 
   const loadMore = () =>
     fetchMore({
@@ -108,6 +53,7 @@ const getContent = () => {
           numResults={0}
           design={null}
           loadMore={
+            postData &&
             postData.edges.length % 10 === 0 &&
             variables.cursor !== null &&
             loadMore
@@ -119,9 +65,22 @@ const getContent = () => {
   );
 };
 
-export default () => (
-  <>
-    <SEO />
-    <Layout>{getContent()}</Layout>
-  </>
-);
+export default () => {
+  const description = "On Demand Arts, Culture & Education Programming";
+
+  return (
+    <>
+      <SEO
+        {...{
+          title: `HEC-TV | Search`,
+          image: "",
+          description: getExcerpt(description, 320),
+          url: process.env.SITE_HOST,
+          fbAppId: process.env.FACEBOOK_APP_ID,
+          pathname: `${process.env.SITE_HOST}/search`
+        }}
+      />
+      <Layout>{getContent()}</Layout>
+    </>
+  );
+};
