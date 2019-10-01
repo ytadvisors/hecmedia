@@ -1378,10 +1378,10 @@
     ramda "^0.26.1"
     s3-stream-upload "^2.0.2"
 
-"@serverless/aws-s3@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@serverless/aws-s3/-/aws-s3-3.1.0.tgz#ca7cd2555f2f09bdcbaf2810644842fa82643c9b"
-  integrity sha512-+cm5ztXH/3lBjLH0kxf+rml1Y8HBHCGWgRUDPLUAKOp4DckhpbxBHB830chNkCpBJQldBpbY75XP5APGGOCTZQ==
+"@serverless/aws-s3@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@serverless/aws-s3/-/aws-s3-4.0.0.tgz#1a2a55e25ffa2836b2f4c1b73131a437654fc501"
+  integrity sha512-WbX4XOXIJb04XHfjKilxv5tgRMvwHNtYobk3kwMIRq6vYOpD/Aa+ymYm159WhjfRSiLjovoa8VbXlxNkdniHyw==
   dependencies:
     "@serverless/core" "^1.0.0"
     archiver "^3.0.0"
@@ -9965,7 +9965,7 @@ react-lazyload@2.6.2:
   resolved "https://registry.yarnpkg.com/react-lazyload/-/react-lazyload-2.6.2.tgz#6a1660de6e8653632797539189d19d64e924482c"
   integrity sha512-zbFiwI3H7W0/Qvb6T/ew2NiGe2wj+soYNW7vv5Dte1eZuJDvvyUOHo8GpYfEeWoP5x4Rree2Hwop+lCISalBwg==
 
-react-lifecycles-compat@^3.0.2, react-lifecycles-compat@^3.0.4:
+react-lifecycles-compat@^3.0.4:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
@@ -10044,14 +10044,6 @@ react-recaptcha@2.3.10:
   version "2.3.10"
   resolved "https://registry.yarnpkg.com/react-recaptcha/-/react-recaptcha-2.3.10.tgz#1f7a001f24ab7e1a323fcf1fd8644afecb56f7da"
   integrity sha512-IyanbozsYCuHvTYDuskZTIEcRAMG/sdvAu5b29iQWoC8Kd3Zk9WGCv2oNxh6RfGHvSvgHAyaLjmC6ei/yMsJ7g==
-
-react-redux-loading-bar@4.4.0:
-  version "4.4.0"
-  resolved "https://registry.yarnpkg.com/react-redux-loading-bar/-/react-redux-loading-bar-4.4.0.tgz#630f1e3ada7a15d461021d58d8ea935901dba104"
-  integrity sha512-kcR+wT2eA3+bQD7Gpn7KcHcnANHkayLQGiePEU4JFnLq6sQqjlcE3n8DAUEGjTV+T+Gwlt3rMq/zfImq5yc0PA==
-  dependencies:
-    prop-types "^15.6.2"
-    react-lifecycles-compat "^3.0.2"
 
 react-redux@7.1.1:
   version "7.1.1"
@@ -10864,14 +10856,14 @@ serve-static@1.14.1:
     parseurl "~1.3.3"
     send "0.17.1"
 
-serverless-next.js@^1.2.3:
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/serverless-next.js/-/serverless-next.js-1.2.3.tgz#530ea6ca223095d403656363d1c25b8a3ab7dec3"
-  integrity sha512-23EQOA1R/XM/hfbOqx11+8Gbl4L/86uHHmendEinrrab1xhkjkcieuobM/lTQyuBklffK4YMXAzJdoVMmXY8cg==
+serverless-next.js@1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/serverless-next.js/-/serverless-next.js-1.2.4.tgz#d886a743c69604c4556e652a008c38ea3e0e03f8"
+  integrity sha512-b2LkJ6YJxSGP9gw/7nx+lRPo9LqyJ1OnWxRQvE1s73oaPzvdHIC70w7MFe9DPpwTsq3EtfxyAoMGKoQNcSZWng==
   dependencies:
     "@serverless/aws-cloudfront" "^5.0.0"
     "@serverless/aws-lambda" "^3.0.0"
-    "@serverless/aws-s3" "^3.1.0"
+    "@serverless/aws-s3" "^4.0.0"
     "@serverless/core" "^1.0.0"
     "@serverless/domain" "^5.0.0"
     execa "^2.0.4"
