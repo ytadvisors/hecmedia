@@ -5,7 +5,7 @@ import { MdLocationOn } from "react-icons/md";
 import { IoIosCalendar } from "react-icons/io";
 import LazyLoad from "react-lazyload";
 import { isServer } from "../../lib/serverFunctions";
-import { getEventDate } from "../../lib/getFunctions";
+import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
 
 import "./styles.scss";
 
@@ -42,7 +42,7 @@ export default class ListOfPosts extends Component {
       ? `${excerpt.substr(0, truncateLength)}&hellip;`
       : excerpt;
 
-  getThumbNail = (thumbnail, isVideo, link) => (
+  getThumbNail = (thumbnail, isVideo = false, link) => (
     <a href={link} className="thumbnail-link">
       {isVideo && <img src={playButton} className="play-icon" alt="play" />}
       <LazyLoad height={200}>
@@ -59,18 +59,6 @@ export default class ListOfPosts extends Component {
     const { link: { page } = {} } = this.props;
     const { slug, redirect } = post;
     return redirect || slug ? `/${page}/${slug}` : `/${page}/${slug}`;
-  };
-
-  getImgSrc = (post, type) => {
-    const {
-      postDetails: { videoImage, postHeader } = {},
-      eventDetails: { eventImage } = {},
-      magazineDetail: { coverImage } = {}
-    } = post;
-
-    const currentImg = videoImage || postHeader || eventImage || coverImage;
-    if (type === "small") return currentImg && currentImg.medium;
-    return currentImg && currentImg.large;
   };
 
   getCategoryHelper = category => {
@@ -236,7 +224,7 @@ export default class ListOfPosts extends Component {
               style={{ padding: "10px", paddingBottom: "30px" }}
             >
               {this.getThumbNail(
-                this.getImgSrc(post, "small"),
+                getPostImgSrc(post, "small"),
                 isVideo,
                 this.getLink(post)
               )}
@@ -255,7 +243,7 @@ export default class ListOfPosts extends Component {
             <div
               className="wallpaper"
               style={{
-                backgroundImage: `url(${this.getImgSrc(post) || defaultImage})`
+                backgroundImage: `url(${getPostImgSrc(post) || defaultImage})`
               }}
             >
               {(post.redirect && (
@@ -295,7 +283,7 @@ export default class ListOfPosts extends Component {
     return (
       <div className="featured-block">
         {this.getThumbNail(
-          this.getImgSrc(post, isMobile ? "small" : ""),
+          getPostImgSrc(post, isMobile ? "small" : ""),
           isVideo,
           this.getLink(post)
         )}
@@ -312,7 +300,7 @@ export default class ListOfPosts extends Component {
         <div
           className="wallpaper"
           style={{
-            backgroundImage: `url(${this.getImgSrc(
+            backgroundImage: `url(${getPostImgSrc(
               post,
               !isMobile ? "small" : ""
             )})`
@@ -338,7 +326,7 @@ export default class ListOfPosts extends Component {
     return (
       <div>
         <div className={`thumbnail-${layout.replace(" ", "-").toLowerCase()}`}>
-          {this.getThumbNail(this.getImgSrc(post), isVideo, this.getLink(post))}
+          {this.getThumbNail(getPostImgSrc(post), isVideo, this.getLink(post))}
         </div>
         {content}
       </div>
@@ -348,7 +336,7 @@ export default class ListOfPosts extends Component {
   getWallpaper = (post, content) => (
     <div
       className="wallpaper"
-      style={{ backgroundImage: `url(${this.getImgSrc(post)})` }}
+      style={{ backgroundImage: `url(${getPostImgSrc(post)})` }}
     >
       <a href={this.getLink(post)}>
         <span>

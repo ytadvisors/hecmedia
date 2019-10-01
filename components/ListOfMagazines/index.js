@@ -1,11 +1,9 @@
 import React from "react";
-import { graphql } from "react-apollo";
-import gql from "graphql-tag";
 import LazyLoad from "react-lazyload";
 
 import "./styles.scss";
 
-export const ListOfMagazines = ({ data: { magazines } }) => (
+export default ({ featuredMagazines }) => (
   <section className="list-of-magazines">
     <div className="title">
       <div>
@@ -15,8 +13,8 @@ export const ListOfMagazines = ({ data: { magazines } }) => (
       </div>
     </div>
     <ul className="magazine-list">
-      {magazines &&
-        magazines.edges.map(
+      {featuredMagazines &&
+        featuredMagazines.edges.map(
           ({
             node: {
               title,
@@ -54,23 +52,3 @@ export const ListOfMagazines = ({ data: { magazines } }) => (
     </ul>
   </section>
 );
-
-export const allMagazines = gql`
-  query allMagazines {
-    magazines(first: 5, where: { orderby: { field: DATE, order: DESC } }) {
-      edges {
-        node {
-          title
-          link
-          magazineDetail {
-            coverImage {
-              sourceUrl(size: MEDIUM)
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-export default graphql(allMagazines)(ListOfMagazines);

@@ -1,126 +1,30 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
-import { ScaleLoader } from "react-spinners";
+import { GET_HOME_PAGE } from "../lib/graphql";
 import Layout from "../containers/Layout";
 import ListOfPosts from "../components/ListOfPosts";
 import SEO from "../components/SEO";
 import { removeDuplicates } from "../lib/updateFunctions";
+import { getPostImgSrc, getExcerpt } from "../lib/getFunctions";
 
-export const GET_HOME_PAGE = gql`
-  query pageInfo($uri: String!) {
-    pageData: pageBy(uri: $uri) {
-      requiredPosts {
-        postList {
-          post {
-            ... on Post {
-              title(format: RENDERED)
-              postDetails {
-                videoImage {
-                  medium: sourceUrl(size: MEDIUM)
-                  large: sourceUrl(size: MEDIUM_LARGE)
-                }
-                postHeader {
-                  medium: sourceUrl(size: MEDIUM)
-                  large: sourceUrl(size: MEDIUM_LARGE)
-                }
-                isVideo
-              }
-              link
-              categories(where: { shouldOutputInFlatList: true }) {
-                edges {
-                  node {
-                    link
-                    name
-                  }
-                }
-              }
-              postId
-              slug
-              excerpt(format: RENDERED)
-              content(format: RENDERED)
-            }
-          }
-        }
-      }
-      feedDesign {
-        newRowLayout {
-          rowLayout
-          displayType
-        }
-        defaultDisplayType
-        defaultRowLayout
-      }
-    }
-    postData: posts(
-      first: 10
-      where: { orderby: { field: DATE, order: ASC } }
-    ) {
-      edges {
-        node {
-          title(format: RENDERED)
-          postDetails {
-            videoImage {
-              medium: sourceUrl(size: MEDIUM)
-              large: sourceUrl(size: MEDIUM_LARGE)
-            }
-            postHeader {
-              medium: sourceUrl(size: MEDIUM)
-              large: sourceUrl(size: MEDIUM_LARGE)
-            }
-            isVideo
-          }
-          link
-          categories(where: { shouldOutputInFlatList: true }) {
-            edges {
-              node {
-                link
-                name
-              }
-            }
-          }
-          postId
-          slug
-          excerpt(format: RENDERED)
-          content(format: RENDERED)
-        }
-      }
-    }
-  }
-`;
-
-const getContent = () => {
-  const variables = { uri: "home" };
-  const { loading, error, data } = useQuery(GET_HOME_PAGE, {
-    variables
+export default () => {
+  const { data } = useQuery(GET_HOME_PAGE, {
+    variables: { uri: "home" },
+    notifyOnNetworkStatusChange: true
   });
-
-  if (loading)
-    return (
-      <Layout>
-        <div className="loading">
-          <ScaleLoader
-            sizeUnit="px"
-            size={150}
-            color="#0065bc"
-            loading
-            height={55}
-            width={10}
-          />
-        </div>
-      </Layout>
-    );
-  if (error) {
-    return (
-      <Layout>
-        <p>Error loading Page</p>
-      </Layout>
-    );
-  }
-
   const { pageData, postData } = data || {};
-  const { requiredPosts: { postList = [] } = {}, feedDesign } = pageData || {};
+  const {
+    title,
+    content,
+    link,
+    requiredPosts: { postList = [] } = {},
+    feedDesign
+  } = pageData || {};
+  const description =
+    content || "On Demand Arts, Culture & Education Programming";
+
   let pagePosts = [];
+  let image = "";
   if (postData && postData.edges) {
     pagePosts = [
       ...postList.map(obj => obj.post),
@@ -129,24 +33,30 @@ const getContent = () => {
     pagePosts = removeDuplicates(pagePosts, "postId");
     pagePosts = removeDuplicates(pagePosts, "postId");
     pagePosts = pagePosts.splice(0, 10);
+    image = getPostImgSrc(pagePosts[0]);
   }
-
   return (
-    <Layout showBottomNav>
-      <ListOfPosts
-        posts={pagePosts}
-        link={{ page: "posts" }}
-        numResults={0}
-        design={feedDesign}
-        loadMore={null}
-        resizeRows
-      />
-    </Layout>
+    <>
+      <Layout showBottomNav>
+        <SEO
+          {...{
+            title: `HEC-TV | ${title}`,
+            image,
+            description: getExcerpt(description, 320),
+            url: process.env.SITE_HOST,
+            fbAppId: process.env.FACEBOOK_APP_ID,
+            pathname: link && link.replace(/https?:\/\/[^/]+/, "")
+          }}
+        />
+        <ListOfPosts
+          posts={pagePosts}
+          link={{ page: "posts" }}
+          numResults={0}
+          design={feedDesign}
+          loadMore={null}
+          resizeRows
+        />
+      </Layout>
+    </>
   );
 };
-
-export default () => (
-  <>
-    <SEO /> {getContent()}
-  </>
-);

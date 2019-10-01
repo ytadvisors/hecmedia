@@ -1,48 +1,23 @@
 import React from "react";
 import Link from "next/link";
-import { graphql } from "react-apollo";
-import gql from "graphql-tag";
 import { Nav, NavItem, NavDropdown } from "react-bootstrap";
+import { useQuery } from "@apollo/react-hooks";
 import { Router } from "../../routes";
+import { GET_EVENTS_CATEGORIES } from "../../lib/graphql";
 import NavWrap from "../NavWrap";
 import CalendarSelector from "../CalendarSelector";
-import { getArrayUnion } from "../../lib/updateFunctions";
 import { getFormattedDate } from "../../lib/getFunctions";
 import "./styles.scss";
 
-export const EventNav = props => {
-  let cursor = "";
-  const {
-    link,
-    title,
-    currentDate,
-    currentCategory,
-    data: { categories, fetchMore }
-  } = props;
+export default props => {
+  const { link, title, currentDate, currentCategory } = props;
+  const variables = { limit: 30 };
+  const { data } = useQuery(GET_EVENTS_CATEGORIES, {
+    variables,
+    notifyOnNetworkStatusChange: true
+  });
 
-  if (categories && categories.edges) {
-    cursor = categories.pageInfo.endCursor;
-    fetchMore({
-      variables: {
-        cursor
-      },
-      updateQuery: (prev, updateProps) => {
-        const { fetchMoreResult } = updateProps;
-        let updateArray = prev;
-        const numResults = fetchMoreResult.categories.edges.length;
-        if (fetchMoreResult && numResults > 0) {
-          updateArray = getArrayUnion(
-            prev,
-            fetchMoreResult,
-            "categories",
-            "node.eventCategoryId"
-          );
-        }
-        return updateArray;
-      }
-    });
-  }
-
+  const { categories } = data || {};
   const changeDate = newDate => {
     Router.pushRoute(`/events/${currentCategory}/${getFormattedDate(newDate)}`);
   };
@@ -106,28 +81,3 @@ export const EventNav = props => {
     </section>
   );
 };
-
-export const allCategories = gql`
-  query allCategories($cursor: String!) {
-    categories: eventCategories(
-      after: $cursor
-      where: { shouldOutputInFlatList: true }
-    ) {
-      edges {
-        node {
-          slug
-          name
-          link
-          eventCategoryId
-        }
-      }
-      pageInfo {
-        endCursor
-      }
-    }
-  }
-`;
-
-export default graphql(allCategories, {
-  options: { variables: { cursor: "" } }
-})(EventNav);

@@ -1,73 +1,60 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
+import SEO from "../../components/SEO";
+import Layout from "../../containers/Layout";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import ListOfPosts from "../../components/ListOfPosts";
-
-const GET_MAGAZINES = gql`
-  query MagazineList {
-    magazines {
-      edges {
-        node {
-          magazineId
-          link
-          slug
-          title
-          magazineDetail {
-            coverImage {
-              medium: sourceUrl(size: MEDIUM)
-              large: sourceUrl(size: MEDIUM_LARGE)
-            }
-          }
-        }
-      }
-    }
-    pageData: pageBy(uri: "magazines") {
-      feedDesign {
-        newRowLayout {
-          rowLayout
-          displayType
-        }
-        defaultDisplayType
-        defaultRowLayout
-      }
-    }
-  }
-`;
+import { GET_ALL_MAGAZINES } from "../../lib/graphql";
 
 export default () => {
-  const loadMagazines = variables => {
-    try {
-      const { loading, error, data } = useQuery(GET_MAGAZINES, {
-        variables,
-        fetchPolicy: "cache-and-network"
-      });
+  const cursor = "";
+  const variables = { cursor };
+  const { data, fetchMore } = useQuery(GET_ALL_MAGAZINES, {
+    variables
+  });
 
-      if (loading) return <p>Loading Magazines</p>;
-      if (error) {
-        return <p>Error loading Magazines</p>;
+  const { magazineData, pageData: { feedDesign } = {} } = data || {};
+  variables.cursor = magazineData ? magazineData.pageInfo.endCursor : "";
+
+  const loadMore = () =>
+    fetchMore({
+      variables,
+      updateQuery: (prev, { fetchMoreResult }) => {
+        if (!fetchMoreResult) {
+          return prev;
+        }
+
+        const results = { ...fetchMoreResult };
+        results.magazineData.edges = [
+          ...prev.magazineData.edges,
+          ...results.magazineData.edges
+        ];
+        return results;
       }
-      return data;
-    } catch (err) {
-      console.log(err.message);
-      return {};
-    }
-  };
-
-  const { magazines, pageData: { feedDesign } = {} } = loadMagazines({});
+    });
 
   return (
     <>
-      <div className="col-md-12">
-        <DefaultNav title="Magazines" link="/magazines" />
-      </div>
-      <ListOfPosts
-        posts={magazines ? magazines.edges.map(obj => obj && obj.node) : []}
-        link={{ page: "magazine" }}
-        numResults={0}
-        design={feedDesign}
-        loadMore={null}
-      />
+      <SEO />
+      <Layout>
+        <div className="col-md-12">
+          <DefaultNav title="Magazines" link="/magazines" />
+        </div>
+        <ListOfPosts
+          posts={
+            magazineData ? magazineData.edges.map(obj => obj && obj.node) : []
+          }
+          link={{ page: "magazine" }}
+          numResults={0}
+          design={feedDesign}
+          loadMore={
+            magazineData &&
+            magazineData.edges.length % 10 === 0 &&
+            variables.cursor !== null &&
+            loadMore
+          }
+        />
+      </Layout>
     </>
   );
 };

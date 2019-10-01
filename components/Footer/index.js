@@ -1,80 +1,13 @@
 import React from "react";
-import { useQuery } from "@apollo/react-hooks";
 import Link from "next/link";
-import gql from "graphql-tag";
 import _ from "lodash";
 import { getSocialMenuObject, getHref } from "../../lib/getFunctions";
 import SocialLinks from "../SocialLinks";
 
 import "./styles.scss";
 
-const GET_FOOTER_LINKS = gql`
-  query FooterLinks {
-    footer: menus(where: { slug: "footer" }) {
-      edges {
-        node {
-          menuItems {
-            edges {
-              node {
-                label
-                url
-                childItems {
-                  edges {
-                    node {
-                      url
-                      label
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    social: menus(where: { slug: "social" }) {
-      edges {
-        node {
-          menuItems {
-            edges {
-              node {
-                label
-                url
-                childItems {
-                  edges {
-                    node {
-                      url
-                      label
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const loadFooter = variables => {
-  try {
-    const { loading, error, data } = useQuery(GET_FOOTER_LINKS, {
-      variables
-    });
-    if (loading) return <p>Loading Category</p>;
-    if (error) {
-      return <p>Error loading Category</p>;
-    }
-    return data;
-  } catch (err) {
-    return {};
-  }
-};
-
-export default () => {
-  const data = loadFooter();
-  const { footer, social } = data || {};
+export default props => {
+  const { footer, social } = props;
   const { node: { menuItems: { edges: footerList = [] } = {} } = {} } = footer
     ? footer.edges[0]
     : {};

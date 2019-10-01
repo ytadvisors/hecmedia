@@ -37,7 +37,7 @@ export default class extends Component {
   };
 
   render() {
-    const { style, programs, children } = this.props;
+    const { style, programs, featuredMagazines, children } = this.props;
     const { isMobile } = this.state;
     return (
       <section className="program-viewer">
@@ -78,7 +78,7 @@ export default class extends Component {
                     <Schedule programs={programs} />
                   </div>
                   <div className="col-sm-8 col-sm-pull-4  col-lg-12 col-lg-pull-0  no-padding">
-                    <ListOfMagazines />
+                    <ListOfMagazines featuredMagazines={featuredMagazines} />
                   </div>
                 </div>
               </SideNavigation>

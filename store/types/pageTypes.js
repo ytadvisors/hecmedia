@@ -29,6 +29,7 @@ export const SET_PRICING = `${prefix}SET_PRICING`;
 export const SET_MENU = `${prefix}SET_MENU`;
 export const SET_LIVE_VIDEO = `${prefix}SET_LIVE_VIDEO`;
 export const SET_PAGE_OPERATION = `${prefix}SET_PAGE_OPERATION`;
+export const SET_DATA = `${prefix}SET_DATA`;
 
 // Error
 export const CHANGE_PAGE_ERROR = `${prefix}CHANGE_PAGE_ERROR`;

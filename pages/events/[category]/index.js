@@ -1,100 +1,43 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
 import Layout from "../../../containers/Layout";
 import SEO from "../../../components/SEO";
 import SinglePost from "../../../components/SinglePost";
 import ListOfPosts from "../../../components/ListOfPosts";
-
-const GET_EVENT_INFO = gql`
-  query eventInfo($uri: String!) {
-    eventData: eventBy(uri: $uri) {
-      title
-      content
-      link
-      slug
-      eventDetails {
-        eventDates {
-          endTime
-          startTime
-        }
-        eventImage {
-          medium: sourceUrl(size: MEDIUM)
-          large: sourceUrl(size: MEDIUM_LARGE)
-        }
-        venue
-        webAddress
-        eventPrice
-        externalImage
-        eventPosts {
-          eventPost {
-            ... on Post {
-              id
-              title(format: RENDERED)
-              excerpt(format: RENDERED)
-              slug
-              postDetails {
-                videoImage {
-                  medium: sourceUrl(size: MEDIUM)
-                  large: sourceUrl(size: MEDIUM_LARGE)
-                }
-                postHeader {
-                  medium: sourceUrl(size: MEDIUM)
-                  large: sourceUrl(size: MEDIUM_LARGE)
-                }
-                isVideo
-              }
-              link
-              categories(where: { shouldOutputInFlatList: true }) {
-                edges {
-                  node {
-                    link
-                    name
-                  }
-                }
-              }
-              postId
-              slug
-              excerpt(format: RENDERED)
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const loadEvents = variables => {
-  try {
-    const { loading, error, data } = useQuery(GET_EVENT_INFO, {
-      variables
-    });
-
-    if (loading) return <p>Loading Events</p>;
-    if (error) {
-      return <p>Error loading Events</p>;
-    }
-    return data;
-  } catch (err) {
-    console.log(err.message);
-    return {};
-  }
-};
+import { GET_EVENT_INFO } from "../../../lib/graphql";
+import { getPostImgSrc, getExcerpt } from "../../../lib/getFunctions";
 
 export default () => {
   const router = useRouter();
   const {
     query: { category }
   } = router;
+  const variables = { uri: category };
 
-  const data = category ? loadEvents({ uri: category }) : {};
-  const { eventData } = data;
-  const { eventDetails: { eventPosts } = {} } = eventData || {};
+  const { data } = useQuery(GET_EVENT_INFO, {
+    variables
+  });
+
+  const { eventData } = data || {};
+  const { title, content, link, eventDetails: { eventPosts } = {} } =
+    eventData || {};
+
+  const description =
+    content || "On Demand Arts, Culture & Education Programming";
 
   return (
     <>
-      <SEO />
+      <SEO
+        {...{
+          title,
+          image: eventData && getPostImgSrc(eventData),
+          description: getExcerpt(description, 320),
+          url: process.env.SITE_HOST,
+          fbAppId: process.env.FACEBOOK_APP_ID,
+          pathname: link && link.replace(/https?:\/\/[^/]+/, "")
+        }}
+      />
       <Layout>
         <div className="col-md-12">
           {eventData && (

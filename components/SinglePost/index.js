@@ -51,7 +51,7 @@ export default class SinglePost extends Component {
   resizeVideos = () => {
     const isMobile = !isServer && $(window).width() <= 1170;
     if (isMobile) {
-      $(`#post-container iframe`).each(function() {
+      $(`.blog-content iframe`).each(function() {
         const src = $(this).attr("src");
         if (src.match(/youtube\.com/g)) {
           let width = $(window).width();
@@ -60,7 +60,7 @@ export default class SinglePost extends Component {
         }
       });
     } else {
-      $(`#post-container iframe`).each(function() {
+      $(`.blog-content iframe`).each(function() {
         const src = $(this).attr("src");
         if (src.match(/youtube\.com/g)) {
           const width = 1000;
@@ -113,7 +113,7 @@ export default class SinglePost extends Component {
       moment(endDate, "MM/DD/YYYY h:mm a", true)
     );
 
-    const imgThumbnail = this.getImgSrc(post);
+    const imgThumbnail = post && this.getImgSrc(post);
 
     const isLiveVideo =
       isPlaying &&
