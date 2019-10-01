@@ -5,18 +5,23 @@ import Layout from "../../containers/Layout";
 import ListOfPosts from "../../components/ListOfPosts";
 import CategoryNav from "../../components/SubNavigation/CategoryNav";
 import { GET_CATEGORY_INFO } from "../../lib/graphql";
+import { getExcerpt, getPostImgSrc } from "../../lib/getFunctions";
 
 export default props => {
   const cursor = "";
-  const { category } = props;
+  const { category, link, content } = props || {};
   const variables = { category, cursor };
   const { data, fetchMore } = useQuery(GET_CATEGORY_INFO, {
     variables
   });
 
+  const title = category
+    .replace(/^\w/, c => c.toUpperCase())
+    .replace(/-/g, " ");
   const { postData } = data || {};
   const posts = postData ? postData.edges.map(obj => obj && obj.node) : [];
   variables.cursor = postData ? postData.pageInfo.endCursor : "";
+  const image = posts && posts.length > 0 ? getPostImgSrc(posts[0]) : "";
 
   const loadMore = () =>
     fetchMore({
@@ -35,9 +40,21 @@ export default props => {
       }
     });
 
+  const description =
+    content || "On Demand Arts, Culture & Education Programming";
+
   return (
     <>
-      <SEO />
+      <SEO
+        {...{
+          title: `HEC-TV | ${title}`,
+          description: getExcerpt(description, 320),
+          url: process.env.SITE_HOST,
+          fbAppId: process.env.FACEBOOK_APP_ID,
+          pathname: link && link.replace(/https?:\/\/[^/]+/, ""),
+          image
+        }}
+      />
       <Layout>
         <CategoryNav />
         <ListOfPosts

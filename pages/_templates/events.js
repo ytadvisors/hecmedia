@@ -52,7 +52,7 @@ export default props => {
     title = "Events",
     link = "/events",
     content
-  } = props;
+  } = props || {};
   const incr = 0;
   const mDay = currentDate ? new Date(`${currentDate} 00:00:00`) : new Date();
   const currentDay = moment(mDay).format("YYYY-MM-DD");

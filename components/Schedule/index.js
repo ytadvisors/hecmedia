@@ -5,7 +5,7 @@ import { getCurrentPrograms } from "../../lib/getFunctions";
 import "./styles.scss";
 
 export default ({ programs = {} }) => {
-  const { scheduleDetails: { schedulePrograms } = {} } = programs;
+  const { scheduleDetails: { schedulePrograms } = {} } = programs || {};
   const dailyPrograms = schedulePrograms
     ? getCurrentPrograms(schedulePrograms, 5)
     : null;
