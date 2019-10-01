@@ -15,7 +15,7 @@ export default props => {
   const { page } = query;
 
   const variables = { uri: page };
-  const { loading, error, data } = useQuery(GET_PAGE_TEMPLATE, {
+  const { data } = useQuery(GET_PAGE_TEMPLATE, {
     variables
   });
 
@@ -58,8 +58,6 @@ export default props => {
                 ...props,
                 title,
                 link,
-                loading,
-                error,
                 pageContent: { ...about, content },
                 key: link
               }}
@@ -74,8 +72,6 @@ export default props => {
                 title,
                 link,
                 content,
-                loading,
-                error,
                 key: link
               }}
             />
@@ -88,8 +84,6 @@ export default props => {
                 ...props,
                 title,
                 link,
-                loading,
-                error,
                 pageContent: { ...contact, content },
                 key: link
               }}

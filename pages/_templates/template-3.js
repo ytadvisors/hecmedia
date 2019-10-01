@@ -7,6 +7,7 @@ import Layout from "../../containers/Layout";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import Template3 from "../../components/Templates/template-3/index";
 import Map from "../../components/Map";
+import { getExcerpt } from "../../lib/getFunctions";
 
 const getSuccessMsg = () => (
   <div
@@ -37,10 +38,21 @@ const contactUs = props => {
 const Page = props => {
   const { title, link, pageContent } = props;
   const { GOOGLE_API_KEY } = process.env;
+  const { content } = pageContent;
+  const description =
+    content || "On Demand Arts, Culture & Education Programming";
 
   return (
     <>
-      <SEO />
+      <SEO
+        {...{
+          title: `HEC-TV | ${title}`,
+          description: getExcerpt(description, 320),
+          url: process.env.SITE_HOST,
+          fbAppId: process.env.FACEBOOK_APP_ID,
+          pathname: link && link.replace(/https?:\/\/[^/]+/, "")
+        }}
+      />
       <Layout>
         <div className="col-md-12">
           <DefaultNav title={title} link={link} />

@@ -5,8 +5,9 @@ import Category from "../../_templates/category";
 export default props => {
   const router = useRouter();
   const {
-    query: { pid }
+    query: { pid },
+    asPath
   } = router;
 
-  return <Category {...props} category={pid} />;
+  return <Category {...props} category={pid} link={asPath} />;
 };
