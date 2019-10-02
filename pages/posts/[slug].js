@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import Layout from "../../containers/Layout";
@@ -9,6 +9,7 @@ import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { GET_PAGE_INFO, GET_PAGE_CATEGORY } from "../../lib/graphql";
 
 export default () => {
+  const [count, setCount] = useState(0);
   const router = useRouter();
   const {
     query: { slug }
@@ -23,13 +24,12 @@ export default () => {
   const { post } = data || {};
   const { categories, postDetails, title, excerpt, content, link } = post || {};
   const { relatedPosts } = postDetails || {};
-  let loadMore = () => {};
   let result = { ...data };
   let currentPosts = [];
   if (postDetails) {
     if (categories && categories.edges) {
       const categoryList = categories.edges.map(obj => obj.node.categoryId);
-      loadMore = () =>
+      if (!relatedPosts || relatedPosts.length < 3) {
         fetchMore({
           query: GET_PAGE_CATEGORY,
           variables: { categories: categoryList },
@@ -46,18 +46,17 @@ export default () => {
                 result.post.postDetails.relatedPosts = currentPosts;
               }
             }
+            setCount(count + 1);
             return result;
           }
         });
+      }
 
       if (result.post.postDetails.relatedPosts)
         result.post.postDetails.relatedPosts = result.post.postDetails.relatedPosts.filter(
           n => (n.relatedPost ? n : null)
         );
     }
-  }
-  if (!relatedPosts || relatedPosts.length < 3) {
-    loadMore();
   }
 
   const description =

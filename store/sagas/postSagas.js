@@ -1,8 +1,6 @@
 import { put, select, takeLatest, all, call, delay } from "redux-saga/effects";
 import deepMapKeys from "deep-map-keys";
 import _ from "lodash";
-
-import { showLoading, hideLoading } from "react-redux-loading-bar";
 import PostApi from "../api/PostApi";
 import * as types from "../types/postTypes";
 import * as eventTypes from "../types/eventTypes";
@@ -93,7 +91,6 @@ function mapPost(result) {
 
 function* loadPost(payload) {
   try {
-    yield put(showLoading());
     const api = new PostApi();
     const post = yield call(api.getPostBySlug, payload.postId);
     if (post.data.length > 0) {
@@ -134,17 +131,13 @@ function* loadPost(payload) {
     } else {
       throw new Error(`No matching post: ${payload.postId}`);
     }
-
-    yield put(hideLoading());
   } catch (error) {
     yield put({ type: types.LOAD_ERROR, error });
-    yield put(hideLoading());
   }
 }
 
 function* loadSubcategories(payload) {
   try {
-    yield put(showLoading());
     const api = new PostApi();
     const categoryInfo = yield call(api.getCategory, payload.category);
     if (
@@ -174,10 +167,8 @@ function* loadSubcategories(payload) {
         });
       }
     }
-    yield put(hideLoading());
   } catch (error) {
     yield put({ type: types.LOAD_ERROR, error });
-    yield put(hideLoading());
   }
 }
 
@@ -190,7 +181,6 @@ function* loadSubcategories(payload) {
  */
 function* loadCategoryPosts({ categories, page = 1, loadMore = false } = {}) {
   try {
-    yield put(showLoading());
     const api = new PostApi();
 
     const posts = yield call(api.getCategoriesPosts, categories, page, 3);
@@ -203,10 +193,8 @@ function* loadCategoryPosts({ categories, page = 1, loadMore = false } = {}) {
       loadMore,
       numResults: getNumAPIResults(posts)
     });
-    yield put(hideLoading());
   } catch (error) {
     yield put({ type: types.LOAD_ERROR, error });
-    yield put(hideLoading());
   }
 }
 
@@ -219,7 +207,6 @@ function* loadCategoryPosts({ categories, page = 1, loadMore = false } = {}) {
  */
 function* loadPostsWithSlug({ slugs, category, loadMore } = {}) {
   try {
-    yield put(showLoading());
     const api = new PostApi();
     const posts = yield call(api.getPostsBySlugs, slugs);
 
@@ -233,16 +220,13 @@ function* loadPostsWithSlug({ slugs, category, loadMore } = {}) {
       loadMore,
       numResults: getNumAPIResults(posts)
     });
-    yield put(hideLoading());
   } catch (error) {
     yield put({ type: types.LOAD_ERROR, error });
-    yield put(hideLoading());
   }
 }
 
 function* loadPostWithSlug({ slug } = {}) {
   try {
-    yield put(showLoading());
     const api = new PostApi();
     const post = yield call(api.getPostBySlug, slug);
 
@@ -257,11 +241,8 @@ function* loadPostWithSlug({ slug } = {}) {
       type: types.SET_POST,
       post: data
     });
-
-    yield put(hideLoading());
   } catch (error) {
     yield put({ type: types.LOAD_ERROR, error });
-    yield put(hideLoading());
   }
 }
 
@@ -286,7 +267,6 @@ function* loadLiveVideos() {
  */
 function* loadAllPosts(payload) {
   try {
-    yield put(showLoading());
     const api = new PostApi();
     let pageCategory = "";
     let posts = [];
@@ -314,7 +294,6 @@ function* loadAllPosts(payload) {
               numResults: 0
             });
 
-            yield put(hideLoading());
             return;
           }
           pageCategory = category.data[0].id;
@@ -338,7 +317,6 @@ function* loadAllPosts(payload) {
               type: types.LOAD_SUBCATEGORIES,
               category: tempCategory.data.slug
             });
-            yield put(hideLoading());
           }
         }
 
@@ -354,16 +332,13 @@ function* loadAllPosts(payload) {
       currentPage: payload.page || 1,
       numResults: getNumAPIResults(posts)
     });
-    yield put(hideLoading());
   } catch (error) {
     yield put({ type: types.LOAD_ERROR, error });
-    yield put(hideLoading());
   }
 }
 
 function* loadSearchPosts(payload) {
   try {
-    yield put(showLoading());
     const api = new PostApi(payload);
     const currentPage = payload.page || 1;
     const terms = payload.terms.toLowerCase();
@@ -409,11 +384,8 @@ function* loadSearchPosts(payload) {
         });
       }
     }
-
-    yield put(hideLoading());
   } catch (error) {
     yield put({ type: types.LOAD_ERROR, error });
-    yield put(hideLoading());
   }
 }
 /*-----------------
@@ -430,7 +402,6 @@ function* loadSearchPosts(payload) {
 
 function* addComment(payload) {
   try {
-    yield put(showLoading());
     validateUser();
     const api = new PostApi();
     yield call(api.addComment, payload.comment);
@@ -441,10 +412,8 @@ function* addComment(payload) {
       page: 1,
       block_load: true
     });
-    yield put(hideLoading());
   } catch (error) {
     yield put({ type: types.LOAD_ERROR, error });
-    yield put(hideLoading());
   }
 }
 

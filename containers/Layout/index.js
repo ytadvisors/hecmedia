@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
 import { Router } from "../../routes";
-import { GET_LAYOUT, GET_SCHEDULE } from "../../lib/graphql";
+import { GET_LAYOUT, GET_SCHEDULE, GET_LIVE_VIDEOS } from "../../lib/graphql";
 import "./styles.scss";
 import ProgramViewer from "../../components/ProgramViewer";
 import Header from "../../components/Header";
@@ -26,26 +26,44 @@ const Layout = props => {
     .format("MMMM-YYYY")
     .toLowerCase();
 
+  const currentDate = moment(mDay)
+    .format("YYYY-MM-DD")
+    .toLowerCase();
+
+  const compareStart = `${currentDate} 00:00:00`;
+  const compareEnd = `${currentDate} 23:59:59`;
+  const keyStart = "display_date";
+  const keyEnd = "end_date";
+
   const { data } = useQuery(GET_LAYOUT, {
     notifyOnNetworkStatusChange: true
   });
-
-  const { header, social, footer, featuredMagazines } = data || {};
-  const { children, showBottomNav, absContent, style } = props;
 
   const { data: schedule } = useQuery(GET_SCHEDULE, {
     variables: { currentMonth },
     notifyOnNetworkStatusChange: true
   });
 
+  const { data: videos } = useQuery(GET_LIVE_VIDEOS, {
+    variables: { keyStart, keyEnd, compareStart, compareEnd },
+    notifyOnNetworkStatusChange: true
+  });
+
+  const { header, social, footer, featuredMagazines } = data || {};
+  const { children, showBottomNav, absContent, style } = props;
   const { programs } = schedule || {};
+  const { liveVideos } = videos || [];
+  const liveVideo =
+    liveVideos && liveVideos.edges.length > 0
+      ? liveVideos.edges.map(obj => obj.node)[0]
+      : {};
 
   return (
     <>
       <div className="layout">
         {absContent}
         <Header searchFunc={searchFunc} header={header} social={social} />
-        <Banner liveVideos={[]} />
+        <Banner liveVideo={liveVideo} />
         <ProgramViewer
           style={style}
           programs={programs}

@@ -1,23 +1,27 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import SEO from "../../components/SEO";
-import Layout from "../../containers/Layout";
-import DefaultNav from "../../components/SubNavigation/DefaultNav";
+import Layout from "../Layout";
 import ListOfPosts from "../../components/ListOfPosts";
-import { GET_ARTICLES } from "../../lib/graphql";
-import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
+import CategoryNav from "../../components/SubNavigation/CategoryNav";
+import { GET_CATEGORY_INFO } from "../../lib/graphql";
+import { getExcerpt, getPostImgSrc } from "../../lib/getFunctions";
 
 export default props => {
   const cursor = "";
-  const variables = { cursor };
-  const { data, fetchMore } = useQuery(GET_ARTICLES, {
+  const { category, link, content } = props || {};
+  const variables = { category, cursor };
+  const { data, fetchMore } = useQuery(GET_CATEGORY_INFO, {
     variables
   });
 
-  const { title, link, content } = props || {};
-  const { postData } = data;
+  const title = category
+    .replace(/^\w/, c => c.toUpperCase())
+    .replace(/-/g, " ");
+  const { postData } = data || {};
   const posts = postData ? postData.edges.map(obj => obj && obj.node) : [];
   variables.cursor = postData ? postData.pageInfo.endCursor : "";
+  const image = posts && posts.length > 0 ? getPostImgSrc(posts[0]) : "";
 
   const loadMore = () =>
     fetchMore({
@@ -44,17 +48,15 @@ export default props => {
       <SEO
         {...{
           title: `HEC-TV | ${title}`,
-          image: getPostImgSrc(posts[0]),
           description: getExcerpt(description, 320),
           url: process.env.SITE_HOST,
           fbAppId: process.env.FACEBOOK_APP_ID,
-          pathname: link && link.replace(/https?:\/\/[^/]+/, "")
+          pathname: link && link.replace(/https?:\/\/[^/]+/, ""),
+          image
         }}
       />
       <Layout>
-        <div className="col-md-12">
-          <DefaultNav title="Articles" link="/articles" />
-        </div>
+        <CategoryNav />
         <ListOfPosts
           posts={posts}
           link={{ page: "posts" }}

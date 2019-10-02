@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
 import SEO from "../../components/SEO";
-import Layout from "../../containers/Layout";
+import Layout from "../Layout";
 import ListOfPosts from "../../components/ListOfPosts";
 import EventNav from "../../components/SubNavigation/EventNav";
 import { getArrayUnion } from "../../lib/updateFunctions";
@@ -57,7 +57,7 @@ export default props => {
   const mDay = currentDate ? new Date(`${currentDate} 00:00:00`) : new Date();
   const currentDay = moment(mDay).format("YYYY-MM-DD");
   const compareStart = `${currentDay} 00:00:00`;
-  const compareEnd = `${currentDay} 24:00:00`;
+  const compareEnd = `${currentDay} 23:59:59`;
   const keyStart = `event_dates_${incr}_start_time`;
   const keyEnd = `event_dates_${incr}_end_time`;
   const after = "";
@@ -69,10 +69,12 @@ export default props => {
 
   const { eventData, pageData: { feedDesign } = {} } = data || {};
   variables.after = eventData ? eventData.pageInfo.endCursor : null;
-  runFetch(fetchMore, variables);
-  runFetch(fetchMore, getIncrVariables(variables));
-  runFetch(fetchMore, getIncrVariables(variables, 2));
-  runFetch(fetchMore, getIncrVariables(variables, 3));
+  if (fetchMore) {
+    runFetch(fetchMore, variables);
+    runFetch(fetchMore, getIncrVariables(variables));
+    runFetch(fetchMore, getIncrVariables(variables, 2));
+    runFetch(fetchMore, getIncrVariables(variables, 3));
+  }
 
   const image =
     eventData && eventData.length > 0 ? getPostImgSrc(eventData[0]) : "";

@@ -1,12 +1,12 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
-import Articles from "./_templates/articles";
+import Articles from "../containers/_templates/articles";
 import Events from "./events";
-import Magazines from "./_templates/magazines";
-import Template1 from "./_templates/template-1";
-import Template2 from "./_templates/template-2";
-import Template3 from "./_templates/template-3";
+import Magazines from "../containers/_templates/magazines";
+import Template1 from "../containers/_templates/template-1";
+import Template2 from "../containers/_templates/template-2";
+import Template3 from "../containers/_templates/template-3";
 import { GET_PAGE_TEMPLATE } from "../lib/graphql";
 
 export default props => {

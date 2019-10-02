@@ -1,6 +1,6 @@
 import React from "react";
 import SEO from "../../components/SEO";
-import Layout from "../../containers/Layout";
+import Layout from "../Layout";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import SinglePost from "../../components/SinglePost";
 import { getExcerpt } from "../../lib/getFunctions";

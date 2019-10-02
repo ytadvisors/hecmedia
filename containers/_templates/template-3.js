@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { sendContactEmail } from "../../store/actions/accountActions";
 import { openOverlayAction } from "../../store/actions/pageActions";
 import SEO from "../../components/SEO";
-import Layout from "../../containers/Layout";
+import Layout from "../Layout";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import Template3 from "../../components/Templates/template-3/index";
 import Map from "../../components/Map";
@@ -37,7 +37,6 @@ const contactUs = props => {
 
 const Page = props => {
   const { title, link, pageContent } = props;
-  const { GOOGLE_API_KEY } = process.env;
   const { content } = pageContent;
   const description =
     content || "On Demand Arts, Culture & Education Programming";
@@ -61,7 +60,7 @@ const Page = props => {
         <Template3
           {...{ ...pageContent, callbackFunc: () => contactUs(props) }}
         >
-          <Map mapKey={GOOGLE_API_KEY} />
+          <Map mapKey={process.env.GOOGLE_API_KEY} />
         </Template3>
       </Layout>
     </>
