@@ -102,5 +102,19 @@ export default () => {
       );
     }
   }
-  return <section className="sub-navigation" />;
+  return (
+    <section className="sub-navigation">
+      <div className="row heading">
+        <div className="col-md-12">
+          <div className="pull-left">
+            <h2
+              dangerouslySetInnerHTML={{
+                __html: "&nbsp;"
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 };
