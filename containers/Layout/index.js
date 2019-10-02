@@ -10,6 +10,7 @@ import Header from "../../components/Header";
 import Banner from "../../components/Banner";
 import Footer from "../../components/Footer";
 import BottomNav from "../../components/BottomNav/index";
+import TagManager from "../../components/TagManager";
 
 import { BasicModal } from "../Modals";
 
@@ -60,6 +61,7 @@ const Layout = props => {
 
   return (
     <>
+      <TagManager noScript />
       <div className="layout">
         {absContent}
         <Header searchFunc={searchFunc} header={header} social={social} />

@@ -8,7 +8,7 @@ import ListOfPosts from "../../components/ListOfPosts";
 import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { GET_MAGAZINE_INFO } from "../../lib/graphql";
 
-const getContent = () => {
+export default () => {
   const router = useRouter();
   const {
     query: { slug }
@@ -25,7 +25,7 @@ const getContent = () => {
     content || "On Demand Arts, Culture & Education Programming";
 
   return (
-    <div className="col-md-12" style={{ background: "#eee" }}>
+    <>
       <SEO
         {...{
           title,
@@ -36,38 +36,36 @@ const getContent = () => {
           pathname: link && link.replace(/https?:\/\/[^/]+/, "")
         }}
       />
-      <SinglePost
-        {...{
-          post: magazine,
-          classes: {
-            thumbnail: "col-md-2 pull-right",
-            content: "col-md-10 no-padding"
-          }
-        }}
-      />
-      {magazinePost && (
-        <ListOfPosts
-          posts={magazinePost ? magazinePost.map(obj => obj.post) : []}
-          link={{ page: "posts" }}
-          numResults={0}
-          design={{
-            defaultRowLayout: "2 Columns",
-            defaultDisplayType: "Post"
-          }}
-          loadMore={null}
-          style={{
-            background: "#f9f9f9",
-            border: "1px solid #ddd"
-          }}
-          resizeRows
-        />
-      )}
-    </div>
+      <Layout style={{ background: "#eee" }}>
+        <div className="col-md-12" style={{ background: "#eee" }}>
+          <SinglePost
+            {...{
+              post: magazine,
+              classes: {
+                thumbnail: "col-md-2 pull-right",
+                content: "col-md-10 no-padding"
+              }
+            }}
+          />
+          {magazinePost && (
+            <ListOfPosts
+              posts={magazinePost ? magazinePost.map(obj => obj.post) : []}
+              link={{ page: "posts" }}
+              numResults={0}
+              design={{
+                defaultRowLayout: "2 Columns",
+                defaultDisplayType: "Post"
+              }}
+              loadMore={null}
+              style={{
+                background: "#f9f9f9",
+                border: "1px solid #ddd"
+              }}
+              resizeRows
+            />
+          )}
+        </div>
+      </Layout>
+    </>
   );
 };
-
-export default () => (
-  <>
-    <Layout style={{ background: "#eee" }}>{getContent()}</Layout>
-  </>
-);

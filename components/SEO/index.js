@@ -1,5 +1,6 @@
 import React from "react";
 import Head from "next/head";
+import TagManager from "../TagManager";
 import { decodeHTML } from "../../lib/updateFunctions";
 
 export default ({
@@ -19,6 +20,7 @@ export default ({
       name="description"
       content={description || "On Demand Arts, Culture & Education Programming"}
     />
+    <TagManager />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta property="og:image" content={image || ""} />
     <meta property="og:title" content={decodeHTML(title || "")} />
