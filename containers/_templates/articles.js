@@ -1,27 +1,23 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import SEO from "../../components/SEO";
-import Layout from "../../containers/Layout";
+import Layout from "../Layout";
+import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import ListOfPosts from "../../components/ListOfPosts";
-import CategoryNav from "../../components/SubNavigation/CategoryNav";
-import { GET_CATEGORY_INFO } from "../../lib/graphql";
-import { getExcerpt, getPostImgSrc } from "../../lib/getFunctions";
+import { GET_ARTICLES } from "../../lib/graphql";
+import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
 
 export default props => {
   const cursor = "";
-  const { category, link, content } = props || {};
-  const variables = { category, cursor };
-  const { data, fetchMore } = useQuery(GET_CATEGORY_INFO, {
+  const variables = { cursor };
+  const { data, fetchMore } = useQuery(GET_ARTICLES, {
     variables
   });
 
-  const title = category
-    .replace(/^\w/, c => c.toUpperCase())
-    .replace(/-/g, " ");
+  const { title, link, content } = props || {};
   const { postData } = data || {};
   const posts = postData ? postData.edges.map(obj => obj && obj.node) : [];
   variables.cursor = postData ? postData.pageInfo.endCursor : "";
-  const image = posts && posts.length > 0 ? getPostImgSrc(posts[0]) : "";
 
   const loadMore = () =>
     fetchMore({
@@ -48,15 +44,17 @@ export default props => {
       <SEO
         {...{
           title: `HEC-TV | ${title}`,
+          image: getPostImgSrc(posts[0]),
           description: getExcerpt(description, 320),
           url: process.env.SITE_HOST,
           fbAppId: process.env.FACEBOOK_APP_ID,
-          pathname: link && link.replace(/https?:\/\/[^/]+/, ""),
-          image
+          pathname: link && link.replace(/https?:\/\/[^/]+/, "")
         }}
       />
       <Layout>
-        <CategoryNav />
+        <div className="col-md-12">
+          <DefaultNav title="Articles" link="/articles" />
+        </div>
         <ListOfPosts
           posts={posts}
           link={{ page: "posts" }}

@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
 import SEO from "../../components/SEO";
-import Layout from "../../containers/Layout";
+import Layout from "../Layout";
 import ListOfPosts from "../../components/ListOfPosts";
 import EventNav from "../../components/SubNavigation/EventNav";
 import { getArrayUnion } from "../../lib/updateFunctions";

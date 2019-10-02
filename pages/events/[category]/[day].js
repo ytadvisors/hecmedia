@@ -1,6 +1,6 @@
 import React from "react";
 import { useRouter } from "next/router";
-import Events from "../../_templates/events";
+import Events from "../../../containers/_templates/events";
 
 export default props => {
   const router = useRouter();

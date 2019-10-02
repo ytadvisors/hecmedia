@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { sendContactEmail } from "../../store/actions/accountActions";
 import { openOverlayAction } from "../../store/actions/pageActions";
 import SEO from "../../components/SEO";
-import Layout from "../../containers/Layout";
+import Layout from "../Layout";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import Template3 from "../../components/Templates/template-3/index";
 import Map from "../../components/Map";

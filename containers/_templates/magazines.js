@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import SEO from "../../components/SEO";
-import Layout from "../../containers/Layout";
+import Layout from "../Layout";
 import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import ListOfPosts from "../../components/ListOfPosts";
 import { GET_ALL_MAGAZINES } from "../../lib/graphql";
