@@ -34,11 +34,11 @@ export default class Banner extends Component {
   };
 
   render() {
-    const { liveVideos = [] } = this.props;
+    const { liveVideo } = this.props;
     const { isMobile } = this.state;
 
-    const { postTitle = "", acf: { startDate, url } = {} } =
-      liveVideos.length > 0 ? liveVideos[0] : {};
+    const { title = "", temporaryLink: { startDate, url } = {} } = liveVideo;
+
     let formattedUrl = url;
     let redirect = true;
     if (url && url.indexOf(process.env.SITE_HOST) !== -1) {
@@ -48,7 +48,7 @@ export default class Banner extends Component {
 
     const excerpt = (
       <div>
-        <div>{getExcerpt(postTitle, isMobile ? 25 : 150)}</div>
+        <div>{getExcerpt(title, isMobile ? 25 : 150)}</div>
         <div className="breaker">.&nbsp;</div>
         <div>{moment(new Date(startDate)).format("MMM, Do hh:mm a z")} CT</div>
       </div>
@@ -56,7 +56,7 @@ export default class Banner extends Component {
 
     return (
       <section className="banner">
-        {postTitle && url && startDate && (
+        {title && url && startDate && (
           <div className="content">
             <div className="container">
               <ul className="live-info">

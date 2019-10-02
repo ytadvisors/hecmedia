@@ -1,19 +1,11 @@
 import React from "react";
 import { FaPlayCircle } from "react-icons/fa";
-import moment from "moment";
-import { graphql } from "react-apollo";
-import gql from "graphql-tag";
 
 import { getCurrentPrograms } from "../../lib/getFunctions";
 import "./styles.scss";
 
-const mDay = moment(new Date());
-const slug = moment(mDay)
-  .format("MMMM-YYYY")
-  .toLowerCase();
-
-const Schedule = ({ data: { programs = {} } }) => {
-  const { scheduleDetails: { schedulePrograms } = {} } = programs;
+export default ({ programs = {} }) => {
+  const { scheduleDetails: { schedulePrograms } = {} } = programs || {};
   const dailyPrograms = schedulePrograms
     ? getCurrentPrograms(schedulePrograms, 5)
     : null;
@@ -42,22 +34,3 @@ const Schedule = ({ data: { programs = {} } }) => {
     </section>
   );
 };
-
-export const allPrograms = gql`
-  query allPrograms($slug: String!) {
-    programs: scheduleBy(slug: $slug) {
-      scheduleDetails {
-        schedulePrograms {
-          programStartTime
-          programEndTime
-          programTitle
-          programStartDate
-        }
-      }
-    }
-  }
-`;
-
-export default graphql(allPrograms, {
-  options: { variables: { slug } }
-})(Schedule);

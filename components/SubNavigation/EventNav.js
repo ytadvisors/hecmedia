@@ -1,48 +1,32 @@
 import React from "react";
 import Link from "next/link";
-import { graphql } from "react-apollo";
-import gql from "graphql-tag";
 import { Nav, NavItem, NavDropdown } from "react-bootstrap";
+import { useQuery } from "@apollo/react-hooks";
+import { Router } from "../../routes";
+import { GET_EVENTS_CATEGORIES } from "../../lib/graphql";
 import NavWrap from "../NavWrap";
 import CalendarSelector from "../CalendarSelector";
-import { getArrayUnion } from "../../lib/updateFunctions";
+import { getFormattedDate } from "../../lib/getFunctions";
 import "./styles.scss";
 
-let cursor = "";
+export default props => {
+  const { link, title, currentDate, currentCategory } = props;
+  const variables = { limit: 30 };
+  const { data } = useQuery(GET_EVENTS_CATEGORIES, {
+    variables,
+    notifyOnNetworkStatusChange: true
+  });
 
-export const EventNav = props => {
-  const {
-    link,
-    title,
-    changeDate,
-    changeCategory,
-    selectTitle,
-    data: { categories, fetchMore }
-  } = props;
+  const { categories } = data || {};
+  const changeDate = newDate => {
+    Router.pushRoute(`/events/${currentCategory}/${getFormattedDate(newDate)}`);
+  };
 
-  if (categories && categories.edges) {
-    cursor = categories.pageInfo.endCursor;
-    fetchMore({
-      variables: {
-        cursor
-      },
-      updateQuery: (prev, updateProps) => {
-        const { fetchMoreResult } = updateProps;
-        let updateArray = prev;
-        const numResults = fetchMoreResult.categories.edges.length;
-        if (fetchMoreResult && numResults > 0) {
-          updateArray = getArrayUnion(
-            prev,
-            fetchMoreResult,
-            "categories",
-            "node.eventCategoryId"
-          );
-        }
-        return updateArray;
-      }
-    });
-  }
+  const getChangedCategory = newCategory =>
+    `/events/${newCategory}/${getFormattedDate(currentDate)}`;
 
+  const currentTitle =
+    currentCategory === "All" ? "Filter Events" : currentCategory;
   return (
     <section className="sub-navigation event-nav">
       <div className="pull-left">
@@ -55,56 +39,45 @@ export const EventNav = props => {
       <Nav className="event-nav-links">
         <NavDropdown
           className="drop-down-menu-list pull-right"
-          title={selectTitle}
+          title={currentTitle}
           id="filter"
           key="filter"
         >
+          {currentTitle !== "Filter Events" && (
+            <NavWrap key="All">
+              <Link
+                href="/events/[category]/[day]/"
+                as={getChangedCategory("All")}
+              >
+                <a>
+                  <span>All Events</span>
+                </a>
+              </Link>
+            </NavWrap>
+          )}
           {categories &&
             categories.edges &&
             categories.edges.map(menu => (
               <NavWrap key={menu.node.link}>
-                <button
-                  type="button"
-                  onClick={() => changeCategory(menu.node.slug)}
+                <Link
+                  href="/events/[category]/[day]/"
+                  as={getChangedCategory(menu.node.slug)}
                 >
-                  <span
-                    dangerouslySetInnerHTML={{
-                      __html: menu.node.name
-                    }}
-                  />
-                </button>
+                  <a>
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: menu.node.name
+                      }}
+                    />
+                  </a>
+                </Link>
               </NavWrap>
             ))}
         </NavDropdown>
         <NavItem className="pull-right calendar-container">
-          <CalendarSelector callback={changeDate} />
+          <CalendarSelector callback={changeDate} currentDate={currentDate} />
         </NavItem>
       </Nav>
     </section>
   );
 };
-
-export const allCategories = gql`
-  query allCategories($cursor: String!) {
-    categories: eventCategories(
-      after: $cursor
-      where: { shouldOutputInFlatList: true }
-    ) {
-      edges {
-        node {
-          slug
-          name
-          link
-          eventCategoryId
-        }
-      }
-      pageInfo {
-        endCursor
-      }
-    }
-  }
-`;
-
-export default graphql(allCategories, {
-  options: { variables: { cursor } }
-})(EventNav);

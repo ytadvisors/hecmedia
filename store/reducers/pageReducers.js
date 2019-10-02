@@ -14,7 +14,8 @@ const initialState = {
   pageTitle: "",
   categoryTitle: "",
   pageOperation: "",
-  pageData: {}
+  pageData: {},
+  data: {}
 };
 
 export default (curState = initialState, action) => {
@@ -36,6 +37,12 @@ export default (curState = initialState, action) => {
         ...state,
         error: false,
         pageData: { ...state.pageData, ...action.pageData }
+      };
+    case types.SET_DATA:
+      return {
+        ...state,
+        error: false,
+        data: { ...action.data }
       };
     case types.SET_PAGE_TITLE:
       return {

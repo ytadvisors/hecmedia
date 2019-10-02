@@ -1,0 +1,54 @@
+{
+  "category": [
+    {
+      "page": "category/[pid]/",
+      "pattern": "/category/:pid"
+    },
+    {
+      "page": "category/[pid]/[id]/",
+      "pattern": "/category/:pid/:id"
+    },
+    {
+      "page": "category/[pid]/[id]/[cid]/",
+      "pattern": "/category/:pid/:id/:cid"
+    }
+  ],
+  "events": [
+    {
+      "page": "events/",
+      "pattern": "/events"
+    },
+    {
+      "page": "events/[category]/",
+      "pattern": "/events/:category"
+    },
+    {
+      "page": "events/[category]/[day]",
+      "pattern": "/events/:category/:day"
+    }
+  ],
+  "posts": [
+    {
+      "page": "posts/[slug]/",
+      "pattern": "/posts/:slug"
+    }
+  ],
+  "magazine": [
+    {
+      "page": "magazine/[slug]/",
+      "pattern": "/magazine/:slug"
+    }
+  ],
+  "search": [
+    {
+      "page": "search/[words]/",
+      "pattern": "/search/:words"
+    }
+  ],
+  "": [
+    {
+      "page": "[page]/",
+      "pattern": "/:page"
+    }
+  ]
+}

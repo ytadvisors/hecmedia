@@ -4,16 +4,16 @@
  * Benefits: Less code, and easily handles complex url structures
  * */
 const routes = require("next-routes");
+const _ = require("lodash");
+const routeList = require("./route-list.json");
 
-// Name   Page      Pattern
-module.exports = routes()
-  .add("articles")
-  .add("category", "/category/:proxy+")
-  .add("event_filter", "/event_filter/:proxy+")
-  .add("event", "/event/:slug")
-  .add("events", "/events")
-  .add("magazine", "/magazine/:slug")
-  .add("magazines")
-  .add("pages")
-  .add("posts", "/posts/:slug")
-  .add("search", "/search/:query");
+const routesMap = routes();
+_.keys(routeList).map(key => {
+  const values = routeList[key];
+  return values.map(newRoute => {
+    if (newRoute.page && newRoute.pattern)
+      routesMap.add(newRoute.page, key, newRoute.pattern);
+    return false;
+  });
+});
+module.exports = routesMap;

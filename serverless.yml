@@ -1,65 +1,11 @@
-service: hecmedia
+name: ${env.APP_NAME}
+stage: ${env.ACTIVE_ENV}
 
-provider:
-  name: aws
-  runtime: nodejs10.x
-  region: us-east-2
-  profile: eb-cli2
-  stage: ${opt:stage}
-
-plugins:
-  - serverless-nextjs-plugin
-  - serverless-offline
-  - serverless-cloudfront-invalidate
-
-custom:
-  stage: ${opt:stage, self:provider.stage}
-  environment: ${file(env.yml):${self:custom.stage}, file(env.yml):default}
-  serverless-nextjs:
-    nextConfigDir: ./
-    assetsBucketName: "dev-cdn.hecmedia.org"
-    cloudFront: true
-    routes:
-      - src: posts
-        path: posts/{slug}
-        request:
-          parameters:
-            paths:
-              slug: true
-      - src: magazine
-        path: magazine/{slug}
-        request:
-          parameters:
-            paths:
-              slug: true
-      - src: event_filter
-        path: event_filter/{proxy+}
-        request:
-          parameters:
-            paths:
-              proxy: true
-      - src: event
-        path: event/{slug}
-        request:
-          parameters:
-            paths:
-              slug: true
-      - src: category
-        path: category/{proxy+}
-        request:
-          parameters:
-            paths:
-              proxy: true
-  serverless-offline:
-    babelOptions:
-      presets: ["es2015"]
-  cloudfrontInvalidate:
-    distributionId: ${self:custom.environment.DISTRIBUTION_ID}
-    items:
-      - "/*"
-
-package:
-  # exclude everything
-  # page handlers are automatically included by the plugin
-  exclude:
-    - ./**
+nextApp:
+  component: "serverless-next.js"
+  inputs:
+    env:
+      APOLLO_CLIENT_URI : ${env.APOLLO_CLIENT_URI}
+    domain:
+      - ${env.SUBDOMAIN}
+      - "hecmedia.org"

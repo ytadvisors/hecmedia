@@ -1,11 +1,11 @@
 import React, { Component } from "react";
-import Link from "next/link";
 import _ from "lodash";
+import { Button } from "react-bootstrap";
 import { MdLocationOn } from "react-icons/md";
 import { IoIosCalendar } from "react-icons/io";
 import LazyLoad from "react-lazyload";
 import { isServer } from "../../lib/serverFunctions";
-import { getEventDate } from "../../lib/getFunctions";
+import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
 
 import "./styles.scss";
 
@@ -42,7 +42,7 @@ export default class ListOfPosts extends Component {
       ? `${excerpt.substr(0, truncateLength)}&hellip;`
       : excerpt;
 
-  getThumbNail = (thumbnail, isVideo, link) => (
+  getThumbNail = (thumbnail, isVideo = false, link) => (
     <a href={link} className="thumbnail-link">
       {isVideo && <img src={playButton} className="play-icon" alt="play" />}
       <LazyLoad height={200}>
@@ -61,30 +61,21 @@ export default class ListOfPosts extends Component {
     return redirect || slug ? `/${page}/${slug}` : `/${page}/${slug}`;
   };
 
-  getImgSrc = (post, type) => {
-    const {
-      postDetails: { videoImage, postHeader } = {},
-      eventDetails: { eventImage } = {},
-      magazineDetail: { coverImage } = {}
-    } = post;
-
-    const currentImg = videoImage || postHeader || eventImage || coverImage;
-    if (type === "small") return currentImg && currentImg.medium;
-    return currentImg && currentImg.large;
-  };
-
-  getCategoryHelper = category =>
-    category.node.link && (
-      <Link href={category.node.link.replace(/https?:\/\/[^/]+/, "")}>
-        <a>
+  getCategoryHelper = category => {
+    if (category.node.link) {
+      const url = category.node.link.replace(/https?:\/\/[^/]+/, "");
+      return (
+        <a href={url}>
           <span
             dangerouslySetInnerHTML={{
               __html: category.node.name
             }}
           />
         </a>
-      </Link>
-    );
+      );
+    }
+    return "";
+  };
 
   getCategories = categoryArray =>
     categoryArray &&
@@ -114,16 +105,14 @@ export default class ListOfPosts extends Component {
     }
     return (
       <p>
-        <Link href={link}>
-          <a>
-            <span
-              className={`blog-title ${postType}`}
-              dangerouslySetInnerHTML={{
-                __html: title
-              }}
-            />
-          </a>
-        </Link>
+        <a href={link}>
+          <span
+            className={`blog-title ${postType}`}
+            dangerouslySetInnerHTML={{
+              __html: title
+            }}
+          />
+        </a>
       </p>
     );
   };
@@ -221,7 +210,9 @@ export default class ListOfPosts extends Component {
   };
 
   getSingleColumnPost = (post, content) => {
-    const isVideo = post.acf && post.acf.isVideo;
+    const { postDetails } = post;
+
+    const isVideo = postDetails && postDetails.isVideo;
 
     return (
       <table className="no-spacing">
@@ -233,7 +224,7 @@ export default class ListOfPosts extends Component {
               style={{ padding: "10px", paddingBottom: "30px" }}
             >
               {this.getThumbNail(
-                this.getImgSrc(post, "small"),
+                getPostImgSrc(post, "small"),
                 isVideo,
                 this.getLink(post)
               )}
@@ -252,7 +243,7 @@ export default class ListOfPosts extends Component {
             <div
               className="wallpaper"
               style={{
-                backgroundImage: `url(${this.getImgSrc(post) || defaultImage})`
+                backgroundImage: `url(${getPostImgSrc(post) || defaultImage})`
               }}
             >
               {(post.redirect && (
@@ -267,15 +258,13 @@ export default class ListOfPosts extends Component {
                   <div className="content">{content}</div>
                 </a>
               )) || (
-                <Link href={this.getLink(post)}>
-                  <a>
-                    <span>
-                      <div className="gradient" />
-                      <div className="texture" />
-                      <div className="content">{content}</div>
-                    </span>
-                  </a>
-                </Link>
+                <a href={this.getLink(post)}>
+                  <span>
+                    <div className="gradient" />
+                    <div className="texture" />
+                    <div className="content">{content}</div>
+                  </span>
+                </a>
               )}
             </div>
           </td>
@@ -285,14 +274,16 @@ export default class ListOfPosts extends Component {
   );
 
   getFeaturedPost = (post, content) => {
-    const isVideo = post.acf && post.acf.isVideo;
+    const { postDetails } = post;
+
+    const isVideo = postDetails && postDetails.isVideo;
 
     const { isMobile } = this.state;
 
     return (
       <div className="featured-block">
         {this.getThumbNail(
-          this.getImgSrc(post, isMobile ? "small" : ""),
+          getPostImgSrc(post, isMobile ? "small" : ""),
           isVideo,
           this.getLink(post)
         )}
@@ -309,33 +300,33 @@ export default class ListOfPosts extends Component {
         <div
           className="wallpaper"
           style={{
-            backgroundImage: `url(${this.getImgSrc(
+            backgroundImage: `url(${getPostImgSrc(
               post,
               !isMobile ? "small" : ""
             )})`
           }}
         >
-          <Link href={this.getLink(post)}>
-            <a>
-              <span>
-                <div className="gradient" />
-                <div className="texture" />
-                <div className="content">{content}</div>
-              </span>
-            </a>
-          </Link>
+          <a href={this.getLink(post)}>
+            <span>
+              <div className="gradient" />
+              <div className="texture" />
+              <div className="content">{content}</div>
+            </span>
+          </a>
         </div>
       </div>
     );
   };
 
   getPost = (layout, post, content) => {
-    const isVideo = post.acf && post.acf.isVideo;
+    const { postDetails } = post;
+
+    const isVideo = postDetails && postDetails.isVideo;
 
     return (
       <div>
         <div className={`thumbnail-${layout.replace(" ", "-").toLowerCase()}`}>
-          {this.getThumbNail(this.getImgSrc(post), isVideo, this.getLink(post))}
+          {this.getThumbNail(getPostImgSrc(post), isVideo, this.getLink(post))}
         </div>
         {content}
       </div>
@@ -345,17 +336,15 @@ export default class ListOfPosts extends Component {
   getWallpaper = (post, content) => (
     <div
       className="wallpaper"
-      style={{ backgroundImage: `url(${this.getImgSrc(post)})` }}
+      style={{ backgroundImage: `url(${getPostImgSrc(post)})` }}
     >
-      <Link href={this.getLink(post)}>
-        <a>
-          <span>
-            <div className="gradient" />
-            <div className="texture" />
-            <div className="content">{content}</div>
-          </span>
-        </a>
-      </Link>
+      <a href={this.getLink(post)}>
+        <span>
+          <div className="gradient" />
+          <div className="texture" />
+          <div className="content">{content}</div>
+        </span>
+      </a>
     </div>
   );
 
@@ -446,16 +435,7 @@ export default class ListOfPosts extends Component {
     let defaultLayout = "Single Column";
     let displayType = "Post";
     let numColumns = 1;
-    const {
-      numPages,
-      currentPage,
-      urlPrefix,
-      posts,
-      title,
-      design,
-      style,
-      resizeRows
-    } = this.props;
+    const { posts, title, design, style, loadMore, resizeRows } = this.props;
     const { isMobile } = this.state;
     if (posts.length > 0) {
       const postsClone = [...posts.filter(n => n)];
@@ -525,38 +505,23 @@ export default class ListOfPosts extends Component {
           </div>
         ));
       }
-      return (
-        <section className="post-list-container clearfix" style={style}>
-          {title ? <div className="title">{title}</div> : ""}
-          {mainContent}
-          {remainingPosts}
-          {numPages && currentPage && (
-            <div className="row clearfix">
-              <ul className="post-pages">
-                <li className="post-page-label">Pages</li>
-                {_.range(numPages).map(page => {
-                  const displayPage = page + 1;
-                  const pageUrl =
-                    displayPage > 1
-                      ? `${urlPrefix}page/${displayPage}`
-                      : urlPrefix;
-                  return (
-                    <li key={page}>
-                      <a
-                        href={pageUrl}
-                        className={currentPage === displayPage ? "active" : ""}
-                      >
-                        {displayPage}
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
-        </section>
-      );
     }
-    return <section />;
+    return (
+      <section className="post-list-container clearfix" style={style}>
+        {title ? <div className="title">{title}</div> : ""}
+        {posts.length > 0 && mainContent}
+        {posts.length > 0 && remainingPosts}
+        {posts.length > 0 && loadMore && (
+          <div className="load-more-container ">
+            <Button
+              className="btn-primary btn-load-more"
+              onClick={() => loadMore()}
+            >
+              LOAD MORE
+            </Button>
+          </div>
+        )}
+      </section>
+    );
   }
 }

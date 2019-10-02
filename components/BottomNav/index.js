@@ -1,8 +1,6 @@
 import React from "react";
-import Link from "next/link";
 import { graphql } from "react-apollo";
 import gql from "graphql-tag";
-
 import "./styles.scss";
 
 const BottomNav = ({ title, data: { bottomNav } }) => {
@@ -16,13 +14,14 @@ const BottomNav = ({ title, data: { bottomNav } }) => {
           {
             <ul>
               <li className="title">{title}</li>
-              {bottomList.map(menu => (
-                <li key={menu.node.url}>
-                  <Link href={menu.node.url.replace(/https?:\/\/[^/]+/, "")}>
-                    <a>{menu.node.label}</a>
-                  </Link>
-                </li>
-              ))}
+              {bottomList.map(menu => {
+                const url = menu.node.url.replace(/https?:\/\/[^/]+/, "");
+                return (
+                  <li key={menu.node.url}>
+                    <a href={url}>{menu.node.label}</a>
+                  </li>
+                );
+              })}
             </ul>
           }
         </div>

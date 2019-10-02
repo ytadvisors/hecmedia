@@ -1,14 +1,13 @@
 import React from "react";
-import { graphql } from "react-apollo";
 import Link from "next/link";
-import gql from "graphql-tag";
 import _ from "lodash";
-import { getSocialMenuObject } from "../../lib/getFunctions";
+import { getSocialMenuObject, getHref } from "../../lib/getFunctions";
 import SocialLinks from "../SocialLinks";
 
 import "./styles.scss";
 
-const Footer = ({ data: { footer, social } }) => {
+export default props => {
+  const { footer, social } = props;
   const { node: { menuItems: { edges: footerList = [] } = {} } = {} } = footer
     ? footer.edges[0]
     : {};
@@ -49,13 +48,19 @@ const Footer = ({ data: { footer, social } }) => {
           {linkMap.map(pageLinks => (
             <div key={pageLinks.id} className="col-xs-6 col-sm-3 no-padding">
               <ul>
-                {pageLinks.obj.map(link => (
-                  <li key={link.node.url}>
-                    <Link href={link.node.url.replace(/https?:\/\/[^/]+/, "")}>
-                      <a>{link.node.label}</a>
-                    </Link>
-                  </li>
-                ))}
+                {pageLinks.obj.map(link => {
+                  const url = link.node.url.replace(/https?:\/\/[^/]+/, "");
+                  return (
+                    <li key={link.node.url}>
+                      {url === "/" && <a href={url}>{link.node.label}</a>}
+                      {url !== "/" && (
+                        <Link href={getHref(url)} as={url}>
+                          <a>{link.node.label}</a>
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
@@ -64,54 +69,3 @@ const Footer = ({ data: { footer, social } }) => {
     </section>
   );
 };
-
-export const allFooters = gql`
-  query allFooters {
-    footer: menus(where: { slug: "footer" }) {
-      edges {
-        node {
-          menuItems {
-            edges {
-              node {
-                label
-                url
-                childItems {
-                  edges {
-                    node {
-                      url
-                      label
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    social: menus(where: { slug: "social" }) {
-      edges {
-        node {
-          menuItems {
-            edges {
-              node {
-                label
-                url
-                childItems {
-                  edges {
-                    node {
-                      url
-                      label
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-export default graphql(allFooters)(Footer);

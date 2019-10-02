@@ -51,7 +51,7 @@ export default class SinglePost extends Component {
   resizeVideos = () => {
     const isMobile = !isServer && $(window).width() <= 1170;
     if (isMobile) {
-      $(`#post-container iframe`).each(function() {
+      $(`.blog-content iframe`).each(function() {
         const src = $(this).attr("src");
         if (src.match(/youtube\.com/g)) {
           let width = $(window).width();
@@ -60,7 +60,7 @@ export default class SinglePost extends Component {
         }
       });
     } else {
-      $(`#post-container iframe`).each(function() {
+      $(`.blog-content iframe`).each(function() {
         const src = $(this).attr("src");
         if (src.match(/youtube\.com/g)) {
           const width = 1000;
@@ -71,33 +71,39 @@ export default class SinglePost extends Component {
     }
   };
 
+  getImgSrc = (post, type) => {
+    const {
+      postDetails: { videoImage, postHeader } = {},
+      eventDetails: { eventImage } = {},
+      magazineDetail: { coverImage } = {}
+    } = post;
+
+    const currentImg = videoImage || postHeader || eventImage || coverImage;
+    if (type === "small") return currentImg && currentImg.medium;
+    return currentImg && currentImg.large;
+  };
+
   render() {
     const {
-      post: {
-        title,
-        content,
-        link = "",
-        postDetails: {
-          youtubeId,
-          showPodcasts,
-          vimeoId,
-          embedUrl,
-          venue,
-          eventDates,
-          webAddress,
-          eventPrice,
-          postHeader
-        } = {},
-        magazineDetail: { coverImage } = {}
-      } = {},
+      post,
       showShareIcons,
       liveVideos = [],
       hideTitle,
       classes,
       podcasts
     } = this.props;
-    const { thumbnail } = postHeader || {};
-    const { medium } = coverImage || {};
+    const { title, content, link = "", postDetails, eventDetails } = post || {};
+    const {
+      youtubeId,
+      showPodcasts,
+      vimeoId,
+      embedUrl,
+      venue,
+      eventDates,
+      webAddress,
+      eventPrice
+    } = postDetails || eventDetails || {};
+
     const containerStyle = { padding: "0" };
     const { acf: { endDate, displayDate, url } = {} } =
       liveVideos.length > 0 ? liveVideos[0] : {};
@@ -107,7 +113,7 @@ export default class SinglePost extends Component {
       moment(endDate, "MM/DD/YYYY h:mm a", true)
     );
 
-    const imgThumbnail = thumbnail || medium;
+    const imgThumbnail = post && this.getImgSrc(post);
 
     const isLiveVideo =
       isPlaying &&
@@ -127,7 +133,11 @@ export default class SinglePost extends Component {
           <ul className="post-details">
             {venue && (
               <li>
-                <Material.MdLocationOn size="25" color="#4ea2ea" />
+                <Material.MdLocationOn
+                  size="25"
+                  color="#4ea2ea"
+                  style={{ verticalAlign: "middle" }}
+                />
                 <span dangerouslySetInnerHTML={{ __html: venue }} />
               </li>
             )}

@@ -1,6 +1,5 @@
 import { combineReducers } from "redux";
 
-import { loadingBarReducer } from "react-redux-loading-bar";
 import accountReducers from "./accountReducers";
 import pageReducers from "./pageReducers";
 import postReducers from "./postReducers";
@@ -18,6 +17,5 @@ export default combineReducers({
   magazineReducers,
   donateReducers,
   scheduleReducers,
-  loadingBar: loadingBarReducer,
   form: formReducers
 });

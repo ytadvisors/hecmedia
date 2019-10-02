@@ -1,21 +1,25 @@
 import React from "react";
 import Link from "next/link";
-import { graphql } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "next/router";
-import gql from "graphql-tag";
+import { GET_ALL_PAGE_CATEGORY } from "../../lib/graphql";
+import { getHref } from "../../lib/getFunctions";
+import { cleanUrl } from "../../lib/updateFunctions";
 import "./styles.scss";
 
-const { WP_HOST } = process.env;
-let cursor = "";
-
-export const CategoryNav = props => {
-  const {
-    data: { categories, fetchMore }
-  } = props;
+export default () => {
+  let cursor = "";
   const router = useRouter();
   const { asPath } = router;
-  const link = `${WP_HOST}${asPath}`;
+  const link = `${process.env.WP_HOST}${asPath}`;
+  const variables = { cursor };
 
+  const { data, fetchMore } = useQuery(GET_ALL_PAGE_CATEGORY, {
+    variables,
+    notifyOnNetworkStatusChange: true
+  });
+
+  const { categories } = data || {};
   if (categories && categories.edges) {
     const menus = categories.edges;
     cursor = categories.pageInfo.endCursor;
@@ -33,7 +37,7 @@ export const CategoryNav = props => {
     if (!categoryList.node)
       fetchMore({
         variables: {
-          cursor
+          cursor: cursor || ""
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
@@ -46,6 +50,8 @@ export const CategoryNav = props => {
 
     if (categoryList.node) {
       const subcategories = categoryList.node.children.edges;
+      const url = cleanUrl(categoryList.node.link);
+      const actualLink = getHref(url);
       return (
         <section className="sub-navigation">
           <div className="row heading">
@@ -53,12 +59,7 @@ export const CategoryNav = props => {
               <div className="pull-left">
                 {categoryList.node.link && (
                   <h2>
-                    <Link
-                      href={categoryList.node.link.replace(
-                        /https?:\/\/[^/]+/,
-                        ""
-                      )}
-                    >
+                    <Link as={url} href={actualLink}>
                       <a
                         dangerouslySetInnerHTML={{
                           __html: categoryList.node.name
@@ -73,15 +74,12 @@ export const CategoryNav = props => {
           <ul className="link-list">
             {subcategories.map(subcategory => {
               const isActive = link === subcategory.node.link ? "active" : "";
+              const subUrl = cleanUrl(subcategory.node.link);
+              const actualSubLink = getHref(subUrl);
               return (
                 <li key={subcategory.node.link}>
                   {!isActive && (
-                    <Link
-                      href={subcategory.node.link.replace(
-                        /https?:\/\/[^/]+/,
-                        ""
-                      )}
-                    >
+                    <Link as={subUrl} href={actualSubLink}>
                       <a
                         dangerouslySetInnerHTML={{
                           __html: subcategory.node.name
@@ -104,33 +102,19 @@ export const CategoryNav = props => {
       );
     }
   }
-  return <></>;
+  return (
+    <section className="sub-navigation">
+      <div className="row heading">
+        <div className="col-md-12">
+          <div className="pull-left">
+            <h2
+              dangerouslySetInnerHTML={{
+                __html: "&nbsp;"
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 };
-
-export const allCategories = gql`
-  query allCategories($cursor: String!) {
-    categories(after: $cursor) {
-      edges {
-        node {
-          name
-          link
-          children {
-            edges {
-              node {
-                link
-                name
-              }
-            }
-          }
-        }
-      }
-      pageInfo {
-        endCursor
-      }
-    }
-  }
-`;
-
-export default graphql(allCategories, {
-  options: { variables: { cursor } }
-})(CategoryNav);

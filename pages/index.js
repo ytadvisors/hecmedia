@@ -1,96 +1,30 @@
 import React from "react";
-import { graphql } from "react-apollo";
-import gql from "graphql-tag";
+import { useQuery } from "@apollo/react-hooks";
+import { GET_HOME_PAGE } from "../lib/graphql";
 import Layout from "../containers/Layout";
 import ListOfPosts from "../components/ListOfPosts";
 import SEO from "../components/SEO";
 import { removeDuplicates } from "../lib/updateFunctions";
+import { getPostImgSrc, getExcerpt } from "../lib/getFunctions";
 
-const uri = "home";
+export default () => {
+  const { data } = useQuery(GET_HOME_PAGE, {
+    variables: { uri: "home" },
+    notifyOnNetworkStatusChange: true
+  });
+  const { pageData, postData } = data || {};
+  const {
+    title,
+    content,
+    link,
+    requiredPosts: { postList = [] } = {},
+    feedDesign
+  } = pageData || {};
+  const description =
+    content || "On Demand Arts, Culture & Education Programming";
 
-export const pageInfo = gql`
-  query pageInfo($uri: String!) {
-    pageData: pageBy(uri: $uri) {
-      requiredPosts {
-        postList {
-          post {
-            ... on Post {
-              title(format: RENDERED)
-              postDetails {
-                videoImage {
-                  medium: sourceUrl(size: MEDIUM)
-                  large: sourceUrl(size: MEDIUM_LARGE)
-                }
-                postHeader {
-                  medium: sourceUrl(size: MEDIUM)
-                  large: sourceUrl(size: MEDIUM_LARGE)
-                }
-              }
-              link
-              categories(where: { shouldOutputInFlatList: true }) {
-                edges {
-                  node {
-                    link
-                    name
-                  }
-                }
-              }
-              postId
-              slug
-              excerpt(format: RENDERED)
-              content(format: RENDERED)
-            }
-          }
-        }
-      }
-      feedDesign {
-        newRowLayout {
-          rowLayout
-          displayType
-        }
-        defaultDisplayType
-        defaultRowLayout
-      }
-    }
-    postData: posts(
-      first: 10
-      where: { orderby: { field: DATE, order: ASC } }
-    ) {
-      edges {
-        node {
-          title(format: RENDERED)
-          postDetails {
-            videoImage {
-              medium: sourceUrl(size: MEDIUM)
-              large: sourceUrl(size: MEDIUM_LARGE)
-            }
-            postHeader {
-              medium: sourceUrl(size: MEDIUM)
-              large: sourceUrl(size: MEDIUM_LARGE)
-            }
-          }
-          link
-          categories(where: { shouldOutputInFlatList: true }) {
-            edges {
-              node {
-                link
-                name
-              }
-            }
-          }
-          postId
-          slug
-          excerpt(format: RENDERED)
-          content(format: RENDERED)
-        }
-      }
-    }
-  }
-`;
-
-const Index = ({ data: { pageData, postData } }) => {
-  const { requiredPosts: { postList = [] } = {}, feedDesign } = pageData || {};
   let pagePosts = [];
+  let image = "";
   if (postData && postData.edges) {
     pagePosts = [
       ...postList.map(obj => obj.post),
@@ -99,10 +33,20 @@ const Index = ({ data: { pageData, postData } }) => {
     pagePosts = removeDuplicates(pagePosts, "postId");
     pagePosts = removeDuplicates(pagePosts, "postId");
     pagePosts = pagePosts.splice(0, 10);
+    image = getPostImgSrc(pagePosts[0]);
   }
   return (
     <>
-      <SEO />
+      <SEO
+        {...{
+          title: `HEC-TV | ${title}`,
+          image,
+          description: getExcerpt(description, 320),
+          url: process.env.SITE_HOST,
+          fbAppId: process.env.FACEBOOK_APP_ID,
+          pathname: link && link.replace(/https?:\/\/[^/]+/, "")
+        }}
+      />
       <Layout showBottomNav>
         <ListOfPosts
           posts={pagePosts}
@@ -116,7 +60,3 @@ const Index = ({ data: { pageData, postData } }) => {
     </>
   );
 };
-
-export default graphql(pageInfo, {
-  options: { variables: { uri } }
-})(Index);

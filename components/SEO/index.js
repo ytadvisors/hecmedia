@@ -1,5 +1,6 @@
 import React from "react";
 import Head from "next/head";
+import TagManager from "../TagManager";
 import { decodeHTML } from "../../lib/updateFunctions";
 
 export default ({
@@ -7,18 +8,19 @@ export default ({
   description,
   image,
   title,
-  siteName,
+  siteName = "hecmedia.org",
   pathname,
-  twitterHandle,
+  twitterHandle = "@hec_tv",
   categories,
   url
 }) => (
   <Head>
-    <title>{title || "HEC-TV | Home"}</title>
+    <title>{title ? decodeHTML(title) : "HEC-TV | Home"}</title>
     <meta
       name="description"
       content={description || "On Demand Arts, Culture & Education Programming"}
     />
+    <TagManager />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta property="og:image" content={image || ""} />
     <meta property="og:title" content={decodeHTML(title || "")} />
@@ -51,6 +53,17 @@ export default ({
       crossOrigin="anonymous"
     />
     <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.css"
+      crossOrigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.css"
+      crossOrigin="anonymous"
+    />
+
+    <link
       rel="apple-touch-icon"
       sizes="180x180"
       href="/static/favicons/apple-touch-icon.png"
@@ -77,13 +90,18 @@ export default ({
     <meta name="msapplication-TileColor" content="#da532c" />
     <meta name="theme-color" content="#ffffff" />
     {categories && (
-      <script type="text/javascript">{`
+      <script
+        type="text/javascript"
+        dangerouslySetInnerHTML={{
+          __html: `
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         pageCategory: ${JSON.stringify(categories)},
         event : "postCategory"
       });
-    `}</script>
+    `
+        }}
+      />
     )}
     <script type="text/javascript">{`function onloadCallback() {}`}</script>
   </Head>
