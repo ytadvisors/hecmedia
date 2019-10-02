@@ -42,7 +42,7 @@
     "dev": "node server.js",
     "build": "next build",
     "start": "next start",
-    "deploy": "serverless",
+    "deploy": "yarn install && serverless",
     "lint": "eslint .",
     "lint:fix": "eslint --fix ."
   },
