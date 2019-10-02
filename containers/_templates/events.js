@@ -69,10 +69,12 @@ export default props => {
 
   const { eventData, pageData: { feedDesign } = {} } = data || {};
   variables.after = eventData ? eventData.pageInfo.endCursor : null;
-  runFetch(fetchMore, variables);
-  runFetch(fetchMore, getIncrVariables(variables));
-  runFetch(fetchMore, getIncrVariables(variables, 2));
-  runFetch(fetchMore, getIncrVariables(variables, 3));
+  if (fetchMore) {
+    runFetch(fetchMore, variables);
+    runFetch(fetchMore, getIncrVariables(variables));
+    runFetch(fetchMore, getIncrVariables(variables, 2));
+    runFetch(fetchMore, getIncrVariables(variables, 3));
+  }
 
   const image =
     eventData && eventData.length > 0 ? getPostImgSrc(eventData[0]) : "";

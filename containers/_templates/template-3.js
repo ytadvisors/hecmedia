@@ -37,7 +37,6 @@ const contactUs = props => {
 
 const Page = props => {
   const { title, link, pageContent } = props;
-  const { GOOGLE_API_KEY } = process.env;
   const { content } = pageContent;
   const description =
     content || "On Demand Arts, Culture & Education Programming";
@@ -61,7 +60,7 @@ const Page = props => {
         <Template3
           {...{ ...pageContent, callbackFunc: () => contactUs(props) }}
         >
-          <Map mapKey={GOOGLE_API_KEY} />
+          <Map mapKey={process.env.GOOGLE_API_KEY} />
         </Template3>
       </Layout>
     </>
