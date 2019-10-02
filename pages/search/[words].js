@@ -8,7 +8,7 @@ import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import { getExcerpt } from "../../lib/getFunctions";
 import { GET_SEARCH_RESULTS } from "../../lib/graphql";
 
-const getContent = () => {
+export default () => {
   const router = useRouter();
   const {
     query: { words }
@@ -38,34 +38,6 @@ const getContent = () => {
       }
     });
 
-  return (
-    <>
-      <div className="col-md-12">
-        <DefaultNav
-          title={`Results: ${decodeURI(words)}`}
-          link={`/search/${words}`}
-        />
-      </div>
-      <div className="col-md-12">
-        <ListOfPosts
-          posts={postData ? postData.edges.map(obj => obj.node) : []}
-          link={{ page: "posts" }}
-          numResults={0}
-          design={null}
-          loadMore={
-            postData &&
-            postData.edges.length % 10 === 0 &&
-            variables.cursor !== null &&
-            loadMore
-          }
-          resizeRows
-        />
-      </div>
-    </>
-  );
-};
-
-export default () => {
   const description = "On Demand Arts, Culture & Education Programming";
 
   return (
@@ -80,7 +52,29 @@ export default () => {
           pathname: `${process.env.SITE_HOST}/search`
         }}
       />
-      <Layout>{getContent()}</Layout>
+      <Layout>
+        <div className="col-md-12">
+          <DefaultNav
+            title={`Results: ${decodeURI(words)}`}
+            link={`/search/${words}`}
+          />
+        </div>
+        <div className="col-md-12">
+          <ListOfPosts
+            posts={postData ? postData.edges.map(obj => obj.node) : []}
+            link={{ page: "posts" }}
+            numResults={0}
+            design={null}
+            loadMore={
+              postData &&
+              postData.edges.length % 10 === 0 &&
+              variables.cursor !== null &&
+              loadMore
+            }
+            resizeRows
+          />
+        </div>
+      </Layout>
     </>
   );
 };

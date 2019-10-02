@@ -65,7 +65,7 @@ export default () => {
     categories && categories.edges.map(obj => obj.node.name);
 
   return (
-    <Layout>
+    <>
       <SEO
         {...{
           title,
@@ -77,59 +77,61 @@ export default () => {
           categories: categoryNames
         }}
       />
-      <div className="col-md-12" style={{ background: "#eee" }}>
-        {result.post && (
-          <SinglePost
-            {...{
-              post: result.post,
-              showShareIcons: true
-            }}
-          />
-        )}
-        {result.post && result.post.postDetails.relatedPosts && (
-          <ListOfPosts
-            title="Related Posts"
-            posts={
-              (result.post.postDetails.relatedPosts &&
-                result.post.postDetails.relatedPosts
-                  .map(obj => obj && obj.relatedPost)
-                  .slice(0, 3)) ||
-              []
-            }
-            link={{ page: "posts" }}
-            numResults={0}
-            style={{
-              background: "#f9f9f9",
-              marginBottom: "20px",
-              border: "1px solid #ddd"
-            }}
-            design={{
-              defaultRowLayout: "3 Columns",
-              defaultDisplayType: "Post"
-            }}
-            loadMore={null}
-            resizeRows
-          />
-        )}
-        {result.post && result.post.postDetails.postEvents && (
-          <ListOfPosts
-            title="Related Events"
-            posts={
-              (result.post.postDetails.postEvents &&
-                result.post.postDetails.postEvents.map(
-                  obj => obj && obj.relatedEvent
-                )) ||
-              []
-            }
-            link={{ page: "events" }}
-            numResults={0}
-            design={{
-              defaultRowLayout: "Single Column",
-              defaultDisplayType: "Wallpaper"
-            }}
-          />
-        )}
-      </div>
-    </Layout>
+      <Layout>
+        <div className="col-md-12" style={{ background: "#eee" }}>
+          {result.post && (
+            <SinglePost
+              {...{
+                post: result.post,
+                showShareIcons: true
+              }}
+            />
+          )}
+          {result.post && result.post.postDetails.relatedPosts && (
+            <ListOfPosts
+              title="Related Posts"
+              posts={
+                (result.post.postDetails.relatedPosts &&
+                  result.post.postDetails.relatedPosts
+                    .map(obj => obj && obj.relatedPost)
+                    .slice(0, 3)) ||
+                []
+              }
+              link={{ page: "posts" }}
+              numResults={0}
+              style={{
+                background: "#f9f9f9",
+                marginBottom: "20px",
+                border: "1px solid #ddd"
+              }}
+              design={{
+                defaultRowLayout: "3 Columns",
+                defaultDisplayType: "Post"
+              }}
+              loadMore={null}
+              resizeRows
+            />
+          )}
+          {result.post && result.post.postDetails.postEvents && (
+            <ListOfPosts
+              title="Related Events"
+              posts={
+                (result.post.postDetails.postEvents &&
+                  result.post.postDetails.postEvents.map(
+                    obj => obj && obj.relatedEvent
+                  )) ||
+                []
+              }
+              link={{ page: "events" }}
+              numResults={0}
+              design={{
+                defaultRowLayout: "Single Column",
+                defaultDisplayType: "Wallpaper"
+              }}
+            />
+          )}
+        </div>
+      </Layout>
+    </>
   );
 };

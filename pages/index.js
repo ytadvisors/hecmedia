@@ -37,17 +37,17 @@ export default () => {
   }
   return (
     <>
+      <SEO
+        {...{
+          title: `HEC-TV | ${title}`,
+          image,
+          description: getExcerpt(description, 320),
+          url: process.env.SITE_HOST,
+          fbAppId: process.env.FACEBOOK_APP_ID,
+          pathname: link && link.replace(/https?:\/\/[^/]+/, "")
+        }}
+      />
       <Layout showBottomNav>
-        <SEO
-          {...{
-            title: `HEC-TV | ${title}`,
-            image,
-            description: getExcerpt(description, 320),
-            url: process.env.SITE_HOST,
-            fbAppId: process.env.FACEBOOK_APP_ID,
-            pathname: link && link.replace(/https?:\/\/[^/]+/, "")
-          }}
-        />
         <ListOfPosts
           posts={pagePosts}
           link={{ page: "posts" }}
