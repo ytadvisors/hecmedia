@@ -1,23 +1,25 @@
 import React from "react";
 import Link from "next/link";
-import { graphql } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "next/router";
-import gql from "graphql-tag";
+import { GET_ALL_PAGE_CATEGORY } from "../../lib/graphql";
 import { getHref } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
 import "./styles.scss";
 
-export const CategoryNav = props => {
-  const { WP_HOST } = process.env;
+export default () => {
   let cursor = "";
-
-  const {
-    data: { categories, fetchMore }
-  } = props;
   const router = useRouter();
   const { asPath } = router;
-  const link = `${WP_HOST}${asPath}`;
+  const link = `${process.env.WP_HOST}${asPath}`;
+  const variables = { cursor };
 
+  const { data, fetchMore } = useQuery(GET_ALL_PAGE_CATEGORY, {
+    variables,
+    notifyOnNetworkStatusChange: true
+  });
+
+  const { categories } = data || {};
   if (categories && categories.edges) {
     const menus = categories.edges;
     cursor = categories.pageInfo.endCursor;
@@ -37,7 +39,6 @@ export const CategoryNav = props => {
         variables: {
           cursor: cursor || ""
         },
-        fetchPolicy: "cache-and-network",
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult) return prev;
           return {
@@ -101,33 +102,5 @@ export const CategoryNav = props => {
       );
     }
   }
-  return <></>;
+  return <section className="sub-navigation" />;
 };
-
-export const allCategories = gql`
-  query allCategories($cursor: String!) {
-    categories(after: $cursor) {
-      edges {
-        node {
-          name
-          link
-          children {
-            edges {
-              node {
-                link
-                name
-              }
-            }
-          }
-        }
-      }
-      pageInfo {
-        endCursor
-      }
-    }
-  }
-`;
-
-export default graphql(allCategories, {
-  options: { variables: { cursor: "" } }
-})(CategoryNav);
