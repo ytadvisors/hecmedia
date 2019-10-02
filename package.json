@@ -42,8 +42,8 @@
     "dev": "node server.js",
     "build": "next build",
     "start": "next start",
-    "deploy-dev": "ACTIVE_ENV=development serverless",
-    "deploy-prod": "ACTIVE_ENV=production serverless",
+    "deploy-dev": "ACTIVE_ENV=dev serverless -s dev",
+    "deploy-prod": "ACTIVE_ENV=prod serverless -s prod",
     "lint": "eslint .",
     "lint:fix": "eslint --fix ."
   },
