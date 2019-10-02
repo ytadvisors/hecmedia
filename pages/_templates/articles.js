@@ -15,7 +15,7 @@ export default props => {
   });
 
   const { title, link, content } = props || {};
-  const { postData } = data;
+  const { postData } = data || {};
   const posts = postData ? postData.edges.map(obj => obj && obj.node) : [];
   variables.cursor = postData ? postData.pageInfo.endCursor : "";
 

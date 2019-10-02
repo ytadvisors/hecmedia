@@ -13,7 +13,6 @@ class MyApp extends App {
     if (Component.getInitialProps) {
       pageProps = await Component.getInitialProps({ ctx });
     }
-    pageProps.query = ctx.query;
     return { pageProps };
   }
 
@@ -22,7 +21,7 @@ class MyApp extends App {
     return (
       <Provider store={store}>
         <ApolloProvider client={apolloClient}>
-          <Component {...pageProps} />
+          <Component {...pageProps} client={apolloClient} />
         </ApolloProvider>
       </Provider>
     );

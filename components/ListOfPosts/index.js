@@ -505,24 +505,23 @@ export default class ListOfPosts extends Component {
           </div>
         ));
       }
-      return (
-        <section className="post-list-container clearfix" style={style}>
-          {title ? <div className="title">{title}</div> : ""}
-          {mainContent}
-          {remainingPosts}
-          {loadMore && (
-            <div className="load-more-container ">
-              <Button
-                className="btn-primary btn-load-more"
-                onClick={() => loadMore()}
-              >
-                LOAD MORE
-              </Button>
-            </div>
-          )}
-        </section>
-      );
     }
-    return <section />;
+    return (
+      <section className="post-list-container clearfix" style={style}>
+        {title ? <div className="title">{title}</div> : ""}
+        {posts.length > 0 && mainContent}
+        {posts.length > 0 && remainingPosts}
+        {posts.length > 0 && loadMore && (
+          <div className="load-more-container ">
+            <Button
+              className="btn-primary btn-load-more"
+              onClick={() => loadMore()}
+            >
+              LOAD MORE
+            </Button>
+          </div>
+        )}
+      </section>
+    );
   }
 }
