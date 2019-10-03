@@ -59,7 +59,9 @@ export default props => {
           posts={posts}
           link={{ page: "posts" }}
           numResults={0}
-          loadMore={variables.cursor !== null && loadMore}
+          loadMore={
+            posts.length % 10 === 0 && variables.cursor !== null && loadMore
+          }
           resizeRows
         />
       </Layout>
