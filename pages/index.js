@@ -32,7 +32,7 @@ export default () => {
     ];
     pagePosts = removeDuplicates(pagePosts, "postId");
     pagePosts = removeDuplicates(pagePosts, "postId");
-    pagePosts = pagePosts.splice(0, 10);
+    pagePosts = pagePosts.splice(0, 15);
     image = getPostImgSrc(pagePosts[0]);
   }
   return (
