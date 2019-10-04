@@ -1,6 +1,7 @@
 import React from "react";
 import VideoPlayer from "../VideoPlayer";
 import ShareSocialLinks from "../ShareSocialLinks";
+import { cleanUrl } from "../../lib/updateFunctions";
 
 import "./styles.scss";
 
@@ -20,6 +21,8 @@ export default ({
       }
     : { padding: "0" };
 
+  const shareUrl = process.env.SITE_HOST + cleanUrl(link.replace(/\/$/, ""));
+
   return (
     <section className="post-container">
       <section>
@@ -38,7 +41,11 @@ export default ({
         <div className="pull-right">
           <div className="social-link-text">Share</div>
           <div className="social-links">
-            <ShareSocialLinks url={link} title={shareTitle} body={content} />
+            <ShareSocialLinks
+              url={shareUrl}
+              title={shareTitle}
+              body={content}
+            />
           </div>
         </div>
       </div>

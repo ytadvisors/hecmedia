@@ -114,11 +114,12 @@ export default class SinglePost extends Component {
     );
 
     const imgThumbnail = post && this.getImgSrc(post);
-
     const isLiveVideo =
       isPlaying &&
       url &&
       cleanUrl(url.replace(/\/$/, "")) === cleanUrl(link.replace(/\/$/, ""));
+
+    const shareUrl = process.env.SITE_HOST + cleanUrl(link.replace(/\/$/, ""));
 
     return (
       <section className="post-container" id="post-container">
@@ -127,7 +128,7 @@ export default class SinglePost extends Component {
 
           {showShareIcons && (
             <div className="row share-container">
-              {link && <ShareSocialLinks url={link} title={title} />}
+              {link && <ShareSocialLinks url={shareUrl} title={title} />}
             </div>
           )}
           <ul className="post-details">
