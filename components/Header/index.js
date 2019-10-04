@@ -262,7 +262,10 @@ export default class Header extends Component {
               <SocialLinks links={socialLinks} />
             </div>
             <Navbar.Toggle className="nav-toggle " />
-            <Nav onSelect={this.closeNav} className="user-admin pull-right">
+            <Nav
+              onSelect={this.closeNav}
+              className="user-admin pull-right clearfix"
+            >
               {this.getLinks(userAdmin)}
             </Nav>
           </Navbar.Header>
