@@ -31,8 +31,8 @@ const Layout = props => {
     .format("YYYY-MM-DD")
     .toLowerCase();
 
-  const compareStart = `${currentDate} 00:00:00`;
-  const compareEnd = `${currentDate} 23:59:59`;
+  const compareStart = currentDate;
+  const compareEnd = currentDate;
   const keyStart = "display_date";
   const keyEnd = "end_date";
 
