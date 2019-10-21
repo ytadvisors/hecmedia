@@ -28,11 +28,11 @@ const Layout = props => {
     .toLowerCase();
 
   const currentDate = moment(mDay)
-    .format("YYYY-MM-DD")
+    .format("YYYY-MM-DD hh:mm:ss")
     .toLowerCase();
 
-  const compareStart = `${currentDate} 00:00:00`;
-  const compareEnd = `${currentDate} 23:59:59`;
+  const compareStart = currentDate;
+  const compareEnd = currentDate;
   const keyStart = "display_date";
   const keyEnd = "end_date";
 
