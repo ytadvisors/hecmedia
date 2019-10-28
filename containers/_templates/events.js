@@ -56,13 +56,14 @@ export default props => {
   const incr = 0;
   const mDay = currentDate ? new Date(`${currentDate} 00:00:00`) : new Date();
   const currentDay = moment(mDay).format("YYYY-MM-DD");
-  const compareStart = `${currentDay} 00:00:00`;
-  const compareEnd = `${currentDay} 23:59:59`;
+
+  const dayStart = `${currentDay} 00:00:00`;
+  const dayEnd = `${currentDay} 23:59:59`;
   const keyStart = `event_dates_${incr}_start_time`;
   const keyEnd = `event_dates_${incr}_end_time`;
   const after = "";
 
-  const variables = { keyStart, keyEnd, compareStart, compareEnd, after };
+  const variables = { keyStart, keyEnd, dayStart, dayEnd, after };
   const { data, fetchMore } = useQuery(GET_EVENTS_BY_DAY, {
     variables
   });
