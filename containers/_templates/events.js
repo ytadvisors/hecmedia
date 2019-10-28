@@ -10,21 +10,6 @@ import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { GET_EVENTS_BY_DAY } from "../../lib/graphql";
 
 export default props => {
-  const getIncrVariables = (variables, adder = 1) => {
-    const { keyEnd: endKey } = variables;
-    const incr =
-      endKey.replace(/[(event_dates|start_time|end_time)_]/gi, "") / 1 + adder;
-
-    const keyStart = `event_dates_${incr}_start_time`;
-    const keyEnd = `event_dates_${incr}_end_time`;
-
-    return {
-      ...variables,
-      keyStart,
-      keyEnd
-    };
-  };
-
   const runFetch = async (fetchMore, args) => {
     await fetchMore({
       query: GET_EVENTS_BY_DAY,
@@ -53,14 +38,13 @@ export default props => {
     link = "/events",
     content
   } = props || {};
-  const incr = 0;
   const mDay = currentDate ? new Date(`${currentDate} 00:00:00`) : new Date();
   const currentDay = moment(mDay).format("YYYY-MM-DD");
 
   const dayStart = `${currentDay} 00:00:00`;
   const dayEnd = `${currentDay} 23:59:59`;
-  const keyStart = `event_dates_${incr}_start_time`;
-  const keyEnd = `event_dates_${incr}_end_time`;
+  const keyStart = `event_dates_$_start_time`;
+  const keyEnd = `event_dates_$_end_time`;
   const after = "";
 
   const variables = { keyStart, keyEnd, dayStart, dayEnd, after };
@@ -72,9 +56,6 @@ export default props => {
   variables.after = eventData ? eventData.pageInfo.endCursor : null;
   if (fetchMore) {
     runFetch(fetchMore, variables);
-    runFetch(fetchMore, getIncrVariables(variables));
-    runFetch(fetchMore, getIncrVariables(variables, 2));
-    runFetch(fetchMore, getIncrVariables(variables, 3));
   }
 
   const image =
