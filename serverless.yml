@@ -3,8 +3,6 @@ name: ${env.APP_NAME}
 nextApp:
   component: "serverless-next.js"
   inputs:
-    timeout: 30
-    memory: 1024
     env:
       APOLLO_CLIENT_URI : ${env.APOLLO_CLIENT_URI}
     domain:
