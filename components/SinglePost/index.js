@@ -87,7 +87,7 @@ export default class SinglePost extends Component {
     const {
       post,
       showShareIcons,
-      liveVideos = [],
+      playingLive,
       hideTitle,
       classes,
       podcasts
@@ -105,13 +105,15 @@ export default class SinglePost extends Component {
     } = postDetails || eventDetails || {};
 
     const containerStyle = { padding: "0" };
-    const { acf: { endDate, displayDate, url } = {} } =
-      liveVideos.length > 0 ? liveVideos[0] : {};
+    const { temporaryLink: { displayDate, endDate, url } = {} } =
+      playingLive || {};
 
-    const isPlaying = moment().isBetween(
-      moment(displayDate, "MM/DD/YYYY h:mm a", true),
-      moment(endDate, "MM/DD/YYYY h:mm a", true)
-    );
+    const isPlaying =
+      displayDate &&
+      moment().isBetween(
+        moment(displayDate, "YYYY-MM-DD HH:mm:ss", true),
+        moment(endDate, "YYYY-MM-DD HH:mm:ss", true)
+      );
 
     const imgThumbnail = post && this.getImgSrc(post);
     const isLiveVideo =
@@ -120,7 +122,6 @@ export default class SinglePost extends Component {
       cleanUrl(url.replace(/\/$/, "")) === cleanUrl(link.replace(/\/$/, ""));
 
     const shareUrl = process.env.SITE_HOST + cleanUrl(link.replace(/\/$/, ""));
-
     return (
       <section className="post-container" id="post-container">
         <div className="col-md-12 no-padding">
