@@ -246,20 +246,6 @@ function* loadPostWithSlug({ slug } = {}) {
   }
 }
 
-function* loadLiveVideos() {
-  try {
-    const api = new PostApi();
-    const liveVideos = yield call(api.getLiveVideos);
-    const liveData = deepMapKeys(liveVideos.data, key => _.camelCase(key));
-    yield put({
-      type: types.SET_LIVE_VIDEOS,
-      liveVideos: liveData
-    });
-  } catch (error) {
-    yield put({ type: types.LOAD_ERROR, error });
-  }
-}
-
 /**
  * Load posts for featured posts
  *
@@ -470,7 +456,6 @@ function* handleErrors(payload) {
 export default function* rootSaga() {
   yield all([
     yield takeLatest(types.LOAD_ALL_POSTS, loadAllPosts),
-    yield takeLatest(types.LOAD_LIVE_VIDEOS, loadLiveVideos),
     yield takeLatest(types.LOAD_POSTS_IN_CATEGORY, loadCategoryPosts),
     yield takeLatest(types.LOAD_SUBCATEGORIES, loadSubcategories),
     yield takeLatest(types.LOAD_POST, loadPost),

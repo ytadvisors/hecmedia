@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { connect } from "react-redux";
 import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
@@ -11,12 +11,16 @@ import Banner from "../../components/Banner";
 import Footer from "../../components/Footer";
 import BottomNav from "../../components/BottomNav/index";
 import TagManager from "../../components/TagManager";
+import { setPlayingLiveAction } from "../../store/actions/postActions";
 
 import { BasicModal } from "../Modals";
 
 const Layout = props => {
+  const { pageForm: { search: { values } = {} } = {}, dispatch } = props;
+
+  const [currentlyPlaying, setPlaying] = useState(false);
+
   const searchFunc = () => {
-    const { pageForm: { search: { values } = {} } = {} } = props;
     if (values && values.search) {
       Router.pushRoute(`/search/${values.search}`);
     }
@@ -54,10 +58,14 @@ const Layout = props => {
   const { children, showBottomNav, absContent, style } = props;
   const { programs } = schedule || {};
   const { liveVideos } = videos || [];
-  const liveVideo =
-    liveVideos && liveVideos.edges.length > 0
-      ? liveVideos.edges.map(obj => obj.node)[0]
-      : {};
+  let liveVideo = {};
+  if (liveVideos && liveVideos.edges.length > 0) {
+    [liveVideo] = liveVideos.edges.map(obj => obj.node);
+    if (!currentlyPlaying) {
+      setPlaying(true);
+      dispatch(setPlayingLiveAction(liveVideo));
+    }
+  }
 
   return (
     <>
@@ -84,6 +92,7 @@ const Layout = props => {
 const mapStateToProps = state => ({
   overlaySettings: state.pageReducers.overlaySettings,
   openOverlay: state.pageReducers.openOverlay,
+  playingLive: state.postReducers.playingLive,
   pageForm: state.form
 });
 
