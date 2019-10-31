@@ -7,7 +7,6 @@ export const LOAD_FOOTER_MENU = `${prefix}LOAD_FOOTER_MENU`;
 export const LOAD_HEADER_MENU = `${prefix}LOAD_HEADER_MENU`;
 export const LOAD_BOTTOM_NAV_MENU = `${prefix}LOAD_BOTTOM_NAV_MENU`;
 export const LOAD_SOCIAL_MENU = `${prefix}LOAD_SOCIAL_MENU`;
-export const LOAD_LIVE_VIDEO = `${prefix}LOAD_LIVE_VIDEO`;
 
 // Create
 

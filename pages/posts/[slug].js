@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { connect } from "react-redux";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import Layout from "../../containers/Layout";
@@ -8,7 +9,8 @@ import ListOfPosts from "../../components/ListOfPosts";
 import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { GET_PAGE_INFO, GET_PAGE_CATEGORY } from "../../lib/graphql";
 
-export default () => {
+const Posts = props => {
+  const { playingLive } = props;
   const [count, setCount] = useState(0);
   const router = useRouter();
   const {
@@ -83,7 +85,8 @@ export default () => {
             <SinglePost
               {...{
                 post: result.post,
-                showShareIcons: true
+                showShareIcns: true,
+                playingLive
               }}
             />
           )}
@@ -135,3 +138,9 @@ export default () => {
     </>
   );
 };
+
+const mapStateToProps = state => ({
+  playingLive: state.postReducers.playingLive
+});
+
+export default connect(mapStateToProps)(Posts);

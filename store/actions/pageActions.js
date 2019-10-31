@@ -35,10 +35,6 @@ export const loadPageAction = pageName => ({
   pageName
 });
 
-export const loadLiveVideosAction = () => ({
-  type: types.LOAD_LIVE_VIDEO
-});
-
 export const loadPricingPlansAction = (page = 1) => ({
   type: types.LOAD_PRICING,
   page

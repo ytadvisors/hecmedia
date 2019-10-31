@@ -10,7 +10,7 @@ const initialState = {
   subcategories: [],
   currentPage: 1,
   post: {},
-  liveVideos: [],
+  playingLive: {},
   numResults: {
     posts: 0,
     postList: 0,
@@ -26,7 +26,6 @@ export default (state = initialState, action) => {
     case types.LOAD_POST:
     case types.LOAD_POSTS_IN_CATEGORY:
     case types.LOAD_SUBCATEGORIES:
-    case types.LOAD_LIVE_VIDEOS:
     case types.LOAD_POST_SLUG:
       return {
         ...state,
@@ -76,10 +75,10 @@ export default (state = initialState, action) => {
         },
         error: false
       };
-    case types.SET_LIVE_VIDEOS:
+    case types.SET_PLAYING_LIVE:
       return {
         ...state,
-        liveVideos: action.liveVideos
+        playingLive: action.playingLive
       };
 
     // Errors

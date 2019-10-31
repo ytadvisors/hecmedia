@@ -25,7 +25,6 @@ export default (curState = initialState, action) => {
     case types.LOAD_PRICING:
     case types.LOAD_BOTTOM_NAV_MENU:
     case types.LOAD_HEADER_MENU:
-    case types.LOAD_LIVE_VIDEO:
       return {
         ...state,
         error: false

@@ -10,7 +10,6 @@ export const LOAD_POSTS_IN_CATEGORY = `${prefix}LOAD_POSTS_IN_CATEGORY`;
 export const LOAD_COMMENTS = `${prefix}LOAD_COMMENTS`;
 export const LOAD_SUBCATEGORIES = `${prefix}LOAD_SUBCATEGORIES`;
 export const LOAD_SEARCH_POSTS = `${prefix}LOAD_SEARCH_POSTS`;
-export const LOAD_LIVE_VIDEOS = `${prefix}LOAD_LIVE_VIDEOS`;
 
 // Create
 export const ADD_COMMENT = `${prefix}ADD_COMMENT`;
@@ -23,7 +22,7 @@ export const SET_SUBCATEGORIES = `${prefix}SET_SUBCATEGORIES`;
 export const SET_ALL_POSTS = `${prefix}SET_ALL_POSTS`;
 export const SET_POSTS_IN_CATEGORY = `${prefix}SET_POSTS_IN_CATEGORY`;
 export const SET_POST = `${prefix}SET_POST`;
-export const SET_LIVE_VIDEOS = `${prefix}SET_LIVE_VIDEOS`;
+export const SET_PLAYING_LIVE = `${prefix}SET_PLAYING_LIVE`;
 
 // Error
 export const LOAD_ERROR = `${prefix}LOAD_ERROR`;
