@@ -50,7 +50,7 @@ export default class Banner extends Component {
       <div>
         <div>{getExcerpt(title, isMobile ? 25 : 150)}</div>
         <div className="breaker">.&nbsp;</div>
-        <div>{moment(startDate).format("MMM Do, h:ma")} CT</div>
+        <div>{moment(startDate).format("MMM Do, h:mma")} CT</div>
       </div>
     );
 
