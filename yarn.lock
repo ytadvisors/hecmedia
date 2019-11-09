@@ -10763,10 +10763,10 @@ serve-static@1.14.1:
     parseurl "~1.3.3"
     send "0.17.1"
 
-serverless-next.js@^1.4.1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/serverless-next.js/-/serverless-next.js-1.4.1.tgz#9edc03b21eaf17cbe2eef3a56493bcb2290ffa4f"
-  integrity sha512-tLy0go72my2hEyz79Y9usdOxhohEySQhtBkAzMXJ+mnMB6dxHNU9h/8yi4nrHT2n66u9DT4OFg9IEqhL1VYe3A==
+serverless-next.js@1.4.3:
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/serverless-next.js/-/serverless-next.js-1.4.3.tgz#eb238195a9772877a9c0e8ee48c52b79b631e258"
+  integrity sha512-ayPqRKBWrgdIzVO0S3N1dUfdxl1KlRqTOXhC2Zh9JoJNgYEf0x3CX/2powR2RLTS266gO72tGNHW+rjjK2+sqg==
   dependencies:
     "@serverless/aws-cloudfront" "^5.0.0"
     "@serverless/aws-lambda" "^3.0.0"
