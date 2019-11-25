@@ -122,6 +122,10 @@ export default class SinglePost extends Component {
       cleanUrl(url.replace(/\/$/, "")) === cleanUrl(link.replace(/\/$/, ""));
 
     const shareUrl = process.env.SITE_HOST + cleanUrl(link.replace(/\/$/, ""));
+
+    const liveEmbedUrl = isLiveVideo && embedUrl;
+    const singleEmbedUrl = !youtubeId && !vimeoId && embedUrl;
+
     return (
       <section className="post-container" id="post-container">
         <div className="col-md-12 no-padding">
@@ -182,7 +186,7 @@ export default class SinglePost extends Component {
                   : `https://vimeo.com/${vimeoId}`
               }
               containerStyle={containerStyle}
-              embedUrl={isLiveVideo && embedUrl}
+              embedUrl={singleEmbedUrl || liveEmbedUrl}
             />
           </div>
         ) : (

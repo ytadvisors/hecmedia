@@ -5,32 +5,23 @@ import SEO from "../../components/SEO";
 import Layout from "../Layout";
 import ListOfPosts from "../../components/ListOfPosts";
 import EventNav from "../../components/SubNavigation/EventNav";
-import { getArrayUnion } from "../../lib/updateFunctions";
 import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { GET_EVENTS_BY_DAY } from "../../lib/graphql";
 
-export default props => {
-  const runFetch = async (fetchMore, args) => {
-    await fetchMore({
-      query: GET_EVENTS_BY_DAY,
-      variables: args,
-      updateQuery: (prev, updateProps) => {
-        const { fetchMoreResult } = updateProps;
-        let updateArray = prev;
-        const numResults = fetchMoreResult.eventData.edges.length;
-        if (fetchMoreResult && numResults > 0) {
-          updateArray = getArrayUnion(
-            prev,
-            fetchMoreResult,
-            "eventData",
-            "node.eventId"
-          );
-        }
-        return updateArray;
-      }
-    });
-  };
+const setEventObject = eventObj => {
+  if (eventObj && eventObj.edges) {
+    eventObj.edges.reduce((acc, item) => {
+      const result = { ...acc };
+      const {
+        node: { eventId }
+      } = item;
+      result[eventId] = item;
+      return result;
+    }, {});
+  }
+};
 
+export default props => {
   const {
     currentCategory = "All",
     currentDate = "",
@@ -48,15 +39,15 @@ export default props => {
   const after = "";
 
   const variables = { keyStart, keyEnd, dayStart, dayEnd, after };
-  const { data, fetchMore } = useQuery(GET_EVENTS_BY_DAY, {
+  const { data } = useQuery(GET_EVENTS_BY_DAY, {
     variables
   });
 
-  const { eventData, pageData: { feedDesign } = {} } = data || {};
-  variables.after = eventData ? eventData.pageInfo.endCursor : null;
-  if (fetchMore) {
-    runFetch(fetchMore, variables);
-  }
+  const { matchStart, pageData: { feedDesign } = {} } = data || {};
+  const matchingStart = matchStart ? setEventObject(matchStart) : {};
+  // const matchingEnd = matchEnd ? setEventObject(matchEnd) : {};
+  // const events = _.unionWith(matchingStart, matchingEnd, _.isEqual);
+  const eventData = matchingStart;
 
   const image =
     eventData && eventData.length > 0 ? getPostImgSrc(eventData[0]) : "";
@@ -84,9 +75,13 @@ export default props => {
             title="Events"
           />
         </div>
-        {eventData && eventData.edges.length > 0 && (
+        {eventData && eventData.edges && eventData.edges.length > 0 && (
           <ListOfPosts
-            posts={eventData ? eventData.edges.map(obj => obj.node) : []}
+            posts={
+              eventData && eventData.edges
+                ? eventData.edges.map(obj => obj.node)
+                : []
+            }
             link={{ page: "events" }}
             numResults={0}
             design={feedDesign}
@@ -95,7 +90,7 @@ export default props => {
           />
         )}
         {!eventData ||
-          (eventData.edges.length <= 0 && (
+          (eventData.edges && eventData.edges.length <= 0 && (
             <div className="col-md-12">
               <p>
                 No Events to display. You can change the date above to find
