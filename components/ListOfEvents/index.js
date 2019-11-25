@@ -8,14 +8,11 @@ import "./styles.scss";
 export default () => {
   const mDay = moment(new Date());
   const currentDay = moment(mDay).format("YYYY-MM-DD");
-  const nextDay = moment(mDay.add(1, "year")).format("YYYY-MM-DD");
 
-  const dayStart = `${currentDay} 00:00:00`;
-  const dayEnd = `${nextDay} 23:59:59`;
-  const keyStart = `event_dates_$_start_time`;
+  const dayEnd = `${currentDay} 00:00:00`;
   const keyEnd = `event_dates_$_end_time`;
 
-  const variables = { keyStart, keyEnd, dayStart, dayEnd };
+  const variables = { keyEnd, dayEnd };
   const { data } = useQuery(GET_CURRENT_EVENTS, {
     variables
   });
