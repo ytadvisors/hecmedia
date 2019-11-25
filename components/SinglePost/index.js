@@ -74,11 +74,12 @@ export default class SinglePost extends Component {
   getImgSrc = (post, type) => {
     const {
       postDetails: { videoImage, postHeader } = {},
-      eventDetails: { eventImage } = {},
+      eventDetails: { eventImage, externalImage = "" } = {},
       magazineDetail: { coverImage } = {}
     } = post;
 
     const currentImg = videoImage || postHeader || eventImage || coverImage;
+    if (externalImage) return externalImage;
     if (type === "small") return currentImg && currentImg.medium;
     return currentImg && currentImg.large;
   };
