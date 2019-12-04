@@ -3,9 +3,9 @@ import shortid from "shortid";
 
 import "./styles.scss";
 
-const getPodcastListItem = ({ title, url }) => {
+const getPodcastListItem = ({ label, url }) => {
   let listClass = "";
-  switch (title) {
+  switch (label) {
     case "Apple Podcasts":
       listClass = "apple-link";
       break;
@@ -45,10 +45,10 @@ const getPodcastListItem = ({ title, url }) => {
 
 export default ({ podcasts }) => (
   <section className="podcast-links">
-    {podcasts && podcasts.length > 0 && (
+    {podcasts && podcasts.nodes && podcasts.nodes.length > 0 && (
       <ul>
         <li className="subscribe-label">Subscribe:</li>
-        {podcasts.map(obj => getPodcastListItem(obj))}
+        {podcasts.nodes[0].menuItems.nodes.map(obj => getPodcastListItem(obj))}
       </ul>
     )}
   </section>

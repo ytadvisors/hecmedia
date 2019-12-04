@@ -23,7 +23,7 @@ const Posts = props => {
     notifyOnNetworkStatusChange: true
   });
 
-  const { post } = data || {};
+  const { post, podcasts } = data || {};
   const { categories, postDetails, title, excerpt, content, link } = post || {};
   const { relatedPosts } = postDetails || {};
   let result = { ...data };
@@ -85,7 +85,8 @@ const Posts = props => {
             <SinglePost
               {...{
                 post: result.post,
-                showShareIcns: true,
+                showShareIcons: true,
+                podcasts,
                 playingLive
               }}
             />
