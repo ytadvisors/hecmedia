@@ -83,7 +83,7 @@ export default props => {
 
   useEffect(() => {
     if (cursor) loadMore();
-  }, [cursor]);
+  }, []);
 
   const eventData = setEventObject(matchEvent, moment(mDay));
   const image =
