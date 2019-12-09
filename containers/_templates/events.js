@@ -49,10 +49,9 @@ export default props => {
     link = "/events",
     content
   } = props || {};
-  const mDay = currentDate ? new Date(`${currentDate} 00:00:00`) : new Date();
+  const mDay = currentDate ? new Date(`${currentDate}T00:01`) : new Date();
   const currentDay = moment(mDay).format("YYYY-MM-DD");
-
-  const dayEnd = `${currentDay} 00:00:00`;
+  const dayEnd = `${currentDay} 00:00:01`;
   const keyEnd = `event_dates_$_end_time`;
   const after = "";
 
