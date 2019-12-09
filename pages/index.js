@@ -54,6 +54,7 @@ export default () => {
           numResults={0}
           design={feedDesign}
           loadMore={null}
+          addNewsLetter
           resizeRows
         />
       </Layout>
