@@ -5,7 +5,7 @@ import * as Material from "react-icons/md";
 import LazyLoad from "react-lazyload";
 import VideoPlayer from "../VideoPlayer/index";
 import ShareSocialLinks from "../ShareSocialLinks";
-import { getEventDate } from "../../lib/getFunctions";
+import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
 import { isServer } from "../../lib/serverFunctions";
 import PodcastLinks from "../PodcastLinks";
@@ -71,19 +71,6 @@ export default class SinglePost extends Component {
     }
   };
 
-  getImgSrc = (post, type) => {
-    const {
-      postDetails: { videoImage, postHeader } = {},
-      eventDetails: { eventImage, externalImage = "" } = {},
-      magazineDetail: { coverImage } = {}
-    } = post;
-
-    const currentImg = videoImage || postHeader || eventImage || coverImage;
-    if (externalImage) return externalImage;
-    if (type === "small") return currentImg && currentImg.medium;
-    return currentImg && currentImg.large;
-  };
-
   render() {
     const {
       post,
@@ -116,7 +103,7 @@ export default class SinglePost extends Component {
         moment(endDate, "YYYY-MM-DD HH:mm:ss", true)
       );
 
-    const imgThumbnail = post && this.getImgSrc(post);
+    const imgThumbnail = post && getPostImgSrc(post);
     const isLiveVideo =
       isPlaying &&
       url &&
