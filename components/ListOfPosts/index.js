@@ -4,7 +4,7 @@ import { Button } from "react-bootstrap";
 import { MdLocationOn } from "react-icons/md";
 import { IoIosCalendar } from "react-icons/io";
 import LazyLoad from "react-lazyload";
-import { isServer } from "../../lib/serverFunctions";
+import NewsLetterContainer from "../../containers/NewsLetterContainer";
 import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
 
 import "./styles.scss";
@@ -22,18 +22,19 @@ export default class ListOfPosts extends Component {
 
   componentDidMount() {
     this.mounted = true;
-    if (!isServer) window.addEventListener("resize", this.resize);
-    this.setState({ isMobile: !isServer && window.innerWidth <= 500 });
+    this.resize();
+    window.addEventListener("resize", this.resize);
+    this.setState({ isMobile: window.innerWidth <= 500 });
   }
 
   componentWillUnmount() {
     this.mounted = false;
-    if (!isServer) window.removeEventListener("resize", this.resize);
+    window.removeEventListener("resize", this.resize);
   }
 
   resize = () => {
     if (this.mounted) {
-      this.setState({ isMobile: !isServer && window.innerWidth <= 500 });
+      this.setState({ isMobile: window.innerWidth <= 500 });
     }
   };
 
@@ -435,7 +436,15 @@ export default class ListOfPosts extends Component {
     let defaultLayout = "Single Column";
     let displayType = "Post";
     let numColumns = 1;
-    const { posts, title, design, style, loadMore, resizeRows } = this.props;
+    const {
+      posts,
+      title,
+      design,
+      style,
+      loadMore,
+      resizeRows,
+      addNewsLetter
+    } = this.props;
     const { isMobile } = this.state;
     if (posts.length > 0) {
       const postsClone = [...posts.filter(n => n)];
@@ -469,14 +478,21 @@ export default class ListOfPosts extends Component {
           const rowOfColumns = _.chunk(row, numColumns);
           postsClone.splice(0, numColumns);
           return (
-            <div key={rowInfo.id}>
-              {this.getRows(
-                currentLayout,
-                currentDisplay,
-                rowOfColumns,
-                tableStyle,
-                !!resizeRows
+            <div id={rowInfo.id} key={rowInfo.id}>
+              {addNewsLetter && rowInfo.id === "3" && isMobile && (
+                <div>
+                  <NewsLetterContainer {...this.props} />
+                </div>
               )}
+              <div>
+                {this.getRows(
+                  currentLayout,
+                  currentDisplay,
+                  rowOfColumns,
+                  tableStyle,
+                  !!resizeRows
+                )}
+              </div>
             </div>
           );
         });
