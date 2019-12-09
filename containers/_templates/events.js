@@ -52,21 +52,16 @@ export default props => {
   const mDay = currentDate ? new Date(`${currentDate} 00:00:00`) : new Date();
   const currentDay = moment(mDay).format("YYYY-MM-DD");
 
-  const dayStart = `${currentDay} 00:00:00`;
-  const dayEnd = `${currentDay} 23:59:59`;
-  const keyStart = `event_dates_$_start_time`;
+  const dayEnd = `${currentDay} 00:00:00`;
   const keyEnd = `event_dates_$_end_time`;
   const after = "";
 
-  const variables = { keyStart, keyEnd, dayStart, dayEnd, after };
+  const variables = { keyEnd, dayEnd, after };
   const { data } = useQuery(GET_EVENTS_BY_DAY, {
     variables
   });
 
   const { matchEvent, pageData: { feedDesign } = {} } = data || {};
-
-  // const matchingEnd = matchEnd ? setEventObject(matchEnd) : {};
-  // const events = _.unionWith(matchingStart, matchingEnd, _.isEqual);
   const eventData = setEventObject(matchEvent, moment(mDay));
 
   const image =
