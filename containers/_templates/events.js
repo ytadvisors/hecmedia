@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
 import SEO from "../../components/SEO";
@@ -6,6 +6,7 @@ import Layout from "../Layout";
 import ListOfPosts from "../../components/ListOfPosts";
 import EventNav from "../../components/SubNavigation/EventNav";
 import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
+import { getQueryUpdate } from "../../lib/updateFunctions";
 import { GET_EVENTS_BY_DAY } from "../../lib/graphql";
 
 const setEventObject = (eventObj, currentDay) => {
@@ -49,20 +50,42 @@ export default props => {
     link = "/events",
     content
   } = props || {};
+
+  const [cursor, setCursor] = useState("");
   const mDay = currentDate ? new Date(`${currentDate}T00:01`) : new Date();
   const currentDay = moment(mDay).format("YYYY-MM-DD");
   const dayEnd = `${currentDay} 00:00:01`;
   const keyEnd = `event_dates_$_end_time`;
-  const after = "";
 
-  const variables = { keyEnd, dayEnd, after };
-  const { data } = useQuery(GET_EVENTS_BY_DAY, {
-    variables
+  const variables = { keyEnd, dayEnd, cursor };
+  const { data, fetchMore } = useQuery(GET_EVENTS_BY_DAY, {
+    variables,
+    notifyOnNetworkStatusChange: true
   });
 
   const { matchEvent, pageData: { feedDesign } = {} } = data || {};
-  const eventData = setEventObject(matchEvent, moment(mDay));
+  variables.cursor =
+    matchEvent && matchEvent.pageInfo.endCursor
+      ? matchEvent.pageInfo.endCursor
+      : "";
+  if (cursor !== variables.cursor && variables.cursor)
+    setCursor(variables.cursor);
 
+  const loadMore = () =>
+    fetchMore
+      ? fetchMore({
+          query: GET_EVENTS_BY_DAY,
+          variables,
+          updateQuery: (prev, fetchData) =>
+            getQueryUpdate(prev, fetchData, "matchEvent")
+        })
+      : {};
+
+  useEffect(() => {
+    if (cursor) loadMore();
+  }, [cursor]);
+
+  const eventData = setEventObject(matchEvent, moment(mDay));
   const image =
     eventData && eventData.length > 0 ? getPostImgSrc(eventData[0]) : "";
   const description =
