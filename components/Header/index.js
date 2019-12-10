@@ -122,6 +122,17 @@ export default class Header extends Component {
         </a>
       );
     }
+    if (label.toLowerCase() === "events") {
+      return (
+        <a href={cleanUrl}>
+          <span
+            dangerouslySetInnerHTML={{
+              __html: label
+            }}
+          />
+        </a>
+      );
+    }
     return (
       <Link href={actualLink} as={cleanUrl}>
         <a>
@@ -253,10 +264,7 @@ export default class Header extends Component {
             </div>
             <div className="brand-details">
               <div className="brand-text">
-                <div>
-                  St. Louis
-                  {`'`} home of Education
-                </div>
+                <div>St. Louis&apos; home of Education</div>
                 <div>Arts, and Culture</div>
               </div>
               <SocialLinks links={socialLinks} />
