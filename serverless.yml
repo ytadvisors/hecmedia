@@ -9,3 +9,4 @@ nextApp:
       - ${env.SUBDOMAIN}
       - "hecmedia.org"
     memory: 1024
+    timeout: 30
