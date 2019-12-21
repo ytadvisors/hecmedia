@@ -7,11 +7,12 @@ import { getHref } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
 import "./styles.scss";
 
-export default () => {
+export default ({ link = "" }) => {
   let cursor = "";
   const router = useRouter();
   const { asPath } = router;
-  const link = `${process.env.WP_HOST}${asPath}`;
+  const pageLink = !link ? `${process.env.WP_HOST}${asPath}` : link;
+
   const variables = { cursor };
 
   const { data, fetchMore } = useQuery(GET_ALL_PAGE_CATEGORY, {
@@ -25,16 +26,16 @@ export default () => {
     cursor = categories.pageInfo.endCursor;
     const categoryList = menus.reduce((acc, menu) => {
       let { ...result } = acc;
-      if (menu.node.link === link) result = menu;
+      if (menu.node.link === pageLink) result = menu;
       else
         result = menu.node.children.edges.reduce((childResult, childMenu) => {
-          if (childMenu.node.link === link) result = menu;
+          if (childMenu.node.link === pageLink) result = menu;
           return result;
         }, result);
       return result;
     }, []);
 
-    if (!categoryList.node)
+    if (menus && menus.length > 0 && !categoryList.node)
       fetchMore({
         variables: {
           cursor: cursor || ""
@@ -73,7 +74,8 @@ export default () => {
           </div>
           <ul className="link-list">
             {subcategories.map(subcategory => {
-              const isActive = link === subcategory.node.link ? "active" : "";
+              const isActive =
+                pageLink === subcategory.node.link ? "active" : "";
               const subUrl = cleanUrl(subcategory.node.link);
               const actualSubLink = getHref(subUrl);
               return (

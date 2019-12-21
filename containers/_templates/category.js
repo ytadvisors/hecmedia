@@ -56,7 +56,7 @@ export default props => {
         }}
       />
       <Layout>
-        <CategoryNav />
+        <CategoryNav link={link} />
         <ListOfPosts
           posts={posts}
           link={{ page: "posts" }}

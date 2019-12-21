@@ -2,6 +2,8 @@ import React from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import Articles from "../containers/_templates/articles";
+import Category from "../containers/_templates/category";
+
 import Events from "./events";
 import Magazines from "../containers/_templates/magazines";
 import Template1 from "../containers/_templates/template-1";
@@ -23,8 +25,21 @@ export default props => {
   const { pageTemplate, title, link, content, contact, about } = pageInfo || {};
 
   let result = [];
+  const category = "spotlight";
+  const spotlightLink = `${process.env.WP_HOST}/category/spotlight/`;
 
   switch (page) {
+    case "spotlight":
+      result = (
+        <Category
+          {...{
+            ...props,
+            category,
+            link: spotlightLink
+          }}
+        />
+      );
+      break;
     case "articles":
       result = (
         <Articles
