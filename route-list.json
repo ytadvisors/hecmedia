@@ -13,6 +13,12 @@
       "pattern": "/category/:pid/:id/:cid"
     }
   ],
+  "spotlight": [
+    {
+      "page": "spotlight/",
+      "pattern": "/:pid"
+    }
+  ],
   "events": [
     {
       "page": "events/",
