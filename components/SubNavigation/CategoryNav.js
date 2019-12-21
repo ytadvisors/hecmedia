@@ -12,11 +12,11 @@ export default () => {
   const router = useRouter();
   const { asPath } = router;
   const link = `${process.env.WP_HOST}${asPath}`;
+
   const variables = { cursor };
 
   const { data, fetchMore } = useQuery(GET_ALL_PAGE_CATEGORY, {
-    variables,
-    notifyOnNetworkStatusChange: true
+    variables
   });
 
   const { categories } = data || {};
@@ -34,7 +34,7 @@ export default () => {
       return result;
     }, []);
 
-    if (!categoryList.node)
+    if (menus && menus.length > 0 && !categoryList.node)
       fetchMore({
         variables: {
           cursor: cursor || ""
