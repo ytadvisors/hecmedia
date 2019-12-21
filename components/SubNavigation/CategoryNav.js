@@ -16,8 +16,7 @@ export default () => {
   const variables = { cursor };
 
   const { data, fetchMore } = useQuery(GET_ALL_PAGE_CATEGORY, {
-    variables,
-    notifyOnNetworkStatusChange: true
+    variables
   });
 
   const { categories } = data || {};
