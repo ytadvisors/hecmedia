@@ -1,68 +1,80 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@apollo/react-hooks";
-import { useRouter } from "next/router";
 import { GET_ALL_PAGE_CATEGORY } from "../../lib/graphql";
 import { getHref } from "../../lib/getFunctions";
-import { cleanUrl } from "../../lib/updateFunctions";
+import { cleanUrl, getQueryUpdate } from "../../lib/updateFunctions";
 import "./styles.scss";
 
-export default () => {
-  let cursor = "";
-  const router = useRouter();
-  const { asPath } = router;
-  const link = `${process.env.WP_HOST}${asPath}`;
-
-  const variables = { cursor };
+export default ({ link }) => {
+  const [currentCursor, setCursor] = useState("");
+  console.log("link is: ", link);
 
   const { data, fetchMore } = useQuery(GET_ALL_PAGE_CATEGORY, {
-    variables
+    variables: { cursor: "" }
   });
 
+  const loadMore = () =>
+    fetchMore &&
+    fetchMore({
+      variables: { cursor: currentCursor },
+      updateQuery: (prev, fetchData) =>
+        getQueryUpdate(prev, fetchData, "categories")
+    });
+
   const { categories } = data || {};
-  if (categories && categories.edges) {
-    const menus = categories.edges;
-    cursor = categories.pageInfo.endCursor;
+
+  const { nodes: menus, pageInfo: { endCursor } = {} } = categories || {};
+
+  if (menus) {
+    if (currentCursor !== endCursor && endCursor) {
+      setCursor(endCursor);
+    }
+
+    /* Set current menu */
     const categoryList = menus.reduce((acc, menu) => {
       let { ...result } = acc;
-      if (menu.node.link === link) result = menu;
-      else
-        result = menu.node.children.edges.reduce((childResult, childMenu) => {
-          if (childMenu.node.link === link) result = menu;
+      const { link: menuLink, children: { nodes: menuList } = {} } = menu || {};
+      if (menuLink === link) {
+        result = menu;
+      } else {
+        result = menuList.reduce((childResult, childMenu) => {
+          if (childMenu.link === link) {
+            result = menu;
+          }
           return result;
         }, result);
+      }
+
       return result;
     }, []);
 
-    if (menus && menus.length > 0 && !categoryList.node)
-      fetchMore({
-        variables: {
-          cursor: cursor || ""
-        },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult) return prev;
-          return {
-            ...prev,
-            categories: { ...prev.categories, ...fetchMoreResult.categories }
-          };
-        }
-      });
+    const {
+      name,
+      link: categoryLink,
+      children: { nodes: subcategoryList } = {}
+    } = categoryList;
 
-    if (categoryList.node) {
-      const subcategories = categoryList.node.children.edges;
-      const url = cleanUrl(categoryList.node.link);
+    if (!name && currentCursor !== "") {
+      loadMore();
+    }
+
+    let subcategories = [];
+    if (name) {
+      subcategories = subcategoryList;
+      const url = cleanUrl(categoryLink);
       const actualLink = getHref(url);
       return (
         <section className="sub-navigation">
           <div className="row heading">
             <div className="col-md-12">
               <div className="pull-left">
-                {categoryList.node.link && (
+                {categoryLink && (
                   <h2>
                     <Link as={url} href={actualLink}>
                       <a
                         dangerouslySetInnerHTML={{
-                          __html: categoryList.node.name
+                          __html: name
                         }}
                       />
                     </Link>
@@ -72,31 +84,33 @@ export default () => {
             </div>
           </div>
           <ul className="link-list">
-            {subcategories.map(subcategory => {
-              const isActive = link === subcategory.node.link ? "active" : "";
-              const subUrl = cleanUrl(subcategory.node.link);
-              const actualSubLink = getHref(subUrl);
-              return (
-                <li key={subcategory.node.link}>
-                  {!isActive && (
-                    <Link as={subUrl} href={actualSubLink}>
-                      <a
+            {subcategories.map(
+              ({ link: subcategoryLink, name: subcategoryName }) => {
+                const isActive = link === subcategoryLink ? "active" : "";
+                const subUrl = cleanUrl(subcategoryLink);
+                const actualSubLink = getHref(subUrl);
+                return (
+                  <li key={subcategoryLink}>
+                    {!isActive && (
+                      <Link as={subUrl} href={actualSubLink}>
+                        <a
+                          dangerouslySetInnerHTML={{
+                            __html: subcategoryName
+                          }}
+                        />
+                      </Link>
+                    )}
+                    {isActive && (
+                      <div
                         dangerouslySetInnerHTML={{
-                          __html: subcategory.node.name
+                          __html: subcategoryName
                         }}
                       />
-                    </Link>
-                  )}
-                  {isActive && (
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: subcategory.node.name
-                      }}
-                    />
-                  )}
-                </li>
-              );
-            })}
+                    )}
+                  </li>
+                );
+              }
+            )}
           </ul>
         </section>
       );
@@ -109,7 +123,7 @@ export default () => {
           <div className="pull-left">
             <h2
               dangerouslySetInnerHTML={{
-                __html: "&nbsp;"
+                __html: "&nbsp; "
               }}
             />
           </div>
