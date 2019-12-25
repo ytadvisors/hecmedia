@@ -39,6 +39,8 @@ export default ({ link }) => {
         result = menu;
       } else {
         result = menuList.reduce((childResult, childMenu) => {
+          console.log(link);
+          console.log(childMenu.link);
           if (childMenu.link === link) {
             result = menu;
           }

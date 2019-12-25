@@ -9,5 +9,6 @@ export default props => {
     asPath
   } = router;
 
-  return <Category {...props} category={cid} link={asPath} />;
+  const link = `${process.env.WP_HOST}${asPath}`;
+  return <Category {...props} category={cid} link={link} />;
 };
