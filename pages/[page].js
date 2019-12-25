@@ -16,10 +16,14 @@ export default props => {
   const { query } = router;
   const { page } = query;
 
+  if (page === "favicon.ico") return "";
+
   const variables = { uri: page };
-  const { data } = useQuery(GET_PAGE_TEMPLATE, {
-    variables
-  });
+  const { data } = page
+    ? useQuery(GET_PAGE_TEMPLATE, {
+        variables
+      })
+    : {};
 
   const { pageInfo } = data || {};
   const { pageTemplate, title, link, content, contact, about } = pageInfo || {};

@@ -1,7 +1,8 @@
 import App from "next/app";
 import React from "react";
 import { Provider } from "react-redux";
-import { withApollo } from "../lib/apollo";
+import { ApolloProvider } from "@apollo/react-hooks";
+import withApollo from "../lib/withApollo";
 import createStore from "../store";
 
 import "../lib/cssDependencies";
@@ -16,10 +17,12 @@ class MyApp extends App {
   }
 
   render() {
-    const { Component, pageProps, store } = this.props;
+    const { Component, pageProps, store, apolloClient } = this.props;
     return (
       <Provider store={store}>
-        <Component {...pageProps} />
+        <ApolloProvider client={apolloClient}>
+          <Component {...pageProps} />
+        </ApolloProvider>
       </Provider>
     );
   }

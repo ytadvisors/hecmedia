@@ -1,7 +1,7 @@
 import * as types from "../types/pageTypes";
 
 const initialState = {
-  currentPage: "home",
+  currentPage: "",
   currentTab: "",
   currentNavigationTab: "",
   currentStep: 0,

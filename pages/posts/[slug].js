@@ -19,9 +19,10 @@ const Posts = props => {
   } = router;
   const variables = { slug };
 
+  console.log("=============VARIABLES==========", variables);
+
   const { data, fetchMore } = useQuery(GET_PAGE_INFO, {
-    variables,
-    notifyOnNetworkStatusChange: true
+    variables
   });
 
   const { post, podcasts } = data || {};
