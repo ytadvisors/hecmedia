@@ -33,25 +33,14 @@ export default class Header extends Component {
     $("#main-nav > div:first-child").addClass("main-container");
     this.setState({ isMobile: window.innerWidth <= 1170 });
     window.addEventListener("resize", this.resize);
-    document
-      .getElementById("__next")
-      .addEventListener("click", this.closeWindow);
   }
 
   componentWillUnmount() {
     this.mounted = false;
     if (!isServer) {
       window.removeEventListener("resize", this.resize);
-      document
-        .getElementById("__next")
-        .removeEventListener("click", this.closeWindow);
     }
   }
-
-  closeWindow = () => {
-    const { isMobile } = this.state;
-    if (this.mounted && !isMobile) this.setState({ navExpanded: false });
-  };
 
   resize = () => {
     if (this.mounted) this.setState({ isMobile: window.innerWidth <= 1170 });
@@ -148,11 +137,7 @@ export default class Header extends Component {
     }
     return (
       <Link href={actualLink} as={cleanUrl}>
-        <a
-          onKeyPress={() => {}}
-          onClick={() => this.setState({ navExpanded: false })}
-          role="presentation"
-        >
+        <a>
           <span
             dangerouslySetInnerHTML={{
               __html: label
