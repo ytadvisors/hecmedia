@@ -138,11 +138,17 @@ export default class Header extends Component {
     return (
       <Link href={actualLink} as={cleanUrl}>
         <a>
-          <span
-            dangerouslySetInnerHTML={{
-              __html: label
-            }}
-          />
+          <div
+            onKeyPress={() => {}}
+            onClick={() => this.setState({ navExpanded: false })}
+            role="presentation"
+          >
+            <span
+              dangerouslySetInnerHTML={{
+                __html: label
+              }}
+            />
+          </div>
         </a>
       </Link>
     );
