@@ -27,6 +27,7 @@ module.exports = {
     "import/no-named-as-default": ["off"],
     "react/static-property-placement": ["off"],
     "react/forbid-prop-types": ["off"],
+    "global-require": ["off"],
     "jsx-a11y/label-has-associated-control": [
       "error",
       {
