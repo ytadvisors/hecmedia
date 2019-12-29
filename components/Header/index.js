@@ -49,9 +49,8 @@ export default class Header extends Component {
   }
 
   closeWindow = () => {
-    const { isMobile, navExpanded } = this.state;
-    if (this.mounted && navExpanded && !isMobile)
-      this.setState({ navExpanded: false });
+    const { isMobile } = this.state;
+    if (this.mounted && !isMobile) this.setState({ navExpanded: false });
   };
 
   resize = () => {
