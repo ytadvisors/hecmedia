@@ -19,8 +19,6 @@ const Posts = props => {
   } = router;
   const variables = { slug };
 
-  console.log("=============VARIABLES==========", variables);
-
   const { data, fetchMore } = useQuery(GET_PAGE_INFO, {
     variables
   });
@@ -59,18 +57,9 @@ const Posts = props => {
     });
 
   useEffect(() => {
-    if (relatedPosts) {
-      if (relatedResults.length < 3) {
-        if (relatedPosts.length > 0 && relatedResults.length === 0) {
-          setRelatedResults(
-            relatedPosts.filter(n => (n.relatedPost ? n : null))
-          );
-        }
-      }
+    if (relatedPosts && relatedPosts.length > 0) {
+      setRelatedResults(relatedPosts.filter(n => (n.relatedPost ? n : null)));
     }
-  }, [relatedPosts]);
-
-  useEffect(() => {
     if (categoryList && relatedResults.length < 3)
       if (categoryList.length > 0) {
         loadMore();
