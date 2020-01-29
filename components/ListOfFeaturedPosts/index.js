@@ -25,7 +25,7 @@ export default props => {
             <li key={link}>
               <a href={url}>
                 <div className="row">
-                  <div className="magazine-img col-xs-4 no-padding">
+                  <div className="magazine-img col-xs-5 no-padding">
                     <LazyLoad height={50}>
                       <img
                         src={img.replace(/^https?:\/\//, "https://")}
@@ -35,7 +35,7 @@ export default props => {
                     </LazyLoad>
                   </div>
                   <div
-                    className="magazine-info col-xs-8 no-padding"
+                    className="magazine-info col-xs-7 no-padding"
                     style={{ paddingLeft: "1em" }}
                     dangerouslySetInnerHTML={{ __html: title }}
                   />
