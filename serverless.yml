@@ -3,8 +3,10 @@ name: ${env.APP_NAME}
 nextApp:
   component: "serverless-next.js"
   inputs:
+    timeout:
+      defaultLambda: 30
     env:
-      APOLLO_CLIENT_URI : ${env.APOLLO_CLIENT_URI}
+      APOLLO_CLIENT_URI: ${env.APOLLO_CLIENT_URI}
     domain:
       - ${env.SUBDOMAIN}
       - "hecmedia.org"
