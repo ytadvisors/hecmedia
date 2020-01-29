@@ -11,7 +11,7 @@ export default props => {
       <div className="title">
         <div>
           <b>
-            <a href="/magazines">HEC-TV Spotlight</a>
+            <a href="/category/spotlight">HEC-TV Spotlight</a>
           </b>
         </div>
       </div>
