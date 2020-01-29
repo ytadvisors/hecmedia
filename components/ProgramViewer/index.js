@@ -3,7 +3,7 @@ import $ from "jquery";
 
 import SideNavigation from "../SideNavigation";
 import ListOfSideTabs from "../ListOfSideTabs";
-import ListOfMagazines from "../ListOfMagazines";
+import ListOfFeaturedPosts from "../ListOfFeaturedPosts";
 
 import Schedule from "../Schedule";
 import ListOfEvents from "../ListOfEvents";
@@ -37,7 +37,13 @@ export default class extends Component {
   };
 
   render() {
-    const { style, programs, featuredMagazines, children } = this.props;
+    const {
+      style,
+      programs,
+      featuredMagazines,
+      spotLightPosts,
+      children
+    } = this.props;
     const { isMobile } = this.state;
     return (
       <section className="program-viewer">
@@ -78,7 +84,10 @@ export default class extends Component {
                     <Schedule programs={programs} />
                   </div>
                   <div className="col-sm-8 col-sm-pull-4  col-lg-12 col-lg-pull-0  no-padding">
-                    <ListOfMagazines featuredMagazines={featuredMagazines} />
+                    <ListOfFeaturedPosts
+                      featuredMagazines={featuredMagazines}
+                      spotLightPosts={spotLightPosts}
+                    />
                   </div>
                 </div>
               </SideNavigation>
