@@ -54,7 +54,13 @@ const Layout = props => {
     notifyOnNetworkStatusChange: true
   });
 
-  const { header, social, footer, featuredMagazines } = data || {};
+  const {
+    header,
+    social,
+    footer,
+    featuredMagazines,
+    spotLight: { nodes: spotLightPosts = [] } = {}
+  } = data || {};
   const { children, showBottomNav, absContent, style } = props;
   const { programs } = schedule || {};
   const { liveVideos } = videos || [];
@@ -78,6 +84,7 @@ const Layout = props => {
           style={style}
           programs={programs}
           featuredMagazines={featuredMagazines}
+          spotLightPosts={spotLightPosts}
         >
           {children}
           {showBottomNav && <BottomNav title="more from" />}
