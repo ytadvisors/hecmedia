@@ -1,6 +1,5 @@
 import React from "react";
 import LazyLoad from "react-lazyload";
-
 import { getPostImgSrc } from "../../lib/getFunctions";
 import "./styles.scss";
 
@@ -11,7 +10,7 @@ export default props => {
       <div className="title">
         <div>
           <b>
-            <a href="/category/spotlight">HEC-TV Spotlight</a>
+            <a href="/spotlight">HEC-TV Spotlight</a>
           </b>
         </div>
       </div>
