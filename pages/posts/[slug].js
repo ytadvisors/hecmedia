@@ -1,4 +1,3 @@
-import "react-app-polyfill/ie9";
 import React, { useState } from "react";
 import { connect } from "react-redux";
 import { useRouter } from "next/router";
