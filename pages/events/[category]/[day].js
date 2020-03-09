@@ -1,4 +1,3 @@
-import "react-app-polyfill/ie9";
 import React from "react";
 import { useRouter } from "next/router";
 import Events from "../../../containers/_templates/events";
