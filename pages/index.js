@@ -1,3 +1,4 @@
+import "react-app-polyfill/ie9";
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import { GET_HOME_PAGE } from "../lib/graphql";
