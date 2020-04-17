@@ -37,7 +37,10 @@ export default class Banner extends Component {
     const { liveVideo } = this.props;
     const { isMobile } = this.state;
 
-    const { title = "", temporaryLink: { startDate, url } = {} } = liveVideo;
+    const {
+      title = "",
+      temporaryLink: { startDate, url, showTime, bannerTitle } = {}
+    } = liveVideo || {};
 
     let formattedUrl = url;
     let redirect = true;
@@ -50,7 +53,7 @@ export default class Banner extends Component {
       <div>
         <div>{getExcerpt(title, isMobile ? 25 : 150)}</div>
         <div className="breaker">.&nbsp;</div>
-        <div>{moment(startDate).format("MMM Do, h:mma")} CT</div>
+        {showTime && <div>{moment(startDate).format("MMM Do, h:mma")} CT</div>}
       </div>
     );
 
@@ -67,12 +70,12 @@ export default class Banner extends Component {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <i>Watch</i>
+                      <i>{bannerTitle}</i>
                     </a>
                   ) : (
                     <Link href={formattedUrl}>
                       <a>
-                        <i>Watch</i>
+                        <i>{bannerTitle}</i>
                       </a>
                     </Link>
                   )}
