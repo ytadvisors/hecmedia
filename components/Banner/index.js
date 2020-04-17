@@ -80,21 +80,23 @@ export default class Banner extends Component {
                     </Link>
                   )}
                 </li>
-                <li className="live vcenter">
-                  {redirect ? (
-                    <a
-                      href={formattedUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Live
-                    </a>
-                  ) : (
-                    <Link href={formattedUrl}>
-                      <a>Live</a>
-                    </Link>
-                  )}
-                </li>
+                {bannerTitle.toLowerCase() === "watch" && (
+                  <li className="live vcenter">
+                    {redirect ? (
+                      <a
+                        href={formattedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Live
+                      </a>
+                    ) : (
+                      <Link href={formattedUrl}>
+                        <a>Live</a>
+                      </Link>
+                    )}
+                  </li>
+                )}
                 <li className="play vcenter no-mobile">
                   {redirect ? (
                     <a
