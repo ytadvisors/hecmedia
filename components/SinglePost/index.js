@@ -89,7 +89,8 @@ export default class SinglePost extends Component {
       venue,
       eventDates,
       webAddress,
-      eventPrice
+      eventPrice,
+      hidePageThumbnail
     } = postDetails || eventDetails || {};
 
     const containerStyle = { padding: "0" };
@@ -103,7 +104,7 @@ export default class SinglePost extends Component {
         moment(endDate, "YYYY-MM-DD HH:mm:ss", true)
       );
 
-    const imgThumbnail = post && getPostImgSrc(post);
+    const imgThumbnail = !hidePageThumbnail && post && getPostImgSrc(post);
     const isLiveVideo =
       isPlaying &&
       url &&
