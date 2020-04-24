@@ -1,5 +1,6 @@
 .banner {
   background: #014a91;
+  color: #fff;
   .content {
     padding: 8px;
     .live-info {
@@ -17,13 +18,13 @@
         a {
           font-weight: bold;
           font-size: 1.5em;
-          color: #fff;
+          color: inherit;
         }
       }
       li.live {
         a {
           font-weight: bold;
-          color: #fff;
+          color: inherit;
           padding: 2px 10px;
           background: red;
           text-transform: uppercase;
@@ -35,7 +36,7 @@
       }
       li.banner-link {
         a {
-          color: #fff;
+          color: inherit;
           text-align: center;
           font-weight: bold;
           div {

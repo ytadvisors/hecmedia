@@ -39,7 +39,14 @@ export default class Banner extends Component {
 
     const {
       title = "",
-      temporaryLink: { startDate, url, showTime, bannerTitle } = {}
+      temporaryLink: {
+        startDate,
+        url,
+        showTime,
+        bannerTitle,
+        bannerBackground = "#014a91",
+        bannerTextColor = "#fff"
+      } = {}
     } = liveVideo || {};
 
     let formattedUrl = url;
@@ -58,7 +65,10 @@ export default class Banner extends Component {
     );
 
     return (
-      <section className="banner">
+      <section
+        className="banner"
+        style={{ background: bannerBackground, color: bannerTextColor }}
+      >
         {title && url && startDate && (
           <div className="content">
             <div className="container">
