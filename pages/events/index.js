@@ -1,4 +1,8 @@
 import React from "react";
 import Events from "../../containers/_templates/events";
 
-export default props => <Events {...props} />;
+export default props => (
+  <div>
+    <Events {...props} />
+  </div>
+);

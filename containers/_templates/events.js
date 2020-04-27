@@ -13,28 +13,32 @@ const setEventObject = (eventObj, currentDay) => {
   if (eventObj && eventObj.nodes) {
     return eventObj.nodes
       .map(event => {
-        const { eventDetails: { eventDates = [] } = {} } = event;
-        const matches = eventDates
-          .map(evnt => {
-            const { endTime, startTime } = evnt;
-            if (endTime && startTime) {
-              const startDay = `${moment(startTime).format(
-                "YYYY-MM-DD"
-              )} 00:00:00`;
-              const endDay = `${moment(endTime).format("YYYY-MM-DD")} 23:59:59`;
-              if (
-                currentDay.isBetween(
-                  moment(new Date(startDay)),
-                  moment(new Date(endDay))
-                )
-              ) {
-                return true;
+        const { eventDetails: { eventDates = [] } = {} } = event || {};
+        const matches =
+          eventDates &&
+          eventDates
+            .map(evnt => {
+              const { endTime, startTime } = evnt;
+              if (endTime && startTime) {
+                const startDay = `${moment(startTime).format(
+                  "YYYY-MM-DD"
+                )} 00:00:00`;
+                const endDay = `${moment(endTime).format(
+                  "YYYY-MM-DD"
+                )} 23:59:59`;
+                if (
+                  currentDay.isBetween(
+                    moment(new Date(startDay)),
+                    moment(new Date(endDay))
+                  )
+                ) {
+                  return true;
+                }
               }
-            }
-            return null;
-          })
-          .filter(x => x);
-        if (matches.length > 0) return event;
+              return null;
+            })
+            .filter(x => x);
+        if (matches && matches.length > 0) return event;
         return null;
       })
       .filter(n => n);

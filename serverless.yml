@@ -10,4 +10,4 @@ nextApp:
     domain:
       - ${env.SUBDOMAIN}
       - "hecmedia.org"
-    memory: 1024
+    memory: 3000
