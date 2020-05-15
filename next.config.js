@@ -13,11 +13,12 @@ const config = {
   target: "serverless",
   env: localEnv,
   webpack: data => {
-    const { ...conf } = data;
+    const conf = { ...data };
     conf.node = {
       fs: "empty"
     };
-    conf.optimization.minimize = true;
+    if (process.env.NODE_ENV === "production")
+      conf.optimization.minimize = true;
     return conf;
   }
 };
