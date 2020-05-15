@@ -17,6 +17,7 @@ const config = {
     conf.node = {
       fs: "empty"
     };
+    conf.optimization.minimize = true;
     return conf;
   }
 };
