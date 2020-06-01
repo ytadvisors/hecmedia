@@ -100,8 +100,8 @@ export default class SinglePost extends Component {
     const isPlaying =
       displayDate &&
       moment().isBetween(
-        moment(displayDate, "YYYY-MM-DD HH:mm:ss", true),
-        moment(endDate, "YYYY-MM-DD HH:mm:ss", true)
+        moment(displayDate, "YYYY-MM-DD hh:mm:ss", true),
+        moment(endDate, "YYYY-MM-DD hh:mm:ss", true)
       );
 
     const imgThumbnail = !hidePageThumbnail && post && getPostImgSrc(post);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
 import SEO from "../../components/SEO";
@@ -55,39 +55,37 @@ export default props => {
     content
   } = props || {};
 
-  const [cursor, setCursor] = useState("");
   const mDay = currentDate ? new Date(`${currentDate}T00:01`) : new Date();
   const currentDay = moment(mDay).format("YYYY-MM-DD");
-  const dayEnd = `${currentDay} 00:00:01`;
+  const dayEnd = `${currentDay} 00:00:00`;
   const keyEnd = `event_dates_$_end_time`;
 
-  const variables = { keyEnd, dayEnd, cursor };
+  const variables = { keyEnd, dayEnd, cursor: "" };
   const { data, fetchMore } = useQuery(GET_EVENTS_BY_DAY, {
     variables,
     notifyOnNetworkStatusChange: true
   });
 
   const { matchEvent, pageData: { feedDesign } = {} } = data || {};
-  variables.cursor =
-    matchEvent && matchEvent.pageInfo.endCursor
-      ? matchEvent.pageInfo.endCursor
-      : "";
-  if (cursor !== variables.cursor && variables.cursor)
-    setCursor(variables.cursor);
+  const { pageInfo: { endCursor: cursor } = {} } = matchEvent || {};
 
   const loadMore = () =>
     fetchMore
       ? fetchMore({
           query: GET_EVENTS_BY_DAY,
-          variables,
+          variables: {
+            keyEnd,
+            dayEnd,
+            cursor
+          },
           updateQuery: (prev, fetchData) =>
             getQueryUpdate(prev, fetchData, "matchEvent")
         })
       : {};
 
-  useEffect(() => {
+  useMemo(() => {
     if (cursor) loadMore();
-  }, []);
+  }, [cursor]);
 
   const eventData = setEventObject(matchEvent, moment(mDay));
   const image =
