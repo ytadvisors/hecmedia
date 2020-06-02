@@ -3,8 +3,6 @@ import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import Articles from "../containers/_templates/articles";
 import Category from "../containers/_templates/category";
-
-import Events from "./events";
 import Magazines from "../containers/_templates/magazines";
 import Template1 from "../containers/_templates/template-1";
 import Template2 from "../containers/_templates/template-2";
@@ -114,18 +112,6 @@ export default props => {
           break;
       }
   }
-
-  if (page === "events")
-    return (
-      <Events
-        {...{
-          ...props,
-          title,
-          link,
-          content
-        }}
-      />
-    );
 
   return result;
 };
