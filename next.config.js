@@ -10,15 +10,13 @@ const { parsed: localEnv } = require("dotenv").config({
 });
 
 const config = {
-  target: "serverless",
+  target: "experimental-serverless-trace",
   env: localEnv,
   webpack: data => {
     const conf = { ...data };
     conf.node = {
       fs: "empty"
     };
-    if (process.env.NODE_ENV === "production")
-      conf.optimization.minimize = true;
     return conf;
   }
 };
