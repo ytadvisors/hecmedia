@@ -17,8 +17,6 @@ const config = {
     conf.node = {
       fs: "empty"
     };
-    if (process.env.NODE_ENV === "production")
-      conf.optimization.minimize = true;
     return conf;
   }
 };
