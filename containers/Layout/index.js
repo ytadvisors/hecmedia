@@ -32,7 +32,7 @@ const Layout = props => {
     .toLowerCase();
 
   const currentDate = moment(mDay)
-    .format("YYYY-MM-DD hh:mm:ss")
+    .format("YYYY-MM-DD HH:mm:ss")
     .toLowerCase();
 
   const compareStart = currentDate;
