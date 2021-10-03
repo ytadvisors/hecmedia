@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
@@ -12,6 +12,7 @@ import { GET_PAGE_INFO, GET_PAGE_CATEGORY } from "../../lib/graphql";
 const Posts = props => {
   const { playingLive } = props;
   const [count, setCount] = useState(0);
+  const [details, setDetails] = useState({});
   const router = useRouter();
   const {
     query: { slug }
@@ -54,12 +55,17 @@ const Posts = props => {
         });
       }
 
-      if (result.post.postDetails.relatedPosts)
+      if (result.post.postDetails.relatedPosts) {
         result.post.postDetails.relatedPosts = result.post.postDetails.relatedPosts.filter(
           n => (n.relatedPost ? n : null)
         );
+      }
     }
   }
+
+  useEffect(() => {
+    setDetails(result.post.postDetails);
+  }, result);
 
   const description =
     excerpt || content || "On Demand Arts, Culture & Education Programming";
@@ -91,12 +97,12 @@ const Posts = props => {
               }}
             />
           )}
-          {result.post && result.post.postDetails.relatedPosts && (
+          {result.post && details.relatedPosts && (
             <ListOfPosts
               title="Related Posts"
               posts={
-                (result.post.postDetails.relatedPosts &&
-                  result.post.postDetails.relatedPosts
+                (details.relatedPosts &&
+                  details.relatedPosts
                     .map(obj => obj && obj.relatedPost)
                     .slice(0, 3)) ||
                 []
@@ -116,14 +122,12 @@ const Posts = props => {
               resizeRows
             />
           )}
-          {result.post && result.post.postDetails.postEvents && (
+          {result.post && details.postEvents && (
             <ListOfPosts
               title="Related Events"
               posts={
-                (result.post.postDetails.postEvents &&
-                  result.post.postDetails.postEvents.map(
-                    obj => obj && obj.relatedEvent
-                  )) ||
+                (details.postEvents &&
+                  details.postEvents.map(obj => obj && obj.relatedEvent)) ||
                 []
               }
               link={{ page: "events" }}
