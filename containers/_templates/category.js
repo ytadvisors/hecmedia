@@ -7,7 +7,7 @@ import CategoryNav from "../../components/SubNavigation/CategoryNav";
 import { GET_CATEGORY_INFO } from "../../lib/graphql";
 import { getExcerpt, getPostImgSrc } from "../../lib/getFunctions";
 
-export default props => {
+const Category = props => {
   const cursor = "";
   const { category, link, content } = props || {};
   const variables = { category, cursor };
@@ -70,3 +70,5 @@ export default props => {
     </>
   );
 };
+
+export default Category;

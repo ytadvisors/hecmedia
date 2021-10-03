@@ -7,7 +7,7 @@ import ListOfPosts from "../../components/ListOfPosts";
 import { GET_ALL_MAGAZINES } from "../../lib/graphql";
 import { getExcerpt, getPostImgSrc } from "../../lib/getFunctions";
 
-export default props => {
+const Magazines = props => {
   const cursor = "";
   const { title = "", link, content } = props || {};
   const variables = { cursor };
@@ -75,3 +75,5 @@ export default props => {
     </>
   );
 };
+
+export default Magazines;

@@ -5,7 +5,7 @@ import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import SinglePost from "../../components/SinglePost";
 import { getExcerpt } from "../../lib/getFunctions";
 
-export default props => {
+const Template = props => {
   const { title, link, content } = props || {};
   const description =
     content || "On Demand Arts, Culture & Education Programming";
@@ -31,3 +31,5 @@ export default props => {
     </>
   );
 };
+
+export default Template;
