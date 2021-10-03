@@ -1,5 +1,6 @@
-import React, { Component } from "react";
+import React, { useEffect } from "react";
 import moment from "moment";
+import { useQuery } from "@apollo/react-hooks";
 import $ from "jquery";
 import * as Material from "react-icons/md";
 import LazyLoad from "react-lazyload";
@@ -8,11 +9,52 @@ import ShareSocialLinks from "../ShareSocialLinks";
 import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
 import { isServer } from "../../lib/serverFunctions";
+import { GET_PAGE_INFO } from "../../lib/graphql";
 import PodcastLinks from "../PodcastLinks";
 import "./styles.scss";
 
-export default class SinglePost extends Component {
-  componentDidMount() {
+const SinglePost = props => {
+  const {
+    post,
+    showShareIcons,
+    playingLive,
+    hideTitle,
+    classes,
+    podcasts
+  } = props;
+
+  const { slug, postDetails: { pollForUpdates } = {} } = post || {};
+
+  const variables = { slug };
+
+  const { data } =
+    pollForUpdates && pollForUpdates !== 0
+      ? useQuery(GET_PAGE_INFO, {
+          variables,
+          notifyOnNetworkStatusChange: true,
+          pollInterval: pollForUpdates * 1000
+        })
+      : {};
+
+  const { updatedPost } = data || {};
+  let currentPost = { ...post, updatedPost };
+
+  const { title, content, link = "", postDetails, eventDetails } =
+    currentPost || {};
+
+  const {
+    youtubeId,
+    showPodcasts,
+    vimeoId,
+    embedUrl,
+    venue,
+    eventDates,
+    webAddress,
+    eventPrice,
+    hidePageThumbnail
+  } = postDetails || eventDetails || {};
+
+  useEffect(() => {
     /* eslint-disable global-require */
     require("slick-carousel/slick/slick"); // required here for build to work
 
@@ -40,15 +82,15 @@ export default class SinglePost extends Component {
       ]
     });
 
-    this.resizeVideos();
-    window.addEventListener("resize", this.resizeVideos);
-  }
+    resizeVideos();
+    window.addEventListener("resize", resizeVideos);
 
-  componentWillUnmount() {
-    if (!isServer) window.removeEventListener("resize", this.resizeVideos);
-  }
+    return () => {
+      window.removeEventListener("resize", resizeVideos, false);
+    };
+  }, []);
 
-  resizeVideos = () => {
+  const resizeVideos = () => {
     const isMobile = !isServer && $(window).width() <= 1170;
     if (isMobile) {
       $(`.blog-content iframe`).each(function() {
@@ -71,134 +113,110 @@ export default class SinglePost extends Component {
     }
   };
 
-  render() {
-    const {
-      post,
-      showShareIcons,
-      playingLive,
-      hideTitle,
-      classes,
-      podcasts
-    } = this.props;
-    const { title, content, link = "", postDetails, eventDetails } = post || {};
-    const {
-      youtubeId,
-      showPodcasts,
-      vimeoId,
-      embedUrl,
-      venue,
-      eventDates,
-      webAddress,
-      eventPrice,
-      hidePageThumbnail
-    } = postDetails || eventDetails || {};
+  const containerStyle = { padding: "0" };
+  const { temporaryLink: { displayDate, endDate, url } = {} } =
+    playingLive || {};
 
-    const containerStyle = { padding: "0" };
-    const { temporaryLink: { displayDate, endDate, url } = {} } =
-      playingLive || {};
+  const isPlaying =
+    displayDate &&
+    moment().isBetween(
+      moment(displayDate, "YYYY-MM-DD hh:mm:ss", true),
+      moment(endDate, "YYYY-MM-DD hh:mm:ss", true)
+    );
 
-    const isPlaying =
-      displayDate &&
-      moment().isBetween(
-        moment(displayDate, "YYYY-MM-DD hh:mm:ss", true),
-        moment(endDate, "YYYY-MM-DD hh:mm:ss", true)
-      );
+  const imgThumbnail =
+    !hidePageThumbnail && currentPost && getPostImgSrc(currentPost);
+  const isLiveVideo =
+    isPlaying &&
+    url &&
+    cleanUrl(url.replace(/\/$/, "")) === cleanUrl(link.replace(/\/$/, ""));
 
-    const imgThumbnail = !hidePageThumbnail && post && getPostImgSrc(post);
-    const isLiveVideo =
-      isPlaying &&
-      url &&
-      cleanUrl(url.replace(/\/$/, "")) === cleanUrl(link.replace(/\/$/, ""));
+  const shareUrl = process.env.SITE_HOST + cleanUrl(link.replace(/\/$/, ""));
 
-    const shareUrl = process.env.SITE_HOST + cleanUrl(link.replace(/\/$/, ""));
+  const liveEmbedUrl = isLiveVideo && embedUrl;
+  const singleEmbedUrl = !youtubeId && !vimeoId && embedUrl;
 
-    const liveEmbedUrl = isLiveVideo && embedUrl;
-    const singleEmbedUrl = !youtubeId && !vimeoId && embedUrl;
+  return (
+    <section className="post-container" id="post-container">
+      <div className="col-md-12 no-padding">
+        {!hideTitle && <h2 dangerouslySetInnerHTML={{ __html: title }} />}
 
-    return (
-      <section className="post-container" id="post-container">
-        <div className="col-md-12 no-padding">
-          {!hideTitle && <h2 dangerouslySetInnerHTML={{ __html: title }} />}
-
-          {showShareIcons && (
-            <div className="row share-container">
-              {link && <ShareSocialLinks url={shareUrl} title={title} />}
-            </div>
-          )}
-          <ul className="post-details">
-            {venue && (
-              <li>
-                <Material.MdLocationOn
-                  size="25"
-                  color="#4ea2ea"
-                  style={{ verticalAlign: "middle" }}
-                />
-                <span dangerouslySetInnerHTML={{ __html: venue }} />
-              </li>
-            )}
-            {webAddress && (
-              <li>
-                <span>
-                  <a
-                    href={webAddress}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {webAddress}
-                  </a>
-                </span>
-              </li>
-            )}
-            {eventDates &&
-              getEventDate(eventDates, "MMM D, hh:mm a", true).map(event => (
-                <li key={event}>
-                  <span
-                    dangerouslySetInnerHTML={{
-                      __html: event
-                    }}
-                  />
-                </li>
-              ))}
-            {eventPrice && (
-              <li>
-                <span>Price: {eventPrice}</span>
-              </li>
-            )}
-          </ul>
-        </div>
-        {youtubeId || vimeoId || embedUrl ? (
-          <div className={`video-post ${(classes && classes.video) || ""}`}>
-            <VideoPlayer
-              url={
-                youtubeId
-                  ? `https://youtu.be/${youtubeId}`
-                  : `https://vimeo.com/${vimeoId}`
-              }
-              containerStyle={containerStyle}
-              embedUrl={singleEmbedUrl || liveEmbedUrl}
-            />
-          </div>
-        ) : (
-          <div
-            className={`blog-image ${(classes && classes.thumbnail) ||
-              "default-img"}`}
-          >
-            {imgThumbnail && (
-              <LazyLoad height={500}>
-                <img
-                  src={imgThumbnail}
-                  className="img-responsive blog-thumbnail"
-                  alt="thumbnail"
-                />
-              </LazyLoad>
-            )}
+        {showShareIcons && (
+          <div className="row share-container">
+            {link && <ShareSocialLinks url={shareUrl} title={title} />}
           </div>
         )}
-        {showPodcasts && <PodcastLinks podcasts={podcasts} />}
-        <div className={`blog-content ${(classes && classes.content) || ""}`}>
-          <div dangerouslySetInnerHTML={{ __html: content }} />
+        <ul className="post-details">
+          {venue && (
+            <li>
+              <Material.MdLocationOn
+                size="25"
+                color="#4ea2ea"
+                style={{ verticalAlign: "middle" }}
+              />
+              <span dangerouslySetInnerHTML={{ __html: venue }} />
+            </li>
+          )}
+          {webAddress && (
+            <li>
+              <span>
+                <a href={webAddress} target="_blank" rel="noopener noreferrer">
+                  {webAddress}
+                </a>
+              </span>
+            </li>
+          )}
+          {eventDates &&
+            getEventDate(eventDates, "MMM D, hh:mm a", true).map(event => (
+              <li key={event}>
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: event
+                  }}
+                />
+              </li>
+            ))}
+          {eventPrice && (
+            <li>
+              <span>Price: {eventPrice}</span>
+            </li>
+          )}
+        </ul>
+      </div>
+      {youtubeId || vimeoId || embedUrl ? (
+        <div className={`video-post ${(classes && classes.video) || ""}`}>
+          <VideoPlayer
+            url={
+              youtubeId
+                ? `https://youtu.be/${youtubeId}`
+                : `https://vimeo.com/${vimeoId}`
+            }
+            containerStyle={containerStyle}
+            embedUrl={singleEmbedUrl || liveEmbedUrl}
+          />
         </div>
-      </section>
-    );
-  }
-}
+      ) : (
+        <div
+          className={`blog-image ${(classes && classes.thumbnail) ||
+            "default-img"}`}
+        >
+          {imgThumbnail && (
+            <LazyLoad height={500}>
+              <img
+                src={imgThumbnail}
+                className="img-responsive blog-thumbnail"
+                alt="thumbnail"
+              />
+            </LazyLoad>
+          )}
+        </div>
+      )}
+      {showPodcasts && <PodcastLinks podcasts={podcasts} />}
+      <div className={`blog-content ${(classes && classes.content) || ""}`}>
+        <div dangerouslySetInnerHTML={{ __html: content }} />
+      </div>
+    </section>
+  );
+};
+
+export default SinglePost;
