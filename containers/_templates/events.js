@@ -9,7 +9,7 @@ import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { getQueryUpdate } from "../../lib/updateFunctions";
 import { GET_EVENTS_BY_DAY } from "../../lib/graphql";
 
-export default props => {
+const Events = props => {
   const {
     currentCategory = "All",
     currentDate = "",
@@ -139,3 +139,5 @@ export default props => {
     </>
   );
 };
+
+export default Events;

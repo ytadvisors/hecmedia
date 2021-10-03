@@ -5,7 +5,7 @@ import DefaultNav from "../../components/SubNavigation/DefaultNav";
 import Template1 from "../../components/Templates/template-1/index";
 import { getExcerpt } from "../../lib/getFunctions";
 
-export default props => {
+const Template = props => {
   const { title, link, pageContent } = props || {};
   const { content } = pageContent;
   const description =
@@ -30,3 +30,5 @@ export default props => {
     </>
   );
 };
+
+export default Template;

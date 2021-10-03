@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useQuery } from "@apollo/react-hooks";
 import { GET_ALL_PAGE_CATEGORY } from "../../lib/graphql";
@@ -6,10 +6,13 @@ import { getHref } from "../../lib/getFunctions";
 import { cleanUrl, getQueryUpdate } from "../../lib/updateFunctions";
 import "./styles.scss";
 
-export default ({ link }) => {
+const CategoryNav = ({ link }) => {
   const [currentCursor, setCursor] = useState("");
-  console.log("link is: ", link);
+  const [currentName, setName] = useState("");
+  const [currentLink, setCategoryLink] = useState("");
+  const [subcategories, setCategories] = useState([]);
 
+  const cleanLink = link.replace(/\/$/g, "");
   const { data, fetchMore } = useQuery(GET_ALL_PAGE_CATEGORY, {
     variables: { cursor: "" }
   });
@@ -23,100 +26,105 @@ export default ({ link }) => {
     });
 
   const { categories } = data || {};
-
   const { nodes: menus, pageInfo: { endCursor } = {} } = categories || {};
 
-  if (menus) {
+  if (!currentName && currentCursor !== "") {
+    loadMore();
+  }
+
+  useEffect(() => {
     if (currentCursor !== endCursor && endCursor) {
       setCursor(endCursor);
     }
 
     /* Set current menu */
-    const categoryList = menus.reduce((acc, menu) => {
-      let { ...result } = acc;
-      const { link: menuLink, children: { nodes: menuList } = {} } = menu || {};
-      if (menuLink === link) {
-        result = menu;
-      } else {
-        result = menuList.reduce((childResult, childMenu) => {
-          console.log(link);
-          console.log(childMenu.link);
-          if (childMenu.link === link) {
-            result = menu;
-          }
-          return result;
-        }, result);
-      }
+    if (menus) {
+      const categoryList = menus.reduce((acc, menu) => {
+        let { ...result } = acc;
+        const { link: menuLink, children: { nodes: menuList } = {} } =
+          menu || {};
+        if (menuLink && menuLink.replace(/\/$/g, "") === cleanLink) {
+          result = menu;
+        } else {
+          result = menuList.reduce((childResult, childMenu) => {
+            if (childMenu && childMenu.link.replace(/\/$/g, "") === cleanLink) {
+              result = menu;
+            }
+            return result;
+          }, result);
+        }
 
-      return result;
-    }, []);
+        return result;
+      }, []);
 
-    const {
-      name,
-      link: categoryLink,
-      children: { nodes: subcategoryList } = {}
-    } = categoryList;
+      const {
+        name,
+        link: categoryLink,
+        children: { nodes: subcategoryList } = {}
+      } = categoryList;
 
-    if (!name && currentCursor !== "") {
-      loadMore();
+      setCategories(subcategoryList);
+      setCategoryLink(categoryLink);
+      setName(name);
     }
+  }, [menus, link]);
 
-    let subcategories = [];
-    if (name) {
-      subcategories = subcategoryList;
-      const url = cleanUrl(categoryLink);
-      const actualLink = getHref(url);
-      return (
-        <section className="sub-navigation">
-          <div className="row heading">
-            <div className="col-md-12">
-              <div className="pull-left">
-                {categoryLink && (
-                  <h2>
-                    <Link as={url} href={actualLink}>
-                      <a
-                        dangerouslySetInnerHTML={{
-                          __html: name
-                        }}
-                      />
-                    </Link>
-                  </h2>
-                )}
-              </div>
+  if (currentName) {
+    const url = cleanUrl(currentLink);
+    const actualLink = getHref(url);
+    return (
+      <section className="sub-navigation">
+        <div className="row heading">
+          <div className="col-md-12">
+            <div className="pull-left">
+              {currentLink && (
+                <h2>
+                  <Link as={url} href={actualLink}>
+                    <a
+                      dangerouslySetInnerHTML={{
+                        __html: currentName
+                      }}
+                    />
+                  </Link>
+                </h2>
+              )}
             </div>
           </div>
-          <ul className="link-list">
-            {subcategories.map(
-              ({ link: subcategoryLink, name: subcategoryName }) => {
-                const isActive = link === subcategoryLink ? "active" : "";
-                const subUrl = cleanUrl(subcategoryLink);
-                const actualSubLink = getHref(subUrl);
-                return (
-                  <li key={subcategoryLink}>
-                    {!isActive && (
-                      <Link as={subUrl} href={actualSubLink}>
-                        <a
-                          dangerouslySetInnerHTML={{
-                            __html: subcategoryName
-                          }}
-                        />
-                      </Link>
-                    )}
-                    {isActive && (
-                      <div
+        </div>
+        <ul className="link-list">
+          {subcategories.map(
+            ({ link: subcategoryLink, name: subcategoryName }) => {
+              const isActive =
+                cleanLink === subcategoryLink.replace(/\/$/g, "")
+                  ? "active"
+                  : "";
+              const subUrl = cleanUrl(subcategoryLink);
+              const actualSubLink = getHref(subUrl);
+              return (
+                <li key={subcategoryLink}>
+                  {!isActive && (
+                    <Link as={subUrl} href={actualSubLink}>
+                      <a
                         dangerouslySetInnerHTML={{
                           __html: subcategoryName
                         }}
                       />
-                    )}
-                  </li>
-                );
-              }
-            )}
-          </ul>
-        </section>
-      );
-    }
+                    </Link>
+                  )}
+                  {isActive && (
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: subcategoryName
+                      }}
+                    />
+                  )}
+                </li>
+              );
+            }
+          )}
+        </ul>
+      </section>
+    );
   }
   return (
     <section className="sub-navigation">
@@ -134,3 +142,5 @@ export default ({ link }) => {
     </section>
   );
 };
+
+export default CategoryNav;

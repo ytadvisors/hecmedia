@@ -7,7 +7,7 @@ import ListOfPosts from "../../components/ListOfPosts";
 import { GET_ARTICLES } from "../../lib/graphql";
 import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
 
-export default props => {
+const Articles = props => {
   const cursor = "";
   const variables = { cursor };
   const { data, fetchMore } = useQuery(GET_ARTICLES, {
@@ -68,3 +68,5 @@ export default props => {
     </>
   );
 };
+
+export default Articles;
