@@ -64,7 +64,7 @@ const Posts = props => {
   }
 
   useEffect(() => {
-    setDetails(result.post.postDetails);
+    setDetails(result.post ? result.post.postDetails : {});
   }, result);
 
   const description =
