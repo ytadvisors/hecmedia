@@ -1,7 +1,7 @@
 name: ${env.APP_NAME}
 
 nextApp:
-  component: "@sls-next/serverless-component@1.19.0-alpha.21"
+  component: "@sls-next/serverless-component@1.19.1-patch.1"
   inputs:
     timeout:
       defaultLambda: 30
@@ -12,3 +12,52 @@ nextApp:
       - ${env.DOMAIN}
     logLambdaExecutionTimes: true
     memory: 3000
+    cloudfront:
+      # this is the default cache behaviour of the cloudfront distribution
+      # the origin-request edge lambda associated to this cache behaviour does the pages server side rendering
+      defaults:
+        minTTL: 0
+        maxTTL: 0
+        defaultTTL: 0
+        forward:
+          headers:
+            [
+              CloudFront-Is-Desktop-Viewer,
+              CloudFront-Is-Mobile-Viewer,
+              CloudFront-Is-Tablet-Viewer,
+            ]
+      # you can set other cache behaviours like "defaults" above that can handle server side rendering
+      # but more specific for a subset of your next.js pages
+      /search/*:
+        minTTL: 20
+        maxTTL: 20
+        defaultTTL: 20
+        forward:
+          cookies: "all"
+          queryString: true
+      /explore/*:
+        minTTL: 1000
+        maxTTL: 1000
+        defaultTTL: 1000
+        forward:
+          cookies: "all"
+          queryString: true
+      /sites/*/search/*:
+        minTTL: 20
+        maxTTL: 20
+        defaultTTL: 20
+        forward:
+          cookies: "all"
+          queryString: true
+      /sites/*/explore/*:
+        minTTL: 1000
+        maxTTL: 1000
+        defaultTTL: 1000
+        forward:
+          cookies: "all"
+          queryString: true
+    errorPages:
+      - code: 503
+        path: "/index.html"
+        minTTL: 5 # optional, minimum ttl the error is cached (default 10)
+        responseCode: 500 # optional, alters the response code
