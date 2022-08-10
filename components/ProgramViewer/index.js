@@ -6,10 +6,11 @@ import ListOfSideTabs from "../ListOfSideTabs";
 import ListOfFeaturedPosts from "../ListOfFeaturedPosts";
 
 import Schedule from "../Schedule";
-import ListOfEvents from "../ListOfEvents";
 import NewsLetterContainer from "../../containers/NewsLetterContainer";
 import SignUp from "../SignUp";
 import "./styles.scss";
+
+const spotlightImg = "/static/assets/spotlight-img.jpg";
 
 export default class extends Component {
   constructor(props) {
@@ -58,10 +59,10 @@ export default class extends Component {
             <div className="col-lg-3 no-padding">
               <SideNavigation>
                 <div className="row">
-                  <div className="col-sm-4 col-sm-push-8 col-lg-12 col-lg-push-0 no-padding">
-                    <ListOfEvents />
-                  </div>
                   <div className="col-sm-8 col-sm-pull-4  col-lg-12 col-lg-pull-0  no-padding">
+                    <a href="/posts/as-seen-on-spotlight">
+                      <img src={spotlightImg} alt="Link to the spotlight" />
+                    </a>
                     {!isMobile && (
                       <ListOfSideTabs
                         currentTab="HEC-TV NewsLetter"
