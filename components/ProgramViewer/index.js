@@ -59,9 +59,13 @@ export default class extends Component {
             <div className="col-lg-3 no-padding">
               <SideNavigation>
                 <div className="row">
-                  <div className="col-sm-8 col-sm-pull-4  col-lg-12 col-lg-pull-0  no-padding">
-                    <a href="/posts/as-seen-on-spotlight">
-                      <img src={spotlightImg} alt="Link to the spotlight" />
+                  <div className="col-lg-12 col-lg-pull-0  no-padding">
+                    <a href="/posts/as-seen-on-spotlight" className="container">
+                      <img
+                        src={spotlightImg}
+                        alt="Link to the spotlight"
+                        className="img-responsive"
+                      />
                     </a>
                     {!isMobile && (
                       <ListOfSideTabs
