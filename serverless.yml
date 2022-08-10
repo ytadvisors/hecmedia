@@ -10,20 +10,6 @@ nextApp:
       - ${env.DOMAIN}
     logLambdaExecutionTimes: true
     memory: 3000
-    cloudfront:
-      # this is the default cache behaviour of the cloudfront distribution
-      # the origin-request edge lambda associated to this cache behaviour does the pages server side rendering
-      defaults:
-        minTTL: 0
-        maxTTL: 0
-        defaultTTL: 0
-        forward:
-          headers:
-            [
-              CloudFront-Is-Desktop-Viewer,
-              CloudFront-Is-Mobile-Viewer,
-              CloudFront-Is-Tablet-Viewer,
-            ]
     errorPages:
       - code: 503
         path: "/index.html"
