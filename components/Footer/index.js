@@ -1,7 +1,6 @@
 import React from "react";
-import Link from "next/link";
 import _ from "lodash";
-import { getSocialMenuObject, getHref } from "../../lib/getFunctions";
+import { getSocialMenuObject } from "../../lib/getFunctions";
 import SocialLinks from "../SocialLinks";
 
 import "./styles.scss";
@@ -53,11 +52,7 @@ export default props => {
                   return (
                     <li key={link.node.url}>
                       {url === "/" && <a href={url}>{link.node.label}</a>}
-                      {url !== "/" && (
-                        <Link href={getHref(url)} as={url}>
-                          <a>{link.node.label}</a>
-                        </Link>
-                      )}
+                      {url !== "/" && <a href={url}>{link.node.label}</a>}
                     </li>
                   );
                 })}
