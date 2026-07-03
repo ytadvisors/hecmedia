@@ -19,7 +19,10 @@ jobs:
         with:
           node-version: "22"
           cache: "yarn"
-      - run: yarn install --frozen-lockfile
+      # --ignore-scripts: node-sass@7.0.1 (EOL) cannot build its native binding
+      # against Node 22's V8 API on any platform (see TESTING.md "CI known gaps").
+      # Safe to skip here — eslint is pure JS and never touches node-sass.
+      - run: yarn install --frozen-lockfile --ignore-scripts
       - run: yarn lint
 
   test:
@@ -30,5 +33,8 @@ jobs:
         with:
           node-version: "22"
           cache: "yarn"
-      - run: yarn install --frozen-lockfile
+      # --ignore-scripts: see comment in the lint job above. Jest mocks all
+      # .scss/.css imports (package.json `jest.moduleNameMapper`), so the test
+      # suite never loads node-sass's native binding either.
+      - run: yarn install --frozen-lockfile --ignore-scripts
       - run: yarn test
