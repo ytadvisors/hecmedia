@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    # Known gap (see TESTING.md "CI known gaps"): this repo has 6 pre-existing eslint
+    # errors unrelated to Phase 1 testing-infra work. Non-blocking until a follow-up
+    # lint-cleanup task lands; flip to blocking once yarn lint exits 0 on master.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
+      - run: yarn test

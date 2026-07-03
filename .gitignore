@@ -9,6 +9,9 @@ jspm_packages
 # Next directories
 .next
 
+# Jest coverage output
+coverage
+
 # Logs
 logs
 npm-debug.log*
