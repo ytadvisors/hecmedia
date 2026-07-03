@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [master, develop]
   pull_request:
-    branches: [master]
+    branches: [master, develop]
 
 jobs:
   lint:
@@ -38,3 +38,34 @@ jobs:
       # suite never loads node-sass's native binding either.
       - run: yarn install --frozen-lockfile --ignore-scripts
       - run: yarn test
+
+  # Preview deploy target: development.hecmedia.org (shared staging URL, already
+  # live per phase0-D3-access-and-preview.md — reused rather than provisioning a
+  # true per-branch/per-PR subdomain, which needs an unverified ACM wildcard-cert
+  # check first, see D3 §2). Deploy-capable AWS creds are human-gated by design
+  # (D3 §3) and are not present as repo secrets today, so this job no-ops with a
+  # warning until a human adds them + Yomi approves an actual deploy.
+  preview-deploy:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile --ignore-scripts
+      - name: Deploy preview (development.hecmedia.org)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.HECMEDIA_DEPLOY_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.HECMEDIA_DEPLOY_AWS_SECRET_ACCESS_KEY }}
+          SUBDOMAIN: development
+          DOMAIN: hecmedia.org
+          APOLLO_CLIENT_URI: ${{ secrets.APOLLO_CLIENT_URI }}
+        run: |
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+            echo "::warning::No deploy-capable AWS credentials configured (HECMEDIA_DEPLOY_AWS_ACCESS_KEY_ID secret unset). Skipping preview deploy — see phase0-D3-access-and-preview.md, deploy creds are human-gated by design."
+            exit 0
+          fi
+          yarn deploy
