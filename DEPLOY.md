@@ -12,8 +12,8 @@ yarn deploy   # = yarn install && serverless
 
 This builds the Next.js app and pushes Lambda@Edge functions + a CloudFront distribution + S3
 static assets, driven by env vars `APOLLO_CLIENT_URI`, `SUBDOMAIN`, `DOMAIN` (see `serverless.yml`).
-Credentials are the `hecadmin` AWS profile — human-gated, not run by CI today (see
-`.github/workflows/ci.yml` and `TESTING.md` for what CI does and does not do).
+Credentials are human-gated. The CI preview job skips deployment unless a human has configured
+the deploy secrets and Yomi has approved that deployment.
 
 **Important distinction:** Serverless Components does not use CloudFormation stacks. There is
 **no `serverless rollback -t <timestamp>` command** for `@sls-next` deployments — that command only
@@ -40,9 +40,15 @@ against the last known-good commit:
    yarn install
    yarn deploy
    ```
-4. Smoke-test before declaring the rollback complete (same checks CI/`TESTING.md` describe):
+4. Smoke-test the deployed domain before declaring the rollback complete. Use the same
+   `SUBDOMAIN` and `DOMAIN` values supplied to the deploy, and verify both the home page and a
+   known dynamic route return successful HTTP responses after CloudFront propagation:
    ```shell
-   yarn smoke
+   SITE_URL="https://${SUBDOMAIN}.${DOMAIN}"
+   curl --fail --silent --show-error --location --retry 12 --retry-all-errors \
+     --retry-delay 10 --output /dev/null "$SITE_URL/"
+   curl --fail --silent --show-error --location --retry 12 --retry-all-errors \
+     --retry-delay 10 --output /dev/null "$SITE_URL/events"
    ```
 5. Return to `master` locally once the rollback is confirmed live — the checkout in step 2 only
    affects your local working tree, not what's deployed, until step 3 runs.
