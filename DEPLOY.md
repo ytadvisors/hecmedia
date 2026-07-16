@@ -54,6 +54,7 @@ against the last known-good commit:
    affects your local working tree, not what's deployed, until step 3 runs.
 
 **Caveats:**
+
 - This redeploys forward to an old commit's code — it does not undo any data/schema changes (there
   are none in this stack; the site has no server-side DB writes) and does not instantly evict
   CloudFront's edge cache. Expect a few minutes for the new Lambda@Edge version to propagate.
