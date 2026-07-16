@@ -35,6 +35,31 @@ jobs:
       - run: yarn install --frozen-lockfile --ignore-scripts
       - run: yarn test
 
+  # E2E contracts hit a live WPGraphQL/REST target.  Fork PRs and repositories
+  # without the protected endpoint secrets must remain green without silently
+  # falling back to the production defaults, so the step explicitly no-ops
+  # unless both endpoints are configured.
+  e2e:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_E2E_APOLLO_CLIENT_URI }}
+      GATSBY_WP_HOST: ${{ secrets.HECMEDIA_E2E_WP_HOST }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile --ignore-scripts
+      - name: Run read-only API contracts when endpoints are configured
+        run: |
+          if [ -z "$APOLLO_CLIENT_URI" ] || [ -z "$GATSBY_WP_HOST" ]; then
+            echo "::warning::HECMEDIA_E2E_APOLLO_CLIENT_URI and HECMEDIA_E2E_WP_HOST are required; skipping e2e contracts."
+            exit 0
+          fi
+          yarn test:e2e
+
   # Preview deploy target: development.hecmedia.org (shared staging URL, already
   # live per phase0-D3-access-and-preview.md — reused rather than provisioning a
   # true per-branch/per-PR subdomain, which needs an unverified ACM wildcard-cert
@@ -43,7 +68,7 @@ jobs:
   # warning until a human adds them + Yomi approves an actual deploy.
   preview-deploy:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
-    needs: test
+    needs: [test, e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
