@@ -32,6 +32,11 @@ jobs:
       # --ignore-scripts: see comment in the lint job above. Jest mocks all
       # .scss/.css imports (package.json `jest.moduleNameMapper`), so the test
       # suite never loads node-sass's native binding either.
+      #
+      # `yarn test` runs Jest with `collectCoverage: true` and a `coverageThreshold`
+      # (package.json `jest` block) — Jest itself exits non-zero when a threshold
+      # is missed, so a coverage regression fails this job with no extra wiring.
+      # See TESTING.md "Coverage policy: the ratchet".
       - run: yarn install --frozen-lockfile --ignore-scripts
       - run: yarn test
 

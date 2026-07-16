@@ -44,8 +44,13 @@ describe("PageLayout (containers/Layout/index.js)", () => {
     const result = await executeQuery(GET_LAYOUT, undefined);
 
     expect(result.errors).toBeUndefined();
-    const { featuredMagazines, spotLight, header, footer, social } =
-      result.data;
+    const {
+      featuredMagazines,
+      spotLight,
+      header,
+      footer,
+      social
+    } = result.data;
 
     expect(Array.isArray(featuredMagazines.edges)).toBe(true);
     expect(Array.isArray(spotLight.nodes)).toBe(true);
@@ -56,9 +61,7 @@ describe("PageLayout (containers/Layout/index.js)", () => {
         expect(Array.isArray(node.menuItems.edges)).toBe(true);
         node.menuItems.edges.forEach(({ node: item }) => {
           expect(typeof item.label).toBe("string");
-          expect(typeof item.url === "string" || item.url === null).toBe(
-            true
-          );
+          expect(typeof item.url === "string" || item.url === null).toBe(true);
           expect(Array.isArray(item.childItems.edges)).toBe(true);
         });
       });

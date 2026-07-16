@@ -77,9 +77,7 @@ describe("CurrentPost + PageCategory (pages/posts/[slug].js)", () => {
       categories: categoryIds
     });
     expect(categoryResult.errors).toBeUndefined();
-    expect(
-      Array.isArray(categoryResult.data.categoryPosts.edges)
-    ).toBe(true);
+    expect(Array.isArray(categoryResult.data.categoryPosts.edges)).toBe(true);
     categoryResult.data.categoryPosts.edges.forEach(({ relatedPost }) => {
       expect(typeof relatedPost.title).toBe("string");
       expect(typeof relatedPost.slug).toBe("string");

@@ -18,10 +18,9 @@ async function executeQuery(document, variables) {
   if (!res.ok) {
     const body = await res.text();
     throw new Error(
-      `GraphQL request to ${GRAPHQL_URI} failed: HTTP ${res.status} — ${body.slice(
-        0,
-        500
-      )}`
+      `GraphQL request to ${GRAPHQL_URI} failed: HTTP ${
+        res.status
+      } — ${body.slice(0, 500)}`
     );
   }
 

@@ -30,10 +30,43 @@
     "collectCoverage": true,
     "collectCoverageFrom": [
       "components/**/*.js",
+      "containers/**/*.js",
+      "pages/**/*.js",
+      "lib/**/*.js",
+      "store/**/*.js",
       "!components/**/styles.scss",
+      "!store/sagas/**",
+      "!store/index.js",
+      "!store/reducers/index.js",
       "!**/*.test.js"
     ],
-    "coverageDirectory": "<rootDir>/coverage"
+    "coverageDirectory": "<rootDir>/coverage",
+    "coverageThreshold": {
+      "global": {
+        "statements": 22,
+        "lines": 22,
+        "branches": 12,
+        "functions": 14
+      },
+      "./store/actions/**/*.js": {
+        "statements": 100,
+        "lines": 100,
+        "branches": 100,
+        "functions": 100
+      },
+      "./store/api/**/*.js": {
+        "statements": 100,
+        "lines": 100,
+        "branches": 0,
+        "functions": 100
+      },
+      "./store/reducers/*Reducers.js": {
+        "statements": 80,
+        "lines": 80,
+        "branches": 70,
+        "functions": 100
+      }
+    }
   },
   "husky": {
     "hooks": {
