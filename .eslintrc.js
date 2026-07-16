@@ -54,5 +54,13 @@ module.exports = {
     Blob: true,
     "window.document": false,
     navigator: true
-  }
+  },
+  overrides: [
+    {
+      files: ["**/*.test.js"],
+      env: {
+        jest: true
+      }
+    }
+  ]
 };

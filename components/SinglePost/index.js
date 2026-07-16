@@ -37,7 +37,7 @@ const SinglePost = props => {
       : {};
 
   const { updatedPost } = data || {};
-  let currentPost = { ...post, updatedPost };
+  const currentPost = { ...post, updatedPost };
 
   const { title, content, link = "", postDetails, eventDetails } =
     currentPost || {};
@@ -53,6 +53,29 @@ const SinglePost = props => {
     eventPrice,
     hidePageThumbnail
   } = postDetails || eventDetails || {};
+
+  const resizeVideos = () => {
+    const isMobile = !isServer && $(window).width() <= 1170;
+    if (isMobile) {
+      $(`.blog-content iframe`).each(function() {
+        const src = $(this).attr("src");
+        if (src.match(/youtube\.com/g)) {
+          let width = $(window).width();
+          $(this).attr("width", Math.floor((width -= width * 0.32)));
+          $(this).attr("height", Math.floor(width / 2));
+        }
+      });
+    } else {
+      $(`.blog-content iframe`).each(function() {
+        const src = $(this).attr("src");
+        if (src.match(/youtube\.com/g)) {
+          const width = 1000;
+          $(this).attr("width", width - 170);
+          $(this).attr("height", Math.floor(width / 2));
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     /* eslint-disable global-require */
@@ -89,29 +112,6 @@ const SinglePost = props => {
       window.removeEventListener("resize", resizeVideos, false);
     };
   }, []);
-
-  const resizeVideos = () => {
-    const isMobile = !isServer && $(window).width() <= 1170;
-    if (isMobile) {
-      $(`.blog-content iframe`).each(function() {
-        const src = $(this).attr("src");
-        if (src.match(/youtube\.com/g)) {
-          let width = $(window).width();
-          $(this).attr("width", Math.floor((width -= width * 0.32)));
-          $(this).attr("height", Math.floor(width / 2));
-        }
-      });
-    } else {
-      $(`.blog-content iframe`).each(function() {
-        const src = $(this).attr("src");
-        if (src.match(/youtube\.com/g)) {
-          const width = 1000;
-          $(this).attr("width", width - 170);
-          $(this).attr("height", Math.floor(width / 2));
-        }
-      });
-    }
-  };
 
   const containerStyle = { padding: "0" };
   const { temporaryLink: { displayDate, endDate, url } = {} } =
