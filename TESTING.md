@@ -76,10 +76,51 @@ are recommended as shared manual preview targets for Jayne's review in the near 
 per-branch ephemeral previews are a separate, larger project blocked on an unresolved ACM
 wildcard-certificate question (see D3 §2/§5) and are out of scope here.
 
+## Coverage policy: the ratchet
+
+Full-repo coverage (`components/`, `containers/`, `pages/`, `lib/`, `store/`) lands in
+**reviewable batches** — one PR per directory group — rather than one giant PR. Each batch:
+
+1. Adds real tests for its directory group.
+2. Raises `coverageThreshold` in `package.json`'s `jest` block to match (or sit just under) the
+   coverage the new tests actually achieve, so a regression fails CI (`yarn test` exits non-zero
+   when a threshold is missed) but the bar never resets backward.
+3. Never chases 100% on trivial glue (default-constructor params, `combineReducers` root files,
+   pass-through no-op reducer branches) at the expense of meaningful branch coverage elsewhere.
+
+Final target once every batch has landed: **global >=80% lines/statements, >=70% branches**,
+per the Phase 2 frontend-coverage task.
+
+**Batch 1 — `store/` (this PR):** reducers (pure unit tests over every action type, including the
+error and no-op branches), action creators (every exported creator, defaults and overrides), and
+`store/api/*` clients (axios mocked, asserting exact URL/params/payload shapes per call — not just
+"was called"). `store/sagas/**` and the `combineReducers`/store-setup glue (`store/index.js`,
+`store/reducers/index.js`) are intentionally excluded from `collectCoverageFrom` — sagas are async
+orchestration best covered when a saga-testing approach is chosen, which is out of this batch's
+scope; the glue files have no branches or logic of their own to test.
+
+Current thresholds:
+
+| Scope                                           | statements/lines | branches | functions |
+| ----------------------------------------------- | ---------------- | -------- | --------- |
+| `store/actions/**`                              | 100%             | 100%     | 100%      |
+| `store/api/**`                                  | 100%             | 0%\*     | 100%      |
+| `store/reducers/*Reducers.js`                   | 80%              | 70%      | 100%      |
+| global (all 5 directories, most still untested) | 22%              | 12%      | 14%       |
+
+\* `store/api/**` branch coverage floors at 0% because the only branches in these files are
+default-constructor parameters (`constructor(props = {}) { super(props); }`) that every real
+caller always supplies explicitly — not meaningful logic to cover.
+
+**Planned follow-up batches:** components A–M, components N–Z, containers + pages, lib. Each
+raises the global threshold and adds its own directory-scoped threshold in the same style as the
+table above.
+
 ## Known gaps
 
-- Six critical paths have tests today: `Footer`, `SocialLinks`, `SideNavigation`, `Header`,
-  `Forms/NewsLetterForm`, and the home page. This is not full coverage of the ~35-component tree.
+- Tested today: `store/` (batch 1, this PR) plus the pre-existing `Footer`, `SocialLinks`,
+  `SideNavigation`, `Header`, `Forms/NewsLetterForm`, and the home page from Phase 1. This is not
+  yet full coverage of the ~114-component tree, the 15 containers, the other 13 pages, or `lib/`.
 - Components wired to Redux (`redux-form`), Apollo (`@apollo/react-hooks`), or `next/router` will
   need a test wrapper (mock store / mock Apollo provider / mock router) — none of the current
   components exercise that path yet, so no wrapper utility exists. Add one under
