@@ -19,8 +19,9 @@ Unit test harness: **Jest 24 + React Testing Library**, run against the componen
 
 ```shell
 yarn install       # or npm install
-npm test           # runs `jest` once, with coverage
-npm run test:watch # jest --watch
+yarn test          # runs `jest` once, with coverage
+yarn test:watch    # jest --watch
+yarn smoke         # checks the shared development site
 ```
 
 Coverage output is written to `coverage/` (gitignored) and printed as a table in the terminal.
@@ -47,14 +48,12 @@ props-in/markup-out functions, which RTL's queries suit well.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push/PR to `master`:
+`.github/workflows/ci.yml` runs on every push/PR to `master` and `develop`:
 
-- **`test` job** (blocking) — `yarn install --frozen-lockfile && yarn test`. This is the merge gate.
-- **`lint` job** (`continue-on-error: true`, non-blocking) — `yarn lint`. Non-blocking today because
-  `master` already has 6 pre-existing eslint errors (curly-brace/`prefer-const`/
-  `no-use-before-define` issues in `BottomNav`, `ReactForm/SelectMenu`, `SinglePost`) unrelated to
-  Phase 1 testing-infra work. **Follow-up recommended:** a small lint-cleanup task to fix those,
-  then flip `lint` to blocking.
+- **`lint` job** (blocking) — `yarn install --frozen-lockfile --ignore-scripts && yarn lint`.
+- **`test` job** (blocking) — `yarn install --frozen-lockfile --ignore-scripts && yarn test`.
+- **`preview-deploy` job** runs after tests for pull requests and `develop`; it safely exits with a
+  warning until human-gated deploy secrets are configured.
 
 **CI installs run with `--ignore-scripts`.** `node-sass@7.0.1` (its last-ever release; the package
 is deprecated in favor of Dart Sass) cannot build its native V8 binding on Node 22 — confirmed both
@@ -69,7 +68,7 @@ on Node 22, the fix is either pinning local dev to Node ≤17 (last version node
 binaries for) or migrating the app off node-sass to Dart Sass (`sass` package), which is a separate,
 larger follow-up outside this task's scope.
 
-**No automated preview/prod deploy step.** Per Phase 0 D3 (`phase0-D3-access-and-preview.md`):
+**Preview deployment remains human-gated.** Per Phase 0 D3 (`phase0-D3-access-and-preview.md`):
 deploy-capable AWS credentials (`hecadmin`) are intentionally human-gated (passphrase-unlocked,
 not self-service for an agent) and any deploy requires explicit Yomi approval regardless of
 credential access. Two existing staging URLs (`development.hecmedia.org`, `develop.hecmedia.org`)
@@ -77,11 +76,10 @@ are recommended as shared manual preview targets for Jayne's review in the near 
 per-branch ephemeral previews are a separate, larger project blocked on an unresolved ACM
 wildcard-certificate question (see D3 §2/§5) and are out of scope here.
 
-## Known gaps (left for T3 — critical-path coverage)
+## Known gaps
 
-- Three components have tests today (`Footer`, `SocialLinks`, `SideNavigation`) — all
-  presentational, prop-in/markup-out. This task's scope was standing up the harness and CI, not
-  full coverage of the ~35-component tree.
+- Six critical paths have tests today: `Footer`, `SocialLinks`, `SideNavigation`, `Header`,
+  `Forms/NewsLetterForm`, and the home page. This is not full coverage of the ~35-component tree.
 - Components wired to Redux (`redux-form`), Apollo (`@apollo/react-hooks`), or `next/router` will
   need a test wrapper (mock store / mock Apollo provider / mock router) — none of the current
   components exercise that path yet, so no wrapper utility exists. Add one under
