@@ -22,14 +22,12 @@ export default ({
         placeholder={defaultText}
         onChange={handleMenuChange}
       />
-      {
-        <div
-          className="errors"
-          dangerouslySetInnerHTML={{
-            __html: touched && error ? error : "&nbsp;"
-          }}
-        />
-      }
+      <div
+        className="errors"
+        dangerouslySetInnerHTML={{
+          __html: touched && error ? error : "&nbsp;"
+        }}
+      />
     </div>
   );
 };

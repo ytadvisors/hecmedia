@@ -11,19 +11,17 @@ const BottomNav = ({ title, data: { bottomNav } }) => {
     <section className="post-bottom-nav">
       <div className="row">
         <div className="col-md-12">
-          {
-            <ul>
-              <li className="title">{title}</li>
-              {bottomList.map(menu => {
-                const url = menu.node.url.replace(/https?:\/\/[^/]+/, "");
-                return (
-                  <li key={menu.node.url}>
-                    <a href={url}>{menu.node.label}</a>
-                  </li>
-                );
-              })}
-            </ul>
-          }
+          <ul>
+            <li className="title">{title}</li>
+            {bottomList.map(menu => {
+              const url = menu.node.url.replace(/https?:\/\/[^/]+/, "");
+              return (
+                <li key={menu.node.url}>
+                  <a href={url}>{menu.node.label}</a>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
     </section>
