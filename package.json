@@ -38,15 +38,22 @@
       "!store/sagas/**",
       "!store/index.js",
       "!store/reducers/index.js",
+      "!lib/cssDependencies.js",
       "!**/*.test.js"
     ],
     "coverageDirectory": "<rootDir>/coverage",
     "coverageThreshold": {
       "global": {
         "statements": 22,
-        "lines": 22,
+        "lines": 23,
         "branches": 12,
         "functions": 14
+      },
+      "./lib/**/*.js": {
+        "statements": 70,
+        "lines": 70,
+        "branches": 60,
+        "functions": 78
       },
       "./store/actions/**/*.js": {
         "statements": 100,
