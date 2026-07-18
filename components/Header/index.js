@@ -12,6 +12,7 @@ import {
   getSocialMenuObject,
   getHref
 } from "../../lib/getFunctions";
+import { buildNavigationPreview } from "../../lib/navigationPreview";
 import { isServer } from "../../lib/serverFunctions";
 import "./styles.scss";
 
@@ -34,7 +35,9 @@ export default class Header extends Component {
     $("#main-nav > div:first-child").addClass("main-container");
     this.setState({ isMobile: window.innerWidth <= 1170 });
     window.addEventListener("resize", this.resize);
-    window.addEventListener("scroll", this.updateScrollState, { passive: true });
+    window.addEventListener("scroll", this.updateScrollState, {
+      passive: true
+    });
     this.updateScrollState();
   }
 
@@ -221,7 +224,9 @@ export default class Header extends Component {
       : {};
 
     const topLinks =
-      headerList.length > 0 ? getHeaderMenuObject(headerList) : [];
+      headerList.length > 0
+        ? buildNavigationPreview(getHeaderMenuObject(headerList))
+        : [];
     const socialLinks =
       socialList.length > 0
         ? getSocialMenuObject(socialList, isMobile ? 15 : 25, "white")
@@ -266,7 +271,9 @@ export default class Header extends Component {
 
     return (
       <header
-        className={`header header--sticky${scrolled ? " header--scrolled" : ""}`}
+        className={`header header--sticky${
+          scrolled ? " header--scrolled" : ""
+        }`}
       >
         <Navbar
           inverse
