@@ -72,7 +72,9 @@
     color: #ddd;
     text-transform: uppercase;
     line-height: 20px;
-    font-size: 15px;
+    // Keep the existing desktop scale, while preventing the tagline from
+    // overpowering the logo as the available header width tightens.
+    font-size: clamp(13px, calc(12px + 0.25vw), 15px);
     .brand-text {
       padding: 10px 5px;
     }
@@ -326,7 +328,9 @@
       li.nav-item {
         margin: 0;
         border-left: 1px solid #192032;
-        font-size: 0.8em;
+        // The primary navigation should remain comfortably readable without
+        // increasing the header's visual weight at wider viewports.
+        font-size: clamp(13px, calc(12px + 0.2vw), 14px);
         a {
           padding: 1em 2em;
           color: #fff;
@@ -396,7 +400,7 @@
       padding: 10px !important;
     }
     .brand-details {
-      font-size: 10px;
+      font-size: 13px;
       .brand-text {
         padding: 12px 5px 0;
       }
@@ -518,6 +522,7 @@
           width: 100%;
           a {
             padding: 10px 0px;
+            font-size: 14px;
             display: block;
           }
         }
