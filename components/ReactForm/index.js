@@ -11,6 +11,7 @@ import SelectMenu from "./SelectMenu";
 import DefaultDatePicker from "./DefaultDatePicker";
 import CheckBoxInput from "./CheckBoxInput";
 import DateTimeAdder from "./DateTimeAdder";
+import formsAreNoSend from "../../lib/noSend";
 
 import "./styles.scss";
 
@@ -18,12 +19,22 @@ export default class ReactForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      termsAgreed: undefined
+      termsAgreed: undefined,
+      noSendNotice: false
     };
   }
 
   selectTerms = event => {
     this.setState({ termsAgreed: event.target.checked });
+  };
+
+  submit = values => {
+    if (formsAreNoSend()) {
+      this.setState({ noSendNotice: true });
+      return undefined;
+    }
+    const { onSubmit } = this.props;
+    return onSubmit(values);
   };
 
   getFieldComponent = field => {
@@ -198,7 +209,6 @@ export default class ReactForm extends Component {
 
   render() {
     const {
-      onSubmit,
       handleSubmit,
       submitting,
       title,
@@ -213,10 +223,17 @@ export default class ReactForm extends Component {
       id: `fields-${x}`,
       value: field
     }));
-    const { termsAgreed } = this.state;
+    const { termsAgreed, noSendNotice } = this.state;
 
     return (
-      <ReduxForm onSubmit={handleSubmit(onSubmit)} className="react-form">
+      <ReduxForm onSubmit={handleSubmit(this.submit)} className="react-form">
+        {noSendNotice ? (
+          <div className="errors" role="status">
+            This staging form is in no-send mode; nothing was submitted.
+          </div>
+        ) : (
+          ""
+        )}
         {terms && !termsAgreed ? (
           <div className="row">
             <div className="col-md-12">

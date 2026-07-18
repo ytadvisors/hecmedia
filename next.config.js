@@ -11,7 +11,11 @@ const { parsed: localEnv } = require("dotenv").config({
 
 const config = {
   target: "experimental-serverless-trace",
-  env: localEnv,
+  env: {
+    ...localEnv,
+    DEPLOY_SHA: process.env.DEPLOY_SHA,
+    HECMEDIA_NO_SEND_FORMS: process.env.HECMEDIA_NO_SEND_FORMS
+  },
   webpack: data => {
     const conf = { ...data };
     conf.node = {

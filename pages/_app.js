@@ -2,6 +2,7 @@ import App from "next/app";
 import React from "react";
 import { Provider } from "react-redux";
 import { ApolloProvider } from "@apollo/react-hooks";
+import Head from "next/head";
 import withApollo from "../lib/withApollo";
 import createStore from "../store";
 
@@ -21,6 +22,16 @@ class MyApp extends App {
     return (
       <Provider store={store}>
         <ApolloProvider client={apolloClient}>
+          <Head>
+            <meta
+              name="hecmedia-deploy-sha"
+              content={process.env.DEPLOY_SHA || "local"}
+            />
+            <meta
+              name="hecmedia-forms-mode"
+              content={process.env.HECMEDIA_NO_SEND_FORMS || "send"}
+            />
+          </Head>
           <Component {...pageProps} />
         </ApolloProvider>
       </Provider>
