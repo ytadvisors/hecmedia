@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import Header from "./index";
 
 const buildMenu = links => ({
@@ -40,6 +40,9 @@ describe("Header (primary navigation)", () => {
 
     expect(screen.getByText("Programs")).toBeInTheDocument();
     expect(screen.getByText("Events")).toBeInTheDocument();
+    const programsLink = screen.getByText("Programs").closest("a");
+    programsLink.focus();
+    expect(programsLink).toHaveFocus();
   });
 
   it("renders a dropdown parent for nav items that carry child items", () => {
@@ -62,5 +65,19 @@ describe("Header (primary navigation)", () => {
   it("renders a search toggle button in the nav", () => {
     const { container } = render(<Header searchFunc={() => {}} />);
     expect(container.querySelector(".search-btn-icon")).toBeInTheDocument();
+  });
+
+  it("keeps its layout space while applying the sticky, scrolled treatment", () => {
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 120
+    });
+    const { container } = render(<Header searchFunc={() => {}} />);
+
+    fireEvent.scroll(window);
+    expect(container.querySelector("header")).toHaveClass(
+      "header--sticky",
+      "header--scrolled"
+    );
   });
 });
