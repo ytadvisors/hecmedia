@@ -49,6 +49,14 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (!req.body.captchaToken || typeof req.body.captchaToken !== "string") {
+    res.status(400).json({
+      ok: false,
+      errors: { captchaToken: "Spam verification failed" }
+    });
+    return;
+  }
+
   const captchaValid = await verifyCaptcha(
     req.body.captchaToken,
     req.headers && req.headers["x-forwarded-for"]

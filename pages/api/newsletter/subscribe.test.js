@@ -132,6 +132,16 @@ describe("POST /api/newsletter/subscribe", () => {
     expect(availableAdapter.subscribe).not.toHaveBeenCalled();
   });
 
+  it("rejects a missing CAPTCHA token before verification or subscription", async () => {
+    const { captchaToken, ...bodyWithoutCaptcha } = validBody;
+    const { req, res } = mockReqRes({ body: bodyWithoutCaptcha });
+    await handler(req, res);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.errors.captchaToken).toBe("Spam verification failed");
+    expect(verifyCaptcha).not.toHaveBeenCalled();
+    expect(availableAdapter.subscribe).not.toHaveBeenCalled();
+  });
+
   it("rejects a failed CAPTCHA without calling the adapter", async () => {
     verifyCaptcha.mockResolvedValue(false);
     const { req, res } = mockReqRes({ body: validBody });
