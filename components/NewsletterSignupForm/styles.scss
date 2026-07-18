@@ -1,0 +1,57 @@
+.newsletter-signup-form {
+  max-width: 480px;
+
+  .field {
+    margin-bottom: 1em;
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 0.3em;
+    }
+
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      padding: 0.6em;
+    }
+
+    &.consent label {
+      display: flex;
+      align-items: center;
+      font-weight: normal;
+
+      input {
+        margin-right: 0.6em;
+      }
+    }
+  }
+
+  .field-error {
+    color: #b00020;
+    font-size: 0.85em;
+    margin-top: 0.3em;
+  }
+
+  .captcha-unavailable {
+    background: #fff3cd;
+    color: #664d03;
+    padding: 0.8em 1em;
+    margin-bottom: 1em;
+    font-size: 0.9em;
+  }
+
+  .form-error {
+    color: #b00020;
+    margin-bottom: 1em;
+  }
+
+  .success-message {
+    background: #ddecff;
+    padding: 1.2em;
+  }
+
+  button[type="submit"] {
+    padding: 0.7em 1.5em;
+  }
+}
