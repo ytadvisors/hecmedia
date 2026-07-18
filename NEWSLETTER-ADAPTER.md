@@ -1,24 +1,20 @@
 # Newsletter signup — adapter contract
 
 **Task:** #68050 (Feature D) | **Parent:** #68047
-**Status:** shipped in staging no-send mode. No ESP is connected — this
-documents the interface a real adapter must implement and what the client
-needs to decide/provide before one can be turned on.
+**Status:** safely gated. No ESP or durable review queue is connected, so the
+page and API do not accept signups or claim that a subscription was saved.
 
 ## What exists today
 
 - `pages/newsletter/index.js` — standalone signup page (`/newsletter`), not
   the pre-existing `NewsLetter`/`NewsLetterForm` overlay widget.
 - `components/NewsletterSignupForm/index.js` — first name, last name, email,
-  and a required consent checkbox. Client-side validation, loading/success/
-  error states, and a captcha-unavailable fallback (see below).
+  a required consent checkbox, and a real reCAPTCHA widget when enabled.
 - `pages/api/newsletter/subscribe.js` — server-side validation, then calls
   `getNewsletterAdapter()` from `lib/newsletter/adapter.js`.
-- `lib/newsletter/adapter.js` — the adapter contract plus the only adapter
-  implemented so far, `MockNewsletterAdapter`, which records the attempt
-  in-memory and returns `{ ok: true, id }`. It never opens a network
-  connection. No subscriber data is transmitted anywhere, and no ESP
-  credentials exist in this repo, staging environment, or CI secrets.
+- `lib/newsletter/adapter.js` — the adapter contract currently resolves to an
+  unavailable adapter. It returns a non-success result until an ESP or durable
+  review-queue adapter is provisioned.
 
 ## The contract a real adapter must satisfy
 
@@ -32,9 +28,8 @@ subscribe({ email, firstName, lastName, consent, source }) =>
   `{ ok: false, error }`. Only throw for programmer error (e.g. missing
   config), which the API route already turns into a 502.
 - `getNewsletterAdapter()` is the single selection point. A real adapter must
-  still check `formsAreNoSend()` (`lib/noSend.js`) first and fall back to
-  `MockNewsletterAdapter` — staging (`HECMEDIA_NO_SEND_FORMS=true`) must never
-  be able to send, regardless of what ESP config is present.
+  set `isAvailable=true` and must never accept submissions when
+  `formsAreNoSend()` (`lib/noSend.js`) is true.
 
 ## What's needed to wire a real adapter later
 
@@ -54,22 +49,22 @@ subscribe({ email, firstName, lastName, consent, source }) =>
 4. **Double vs. single opt-in** — a client decision that changes whether
    `subscribe()` returns immediately-subscribed or pending-confirmation.
 
-## Captcha-unavailable behavior
+## Exposure and CAPTCHA policy
 
-The existing `components/ReactForm/Captcha` reads `RE_CAPTCHA_SITE_KEY`
-directly and has no fallback if it's unset. `NewsletterSignupForm` instead
-checks for the key up front: if present, it renders a slot for the real
-widget; if absent, it shows a "spam verification is temporarily unavailable"
-notice and does **not** block submission on a missing captcha token. This
-avoids the failure mode where an unset key would silently make the form
-unsubmittable.
+The public page is gated when `HECMEDIA_NO_SEND_FORMS=true` or no
+`RE_CAPTCHA_SITE_KEY` is available. The API separately rejects no-send and
+unavailable-adapter requests before it processes personal information. Once a
+durable adapter is added, production must provide `RE_CAPTCHA_SECRET_KEY`; the
+API verifies the submitted token with Google and fails closed on missing,
+invalid, or unverifiable CAPTCHA. The site key alone is not enough to expose
+the form safely.
 
 ## Testing
 
-- `lib/newsletter/adapter.test.js` — mock adapter never throws, always
-  resolves ok, records what it "sent."
-- `pages/api/newsletter/subscribe.test.js` — method/validation/consent
-  handling, and that a valid request reaches the mock adapter.
+- `lib/newsletter/adapter.test.js` — unavailable adapter never reports a
+  durable subscription.
+- `pages/api/newsletter/subscribe.test.js` — method, no-send/unavailable
+  adapter, validation, and CAPTCHA abuse-control handling.
 - `components/NewsletterSignupForm/index.test.js` — field validation,
   loading/success/error states, and both captcha-availability branches.
 - `pages/newsletter/index.test.js` — page composition (Layout + form).

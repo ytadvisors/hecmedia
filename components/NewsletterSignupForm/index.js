@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import validator from "validator";
+import Recaptcha from "react-recaptcha";
 import "./styles.scss";
 
 const STATUS = {
@@ -33,6 +34,7 @@ export default function NewsletterSignupForm({ onSubscribe, captchaSiteKey }) {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState(STATUS.IDLE);
   const [serverError, setServerError] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState(null);
 
   const captchaAvailable = Boolean(captchaSiteKey);
 
@@ -50,12 +52,17 @@ export default function NewsletterSignupForm({ onSubscribe, captchaSiteKey }) {
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) return;
+    if (!captchaToken) {
+      setStatus(STATUS.ERROR);
+      setServerError("Please complete spam verification.");
+      return;
+    }
 
     setStatus(STATUS.LOADING);
     setServerError(null);
 
     try {
-      const result = await onSubscribe(values);
+      const result = await onSubscribe({ ...values, captchaToken });
       if (result && result.ok) {
         setStatus(STATUS.SUCCESS);
       } else {
@@ -138,12 +145,16 @@ export default function NewsletterSignupForm({ onSubscribe, captchaSiteKey }) {
 
       {captchaAvailable ? (
         <div className="field captcha-slot" data-testid="captcha-slot">
-          {/* Real reCAPTCHA renders here once RE_CAPTCHA_SITE_KEY is set. */}
+          <Recaptcha
+            sitekey={captchaSiteKey}
+            verifyCallback={setCaptchaToken}
+            expiredCallback={() => setCaptchaToken(null)}
+          />
         </div>
       ) : (
         <div className="captcha-unavailable" data-testid="captcha-unavailable">
-          Spam verification is temporarily unavailable. Your submission will
-          still be reviewed before it&rsquo;s added to the list.
+          Spam verification is unavailable. Newsletter signup cannot be
+          completed right now.
         </div>
       )}
 

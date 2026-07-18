@@ -29,10 +29,17 @@ export default () => (
           Subscribe to get HEC Media programming updates and event announcements
           in your inbox.
         </p>
-        <NewsletterSignupForm
-          onSubscribe={subscribe}
-          captchaSiteKey={process.env.RE_CAPTCHA_SITE_KEY}
-        />
+        {process.env.HECMEDIA_NO_SEND_FORMS === "true" ||
+        !process.env.RE_CAPTCHA_SITE_KEY ? (
+          <p data-testid="newsletter-unavailable">
+            Newsletter signup is not available at this time.
+          </p>
+        ) : (
+          <NewsletterSignupForm
+            onSubscribe={subscribe}
+            captchaSiteKey={process.env.RE_CAPTCHA_SITE_KEY}
+          />
+        )}
       </section>
     </Layout>
   </>

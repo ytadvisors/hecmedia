@@ -1,5 +1,10 @@
 import validator from "validator";
 import { getNewsletterAdapter } from "../../../lib/newsletter/adapter";
+import formsAreNoSend from "../../../lib/noSend";
+import {
+  captchaIsConfigured,
+  verifyCaptcha
+} from "../../../lib/newsletter/captcha";
 
 function validate(body) {
   const errors = {};
@@ -14,10 +19,6 @@ function validate(body) {
   return errors;
 }
 
-// Staging-only subscribe endpoint. It always goes through
-// getNewsletterAdapter(), which today only resolves to the in-memory mock —
-// no subscriber data ever leaves this process. See
-// docs/newsletter-adapter-contract.md for what a production adapter needs.
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -31,8 +32,36 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { firstName, lastName, email, consent } = req.body;
   const adapter = getNewsletterAdapter();
+  if (formsAreNoSend() || !adapter.isAvailable) {
+    res.status(503).json({
+      ok: false,
+      error: "Newsletter signup is not available at this time."
+    });
+    return;
+  }
+
+  if (!captchaIsConfigured()) {
+    res.status(503).json({
+      ok: false,
+      error: "Newsletter signup is not configured."
+    });
+    return;
+  }
+
+  const captchaValid = await verifyCaptcha(
+    req.body.captchaToken,
+    req.headers && req.headers["x-forwarded-for"]
+  );
+  if (!captchaValid) {
+    res.status(400).json({
+      ok: false,
+      errors: { captchaToken: "Spam verification failed" }
+    });
+    return;
+  }
+
+  const { firstName, lastName, email, consent } = req.body;
 
   try {
     const result = await adapter.subscribe({

@@ -2,6 +2,12 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import NewsletterSignupForm from "./index";
 
+jest.mock("react-recaptcha", () => ({ verifyCallback }) => (
+  <button type="button" onClick={() => verifyCallback("captcha-token")}>
+    Complete spam verification
+  </button>
+));
+
 function fillValidForm() {
   fireEvent.change(screen.getByLabelText("First name"), {
     target: { value: "Ada" }
@@ -13,6 +19,12 @@ function fillValidForm() {
     target: { value: "reader@example.com" }
   });
   fireEvent.click(screen.getByLabelText(/I agree to receive/));
+}
+
+function completeCaptcha() {
+  fireEvent.click(
+    screen.getByRole("button", { name: /complete spam verification/i })
+  );
 }
 
 describe("NewsletterSignupForm", () => {
@@ -74,12 +86,20 @@ describe("NewsletterSignupForm", () => {
           resolveSubscribe = resolve;
         })
     );
-    render(<NewsletterSignupForm onSubscribe={onSubscribe} />);
+    render(
+      <NewsletterSignupForm
+        onSubscribe={onSubscribe}
+        captchaSiteKey="site-key"
+      />
+    );
 
     fillValidForm();
+    completeCaptcha();
     fireEvent.click(screen.getByRole("button", { name: /subscribe/i }));
 
-    expect(await screen.findByRole("button")).toHaveTextContent("Subscribing…");
+    expect(
+      await screen.findByRole("button", { name: /subscribing/i })
+    ).toBeDisabled();
 
     resolveSubscribe({ ok: true, id: "mock-1" });
 
@@ -91,9 +111,15 @@ describe("NewsletterSignupForm", () => {
       ok: false,
       error: "Subscribe failed"
     });
-    render(<NewsletterSignupForm onSubscribe={onSubscribe} />);
+    render(
+      <NewsletterSignupForm
+        onSubscribe={onSubscribe}
+        captchaSiteKey="site-key"
+      />
+    );
 
     fillValidForm();
+    completeCaptcha();
     fireEvent.click(screen.getByRole("button", { name: /subscribe/i }));
 
     expect(await screen.findByTestId("form-error")).toHaveTextContent(
@@ -103,11 +129,33 @@ describe("NewsletterSignupForm", () => {
 
   it("shows an error state when onSubscribe rejects", async () => {
     const onSubscribe = jest.fn().mockRejectedValue(new Error("network down"));
-    render(<NewsletterSignupForm onSubscribe={onSubscribe} />);
+    render(
+      <NewsletterSignupForm
+        onSubscribe={onSubscribe}
+        captchaSiteKey="site-key"
+      />
+    );
 
     fillValidForm();
+    completeCaptcha();
     fireEvent.click(screen.getByRole("button", { name: /subscribe/i }));
 
     expect(await screen.findByTestId("form-error")).toBeInTheDocument();
+  });
+
+  it("does not submit until spam verification is complete", () => {
+    const onSubscribe = jest.fn();
+    render(
+      <NewsletterSignupForm
+        onSubscribe={onSubscribe}
+        captchaSiteKey="site-key"
+      />
+    );
+    fillValidForm();
+    fireEvent.click(screen.getByRole("button", { name: /^subscribe$/i }));
+    expect(
+      screen.getByText("Please complete spam verification.")
+    ).toBeInTheDocument();
+    expect(onSubscribe).not.toHaveBeenCalled();
   });
 });
