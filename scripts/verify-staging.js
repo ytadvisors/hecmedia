@@ -49,6 +49,10 @@ async function main() {
       fail(`${route} returned HTTP ${response.statusCode}`);
     if (!/HEC-TV/.test(body))
       fail(`${route} did not render the HEC-TV identity`);
+    if (route === "/" && !/Trending Now/.test(body))
+      fail("/ did not render Trending Now");
+    if (route === "/" && !/Staging preview/.test(body))
+      fail("/ did not render the staging-only indicator");
     if (!body.includes(`name="hecmedia-deploy-sha" content="${expectedSha}"`))
       fail(`${route} did not render deploy SHA`);
     if (!body.includes('name="hecmedia-forms-mode" content="true"'))
