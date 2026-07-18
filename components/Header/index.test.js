@@ -42,6 +42,28 @@ describe("Header (primary navigation)", () => {
     expect(screen.getByText("Events")).toBeInTheDocument();
   });
 
+  it.each([320, 1440])(
+    "keeps the tagline and primary nav hooks at %ipx",
+    width => {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: width
+      });
+      const header = buildMenu([
+        { url: "https://hectv.org/programs", label: "Programs" }
+      ]);
+
+      const { container } = render(
+        <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+      );
+
+      expect(container.querySelector(".header-tagline")).toBeInTheDocument();
+      expect(screen.getByText("Programs").closest("a")).toHaveClass(
+        "header-nav-link"
+      );
+    }
+  );
+
   it("renders a dropdown parent for nav items that carry child items", () => {
     const header = buildMenu([
       {

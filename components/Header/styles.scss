@@ -65,6 +65,8 @@
     font-size: 15px;
     .brand-text {
       padding: 10px 5px;
+      // Keep the secondary tagline readable without competing with the logo.
+      font-size: clamp(0.75rem, 0.7rem + 0.25vw, 0.9375rem);
     }
   }
   ul.brand-social {
@@ -324,6 +326,8 @@
           border-radius: 0;
           margin: 0;
           text-transform: uppercase;
+          // Preserve the compact nav while allowing a small, fluid desktop increase.
+          font-size: clamp(0.75rem, 0.71rem + 0.19vw, 0.875rem);
         }
         a:hover {
           background: #23272e;

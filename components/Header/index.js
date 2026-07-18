@@ -111,6 +111,7 @@ export default class Header extends Component {
     if (isRedirect) {
       return (
         <a
+          className="header-nav-link"
           aria-labelledby="redirect"
           href={cleanUrl}
           target="_blank"
@@ -126,7 +127,7 @@ export default class Header extends Component {
     }
     if (label.toLowerCase() === "events") {
       return (
-        <a href={cleanUrl}>
+        <a className="header-nav-link" href={cleanUrl}>
           <span
             dangerouslySetInnerHTML={{
               __html: label
@@ -137,7 +138,7 @@ export default class Header extends Component {
     }
     return (
       <Link href={actualLink} as={cleanUrl}>
-        <a>
+        <a className="header-nav-link">
           <div
             onKeyPress={() => {}}
             onClick={() => this.setState({ navExpanded: false })}
@@ -271,7 +272,7 @@ export default class Header extends Component {
               </Navbar.Brand>
             </div>
             <div className="brand-details">
-              <div className="brand-text">
+              <div className="brand-text header-tagline">
                 <div>St. Louis&apos; home of Education</div>
                 <div>Arts, and Culture</div>
               </div>
