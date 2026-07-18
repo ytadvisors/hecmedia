@@ -66,6 +66,7 @@ export default class Banner extends Component {
 
     return (
       <section
+        id="watch-live"
         className="banner"
         style={{ background: bannerBackground, color: bannerTextColor }}
       >

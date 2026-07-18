@@ -23,6 +23,16 @@ const buildMenu = links => ({
 });
 
 describe("Header (primary navigation)", () => {
+  const originalTopBarPreview = process.env.HECMEDIA_TOPBAR_CTA_PREVIEW;
+
+  afterEach(() => {
+    if (originalTopBarPreview === undefined) {
+      delete process.env.HECMEDIA_TOPBAR_CTA_PREVIEW;
+    } else {
+      process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = originalTopBarPreview;
+    }
+  });
+
   it("renders without crashing when no menu data is provided yet", () => {
     render(<Header searchFunc={() => {}} />);
     expect(screen.getByAltText("HECTV logo")).toBeInTheDocument();
@@ -65,6 +75,60 @@ describe("Header (primary navigation)", () => {
   it("renders a search toggle button in the nav", () => {
     const { container } = render(<Header searchFunc={() => {}} />);
     expect(container.querySelector(".search-btn-icon")).toBeInTheDocument();
+  });
+
+  it("renders staging-safe Watch Live, Subscribe, and Donate top-bar CTAs", () => {
+    process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = "true";
+    render(<Header searchFunc={() => {}} />);
+
+    expect(screen.getByRole("link", { name: "Watch Live" })).toHaveAttribute(
+      "href",
+      "/#watch-live"
+    );
+    expect(screen.getByRole("link", { name: "Subscribe" })).toHaveAttribute(
+      "href",
+      "#subscribe"
+    );
+    expect(
+      screen.getByRole("button", { name: /Donate Staging only/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Staging only")).toBeVisible();
+  });
+
+  it("keeps the donation placeholder keyboard-accessible and transaction-free", () => {
+    process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = "true";
+    render(<Header searchFunc={() => {}} />);
+
+    const donate = screen.getByRole("button", {
+      name: /Donate Staging only/i
+    });
+    donate.focus();
+    expect(donate).toHaveFocus();
+    fireEvent.keyDown(donate, { key: "Enter", code: "Enter" });
+    fireEvent.click(donate);
+    expect(
+      screen.getByRole("status", {
+        name: ""
+      })
+    ).toHaveTextContent("Donations are disabled in this staging preview.");
+    expect(donate).not.toHaveAttribute("href");
+  });
+
+  it("keeps all three CTAs available in the mobile header", () => {
+    process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = "true";
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 375
+    });
+    const { container } = render(<Header searchFunc={() => {}} />);
+
+    expect(container.querySelector(".top-bar-actions")).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("link", { name: /Watch Live|Subscribe/ })
+    ).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: /Donate Staging only/i })
+    ).toBeVisible();
   });
 
   it("keeps its layout space while applying the sticky, scrolled treatment", () => {

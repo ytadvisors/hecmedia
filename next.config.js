@@ -14,7 +14,8 @@ const config = {
   env: {
     ...localEnv,
     DEPLOY_SHA: process.env.DEPLOY_SHA,
-    HECMEDIA_NO_SEND_FORMS: process.env.HECMEDIA_NO_SEND_FORMS
+    HECMEDIA_NO_SEND_FORMS: process.env.HECMEDIA_NO_SEND_FORMS,
+    HECMEDIA_TOPBAR_CTA_PREVIEW: process.env.HECMEDIA_TOPBAR_CTA_PREVIEW
   },
   webpack: data => {
     const conf = { ...data };
