@@ -3,7 +3,7 @@ import $ from "jquery";
 
 import SideNavigation from "../SideNavigation";
 import ListOfSideTabs from "../ListOfSideTabs";
-import ListOfFeaturedPosts from "../ListOfFeaturedPosts";
+import TrendingNow from "../TrendingNow";
 
 import Schedule from "../Schedule";
 import NewsLetterContainer from "../../containers/NewsLetterContainer";
@@ -41,8 +41,9 @@ export default class extends Component {
     const {
       style,
       programs,
-      featuredMagazines,
       spotLightPosts,
+      trendingNowLoading,
+      trendingNowError,
       children
     } = this.props;
     const { isMobile } = this.state;
@@ -89,9 +90,10 @@ export default class extends Component {
                     <Schedule programs={programs} />
                   </div>
                   <div className="col-sm-8 col-sm-pull-4  col-lg-12 col-lg-pull-0  no-padding">
-                    <ListOfFeaturedPosts
-                      featuredMagazines={featuredMagazines}
-                      spotLightPosts={spotLightPosts}
+                    <TrendingNow
+                      spotlightPosts={spotLightPosts}
+                      loading={trendingNowLoading}
+                      error={trendingNowError}
                     />
                   </div>
                 </div>
