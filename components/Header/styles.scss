@@ -1,4 +1,14 @@
 .header {
+  // Sticky keeps the header in normal document flow, so content retains its layout offset.
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  &.header--scrolled .navbar-class {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
+  }
+
   .main-container {
     padding: 0 !important;
     background: #0065bc;

@@ -24,7 +24,8 @@ export default class Header extends Component {
     this.state = {
       open: {},
       navExpanded: false,
-      isMobile: false
+      isMobile: false,
+      scrolled: false
     };
   }
 
@@ -33,17 +34,29 @@ export default class Header extends Component {
     $("#main-nav > div:first-child").addClass("main-container");
     this.setState({ isMobile: window.innerWidth <= 1170 });
     window.addEventListener("resize", this.resize);
+    window.addEventListener("scroll", this.updateScrollState, { passive: true });
+    this.updateScrollState();
   }
 
   componentWillUnmount() {
     this.mounted = false;
     if (!isServer) {
       window.removeEventListener("resize", this.resize);
+      window.removeEventListener("scroll", this.updateScrollState);
     }
   }
 
   resize = () => {
     if (this.mounted) this.setState({ isMobile: window.innerWidth <= 1170 });
+  };
+
+  updateScrollState = () => {
+    const scrolled = window.pageYOffset > 0 || window.scrollY > 0;
+    if (this.mounted) {
+      this.setState(currentState =>
+        currentState.scrolled === scrolled ? null : { scrolled }
+      );
+    }
   };
 
   search = () => {
@@ -196,7 +209,7 @@ export default class Header extends Component {
 
   render() {
     const { header, social } = this.props;
-    const { navExpanded, isMobile } = this.state;
+    const { navExpanded, isMobile, scrolled } = this.state;
     const style = isMobile
       ? { width: `${window.innerWidth - 50}px`, right: "12px" }
       : {};
@@ -252,7 +265,9 @@ export default class Header extends Component {
     ];
 
     return (
-      <section className="header">
+      <header
+        className={`header header--sticky${scrolled ? " header--scrolled" : ""}`}
+      >
         <Navbar
           inverse
           className="navbar-class"
@@ -296,7 +311,7 @@ export default class Header extends Component {
             </Navbar.Collapse>
           </div>
         </Navbar>
-      </section>
+      </header>
     );
   }
 }
