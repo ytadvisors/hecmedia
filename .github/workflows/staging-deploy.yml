@@ -1,0 +1,127 @@
+name: HEC Media staging deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Deploy a commit or roll back to the last known-good staging SHA.
+        required: true
+        type: choice
+        options: [deploy, rollback]
+      ref:
+        description: Commit SHA to deploy. Required for deploy; ignored for rollback.
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+# Runs are serialized rather than cancelled. An always-run evidence step records
+# manual cancellation or failure, so it cannot be mistaken for success.
+concurrency:
+  group: hecmedia-staging-deployment
+  cancel-in-progress: false
+
+env:
+  STAGING_SITE_URL: https://development.hecmedia.org
+  STAGING_SUBDOMAIN: development
+  STAGING_DOMAIN: hecmedia.org
+  HECMEDIA_NO_SEND_FORMS: "true"
+
+jobs:
+  deploy-and-verify:
+    runs-on: ubuntu-latest
+    environment:
+      name: hecmedia-staging
+      url: https://development.hecmedia.org
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Resolve staging-only revision
+        id: revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          ref='${{ inputs.ref }}'
+          if [ '${{ inputs.action }}' = rollback ]; then ref=staging-last-known-good; fi
+          if [ -z "$ref" ]; then echo "A commit SHA is required for deploy." >&2; exit 1; fi
+          git rev-parse --verify "$ref^{commit}"
+          git checkout --detach "$ref"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "16"
+          cache: yarn
+      - name: Preflight staging configuration by name only
+        env:
+          HECMEDIA_STAGING_AWS_ROLE_ARN: ${{ secrets.HECMEDIA_STAGING_AWS_ROLE_ARN }}
+          HECMEDIA_STAGING_APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_STAGING_APOLLO_CLIENT_URI }}
+          HECMEDIA_STAGING_WP_HOST: ${{ secrets.HECMEDIA_STAGING_WP_HOST }}
+          HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          set -euo pipefail
+          for name in HECMEDIA_STAGING_AWS_ROLE_ARN HECMEDIA_STAGING_APOLLO_CLIENT_URI HECMEDIA_STAGING_WP_HOST HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID; do
+            if [ -z "${!name:-}" ]; then echo "::error title=Missing staging configuration::$name is required in the hecmedia-staging environment"; exit 1; fi
+            echo "$name is configured"
+          done
+          test "$STAGING_SITE_URL" = "https://development.hecmedia.org"
+          test "$STAGING_SUBDOMAIN" = development
+          test "$STAGING_DOMAIN" = hecmedia.org
+          test "$HECMEDIA_NO_SEND_FORMS" = true
+      - run: yarn install --frozen-lockfile
+      - name: Lint and Jest coverage
+        run: yarn lint && yarn test
+      - name: Read-only API contracts
+        env:
+          APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_STAGING_APOLLO_CLIENT_URI }}
+          GATSBY_WP_HOST: ${{ secrets.HECMEDIA_STAGING_WP_HOST }}
+          E2E_ALLOW_WRITES: "0"
+        run: yarn test:e2e
+      - name: Build production bundle for staging
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+        run: yarn build
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.HECMEDIA_STAGING_AWS_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Deploy only development.hecmedia.org
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+          SUBDOMAIN: development
+          DOMAIN: hecmedia.org
+          APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_STAGING_APOLLO_CLIENT_URI }}
+          HECMEDIA_NO_SEND_FORMS: "true"
+        run: yarn deploy
+      - name: Verify rendered site, routes, no-send forms, and CloudFront alias
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          set -euo pipefail
+          aws cloudfront get-distribution --id "$CLOUDFRONT_DISTRIBUTION_ID" --query 'Distribution.DistributionConfig.Aliases.Items' --output text > cloudfront-aliases.txt
+          CLOUDFRONT_ALIASES="$(tr '\t' ',' < cloudfront-aliases.txt)" node scripts/verify-staging.js | tee staging-verification.json
+      - name: Record last known-good staging SHA
+        if: success()
+        env:
+          SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          git tag -f staging-last-known-good "$SHA"
+          git push --force origin refs/tags/staging-last-known-good
+      - name: Write deploy evidence
+        if: always()
+        env:
+          SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          printf '{"target":"https://development.hecmedia.org","sha":"%s","action":"%s","outcome":"%s"}\n' "$SHA" '${{ inputs.action }}' '${{ job.status }}' > staging-deploy-evidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hecmedia-staging-evidence-${{ github.run_id }}
+          path: |
+            staging-deploy-evidence.json
+            staging-verification.json
+            cloudfront-aliases.txt
+          if-no-files-found: warn
