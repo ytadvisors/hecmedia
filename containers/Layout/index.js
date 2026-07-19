@@ -39,9 +39,12 @@ const Layout = props => {
   const keyStart = "display_date";
   const keyEnd = "end_date";
 
-  const { data } = useQuery(GET_LAYOUT, {
-    notifyOnNetworkStatusChange: true
-  });
+  const { data, loading: layoutLoading, error: layoutError } = useQuery(
+    GET_LAYOUT,
+    {
+      notifyOnNetworkStatusChange: true
+    }
+  );
 
   const { data: schedule } = useQuery(GET_SCHEDULE, {
     variables: { currentMonth },
@@ -83,6 +86,8 @@ const Layout = props => {
           programs={programs}
           featuredMagazines={featuredMagazines}
           spotLightPosts={spotLightPosts}
+          trendingNowLoading={layoutLoading}
+          trendingNowError={layoutError}
         >
           {children}
           {showBottomNav && <BottomNav title="more from" />}

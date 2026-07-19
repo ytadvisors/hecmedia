@@ -26,7 +26,8 @@ export default class Header extends Component {
       open: {},
       navExpanded: false,
       isMobile: false,
-      scrolled: false
+      scrolled: false,
+      showDonatePlaceholder: false
     };
   }
 
@@ -88,6 +89,10 @@ export default class Header extends Component {
     if (this.mounted) {
       this.setState({ navExpanded: false });
     }
+  };
+
+  showDonatePlaceholder = () => {
+    if (this.mounted) this.setState({ showDonatePlaceholder: true });
   };
 
   getNavDropDown = link => {
@@ -212,7 +217,12 @@ export default class Header extends Component {
 
   render() {
     const { header, social } = this.props;
-    const { navExpanded, isMobile, scrolled } = this.state;
+    const {
+      navExpanded,
+      isMobile,
+      scrolled,
+      showDonatePlaceholder
+    } = this.state;
     const style = isMobile
       ? { width: `${window.innerWidth - 50}px`, right: "12px" }
       : {};
@@ -268,6 +278,7 @@ export default class Header extends Component {
         )
       }
     ];
+    const showTopBarCtas = process.env.HECMEDIA_TOPBAR_CTA_PREVIEW === "true";
 
     return (
       <header
@@ -299,6 +310,33 @@ export default class Header extends Component {
               </div>
               <SocialLinks links={socialLinks} />
             </div>
+            {showTopBarCtas && (
+              <nav className="top-bar-actions" aria-label="Featured actions">
+                <a className="top-bar-cta" href="/#watch-live">
+                  Watch Live
+                </a>
+                <a className="top-bar-cta" href="#subscribe">
+                  Subscribe
+                </a>
+                <button
+                  type="button"
+                  className="top-bar-cta top-bar-cta--placeholder"
+                  aria-describedby="donate-staging-description"
+                  onClick={this.showDonatePlaceholder}
+                >
+                  Donate <span className="cta-staging-badge">Staging only</span>
+                </button>
+                <span id="donate-staging-description" className="sr-only">
+                  Staging placeholder. Donations are disabled and no transaction
+                  can be created.
+                </span>
+                {showDonatePlaceholder && (
+                  <p className="cta-placeholder-message" role="status">
+                    Donations are disabled in this staging preview.
+                  </p>
+                )}
+              </nav>
+            )}
             <Navbar.Toggle className="nav-toggle " />
             <Nav
               onSelect={this.closeNav}

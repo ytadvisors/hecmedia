@@ -72,9 +72,66 @@
     color: #ddd;
     text-transform: uppercase;
     line-height: 20px;
-    font-size: 15px;
+    // Keep the existing desktop scale, while preventing the tagline from
+    // overpowering the logo as the available header width tightens.
+    font-size: clamp(13px, calc(12px + 0.25vw), 15px);
     .brand-text {
       padding: 10px 5px;
+    }
+  }
+  .top-bar-actions {
+    display: flex;
+    float: right;
+    align-items: center;
+    gap: 6px;
+    margin: 14px 8px 8px auto;
+    position: relative;
+
+    .top-bar-cta {
+      min-height: 36px;
+      padding: 8px 11px;
+      border: 1px solid #fff;
+      border-radius: 4px;
+      background: #fff;
+      color: #004c8e;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 18px;
+      text-decoration: none;
+
+      &:hover,
+      &:focus {
+        background: #004c8e;
+        color: #fff;
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+    }
+    .top-bar-cta--placeholder {
+      cursor: pointer;
+      text-align: center;
+    }
+    .cta-staging-badge {
+      display: block;
+      font-size: 9px;
+      font-weight: 600;
+      line-height: 11px;
+      text-transform: uppercase;
+    }
+    .cta-placeholder-message {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      width: 240px;
+      margin: 0;
+      padding: 8px;
+      border-radius: 4px;
+      background: #fff;
+      color: #222;
+      font-size: 12px;
+      line-height: 16px;
+      text-align: center;
+      z-index: 101;
     }
   }
   ul.brand-social {
@@ -326,7 +383,9 @@
       li.nav-item {
         margin: 0;
         border-left: 1px solid #192032;
-        font-size: 0.8em;
+        // The primary navigation should remain comfortably readable without
+        // increasing the header's visual weight at wider viewports.
+        font-size: clamp(13px, calc(12px + 0.2vw), 14px);
         a {
           padding: 1em 2em;
           color: #fff;
@@ -361,6 +420,9 @@
 
 @media (max-width: 1170px) {
   .header {
+    .top-bar-actions {
+      margin: 11px 55px 6px auto;
+    }
     .donate-btn {
       padding-top: 8px !important;
     }
@@ -396,7 +458,7 @@
       padding: 10px !important;
     }
     .brand-details {
-      font-size: 10px;
+      font-size: 13px;
       .brand-text {
         padding: 12px 5px 0;
       }
@@ -518,9 +580,38 @@
           width: 100%;
           a {
             padding: 10px 0px;
+            font-size: 14px;
             display: block;
           }
         }
+      }
+    }
+  }
+}
+
+@media (max-width: 620px) {
+  .header {
+    .navbar-class {
+      height: 155px !important;
+    }
+    .top-bar-actions {
+      position: absolute;
+      top: 73px;
+      right: 8px;
+      left: 8px;
+      justify-content: center;
+      margin: 0;
+
+      .top-bar-cta {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 7px 4px;
+        font-size: 12px;
+      }
+      .cta-placeholder-message {
+        right: 0;
+        left: 0;
+        width: auto;
       }
     }
   }

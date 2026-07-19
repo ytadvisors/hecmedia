@@ -77,6 +77,30 @@ are recommended as shared manual preview targets for Jayne's review in the near 
 per-branch ephemeral previews are a separate, larger project blocked on an unresolved ACM
 wildcard-certificate question (see D3 §2/§5) and are out of scope here.
 
+## API e2e contracts
+
+`yarn test:e2e` is a separate Jest project (`jest.e2e.config.js`). It executes the 18 named
+documents exported from `lib/graphql.js`, plus the read-only REST clients used by `store/api/`.
+Assertions are deliberately shape-based: lists may be empty and nullable WP fields may be null,
+but an unexpected response shape, GraphQL error, HTTP failure, or missing field fails the suite.
+
+By default, the suite reads the live public endpoints only:
+
+| Variable            | Default                             | Purpose            |
+| ------------------- | ----------------------------------- | ------------------ |
+| `APOLLO_CLIENT_URI` | `https://prod-wp.hectv.org/graphql` | WPGraphQL endpoint |
+| `GATSBY_WP_HOST`    | `https://prod-wp.hectv.org`         | WP REST host       |
+
+Override both variables to point to the approved staging endpoint for CI or staging verification.
+CI receives them from protected `HECMEDIA_E2E_APOLLO_CLIENT_URI` and
+`HECMEDIA_E2E_WP_HOST` secrets. If either secret is unavailable (including fork PRs), the `e2e`
+job exits successfully with a warning instead of using the public defaults.
+
+The e2e suite contains no write call. Any future add-comment, donation, or account mutation test
+must call `writesAllowed()` from `tests/e2e/support/writeGuard.js`; it only returns true when
+`E2E_ALLOW_WRITES=1` **and** every target is visibly a staging/local host. Production and unknown
+hosts are denied in code regardless of the opt-in, so production remains read-only.
+
 ## Coverage policy: the ratchet
 
 Full-repo coverage (`components/`, `containers/`, `pages/`, `lib/`, `store/`) lands in
