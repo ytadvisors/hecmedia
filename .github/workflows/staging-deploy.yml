@@ -28,6 +28,7 @@ env:
   STAGING_SUBDOMAIN: development
   STAGING_DOMAIN: hecmedia.org
   HECMEDIA_NO_SEND_FORMS: "true"
+  HECMEDIA_NAVIGATION_PREVIEW: "true"
   HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
 
 jobs:
@@ -71,6 +72,7 @@ jobs:
           test "$STAGING_SUBDOMAIN" = development
           test "$STAGING_DOMAIN" = hecmedia.org
           test "$HECMEDIA_NO_SEND_FORMS" = true
+          test "$HECMEDIA_NAVIGATION_PREVIEW" = true
           test "$HECMEDIA_TOPBAR_CTA_PREVIEW" = true
       - run: yarn install --frozen-lockfile
       - name: Lint and Jest coverage
@@ -96,6 +98,7 @@ jobs:
           DOMAIN: hecmedia.org
           APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_STAGING_APOLLO_CLIENT_URI }}
           HECMEDIA_NO_SEND_FORMS: "true"
+          HECMEDIA_NAVIGATION_PREVIEW: "true"
           HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
         run: yarn deploy
       - name: Verify rendered site, routes, no-send forms, and CloudFront alias

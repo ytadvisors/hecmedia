@@ -86,10 +86,10 @@ but an unexpected response shape, GraphQL error, HTTP failure, or missing field 
 
 By default, the suite reads the live public endpoints only:
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
+| Variable            | Default                             | Purpose            |
+| ------------------- | ----------------------------------- | ------------------ |
 | `APOLLO_CLIENT_URI` | `https://prod-wp.hectv.org/graphql` | WPGraphQL endpoint |
-| `GATSBY_WP_HOST` | `https://prod-wp.hectv.org` | WP REST host |
+| `GATSBY_WP_HOST`    | `https://prod-wp.hectv.org`         | WP REST host       |
 
 Override both variables to point to the approved staging endpoint for CI or staging verification.
 CI receives them from protected `HECMEDIA_E2E_APOLLO_CLIENT_URI` and
