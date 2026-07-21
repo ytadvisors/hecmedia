@@ -74,7 +74,15 @@ jobs:
           test "$HECMEDIA_NO_SEND_FORMS" = true
           test "$HECMEDIA_NAVIGATION_PREVIEW" = true
           test "$HECMEDIA_TOPBAR_CTA_PREVIEW" = true
-      - run: yarn install --frozen-lockfile
+      # --ignore-engines: this job pins Node 16 on purpose — node-sass@7.0.1 must
+      # actually compile here (unlike CI, which pins Node 22 and skips native
+      # builds with --ignore-scripts) because the deploy step below runs a real
+      # `next build`. The only engine conflict is `@types/jest@*`, which pulls
+      # `expect@30` (needs Node >=18) purely as a typings dependency; the runtime
+      # test stack is jest@24.9.0 and expect@24.9.0, and nothing ever executes
+      # expect@30 on Node 16. Without this flag `yarn install` aborts with
+      # "Found incompatible module" and the deploy cannot run at all.
+      - run: yarn install --frozen-lockfile --ignore-engines
       - name: Lint and Jest coverage
         run: yarn lint && yarn test
       - name: Read-only API contracts
