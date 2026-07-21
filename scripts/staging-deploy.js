@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-"use strict";
 
 /*
  * Scoped staging deploy for development.hecmedia.org.
@@ -16,7 +15,7 @@
  *
  * Usage:
  *   node scripts/staging-deploy.js build   # next build -> .serverless_nextjs/{assets,default-lambda}
- *   node scripts/staging-deploy.js deploy  # sync assets, update Lambda, repoint CloudFront, invalidate
+ *   node scripts/staging-deploy.js deploy  # upload new assets, update Lambda, repoint CloudFront, invalidate
  *
  * "deploy" expects AWS credentials already configured in the environment
  * (this repo's workflow does that via aws-actions/configure-aws-credentials
@@ -72,7 +71,7 @@ async function build() {
   // function. If the app now needs API routes or image optimization, the
   // build will also emit api-lambda/ or image-lambda/, which this policy
   // cannot deploy - fail loudly instead of silently shipping a half-deploy.
-  for (const extra of ["api-lambda", "image-lambda"]) {
+  ["api-lambda", "image-lambda"].forEach(extra => {
     if (fs.existsSync(path.join(BUILD_DIR, extra))) {
       throw new Error(
         `Build produced .serverless_nextjs/${extra}, but hecmedia-staging-deploy-policy.json ` +
@@ -80,16 +79,19 @@ async function build() {
           "That policy needs deliberate, reviewed widening before this can deploy - see task #81876."
       );
     }
-  }
+  });
 }
 
 function syncAssets() {
+  // Do not delete old immutable assets during a release. Until the updated
+  // distribution has propagated, cached pages can still reference chunks from
+  // the active Lambda version; a later deploy failure would leave that version
+  // live as well. Retention-aware cleanup belongs in a separate operation.
   run("aws", [
     "s3",
     "sync",
     ASSETS_DIR,
     `s3://${BUCKET_NAME}`,
-    "--delete",
     "--region",
     REGION
   ]);
@@ -97,7 +99,9 @@ function syncAssets() {
 
 function zipDefaultLambda() {
   fs.rmSync(LAMBDA_ZIP_PATH, { force: true });
-  run("zip", ["-r", "-X", "-q", LAMBDA_ZIP_PATH, "."], { cwd: DEFAULT_LAMBDA_DIR });
+  run("zip", ["-r", "-X", "-q", LAMBDA_ZIP_PATH, "."], {
+    cwd: DEFAULT_LAMBDA_DIR
+  });
 }
 
 function getFunctionArn() {
@@ -156,7 +160,12 @@ function updateLambda() {
 function updateCloudFront(distributionId, lambdaArn, version) {
   const versionedArn = `${lambdaArn}:${version}`;
   const current = JSON.parse(
-    run("aws", ["cloudfront", "get-distribution-config", "--id", distributionId])
+    run("aws", [
+      "cloudfront",
+      "get-distribution-config",
+      "--id",
+      distributionId
+    ])
   );
   const etag = current.ETag;
   const config = current.DistributionConfig;
@@ -166,17 +175,23 @@ function updateCloudFront(distributionId, lambdaArn, version) {
     ...((config.CacheBehaviors && config.CacheBehaviors.Items) || [])
   ];
 
-  let replaced = 0;
-  for (const behavior of behaviors) {
-    const items = behavior.LambdaFunctionAssociations && behavior.LambdaFunctionAssociations.Items;
-    if (!items) continue;
-    for (const assoc of items) {
-      if (assoc.LambdaFunctionARN && assoc.LambdaFunctionARN.startsWith(`${lambdaArn}:`)) {
-        assoc.LambdaFunctionARN = versionedArn;
-        replaced++;
-      }
-    }
-  }
+  const associations = behaviors.reduce((all, behavior) => {
+    const lambdaAssociations = behavior.LambdaFunctionAssociations;
+    return all.concat(
+      lambdaAssociations && lambdaAssociations.Items
+        ? lambdaAssociations.Items
+        : []
+    );
+  }, []);
+  const matchedAssociations = associations.filter(
+    assoc =>
+      assoc.LambdaFunctionARN &&
+      assoc.LambdaFunctionARN.startsWith(`${lambdaArn}:`)
+  );
+  matchedAssociations.forEach(assoc => {
+    Object.assign(assoc, { LambdaFunctionARN: versionedArn });
+  });
+  const replaced = matchedAssociations.length;
 
   if (replaced === 0) {
     throw new Error(
@@ -197,7 +212,25 @@ function updateCloudFront(distributionId, lambdaArn, version) {
     "--if-match",
     etag
   ]);
-  run("aws", ["cloudfront", "create-invalidation", "--distribution-id", distributionId, "--paths", "/*"]);
+
+  // update-distribution returns before the new Lambda@Edge associations are
+  // serving. Wait before invalidating or letting the workflow verify DEPLOY_SHA
+  // so a verification request cannot race the previous release.
+  run("aws", [
+    "cloudfront",
+    "wait",
+    "distribution-deployed",
+    "--id",
+    distributionId
+  ]);
+  run("aws", [
+    "cloudfront",
+    "create-invalidation",
+    "--distribution-id",
+    distributionId,
+    "--paths",
+    "/*"
+  ]);
 
   return replaced;
 }
@@ -205,7 +238,9 @@ function updateCloudFront(distributionId, lambdaArn, version) {
 async function deploy() {
   const distributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
   if (!distributionId) {
-    throw new Error("CLOUDFRONT_DISTRIBUTION_ID is required (set from HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID)");
+    throw new Error(
+      "CLOUDFRONT_DISTRIBUTION_ID is required (set from HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID)"
+    );
   }
 
   syncAssets();
@@ -214,7 +249,9 @@ async function deploy() {
   const version = updateLambda();
   const replaced = updateCloudFront(distributionId, lambdaArn, version);
 
-  console.log(`Deployed ${lambdaArn}:${version}; repointed ${replaced} Lambda@Edge association(s).`);
+  console.log(
+    `Deployed ${lambdaArn}:${version}; repointed ${replaced} Lambda@Edge association(s).`
+  );
 }
 
 async function main() {
@@ -224,7 +261,11 @@ async function main() {
   throw new Error(`Unknown command "${command}". Use "build" or "deploy".`);
 }
 
-main().catch(err => {
-  console.error(err.message || err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch(err => {
+    console.error(err.message || err);
+    process.exit(1);
+  });
+}
+
+module.exports = { syncAssets, updateCloudFront };

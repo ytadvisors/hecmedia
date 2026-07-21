@@ -100,6 +100,7 @@
     "@apollo/react-common": "^3.1.3",
     "@apollo/react-hooks": "^3.1.3",
     "@apollo/react-ssr": "^3.1.3",
+    "@sls-next/lambda-at-edge": "^1.4.1-alpha.2",
     "@emotion/core": "^10.0.17",
     "@emotion/styled": "^10.0.12",
     "@zeit/next-css": "1.0.1",
@@ -172,7 +173,6 @@
     "webpack": "4.39.2"
   },
   "devDependencies": {
-    "@sls-next/lambda-at-edge": "^1.4.1-alpha.2",
     "@babel/preset-env": "7.5.5",
     "@babel/preset-flow": "^7.0.0",
     "@babel/preset-react": "7.0.0",
