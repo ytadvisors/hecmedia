@@ -83,24 +83,20 @@ jobs:
           GATSBY_WP_HOST: ${{ secrets.HECMEDIA_STAGING_WP_HOST }}
           E2E_ALLOW_WRITES: "0"
         run: yarn test:e2e
-      - name: Build production bundle for staging
+      - name: Package Next.js app for Lambda@Edge (no AWS calls)
         env:
           DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
-        run: yarn build
+        run: node scripts/staging-deploy.js build
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.HECMEDIA_STAGING_AWS_ROLE_ARN }}
           aws-region: us-east-1
-      - name: Deploy only development.hecmedia.org
+      - name: Deploy to existing staging resources (scoped update, no create/IAM/Route53)
         env:
-          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
-          SUBDOMAIN: development
-          DOMAIN: hecmedia.org
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID }}
           APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_STAGING_APOLLO_CLIENT_URI }}
-          HECMEDIA_NO_SEND_FORMS: "true"
-          HECMEDIA_NAVIGATION_PREVIEW: "true"
-          HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
-        run: yarn deploy
+          WP_HOST: ${{ secrets.HECMEDIA_STAGING_WP_HOST }}
+        run: node scripts/staging-deploy.js deploy
       - name: Verify rendered site, routes, no-send forms, and CloudFront alias
         env:
           DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
