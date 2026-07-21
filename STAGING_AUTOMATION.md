@@ -22,13 +22,15 @@ with HEC Media's required reviewers, then add only these environment secrets:
 - `HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID` — distribution serving only
   `development.hecmedia.org`.
 
+The workflow uses GitHub OIDC and the role ARN above; it must not receive
+static AWS access keys, a static secret key, or an AWS region secret.
+
 Its OIDC trust policy must allow only
 `repo:ytadvisors/hecmedia:environment:hecmedia-staging` with audience
 `sts.amazonaws.com`. Permissions must be limited to the existing staging
-deployment's named S3 assets, Lambda@Edge functions and versions, CloudFront
-distribution/invalidation, and named deployment IAM roles. It must not allow
-Route 53 changes, SES, billing, IAM administration, production resource ARNs,
-or wildcard resources. The CloudFront distribution must list exactly
+deployment's named S3 assets, Lambda@Edge function and versions, and CloudFront
+distribution/invalidation. It must not allow Route 53 changes, SES, billing,
+any IAM action, production resource ARNs, or wildcard resources. The CloudFront distribution must list exactly
 `development.hecmedia.org` as its alias.
 
 Related work: #68041, #68042, #68043, #68044, #68045, #68046, #68047, #68048,
