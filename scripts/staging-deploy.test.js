@@ -6,6 +6,10 @@ jest.mock("fs", () => ({
 }));
 
 const { execFileSync } = require("child_process");
+const path = require("path");
+
+const realFs = jest.requireActual("fs");
+
 const { syncAssets, updateCloudFront } = require("./staging-deploy");
 
 const lambdaArn =
@@ -60,4 +64,22 @@ test("waits for CloudFront propagation before invalidating updated associations"
   ]);
   expect(updateIndex).toBeLessThan(waitIndex);
   expect(waitIndex).toBeLessThan(invalidateIndex);
+});
+
+test("uses build-time SSR config and never checks a Lambda runtime environment", () => {
+  const repoRoot = path.join(__dirname, "..");
+  const workflow = realFs.readFileSync(
+    path.join(repoRoot, ".github/workflows/staging-deploy.yml"),
+    "utf8"
+  );
+  const deployScript = realFs.readFileSync(
+    path.join(__dirname, "staging-deploy.js"),
+    "utf8"
+  );
+
+  expect(workflow).toMatch(
+    /Package Next\.js app for Lambda@Edge[\s\S]*?APOLLO_CLIENT_URI: \$\{\{ secrets\.HECMEDIA_STAGING_APOLLO_CLIENT_URI \}\}[\s\S]*?WP_HOST: \$\{\{ secrets\.HECMEDIA_STAGING_WP_HOST \}\}/
+  );
+  expect(deployScript).not.toContain("checkLambdaEnvironment");
+  expect(deployScript).not.toContain("get-function-configuration");
 });
