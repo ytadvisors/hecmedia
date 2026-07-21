@@ -27,9 +27,6 @@ env:
   STAGING_SITE_URL: https://development.hecmedia.org
   STAGING_SUBDOMAIN: development
   STAGING_DOMAIN: hecmedia.org
-  HECMEDIA_NO_SEND_FORMS: "true"
-  HECMEDIA_NAVIGATION_PREVIEW: "true"
-  HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
 
 jobs:
   deploy-and-verify:
@@ -62,6 +59,9 @@ jobs:
           HECMEDIA_STAGING_APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_STAGING_APOLLO_CLIENT_URI }}
           HECMEDIA_STAGING_WP_HOST: ${{ secrets.HECMEDIA_STAGING_WP_HOST }}
           HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID }}
+          HECMEDIA_NO_SEND_FORMS: "true"
+          HECMEDIA_NAVIGATION_PREVIEW: "true"
+          HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
         run: |
           set -euo pipefail
           for name in HECMEDIA_STAGING_AWS_ROLE_ARN HECMEDIA_STAGING_APOLLO_CLIENT_URI HECMEDIA_STAGING_WP_HOST HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID; do
@@ -96,6 +96,9 @@ jobs:
           DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
           APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_STAGING_APOLLO_CLIENT_URI }}
           WP_HOST: ${{ secrets.HECMEDIA_STAGING_WP_HOST }}
+          HECMEDIA_NO_SEND_FORMS: "true"
+          HECMEDIA_NAVIGATION_PREVIEW: "true"
+          HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
         run: node scripts/staging-deploy.js build
       - uses: aws-actions/configure-aws-credentials@v4
         with:
