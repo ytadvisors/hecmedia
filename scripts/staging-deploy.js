@@ -22,9 +22,12 @@
  * (this repo's workflow does that via aws-actions/configure-aws-credentials
  * against the OIDC role in hecmedia-staging-trust-policy.json) and requires:
  *   CLOUDFRONT_DISTRIBUTION_ID  - set from the HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID secret
- *   APOLLO_CLIENT_URI, WP_HOST - only used to sanity-check the Lambda's existing
- *                                 runtime config (see checkLambdaEnvironment below);
- *                                 not applied to the function.
+ *
+ * APOLLO_CLIENT_URI/WP_HOST are consumed by the BUILD step (next.config.js
+ * inlines them into the Lambda@Edge bundle at build time - Lambda@Edge has no
+ * runtime environment variables at all), not by deploy. Correctness is
+ * confirmed after deploy by scripts/verify-staging.js against the rendered
+ * site, not by inspecting Lambda config.
  */
 
 const path = require("path");
@@ -109,42 +112,6 @@ function getFunctionArn() {
     ])
   );
   return out.Configuration.FunctionArn;
-}
-
-// lambda:UpdateFunctionCode replaces code only - it cannot change the
-// function's environment variables, and this role deliberately has no
-// lambda:UpdateFunctionConfiguration (that's a much wider blast radius than
-// "update the code"). APOLLO_CLIENT_URI/WP_HOST are read by lib/initApollo.js
-// and pages/[page].js at request time from process.env, so they must already
-// be correct on the live function - this only verifies that, using the
-// read-only lambda:GetFunctionConfiguration this role does have.
-function checkLambdaEnvironment(expected) {
-  const out = JSON.parse(
-    run("aws", [
-      "lambda",
-      "get-function-configuration",
-      "--function-name",
-      LAMBDA_FUNCTION_NAME,
-      "--region",
-      REGION
-    ])
-  );
-  const actual = (out.Environment && out.Environment.Variables) || {};
-  const mismatches = Object.entries(expected)
-    .filter(([, expectedValue]) => Boolean(expectedValue))
-    .filter(([key, expectedValue]) => actual[key] !== expectedValue)
-    .map(([key, expectedValue]) => `${key}: deployed="${actual[key] || "(unset)"}" expected="${expectedValue}"`);
-
-  if (mismatches.length > 0) {
-    throw new Error(
-      "New code was NOT deployed: the Lambda's existing runtime environment variables " +
-        `do not match what this run expects:\n  ${mismatches.join("\n  ")}\n` +
-        "This role only has lambda:UpdateFunctionCode/GetFunctionConfiguration, not " +
-        "UpdateFunctionConfiguration, so it cannot fix this itself. Correct it out of band " +
-        "(console, or a separately reviewed change to hecmedia-staging-deploy-policy.json) " +
-        "before re-running - don't widen the policy just to make this check pass."
-    );
-  }
 }
 
 function updateLambda() {
@@ -240,11 +207,6 @@ async function deploy() {
   if (!distributionId) {
     throw new Error("CLOUDFRONT_DISTRIBUTION_ID is required (set from HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID)");
   }
-
-  checkLambdaEnvironment({
-    APOLLO_CLIENT_URI: process.env.APOLLO_CLIENT_URI,
-    WP_HOST: process.env.WP_HOST
-  });
 
   syncAssets();
 
