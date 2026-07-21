@@ -2,10 +2,10 @@
 /* eslint-disable no-console */
 
 /*
- * Updates the three pre-existing resources serving development.hecmedia.org.
- * This intentionally does not invoke the Serverless component: a fresh CI
- * checkout has no component state and could otherwise create IAM or Route 53
- * resources. Every AWS command below is covered by the reviewed OIDC policy.
+ * Updates only the three existing resources serving development.hecmedia.org.
+ * It deliberately does not invoke the Serverless component: its state is not
+ * present on a fresh CI checkout, and it can create IAM or Route 53 resources.
+ * Every AWS command below is covered by hecmedia-staging-deploy-policy.json.
  */
 
 const fs = require("fs");
@@ -30,12 +30,13 @@ function run(command, args, options = {}) {
 }
 
 async function build() {
-  // This is the packaging library used by the pinned serverless-next.js
-  // dependency. Builder performs a local Next build and emits the exact
-  // assets/default-lambda layout; it makes no AWS calls.
-  const lambdaAtEdgePackage = "@sls-next/lambda-at-edge";
-  // eslint-disable-next-line import/no-dynamic-require
-  const { Builder } = require(lambdaAtEdgePackage);
+  // This is the packaging half of the pinned serverless-next.js dependency.
+  // Builder only creates local assets and the Lambda@Edge handler; it makes no
+  // AWS calls.
+  // The package is a direct devDependency; this pragma accommodates linting
+  // this isolated worktree before its dependencies are installed.
+  // eslint-disable-next-line import/no-extraneous-dependencies, import/no-unresolved
+  const { Builder } = require("@sls-next/lambda-at-edge");
   const builder = new Builder(ROOT, OUTPUT, {
     cmd: "node_modules/.bin/next",
     args: ["build"],
@@ -49,14 +50,9 @@ async function build() {
 
   ["api-lambda", "image-lambda"].forEach(unsupported => {
     if (fs.existsSync(path.join(OUTPUT, unsupported))) {
-      throw new Error(`Build produced ${unsupported}, but the approved role can update only ${FUNCTION_NAME}. A separate reviewed change is required.`);
+      throw new Error(`Build produced ${unsupported}, but the reviewed role can update only ${FUNCTION_NAME}. A separate reviewed change is required.`);
     }
   });
-}
-
-function zipLambda() {
-  fs.rmSync(LAMBDA_ZIP, { force: true });
-  run("zip", ["-r", "-X", "-q", LAMBDA_ZIP, "."], { cwd: DEFAULT_LAMBDA });
 }
 
 function assertExistingFunction() {
@@ -68,34 +64,45 @@ function assertExistingFunction() {
   }
 }
 
+function zipLambda() {
+  fs.rmSync(LAMBDA_ZIP, { force: true });
+  run("zip", ["-r", "-X", "-q", LAMBDA_ZIP, "."], { cwd: DEFAULT_LAMBDA });
+}
+
 function updateLambda() {
   zipLambda();
   run("aws", [
     "lambda", "update-function-code", "--function-name", FUNCTION_NAME,
     "--zip-file", `fileb://${LAMBDA_ZIP}`, "--region", REGION
   ]);
+  // The CLI waiter uses GetFunctionConfiguration, included in the reviewed policy.
   run("aws", ["lambda", "wait", "function-updated", "--function-name", FUNCTION_NAME, "--region", REGION]);
   return JSON.parse(run("aws", [
     "lambda", "publish-version", "--function-name", FUNCTION_NAME, "--region", REGION
   ])).Version;
 }
 
-function associations(config) {
-  return [config.DefaultCacheBehavior, ...((config.CacheBehaviors && config.CacheBehaviors.Items) || [])]
-    .flatMap(behavior => (behavior.LambdaFunctionAssociations && behavior.LambdaFunctionAssociations.Items) || []);
-}
-
 function updateDistribution(version) {
   const response = JSON.parse(run("aws", ["cloudfront", "get-distribution-config", "--id", DISTRIBUTION_ID]));
   const config = response.DistributionConfig;
-  let updated = 0;
-  associations(config).forEach(association => {
-    if (association.LambdaFunctionARN && association.LambdaFunctionARN.startsWith(`${FUNCTION_ARN}:`)) {
-      const associationToUpdate = association;
-      associationToUpdate.LambdaFunctionARN = `${FUNCTION_ARN}:${version}`;
+  const replaceAssociations = behavior => {
+    const associations = behavior.LambdaFunctionAssociations;
+    if (!associations || !associations.Items) return { behavior, updated: 0 };
+    let updated = 0;
+    const items = associations.Items.map(association => {
+      if (!association.LambdaFunctionARN || !association.LambdaFunctionARN.startsWith(`${FUNCTION_ARN}:`)) return association;
       updated += 1;
-    }
-  });
+      return { ...association, LambdaFunctionARN: `${FUNCTION_ARN}:${version}` };
+    });
+    return { behavior: { ...behavior, LambdaFunctionAssociations: { ...associations, Items: items } }, updated };
+  };
+  const defaultBehavior = replaceAssociations(config.DefaultCacheBehavior);
+  const cacheBehaviors = ((config.CacheBehaviors && config.CacheBehaviors.Items) || []).map(replaceAssociations);
+  config.DefaultCacheBehavior = defaultBehavior.behavior;
+  if (config.CacheBehaviors) {
+    config.CacheBehaviors = { ...config.CacheBehaviors, Items: cacheBehaviors.map(result => result.behavior) };
+  }
+  const updated = defaultBehavior.updated + cacheBehaviors.reduce((total, result) => total + result.updated, 0);
   if (updated === 0) {
     throw new Error(`No ${FUNCTION_NAME} Lambda@Edge associations exist on ${DISTRIBUTION_ID}; refusing a blind distribution update.`);
   }
@@ -112,6 +119,8 @@ function deploy() {
   if (!fs.existsSync(ASSETS) || !fs.existsSync(DEFAULT_LAMBDA)) {
     throw new Error("Run `node scripts/staging-deploy.js build` before deploy.");
   }
+  // Check the named resource before any write. The workflow separately checks
+  // its environment secret equals the same reviewed distribution ID.
   assertExistingFunction();
   run("aws", ["s3", "sync", ASSETS, `s3://${BUCKET}`, "--delete", "--region", REGION]);
   const version = updateLambda();
