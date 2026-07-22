@@ -1,0 +1,112 @@
+# MBA-local WordPress API for HECMedia app development (task #82651).
+#
+# Entirely local to the host running it (worker-mba) — no ports beyond 127.0.0.1,
+# no connection to any HEC Media AWS resource, no production credentials. Built on
+# the existing local staging harness pattern from
+# deliverables/hecmedia/staging-wp-harness/docker-compose.yml (mysql:5.7 pinned to
+# match the live source engine).
+#
+# Serves the full API surface the Next.js app consumes:
+#   - WP REST v2            (core)
+#   - WPGraphQL             (plugin, installed by seed.sh)
+#   - wp-api-menus v2       (plugin, installed by seed.sh — PageApi.js reads
+#                             /wp-json/wp-api-menus/v2/menus/{id})
+#   - hectv/v1              (LOCAL STUB ONLY — see mu-plugins/hectv-v1-stub.php.
+#                             The real hectv/v1 plugin is custom WP-side code that
+#                             does not live in this repo or any repo available to
+#                             this environment; it could not be audited or copied.
+#                             The stub reproduces the routes the app calls
+#                             (livevideos/live, token/email, token/thirdparty,
+#                             users/me, users) with fixture responses so local dev
+#                             and tests exercise the same URLs/shapes. It is NOT a
+#                             behavioral clone of production auth/video logic.)
+#
+# Usage: see ../../dev-infra/wordpress/RUNBOOK.md
+
+services:
+  db:
+    image: mysql:5.7
+    platform: linux/amd64
+    container_name: hecmedia-dev-db
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-devroot}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-wordpress}
+      MYSQL_USER: ${MYSQL_USER:-wordpress}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+    volumes:
+      - dev_db_data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:13307:3306"
+    healthcheck:
+      # See staging-wp-harness/docker-compose.yml for why this can't be mysqladmin
+      # ping: the mysql:5.7 entrypoint answers ping from a transient bootstrap
+      # server before restarting as the real one, so ping goes healthy too early.
+      test:
+        [
+          "CMD",
+          "mysql",
+          "-h",
+          "127.0.0.1",
+          "-u${MYSQL_USER:-wordpress}",
+          "-p${MYSQL_PASSWORD:-wordpress}",
+          "-e",
+          "SELECT 1",
+          "${MYSQL_DATABASE:-wordpress}",
+        ]
+      interval: 15s
+      timeout: 60s
+      retries: 20
+      start_period: 60s
+
+  wordpress:
+    image: wordpress:6.8-php8.2-apache
+    container_name: hecmedia-dev-wp
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+      WORDPRESS_DEBUG: 1
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', 'http://localhost:8091');
+        define('WP_SITEURL', 'http://localhost:8091');
+    volumes:
+      - dev_wp_data:/var/www/html
+      # Local-only stub for the custom hectv/v1 namespace (see header note above).
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+    ports:
+      - "127.0.0.1:8091:80"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/wp-login.php"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  # One-off WP-CLI runner: `docker compose run --rm wpcli <command>`
+  wpcli:
+    image: wordpress:cli-php8.2
+    user: "33:33"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+    volumes:
+      - dev_wp_data:/var/www/html
+      - ./seed.sh:/seed.sh:ro
+    entrypoint: ["wp"]
+    command: ["--info"]
+
+volumes:
+  dev_db_data:
+  dev_wp_data:
