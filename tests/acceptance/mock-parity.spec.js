@@ -35,6 +35,9 @@ const MOCK_NAV = [
   "READ NOW"
 ];
 const MOCK_CTAS = ["SUBSCRIBE", "SUPPORT", "GET INVOLVED"];
+// Google's documented v2 test key. Its presence is an intentional staging
+// safety contract: the acceptance run must never solve a production captcha.
+const RECAPTCHA_V2_TEST_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 
 const HEADER_IMAGE_FIXTURES = [
   { slug: "header-image-size-small", size: "small" },
@@ -232,12 +235,15 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
     await page.locator("#newsletter-consent").check();
 
     // The form refuses to submit without a captcha token, so the widget stays
-    // in the flow. Staging must be configured with a reCAPTCHA *test* site key
-    // (see the staging captcha guard); against a production key this step fails
-    // loudly, which is the correct outcome — it must never be softened into
-    // skipping the submission.
+    // in the flow. Assert the documented Google test key before interacting:
+    // staging must never present a production captcha key to this live-browser
+    // check. A production key fails loudly rather than being worked around.
+    const captchaFrame = page.locator(
+      `iframe[src*="${RECAPTCHA_V2_TEST_SITE_KEY}"]`
+    );
+    await expect(captchaFrame).toHaveCount(1);
     await page
-      .frameLocator('iframe[title*="reCAPTCHA" i]')
+      .frameLocator(`iframe[src*="${RECAPTCHA_V2_TEST_SITE_KEY}"]`)
       .getByRole("checkbox")
       .check();
 
