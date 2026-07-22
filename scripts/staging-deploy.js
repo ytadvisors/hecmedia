@@ -68,13 +68,26 @@ function discardEmptyApiLambdaBundle() {
   if (!fs.existsSync(API_LAMBDA_DIR)) return;
 
   const manifestPath = path.join(API_LAMBDA_DIR, "manifest.json");
+  if (!fs.existsSync(manifestPath)) {
+    if (directoryHasFiles(API_LAMBDA_DIR)) {
+      throw new Error(
+        "Generated api-lambda has no manifest but contains files. Refusing to discard it."
+      );
+    }
+    fs.rmSync(API_LAMBDA_DIR, { recursive: true, force: false });
+    console.log(
+      "Discarded generated api-lambda after verifying the manifest-less directory is empty."
+    );
+    return;
+  }
+
   let manifest;
   try {
     manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   } catch (err) {
     throw new Error(
-      `Generated api-lambda manifest is missing or invalid (${err.message}). ` +
-        "Refusing to assume the bundle is empty."
+      `Generated api-lambda manifest is invalid (${err.message}). ` +
+        "Refusing to discard the bundle."
     );
   }
 
