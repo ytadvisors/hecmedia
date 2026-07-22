@@ -27,3 +27,4 @@ env.yml
 .env.prod
 .env.local
 .serverless_nextjs/
+.staging-disabled-pages-api/
