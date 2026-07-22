@@ -57,9 +57,19 @@ module.exports = {
   },
   overrides: [
     {
-      files: ["**/*.test.js"],
+      files: [
+        "**/*.test.js",
+        "tests/acceptance/**/*.js",
+        "playwright.config.js"
+      ],
       env: {
         jest: true
+      },
+      rules: {
+        "import/no-extraneous-dependencies": [
+          "error",
+          { devDependencies: true }
+        ]
       }
     }
   ]

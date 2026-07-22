@@ -55,6 +55,35 @@ wpcli post create \
   --post_status=publish \
   --post_category=programs \
   --post_content="Fixture content for local API development." || true
+
+echo "== header-image-size acceptance fixtures =="
+# These posts make every supported setting observable in the real browser.
+# The final post intentionally has no meta value: it proves the default remains
+# visually identical to an explicitly selected `full` image.
+for size in small medium large full; do
+  fixture_id=$(wpcli post list --post_type=post --name="header-image-size-${size}" --field=ID 2>/dev/null || true)
+  if [ -z "$fixture_id" ]; then
+    fixture_id=$(wpcli post create \
+      --post_type=post \
+      --post_name="header-image-size-${size}" \
+      --post_title="Header Image Size ${size}" \
+      --post_status=publish \
+      --post_content="Deterministic header-image-size acceptance fixture." \
+      --porcelain)
+  fi
+  wpcli post meta update "$fixture_id" hectv_header_image_size "$size"
+done
+default_fixture_id=$(wpcli post list --post_type=post --name="header-image-size-default" --field=ID 2>/dev/null || true)
+if [ -z "$default_fixture_id" ]; then
+  default_fixture_id=$(wpcli post create \
+    --post_type=post \
+    --post_name="header-image-size-default" \
+    --post_title="Header Image Size Default" \
+    --post_status=publish \
+    --post_content="Default header-image-size acceptance fixture." \
+    --porcelain)
+fi
+wpcli post meta delete "$default_fixture_id" hectv_header_image_size >/dev/null 2>&1 || true
 wpcli post create \
   --post_type=page \
   --post_title="Home" \
