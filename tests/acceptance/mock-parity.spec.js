@@ -28,9 +28,42 @@ const { test, expect } = require("@playwright/test");
 const MOCK_NAV = ["ABOUT", "PROGRAMS", "PRODUCTION SERVICES", "WATCH NOW", "READ NOW"];
 const MOCK_CTAS = ["SUBSCRIBE", "SUPPORT", "GET INVOLVED"];
 
+/**
+ * HEALTH GATE — run before every requirement assertion.
+ *
+ * A suite that can pass because the page failed to render is worse than no suite.
+ * Against the local stack on 2026-07-22 this happened for real: WPGraphQL there is
+ * core-schema-only, the app's queries threw ("Cannot query field \"scheduleBy\""), the
+ * home page came up behind a Next dev error overlay — and two assertions PASSED anyway,
+ * because the content they check for absence of ("(b) old Spotlight logo is gone",
+ * "(c) newsletter is not in the rail") simply never rendered.
+ *
+ * So: if the page did not actually render, fail loudly here instead of reporting a
+ * green requirement. Absence-based assertions are only meaningful on a healthy page.
+ */
+async function assertPageRendered(page) {
+  const overlay = await page
+    .locator("nextjs-portal, [data-nextjs-dialog], #__next-error")
+    .count();
+  expect(overlay, "page rendered behind a Next.js error overlay").toBe(0);
+
+  // Always present on every page of this site, in every environment.
+  await expect(
+    page.locator("header.header"),
+    "site header did not render — the page is not healthy"
+  ).toHaveCount(1);
+}
+
+/** goto + health gate. Use this instead of a bare page.goto in every test. */
+async function open(page, path) {
+  const response = await page.goto(path);
+  await assertPageRendered(page);
+  return response;
+}
+
 test.describe("(a) sticky header", () => {
   test("header is sticky and keeps its layout space", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const header = page.locator("header.header");
     await expect(header).toHaveClass(/header--sticky/);
     await expect(header).toHaveCSS("position", "sticky");
@@ -39,7 +72,7 @@ test.describe("(a) sticky header", () => {
 
 test.describe("(b) rail promo replaces the Spotlight logo", () => {
   test("the old Spotlight logo is gone from the right rail", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const stale = page.locator(
       '.col-lg-3 img[alt*="spotlight" i], .col-lg-3 img[src*="spotlight" i]'
     );
@@ -47,7 +80,7 @@ test.describe("(b) rail promo replaces the Spotlight logo", () => {
   });
 
   test("a promo card renders with both an image and a link", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const promo = page.locator(".col-lg-3 a.rail-promo, .col-lg-3 a.educators-card");
     await expect(promo).toHaveCount(1);
     await expect(promo).toHaveAttribute("href", /.+/);
@@ -57,13 +90,13 @@ test.describe("(b) rail promo replaces the Spotlight logo", () => {
 
 test.describe("(c) Trending Now replaces the rail newsletter", () => {
   test("the newsletter signup is no longer in the right rail", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     // "Replace" means the old one is gone. It lives on /newsletter now (req d).
     await expect(page.locator(".col-lg-3 form")).toHaveCount(0);
   });
 
   test("Trending Now renders thumbnails, per the mock", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const trending = page.locator("[class*=trending]").first();
     await expect(trending).toBeVisible();
     expect(await trending.locator("li").count()).toBeGreaterThan(0);
@@ -71,7 +104,7 @@ test.describe("(c) Trending Now replaces the rail newsletter", () => {
   });
 
   test("Trending Now sits above the retained HEC-TV Spotlight list", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const order = await page.evaluate(() => {
       const trending = document.querySelector("[class*=trending]");
       const spotlight = [...document.querySelectorAll("*")].find(
@@ -107,7 +140,7 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
 
 test.describe("(e) navigation sub-dropdowns", () => {
   test("a nested submenu exists and opens", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const parent = page.locator("#main-nav .dropdown-menu li").filter({
       has: page.locator(".dropdown-menu, ul")
     });
@@ -117,7 +150,7 @@ test.describe("(e) navigation sub-dropdowns", () => {
   });
 
   test("top-level labels come from the CMS menu, matching the mock", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const labels = await page.$$eval("#main-nav .nav > li", items =>
       items.map(li => (li.textContent || "").trim().split("\n")[0].toUpperCase())
     );
@@ -127,10 +160,10 @@ test.describe("(e) navigation sub-dropdowns", () => {
 
 test.describe("(f) article header image sizing", () => {
   test("an article exposes a per-post header image size", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const href = await page.locator("a[href*='/posts/']").first().getAttribute("href");
     expect(href).toBeTruthy();
-    await page.goto(href);
+    await open(page, href);
     await expect(
       page.locator("[data-header-image-size], [class*=header-image--]")
     ).toHaveCount(1);
@@ -139,7 +172,7 @@ test.describe("(f) article header image sizing", () => {
 
 test.describe("(g) customizable top-bar buttons", () => {
   test("CTAs match the mock", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const labels = await page.$$eval(".top-bar-actions a, .top-bar-cta", els =>
       els.map(el => (el.textContent || "").trim().toUpperCase())
     );
@@ -149,7 +182,7 @@ test.describe("(g) customizable top-bar buttons", () => {
   });
 
   test("no dead CTAs — every one is a real link with an href", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     await expect(page.locator(".top-bar-actions button")).toHaveCount(0);
     await expect(page.locator(".top-bar-actions a:not([href])")).toHaveCount(0);
   });
@@ -157,7 +190,7 @@ test.describe("(g) customizable top-bar buttons", () => {
 
 test.describe("no staging scaffolding is visible to the client", () => {
   test("no STAGING PREVIEW / STAGING ONLY badges anywhere on the home page", async ({ page }) => {
-    await page.goto("/");
+    await open(page, "/");
     const body = (await page.locator("body").innerText()).toUpperCase();
     expect(body).not.toContain("STAGING PREVIEW");
     expect(body).not.toContain("STAGING ONLY");

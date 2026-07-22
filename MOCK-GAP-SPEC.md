@@ -320,6 +320,40 @@ This is why T1 ships a hard `/newsletter/thank-you` assertion in
 `scripts/verify-staging.js` and not only a test: the deploy verifier is the only layer
 that can structurally see that class of failure.
 
+### The local loop does not work yet — Gate 0 has to fix that first
+
+Standing the loop up on 2026-07-22 surfaced something that changes Gate 0's scope. The
+local stack **does not faithfully render the site**, so a local run today is not a valid
+gate. Running the acceptance suite against `localhost:3000` reports `8 failed / 6 passed`
+against staging's `12 failed / 2 passed`, and **the difference is almost entirely
+environmental, not real**:
+
+- `dev.log`: `ApolloError: GraphQL error: Cannot query field "scheduleBy" on type
+  "RootQuery"`. The local WPGraphQL is core-schema-only, exactly as
+  `dev-infra/wordpress/RUNBOOK.md` warns, so the app's real queries fail against it.
+- A Next dev **error overlay is present on the home page** (`nextjs-portal` count 1), and
+  Trending Now never resolves — it sits on `Loading trending stories…` forever.
+- Several local "passes" are therefore **vacuous**: `(b) old Spotlight logo is gone` and
+  `(c) newsletter is not in the rail` pass because the local fixtures never render that
+  content at all, not because anything was fixed. At least one (`no STAGING PREVIEW
+  badges`) passed while the badge is demonstrably in the local DOM — i.e. it raced a page
+  that never finishes loading.
+
+**A test suite that can pass because the page failed to render is worse than no suite.**
+Two consequences:
+
+1. `tests/acceptance/mock-parity.spec.js` gets a **health gate** that runs before every
+   assertion: the page must have no dev error overlay, and a known always-present anchor
+   must be visible. If the page did not render, every requirement test fails loudly rather
+   than passing vacuously.
+2. **Gate 0's real job is bigger than "register four fields."** It has to make the local
+   stack render the home page faithfully — the same missing custom WP PHP (§2.3) is both
+   why c/f/g were hardcoded *and* why the local loop can't render. Until Gate 0 lands,
+   "test locally first" is not yet available to Jerome, and staging remains the only
+   honest signal. That is a Gate-0 acceptance criterion, not a footnote: **the acceptance
+   suite must produce the same verdict locally as against staging on the unchanged
+   codebase.** If it doesn't, the harness is lying.
+
 ### Standing rules for this batch
 
 1. **Prove it locally before staging.** Local Docker WP + `yarn dev` + the acceptance
