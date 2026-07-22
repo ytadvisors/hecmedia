@@ -207,19 +207,21 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
     //      subscriber row is written, and no ESP automation can fire. We
     //      deliberately do NOT call route.continue()/route.fallback() here.
     // ------------------------------------------------------------------
-    const subscribeRequests = [];
+    const interceptedSubscriptions = [];
     const subscribeUrl = new URL(
       "/api/newsletter/subscribe",
       process.env.STAGING_SITE_URL || "https://development.hecmedia.org"
     ).toString();
     await page.route(subscribeUrl, async route => {
-      subscribeRequests.push({ method: route.request().method() });
+      const interception = { method: route.request().method(), success: false };
+      interceptedSubscriptions.push(interception);
       // Stubbed success. The request stops here and is never forwarded.
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ ok: true, id: "stubbed-acceptance-run" })
       });
+      interception.success = true;
     });
 
     await open(page, "/newsletter");
@@ -255,11 +257,13 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
 
     // The form actually posted, and posted to the route it is meant to.
     await expect
-      .poll(() => subscribeRequests.length, {
+      .poll(() => interceptedSubscriptions.length, {
         message: "the form never posted to /api/newsletter/subscribe"
       })
       .toBe(1);
-    expect(subscribeRequests[0].method).toBe("POST");
+    expect(interceptedSubscriptions).toEqual([
+      { method: "POST", success: true }
+    ]);
 
     // ...and that submission is what moved the browser to the Thank You route.
     await expect(page).toHaveURL(/\/newsletter\/thank-you\/?$/);
