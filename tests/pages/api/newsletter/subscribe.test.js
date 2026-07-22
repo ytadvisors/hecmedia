@@ -113,6 +113,7 @@ describe("POST /api/newsletter/subscribe", () => {
     await handler(req, res);
     expect(res.statusCode).toBe(503);
     expect(res.body.ok).toBe(false);
+    expect(getNewsletterAdapter).not.toHaveBeenCalled();
     expect(availableAdapter.subscribe).not.toHaveBeenCalled();
   });
 

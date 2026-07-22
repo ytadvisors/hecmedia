@@ -32,8 +32,18 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Check the staging safety boundary before even resolving an adapter. This
+  // makes no-send deployments incapable of initializing a write integration.
+  if (formsAreNoSend()) {
+    res.status(503).json({
+      ok: false,
+      error: "Newsletter signup is not available at this time."
+    });
+    return;
+  }
+
   const adapter = getNewsletterAdapter();
-  if (formsAreNoSend() || !adapter.isAvailable) {
+  if (!adapter.isAvailable) {
     res.status(503).json({
       ok: false,
       error: "Newsletter signup is not available at this time."
