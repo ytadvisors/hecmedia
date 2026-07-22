@@ -40,6 +40,11 @@ const REPO_ROOT = path.join(__dirname, "..");
 const BUILD_DIR = path.join(REPO_ROOT, ".serverless_nextjs");
 const ASSETS_DIR = path.join(BUILD_DIR, "assets");
 const DEFAULT_LAMBDA_DIR = path.join(BUILD_DIR, "default-lambda");
+const API_PAGES_DIR = path.join(REPO_ROOT, "pages", "api");
+const STAGED_API_PAGES_DIR = path.join(
+  REPO_ROOT,
+  ".staging-disabled-pages-api"
+);
 const LAMBDA_ZIP_PATH = path.join(BUILD_DIR, "default-lambda.zip");
 const CLOUDFRONT_CONFIG_PATH = path.join(BUILD_DIR, "cloudfront-config.json");
 
@@ -58,7 +63,36 @@ async function build() {
     cmd: "node_modules/.bin/next",
     args: ["build"]
   });
-  await builder.build();
+
+  // Staging is deliberately no-send and its public newsletter page never
+  // invokes /api/newsletter/subscribe. The existing staging stack predates
+  // Next API routes and has one tightly scoped Lambda@Edge function, so omit
+  // pages/api from this package instead of creating a second Lambda or
+  // widening IAM. Always restore the source tree, including after a failed
+  // build. Production and any send-enabled build retain the API route.
+  let apiPagesMoved = false;
+  if (fs.existsSync(API_PAGES_DIR)) {
+    if (process.env.HECMEDIA_NO_SEND_FORMS !== "true") {
+      throw new Error(
+        "Refusing to omit Next API routes unless HECMEDIA_NO_SEND_FORMS=true."
+      );
+    }
+    if (fs.existsSync(STAGED_API_PAGES_DIR)) {
+      throw new Error(
+        `${STAGED_API_PAGES_DIR} already exists; refusing to overwrite it.`
+      );
+    }
+    fs.renameSync(API_PAGES_DIR, STAGED_API_PAGES_DIR);
+    apiPagesMoved = true;
+  }
+
+  try {
+    await builder.build();
+  } finally {
+    if (apiPagesMoved) {
+      fs.renameSync(STAGED_API_PAGES_DIR, API_PAGES_DIR);
+    }
+  }
 
   if (!fs.existsSync(DEFAULT_LAMBDA_DIR) || !fs.existsSync(ASSETS_DIR)) {
     throw new Error(
@@ -68,9 +102,8 @@ async function build() {
   }
 
   // The granted role has permission to update exactly one Lambda@Edge
-  // function. If the app now needs API routes or image optimization, the
-  // build will also emit api-lambda/ or image-lambda/, which this policy
-  // cannot deploy - fail loudly instead of silently shipping a half-deploy.
+  // function. If the no-send exclusion regresses or the app needs image
+  // optimization, these extra bundles cannot be deployed by this policy.
   ["api-lambda", "image-lambda"].forEach(extra => {
     if (fs.existsSync(path.join(BUILD_DIR, extra))) {
       throw new Error(
@@ -268,4 +301,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { syncAssets, updateCloudFront };
+module.exports = { build, syncAssets, updateCloudFront };

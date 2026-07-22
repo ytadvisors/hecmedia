@@ -2,7 +2,11 @@ jest.mock("child_process", () => ({ execFileSync: jest.fn() }));
 jest.mock("fs", () => ({
   writeFileSync: jest.fn(),
   existsSync: jest.fn(),
-  rmSync: jest.fn()
+  rmSync: jest.fn(),
+  renameSync: jest.fn()
+}));
+jest.mock("@sls-next/lambda-at-edge", () => ({
+  Builder: jest.fn().mockImplementation(() => ({ build: jest.fn() }))
 }));
 
 const { execFileSync } = require("child_process");
@@ -10,7 +14,8 @@ const path = require("path");
 
 const realFs = jest.requireActual("fs");
 
-const { syncAssets, updateCloudFront } = require("./staging-deploy");
+const fs = require("fs");
+const { build, syncAssets, updateCloudFront } = require("./staging-deploy");
 
 const lambdaArn =
   "arn:aws:lambda:us-east-1:123456789012:function:mf64oua-5ao6wt";
@@ -26,6 +31,37 @@ const distributionConfig = {
 
 beforeEach(() => {
   execFileSync.mockReset();
+  fs.existsSync.mockReset();
+  fs.renameSync.mockReset();
+});
+
+test("omits API routes only for a no-send staging build and restores them", async () => {
+  const originalNoSend = process.env.HECMEDIA_NO_SEND_FORMS;
+  process.env.HECMEDIA_NO_SEND_FORMS = "true";
+  fs.existsSync.mockImplementation(file => {
+    if (file.endsWith("pages/api")) return true;
+    if (file.endsWith(".staging-disabled-pages-api")) return false;
+    if (file.endsWith("default-lambda") || file.endsWith("assets")) return true;
+    return false;
+  });
+
+  try {
+    await build();
+  } finally {
+    if (originalNoSend === undefined) delete process.env.HECMEDIA_NO_SEND_FORMS;
+    else process.env.HECMEDIA_NO_SEND_FORMS = originalNoSend;
+  }
+
+  expect(fs.renameSync.mock.calls).toEqual([
+    [
+      expect.stringMatching(/pages\/api$/),
+      expect.stringMatching(/\.staging-disabled-pages-api$/)
+    ],
+    [
+      expect.stringMatching(/\.staging-disabled-pages-api$/),
+      expect.stringMatching(/pages\/api$/)
+    ]
+  ]);
 });
 
 test("syncAssets preserves prior immutable assets during a release", () => {
