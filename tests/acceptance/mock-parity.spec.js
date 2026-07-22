@@ -176,6 +176,7 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
   test("/newsletter serves", async ({ page }) => {
     const res = await page.goto("/newsletter");
     expect(res.status()).toBe(200);
+    await assertPageRendered(page);
   });
 
   // The regression that shipped: Jest-green, Lambda@Edge-404. route-list.json's
@@ -185,6 +186,7 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
   }) => {
     const res = await page.goto("/newsletter/thank-you");
     expect(res.status()).toBe(200);
+    await assertPageRendered(page);
   });
 
   // The requirement is a REDIRECT, and a redirect is only proven by performing
