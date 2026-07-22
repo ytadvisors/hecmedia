@@ -193,8 +193,8 @@ Local acceptance, owned by the worker-mba WordPress gate:
 4. Keep fixtures in `seed.sh` and add automated save/edit, validation, authorization, REST, and
    WPGraphQL coverage. The local API tests must prove both success and negative paths.
 
-Build and verify only against **local Docker WP** (`dev-infra/wordpress/`, worker-mba, port
-8091) — never `prod-wp.hectv.org`. The local instance has no ACF and stubs `hectv/v1`; do not
+Build and verify only against **local Docker WP** (`dev-infra/wordpress/`, worker-mba, port 8091)
+— never `prod-wp.hectv.org`. The local instance has no ACF and stubs `hectv/v1`; do not
 extend that stub. Register real native fields in the candidate plugin so the local code path is
 the one proposed for review.
 
@@ -205,11 +205,20 @@ Add explicit `newsletter` routes to `route-list.json` (`/newsletter`,
 `/newsletter/thank-you`). Add to `scripts/verify-staging.js` a hard assertion that
 `/newsletter/thank-you` returns 200 on the deployed distribution, so this can never
 regress silently. A Jest-green route that 404s in Lambda@Edge is exactly the class of bug
-the deploy verifier exists to catch. Keep staging server-side no-send protection, but retain
-the newsletter API route and make the rendered form call it; the endpoint's no-send response
-protects ordinary staging visitors while Playwright intercepts only that request for the
-browser redirect proof. Configure only Google's non-production reCAPTCHA v2 test site/secret
-pair in staging — never a production key.
+the deploy verifier exists to catch.
+
+**Safe acceptance seam (required):** remove the page-level
+`HECMEDIA_NO_SEND_FORMS` early return so the rendered form always calls
+`POST /api/newsletter/subscribe`. Preserve no-send at the server/deployment boundary: the
+API handler must return non-success without calling the subscription adapter when present,
+and the existing staging package must continue to omit the API bundle rather than grant a
+write-capable Lambda. In the Playwright test, register `page.route()` before navigation and
+use only `route.fulfill({ ok: true })` for that exact same-origin POST; never continue or
+fallback the route. Thus the request is observable and `onSuccess()` reaches the Thank You
+route, while the staging server, adapter, and ESP receive no request or write. Add a page
+unit test proving no-send mode still invokes this browser seam, plus API/deploy tests proving
+ordinary no-send requests cannot call the adapter. Configure only Google's non-production
+reCAPTCHA v2 test site/secret pair in staging — never a production key.
 
 **T2 — (c) Trending Now replaces the newsletter, properly.**
 Remove the newsletter block from the right rail entirely (it now lives on `/newsletter`,

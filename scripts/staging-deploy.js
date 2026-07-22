@@ -190,12 +190,14 @@ async function build() {
     args: ["build"]
   });
 
-  // Staging is deliberately no-send and its public newsletter page never
-  // invokes /api/newsletter/subscribe. The existing staging stack predates
-  // Next API routes and has one tightly scoped Lambda@Edge function, so omit
-  // pages/api from this package instead of creating a second Lambda or
-  // widening IAM. Always restore the source tree, including after a failed
-  // build. Production and any send-enabled build retain the API route.
+  // Staging is deliberately no-send. The browser still invokes
+  // /api/newsletter/subscribe so Playwright can fulfill that request locally
+  // and prove the submit -> Thank You flow without a write. The existing
+  // staging stack predates Next API routes and has one tightly scoped
+  // Lambda@Edge function, so ordinary staging requests receive no API bundle
+  // instead of creating a second Lambda or widening IAM. Always restore the
+  // source tree, including after a failed build. Production and any send-
+  // enabled build retain the API route.
   let apiPagesMoved = false;
   if (fs.existsSync(API_PAGES_DIR)) {
     if (process.env.HECMEDIA_NO_SEND_FORMS !== "true") {

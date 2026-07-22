@@ -6,7 +6,7 @@ const siteUrl = process.env.STAGING_SITE_URL;
 const expectedSha = process.env.DEPLOY_SHA;
 const aliases = (process.env.CLOUDFRONT_ALIASES || "").split(",");
 const expectedHost = "development.hecmedia.org";
-const routes = ["/", "/events", "/about-us"];
+const routes = ["/", "/events", "/about-us", "/newsletter/thank-you"];
 
 function fail(message) {
   throw new Error(message);
