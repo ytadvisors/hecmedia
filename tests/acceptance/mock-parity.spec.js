@@ -35,6 +35,9 @@ const MOCK_NAV = [
   "READ NOW"
 ];
 const MOCK_CTAS = ["SUBSCRIBE", "SUPPORT", "GET INVOLVED"];
+// Google's documented v2 test key. Its presence is an intentional staging
+// safety contract: the acceptance run must never solve a production captcha.
+const RECAPTCHA_V2_TEST_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 
 const HEADER_IMAGE_FIXTURES = [
   { slug: "header-image-size-small", size: "small" },
@@ -173,6 +176,7 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
   test("/newsletter serves", async ({ page }) => {
     const res = await page.goto("/newsletter");
     expect(res.status()).toBe(200);
+    await assertPageRendered(page);
   });
 
   // The regression that shipped: Jest-green, Lambda@Edge-404. route-list.json's
@@ -182,6 +186,7 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
   }) => {
     const res = await page.goto("/newsletter/thank-you");
     expect(res.status()).toBe(200);
+    await assertPageRendered(page);
   });
 
   // The requirement is a REDIRECT, and a redirect is only proven by performing
@@ -204,15 +209,21 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
     //      subscriber row is written, and no ESP automation can fire. We
     //      deliberately do NOT call route.continue()/route.fallback() here.
     // ------------------------------------------------------------------
-    const subscribeRequests = [];
-    await page.route("**/api/newsletter/subscribe", async route => {
-      subscribeRequests.push({ method: route.request().method() });
+    const interceptedSubscriptions = [];
+    const subscribeUrl = new URL(
+      "/api/newsletter/subscribe",
+      process.env.STAGING_SITE_URL || "https://development.hecmedia.org"
+    ).toString();
+    await page.route(subscribeUrl, async route => {
+      const interception = { method: route.request().method(), success: false };
+      interceptedSubscriptions.push(interception);
       // Stubbed success. The request stops here and is never forwarded.
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ ok: true, id: "stubbed-acceptance-run" })
       });
+      interception.success = true;
     });
 
     await open(page, "/newsletter");
@@ -232,12 +243,15 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
     await page.locator("#newsletter-consent").check();
 
     // The form refuses to submit without a captcha token, so the widget stays
-    // in the flow. Staging must be configured with a reCAPTCHA *test* site key
-    // (see the staging captcha guard); against a production key this step fails
-    // loudly, which is the correct outcome — it must never be softened into
-    // skipping the submission.
+    // in the flow. Assert the documented Google test key before interacting:
+    // staging must never present a production captcha key to this live-browser
+    // check. A production key fails loudly rather than being worked around.
+    const captchaFrame = page.locator(
+      `iframe[src*="${RECAPTCHA_V2_TEST_SITE_KEY}"]`
+    );
+    await expect(captchaFrame).toHaveCount(1);
     await page
-      .frameLocator('iframe[title*="reCAPTCHA" i]')
+      .frameLocator(`iframe[src*="${RECAPTCHA_V2_TEST_SITE_KEY}"]`)
       .getByRole("checkbox")
       .check();
 
@@ -245,11 +259,13 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
 
     // The form actually posted, and posted to the route it is meant to.
     await expect
-      .poll(() => subscribeRequests.length, {
+      .poll(() => interceptedSubscriptions.length, {
         message: "the form never posted to /api/newsletter/subscribe"
       })
       .toBe(1);
-    expect(subscribeRequests[0].method).toBe("POST");
+    expect(interceptedSubscriptions).toEqual([
+      { method: "POST", success: true }
+    ]);
 
     // ...and that submission is what moved the browser to the Thank You route.
     await expect(page).toHaveURL(/\/newsletter\/thank-you\/?$/);

@@ -10,6 +10,8 @@
  * it does not rely on a host-installed Chrome binary.
  */
 /* eslint-env node */
+// Playwright is provisioned by the worker acceptance gate, not this legacy app's lockfile.
+// eslint-disable-next-line import/no-unresolved
 const { defineConfig, devices } = require("@playwright/test");
 
 module.exports = defineConfig({

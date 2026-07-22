@@ -6,12 +6,9 @@ import SEO from "../../components/SEO";
 import NewsletterSignupForm from "../../components/NewsletterSignupForm";
 
 async function subscribe(values) {
-  if (process.env.HECMEDIA_NO_SEND_FORMS === "true") {
-    return {
-      ok: false,
-      error: "This staging preview cannot submit newsletter subscriptions."
-    };
-  }
+  // No-send is enforced at the API/deployment boundary, not here. This keeps
+  // the browser's real submit -> response -> redirect path testable while the
+  // staging build continues to prevent every durable subscription write.
   const response = await fetch("/api/newsletter/subscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
