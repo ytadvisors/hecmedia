@@ -24,18 +24,12 @@ const buildMenu = links => ({
 
 describe("Header (primary navigation)", () => {
   const originalNavigationPreview = process.env.HECMEDIA_NAVIGATION_PREVIEW;
-  const originalTopBarPreview = process.env.HECMEDIA_TOPBAR_CTA_PREVIEW;
 
   afterEach(() => {
     if (originalNavigationPreview === undefined) {
       delete process.env.HECMEDIA_NAVIGATION_PREVIEW;
     } else {
       process.env.HECMEDIA_NAVIGATION_PREVIEW = originalNavigationPreview;
-    }
-    if (originalTopBarPreview === undefined) {
-      delete process.env.HECMEDIA_TOPBAR_CTA_PREVIEW;
-    } else {
-      process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = originalTopBarPreview;
     }
   });
 
@@ -138,58 +132,51 @@ describe("Header (primary navigation)", () => {
     expect(container.querySelector(".search-btn-icon")).toBeInTheDocument();
   });
 
-  it("renders staging-safe Watch Live, Subscribe, and Donate top-bar CTAs", () => {
-    process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = "true";
-    render(<Header searchFunc={() => {}} />);
+  it("does not render top-bar CTAs when no CTA data is provided", () => {
+    const { container } = render(<Header searchFunc={() => {}} />);
 
-    expect(screen.getByRole("link", { name: "Watch Live" })).toHaveAttribute(
-      "href",
-      "/#watch-live"
-    );
+    expect(container.querySelector(".top-bar-actions")).not.toBeInTheDocument();
+  });
+
+  it("renders top-bar CTAs from the topbarCtas prop, not hardcoded links", () => {
+    const topbarCtas = [
+      { label: "Subscribe", url: "/newsletter" },
+      { label: "Support", url: "/support" },
+      { label: "Get Involved", url: "/get-involved" }
+    ];
+    render(<Header searchFunc={() => {}} topbarCtas={topbarCtas} />);
+
     expect(screen.getByRole("link", { name: "Subscribe" })).toHaveAttribute(
       "href",
       "/newsletter"
     );
-    expect(
-      screen.getByRole("button", { name: /Donate Staging only/i })
-    ).toBeInTheDocument();
-    expect(screen.getByText("Staging only")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Support" })).toHaveAttribute(
+      "href",
+      "/support"
+    );
+    expect(screen.getByRole("link", { name: "Get Involved" })).toHaveAttribute(
+      "href",
+      "/get-involved"
+    );
   });
 
-  it("keeps the donation placeholder keyboard-accessible and transaction-free", () => {
-    process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = "true";
-    render(<Header searchFunc={() => {}} />);
+  it("groups social links and CTA pills together on the second row, away from search", () => {
+    const social = buildMenu([
+      { url: "https://facebook.com/hectv", label: "Facebook" }
+    ]);
+    const topbarCtas = [{ label: "Subscribe", url: "/newsletter" }];
+    const { container } = render(
+      <Header searchFunc={() => {}} social={social} topbarCtas={topbarCtas} />
+    );
 
-    const donate = screen.getByRole("button", {
-      name: /Donate Staging only/i
-    });
-    donate.focus();
-    expect(donate).toHaveFocus();
-    fireEvent.keyDown(donate, { key: "Enter", code: "Enter" });
-    fireEvent.click(donate);
-    expect(
-      screen.getByRole("status", {
-        name: ""
-      })
-    ).toHaveTextContent("Donations are disabled in this staging preview.");
-    expect(donate).not.toHaveAttribute("href");
-  });
+    const secondaryRow = container.querySelector(".header-secondary-row");
+    expect(secondaryRow).toBeInTheDocument();
+    expect(secondaryRow.querySelector(".social-links")).toBeInTheDocument();
+    expect(secondaryRow.querySelector(".top-bar-actions")).toBeInTheDocument();
 
-  it("keeps all three CTAs available in the mobile header", () => {
-    process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = "true";
-    Object.defineProperty(window, "innerWidth", {
-      configurable: true,
-      value: 375
-    });
-    const { container } = render(<Header searchFunc={() => {}} />);
-
-    expect(container.querySelector(".top-bar-actions")).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("link", { name: /Watch Live|Subscribe/ })
-    ).toHaveLength(2);
-    expect(
-      screen.getByRole("button", { name: /Donate Staging only/i })
-    ).toBeVisible();
+    const topRow = container.querySelector(".header-top-row");
+    expect(topRow.querySelector(".search-btn-icon")).toBeInTheDocument();
+    expect(topRow.querySelector(".top-bar-actions")).not.toBeInTheDocument();
   });
 
   it("keeps its layout space while applying the sticky, scrolled treatment", () => {
