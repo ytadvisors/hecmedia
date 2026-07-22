@@ -113,6 +113,7 @@ jobs:
           HECMEDIA_NAVIGATION_PREVIEW: "true"
           HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
           HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true"
+          RE_CAPTCHA_SITE_KEY: ${{ secrets.HECMEDIA_STAGING_RECAPTCHA_SITE_KEY }}
         run: node scripts/staging-deploy.js build
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -132,10 +133,15 @@ jobs:
           CLOUDFRONT_ALIASES="$(tr '\t' ',' < cloudfront-aliases.txt)" node scripts/verify-staging.js | tee staging-verification.json
           BROWSER_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           test -n "$BROWSER_BIN"
-          timeout 60 "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --virtual-time-budget=5000 --dump-dom "$STAGING_SITE_URL/" > staging-hydrated-home.html
+          timeout 60 "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --enable-logging=stderr --virtual-time-budget=5000 --dump-dom "$STAGING_SITE_URL/" > staging-hydrated-home.html 2> staging-browser-console.log
           grep -q 'Trending Now' staging-hydrated-home.html
           if grep -q '>404 not found\.<' staging-hydrated-home.html; then
             echo "::error title=Hydration failed::The hydrated staging DOM collapsed to 404 not found."
+            exit 1
+          fi
+          timeout 60 "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --enable-logging=stderr --virtual-time-budget=5000 --dump-dom "$STAGING_SITE_URL/category/films" > staging-hydrated-category.html 2>> staging-browser-console.log
+          if grep -Eqi 'incompatible-href-as|provided .as. value.*incompatible' staging-browser-console.log; then
+            echo "::error title=Dynamic route failed::A hydrated route emitted an incompatible href/as error."
             exit 1
           fi
       - name: Record last known-good staging SHA
@@ -159,5 +165,7 @@ jobs:
             staging-deploy-evidence.json
             staging-verification.json
             cloudfront-aliases.txt
+            staging-browser-console.log
             staging-hydrated-home.html
+            staging-hydrated-category.html
           if-no-files-found: warn

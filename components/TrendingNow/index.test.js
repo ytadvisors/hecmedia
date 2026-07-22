@@ -4,13 +4,16 @@ import TrendingNow from "./index";
 
 describe("TrendingNow", () => {
   it("labels the fixture-driven experience as a staging preview", () => {
-    render(
+    const { container } = render(
       <TrendingNow
         spotlightPosts={[
           {
             postId: 1,
             title: "A current story",
-            link: "https://hectv.org/posts/current"
+            link: "https://hectv.org/posts/current",
+            postDetails: {
+              videoImage: { medium: "https://img.test/current.jpg" }
+            }
           }
         ]}
       />
@@ -21,6 +24,10 @@ describe("TrendingNow", () => {
     expect(
       screen.getByRole("link", { name: "A current story" })
     ).toHaveAttribute("href", "/posts/current");
+    expect(container.querySelector(".trending-list img")).toHaveAttribute(
+      "src",
+      "https://img.test/current.jpg"
+    );
   });
 
   it("renders a loading state", () => {

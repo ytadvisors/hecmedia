@@ -315,7 +315,7 @@ export default class Header extends Component {
                 <a className="top-bar-cta" href="/#watch-live">
                   Watch Live
                 </a>
-                <a className="top-bar-cta" href="#subscribe">
+                <a className="top-bar-cta" href="/newsletter">
                   Subscribe
                 </a>
                 <button

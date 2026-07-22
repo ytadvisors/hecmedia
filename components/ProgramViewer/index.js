@@ -2,40 +2,15 @@ import React, { Component } from "react";
 import $ from "jquery";
 
 import SideNavigation from "../SideNavigation";
-import ListOfSideTabs from "../ListOfSideTabs";
 import TrendingNow from "../TrendingNow";
 
 import Schedule from "../Schedule";
-import NewsLetterContainer from "../../containers/NewsLetterContainer";
-import SignUp from "../SignUp";
 import "./styles.scss";
 
-const spotlightImg = "/static/assets/spotlight-img.jpg";
-
 export default class extends Component {
-  constructor(props) {
-    super(props);
-    this.mounted = true;
-    this.state = {
-      isMobile: false
-    };
-  }
-
   componentDidMount() {
-    this.mounted = true;
     $("#main-nav > div:first-child").addClass("main-container");
-    this.setState({ isMobile: window.innerWidth <= 1170 });
-    window.addEventListener("resize", this.resize);
   }
-
-  componentWillUnmount() {
-    this.mounted = false;
-    window.removeEventListener("resize", this.resize);
-  }
-
-  resize = () => {
-    if (this.mounted) this.setState({ isMobile: window.innerWidth <= 1170 });
-  };
 
   render() {
     const {
@@ -46,7 +21,6 @@ export default class extends Component {
       trendingNowError,
       children
     } = this.props;
-    const { isMobile } = this.state;
     return (
       <section className="program-viewer">
         <div
@@ -61,36 +35,13 @@ export default class extends Component {
               <SideNavigation>
                 <div className="row">
                   <div className="col-lg-12 col-lg-pull-0  no-padding">
-                    <a href="/posts/as-seen-on-spotlight" className="container">
-                      <img
-                        src={spotlightImg}
-                        alt="Link to the spotlight"
-                        className="img-responsive"
+                    <a href="/spotlight" className="educators-card">
+                      <span
+                        className="educators-card__notebook"
+                        aria-hidden="true"
                       />
+                      <span>For Educators</span>
                     </a>
-                    {isMobile ? (
-                      <section
-                        className="mobile-subscribe"
-                        id="subscribe"
-                        aria-label="HEC-TV NewsLetter sign up"
-                      >
-                        <NewsLetterContainer />
-                      </section>
-                    ) : (
-                      <ListOfSideTabs
-                        currentTab="HEC-TV NewsLetter"
-                        tabs={[
-                          {
-                            title: "Sign Up",
-                            content: <SignUp />
-                          },
-                          {
-                            title: "HEC-TV NewsLetter",
-                            content: <NewsLetterContainer />
-                          }
-                        ]}
-                      />
-                    )}
                   </div>
                 </div>
                 <div className="row">

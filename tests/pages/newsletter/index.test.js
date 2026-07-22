@@ -26,15 +26,16 @@ describe("Newsletter signup page (pages/newsletter/index.js)", () => {
     else process.env.RE_CAPTCHA_SITE_KEY = originalSiteKey;
   });
 
-  it("gates the public form in no-send mode", () => {
+  it("shows the CAPTCHA form in no-send mode without enabling submissions", () => {
     process.env.HECMEDIA_NO_SEND_FORMS = "true";
+    process.env.RE_CAPTCHA_SITE_KEY = "staging-site-key";
     render(<NewsletterPage />);
 
     expect(screen.getByTestId("layout")).toBeInTheDocument();
+    expect(screen.getByTestId("newsletter-signup-form")).toBeInTheDocument();
     expect(
-      screen.queryByTestId("newsletter-signup-form")
+      screen.queryByTestId("newsletter-unavailable")
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId("newsletter-unavailable")).toBeInTheDocument();
     expect(screen.getByText("Stay Connected")).toBeInTheDocument();
   });
 

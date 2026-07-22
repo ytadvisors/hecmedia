@@ -127,7 +127,7 @@ describe("Header (primary navigation)", () => {
     );
     expect(screen.getByRole("link", { name: "Subscribe" })).toHaveAttribute(
       "href",
-      "#subscribe"
+      "/newsletter"
     );
     expect(
       screen.getByRole("button", { name: /Donate Staging only/i })

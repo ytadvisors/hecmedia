@@ -24,7 +24,17 @@ const TrendingNow = ({ spotlightPosts, loading, error }) => {
         <ul className="trending-list">
           {items.map(item => (
             <li key={item.id}>
-              <a href={item.href}>{item.title}</a>
+              <a href={item.href}>
+                {item.image && (
+                  <img
+                    src={item.image}
+                    alt=""
+                    loading="lazy"
+                    aria-hidden="true"
+                  />
+                )}
+                <span>{item.title}</span>
+              </a>
             </li>
           ))}
         </ul>

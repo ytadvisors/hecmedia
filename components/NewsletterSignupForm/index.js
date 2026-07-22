@@ -24,7 +24,11 @@ function validate({ firstName, lastName, email, consent }) {
 // `onSubscribe` is injected by the page so this component stays free of
 // fetch/adapter concerns and is testable with a plain jest.fn(). It must
 // return a Promise resolving to { ok, error? }.
-export default function NewsletterSignupForm({ onSubscribe, captchaSiteKey }) {
+export default function NewsletterSignupForm({
+  onSubscribe,
+  captchaSiteKey,
+  onSuccess
+}) {
   const [values, setValues] = useState({
     firstName: "",
     lastName: "",
@@ -65,6 +69,7 @@ export default function NewsletterSignupForm({ onSubscribe, captchaSiteKey }) {
       const result = await onSubscribe({ ...values, captchaToken });
       if (result && result.ok) {
         setStatus(STATUS.SUCCESS);
+        onSuccess();
       } else {
         setStatus(STATUS.ERROR);
         setServerError((result && result.error) || "Something went wrong.");
@@ -173,9 +178,11 @@ export default function NewsletterSignupForm({ onSubscribe, captchaSiteKey }) {
 
 NewsletterSignupForm.propTypes = {
   onSubscribe: PropTypes.func.isRequired,
-  captchaSiteKey: PropTypes.string
+  captchaSiteKey: PropTypes.string,
+  onSuccess: PropTypes.func
 };
 
 NewsletterSignupForm.defaultProps = {
-  captchaSiteKey: undefined
+  captchaSiteKey: undefined,
+  onSuccess: () => {}
 };

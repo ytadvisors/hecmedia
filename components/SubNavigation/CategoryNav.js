@@ -6,6 +6,19 @@ import { getHref } from "../../lib/getFunctions";
 import { cleanUrl, getQueryUpdate } from "../../lib/updateFunctions";
 import "./styles.scss";
 
+export const findCategoryForLink = (menus, cleanLink) =>
+  (menus || []).reduce((result, menu) => {
+    const { link: menuLink, children: { nodes: menuList = [] } = {} } =
+      menu || {};
+    if (menuLink && menuLink.replace(/\/$/g, "") === cleanLink) return menu;
+    return (
+      menuList.find(
+        childMenu =>
+          childMenu && childMenu.link.replace(/\/$/g, "") === cleanLink
+      ) || result
+    );
+  }, []);
+
 const CategoryNav = ({ link }) => {
   const [currentCursor, setCursor] = useState("");
   const [currentName, setName] = useState("");
@@ -39,23 +52,7 @@ const CategoryNav = ({ link }) => {
 
     /* Set current menu */
     if (menus) {
-      const categoryList = menus.reduce((acc, menu) => {
-        let { ...result } = acc;
-        const { link: menuLink, children: { nodes: menuList } = {} } =
-          menu || {};
-        if (menuLink && menuLink.replace(/\/$/g, "") === cleanLink) {
-          result = menu;
-        } else {
-          result = menuList.reduce((childResult, childMenu) => {
-            if (childMenu && childMenu.link.replace(/\/$/g, "") === cleanLink) {
-              result = menu;
-            }
-            return result;
-          }, result);
-        }
-
-        return result;
-      }, []);
+      const categoryList = findCategoryForLink(menus, cleanLink);
 
       const {
         name,

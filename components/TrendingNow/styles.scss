@@ -35,15 +35,36 @@
     }
 
     a {
+      align-items: center;
       color: #ccc;
-      display: inline-block;
+      display: flex;
       font-size: 90%;
       font-weight: bold;
+      gap: 10px;
       text-transform: uppercase;
+
+      img {
+        flex: 0 0 96px;
+        height: 64px;
+        object-fit: cover;
+        width: 96px;
+      }
+
+      span {
+        min-width: 0;
+      }
     }
 
     a:hover {
       color: #aaa;
     }
+  }
+}
+
+@media (max-width: 767px) {
+  .trending-now .trending-list a img {
+    flex-basis: 112px;
+    height: 72px;
+    width: 112px;
   }
 }

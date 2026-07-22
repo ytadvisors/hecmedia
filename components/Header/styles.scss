@@ -62,7 +62,7 @@
     }
   }
   .navbar-brand-class {
-    width: 140px;
+    width: 165px;
     height: auto !important;
     padding: 10px 10px 0 0 !important;
     margin: 0 !important;
@@ -74,7 +74,7 @@
     line-height: 20px;
     // Keep the existing desktop scale, while preventing the tagline from
     // overpowering the logo as the available header width tightens.
-    font-size: clamp(13px, calc(12px + 0.25vw), 15px);
+    font-size: clamp(14px, calc(13px + 0.25vw), 17px);
     .brand-text {
       padding: 10px 5px;
     }
@@ -421,7 +421,10 @@
 @media (max-width: 1170px) {
   .header {
     .top-bar-actions {
-      margin: 11px 55px 6px auto;
+      margin: 0;
+      position: absolute;
+      right: 88px;
+      top: 10px;
     }
     .donate-btn {
       padding-top: 8px !important;
@@ -445,16 +448,19 @@
     }
     .navbar-header-class {
       padding-left: 0;
+      min-height: 112px;
+      position: relative;
     }
     .navbar-header {
       float: none;
       margin: 0 !important;
     }
     .navbar-class {
-      height: 155px !important;
+      height: auto !important;
+      min-height: 112px;
     }
     .navbar-brand-class {
-      width: 100px;
+      width: 120px;
       padding: 10px !important;
     }
     .brand-details {
@@ -469,6 +475,10 @@
     }
     .navbar-toggle {
       display: block;
+      margin: 0;
+      position: absolute;
+      right: 12px;
+      top: 12px;
     }
     .navbar-collapse {
       border-top: 1px solid transparent;
@@ -558,9 +568,12 @@
     }
 
     ul.user-admin {
-      clear: both;
-      padding: 5px 0 0 10px;
-      width: 100%;
+      clear: none;
+      padding: 0;
+      position: absolute;
+      right: 12px;
+      top: 54px;
+      width: auto;
       li {
         display: inline-block;
         .search-btn-icon {
@@ -592,11 +605,25 @@
 @media (max-width: 620px) {
   .header {
     .navbar-class {
-      height: 155px !important;
+      min-height: 142px;
+    }
+    .navbar-header-class {
+      min-height: 142px;
+    }
+    .navbar-brand-class {
+      width: 105px;
+    }
+    .brand-details {
+      font-size: 12px;
+      line-height: 17px;
+
+      .brand-text {
+        padding-top: 10px;
+      }
     }
     .top-bar-actions {
       position: absolute;
-      top: 73px;
+      top: 91px;
       right: 8px;
       left: 8px;
       justify-content: center;
@@ -612,6 +639,14 @@
         right: 0;
         left: 0;
         width: auto;
+      }
+    }
+    ul.user-admin {
+      right: 8px;
+      top: 48px;
+
+      li .search-btn-icon {
+        margin: 0;
       }
     }
   }
