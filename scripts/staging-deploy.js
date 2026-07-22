@@ -41,6 +41,7 @@ const BUILD_DIR = path.join(REPO_ROOT, ".serverless_nextjs");
 const ASSETS_DIR = path.join(BUILD_DIR, "assets");
 const DEFAULT_LAMBDA_DIR = path.join(BUILD_DIR, "default-lambda");
 const API_LAMBDA_DIR = path.join(BUILD_DIR, "api-lambda");
+const IMAGE_LAMBDA_DIR = path.join(BUILD_DIR, "image-lambda");
 const API_PAGES_DIR = path.join(REPO_ROOT, "pages", "api");
 const STAGED_API_PAGES_DIR = path.join(
   REPO_ROOT,
@@ -128,6 +129,56 @@ function discardEmptyApiLambdaBundle() {
   );
 }
 
+function sourceUsesNextImage(directory = REPO_ROOT) {
+  const ignored = new Set([
+    ".git",
+    ".next",
+    ".serverless_nextjs",
+    "coverage",
+    "node_modules"
+  ]);
+  const sourceExtensions = new Set([".js", ".jsx", ".mjs", ".ts", ".tsx"]);
+
+  function scan(current) {
+    return fs.readdirSync(current, { withFileTypes: true }).some(entry => {
+      if (ignored.has(entry.name)) return false;
+      const entryPath = path.join(current, entry.name);
+      if (entry.isDirectory()) return scan(entryPath);
+      if (/\.(?:test|spec)\.[^.]+$/.test(entry.name)) return false;
+      if (!entry.isFile() || !sourceExtensions.has(path.extname(entry.name))) {
+        return false;
+      }
+      const source = fs.readFileSync(entryPath, "utf8");
+      return /(?:from\s*|require\(\s*|import\(\s*)["']next\/image["']/.test(
+        source
+      );
+    });
+  }
+
+  return scan(directory);
+}
+
+function discardUnusedImageLambdaBundle() {
+  if (!fs.existsSync(IMAGE_LAMBDA_DIR)) return;
+  if (process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER !== "true") {
+    throw new Error(
+      "Generated image-lambda while HECMEDIA_DISABLE_IMAGE_OPTIMIZER is not true. " +
+        "Refusing to discard it."
+    );
+  }
+  if (sourceUsesNextImage()) {
+    throw new Error(
+      "Generated image-lambda and application source imports next/image. " +
+        "Refusing to discard a bundle the application may need."
+    );
+  }
+
+  fs.rmSync(IMAGE_LAMBDA_DIR, { recursive: true, force: false });
+  console.log(
+    "Discarded generated image-lambda after verifying the staging optimizer flag and zero next/image imports."
+  );
+}
+
 async function build() {
   // @sls-next/lambda-at-edge is the packaging half of the pipeline this stack
   // was originally built with. Using it directly (instead of the full
@@ -177,6 +228,7 @@ async function build() {
   }
 
   discardEmptyApiLambdaBundle();
+  discardUnusedImageLambdaBundle();
 
   // The granted role has permission to update exactly one Lambda@Edge
   // function. If the no-send exclusion regresses or the app needs image
@@ -381,6 +433,8 @@ if (require.main === module) {
 module.exports = {
   build,
   discardEmptyApiLambdaBundle,
+  discardUnusedImageLambdaBundle,
+  sourceUsesNextImage,
   syncAssets,
   updateCloudFront
 };
