@@ -1,13 +1,13 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import NewsletterPage from "./index";
+import NewsletterPage from "../../../pages/newsletter/index";
 
-jest.mock("../../containers/Layout", () => ({ children }) => (
+jest.mock("../../../containers/Layout", () => ({ children }) => (
   <div data-testid="layout">{children}</div>
 ));
 
 jest.mock(
-  "../../components/NewsletterSignupForm",
+  "../../../components/NewsletterSignupForm",
   () => ({ captchaSiteKey }) => (
     <div data-testid="newsletter-signup-form">
       captchaSiteKey:{captchaSiteKey || "none"}
