@@ -255,6 +255,18 @@ test("uses build-time SSR config and never checks a Lambda runtime environment",
   expect(deployScript).not.toContain("get-function-configuration");
 });
 
+test("packages staging on Node 24 with the webpack 4 OpenSSL compatibility flag", () => {
+  const workflow = realFs.readFileSync(
+    path.join(__dirname, "../.github/workflows/staging-deploy.yml"),
+    "utf8"
+  );
+
+  expect(workflow).toMatch(/actions\/setup-node@v4[\s\S]*?node-version: "24"/);
+  expect(workflow).toMatch(
+    /Package Next\.js app for Lambda@Edge[\s\S]*?NODE_OPTIONS: --openssl-legacy-provider/
+  );
+});
+
 test("requires Yomi to authorize every staging workflow dispatch", () => {
   const workflow = realFs.readFileSync(
     path.join(__dirname, "../.github/workflows/staging-deploy.yml"),

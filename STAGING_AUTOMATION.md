@@ -37,6 +37,13 @@ fails before AWS access. Other builds keep Next's default loader.
 
 ## Least-privilege environment configuration
 
+The staging package job runs on Node 24, matching the supported runtime selected
+for the existing Lambda@Edge function. The application uses Dart Sass with
+`sass-loader@10` in place of the retired native `node-sass` binding. Because
+Next.js 9 still bundles webpack 4, `NODE_OPTIONS=--openssl-legacy-provider` is
+scoped to the package step for its MD4 build hash; that option is not present in
+the deployed Lambda environment.
+
 The `hecmedia-staging` environment contains only these environment secrets:
 
 - `HECMEDIA_STAGING_AWS_ROLE_ARN` — OIDC role for this workflow.
