@@ -7,14 +7,21 @@ a production build, deployment, and post-deploy verification. Forms are forced
 into no-send mode. A successful verification updates the
 `staging-last-known-good` tag; selecting `rollback` redeploys that exact SHA.
 
+Every dispatch must be initiated by Yomi's `ytwguru` GitHub account. The
+authorization job runs before the environment-bearing deployment job, so an
+unauthorized actor cannot reach the staging secrets or AWS credential step.
+This repository's current GitHub plan does not expose required-reviewer rules
+for its private environments; the actor gate is the enforceable compensating
+control. If the plan later supports environment reviewers, add `ytwguru` as the
+required reviewer with self-review prevention and retain this gate as defense
+in depth.
+
 Production domains, CMS write credentials, mail credentials, invoices, and
 client-send configuration are neither requested nor accepted by this workflow.
 
-## One-time least-privilege access request
+## Least-privilege environment configuration
 
-GitHub reports that `hecmedia-staging` does not exist and the repository has no
-Actions secrets or variables. Create a protected `hecmedia-staging` environment
-with HEC Media's required reviewers, then add only these environment secrets:
+The `hecmedia-staging` environment contains only these environment secrets:
 
 - `HECMEDIA_STAGING_AWS_ROLE_ARN` — OIDC role for this workflow.
 - `HECMEDIA_STAGING_APOLLO_CLIENT_URI` — the site is SSR-only and has no

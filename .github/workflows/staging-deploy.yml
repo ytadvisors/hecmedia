@@ -29,7 +29,20 @@ env:
   STAGING_DOMAIN: hecmedia.org
 
 jobs:
+  authorize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Yomi approval
+        env:
+          DISPATCH_ACTOR: ${{ github.actor }}
+        run: |
+          if [ "$DISPATCH_ACTOR" != "ytwguru" ]; then
+            echo "::error title=Staging approval required::Only ytwguru may authorize an HEC Media staging deployment."
+            exit 1
+          fi
+
   deploy-and-verify:
+    needs: authorize
     runs-on: ubuntu-latest
     environment:
       name: hecmedia-staging
