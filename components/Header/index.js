@@ -25,6 +25,7 @@ export default class Header extends Component {
     this.state = {
       open: {},
       navExpanded: false,
+      activeDropdown: null,
       isMobile: false,
       scrolled: false,
       showDonatePlaceholder: false
@@ -87,7 +88,13 @@ export default class Header extends Component {
 
   closeNav = () => {
     if (this.mounted) {
-      this.setState({ navExpanded: false });
+      this.setState({ navExpanded: false, activeDropdown: null });
+    }
+  };
+
+  setActiveDropdown = (url, isOpen) => {
+    if (this.mounted) {
+      this.setState({ activeDropdown: isOpen ? url : null });
     }
   };
 
@@ -97,6 +104,7 @@ export default class Header extends Component {
 
   getNavDropDown = link => {
     const { url, label } = link;
+    const { activeDropdown } = this.state;
     const btnDisplay = link.btnClass || "btn-secondary";
 
     return (
@@ -105,6 +113,8 @@ export default class Header extends Component {
         className={`btn ${btnDisplay}`}
         title={label}
         id={url}
+        open={activeDropdown === url}
+        onToggle={isOpen => this.setActiveDropdown(url, isOpen)}
       >
         {link.children.map(menu => (
           <NavWrap key={shortid.generate()}>{this.getLink(menu)}</NavWrap>
@@ -122,7 +132,10 @@ export default class Header extends Component {
     if (buttonClick) {
       return (
         <Button
-          onClick={buttonClick}
+          onClick={event => {
+            this.closeNav();
+            buttonClick(event);
+          }}
           dangerouslySetInnerHTML={{
             __html: label
           }}
@@ -136,6 +149,7 @@ export default class Header extends Component {
           href={cleanUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={this.closeNav}
         >
           <span
             dangerouslySetInnerHTML={{
@@ -147,7 +161,7 @@ export default class Header extends Component {
     }
     if (label.toLowerCase() === "events") {
       return (
-        <a href={cleanUrl}>
+        <a href={cleanUrl} onClick={this.closeNav}>
           <span
             dangerouslySetInnerHTML={{
               __html: label
@@ -161,7 +175,7 @@ export default class Header extends Component {
         <a>
           <div
             onKeyPress={() => {}}
-            onClick={() => this.setState({ navExpanded: false })}
+            onClick={this.closeNav}
             role="presentation"
           >
             <span
