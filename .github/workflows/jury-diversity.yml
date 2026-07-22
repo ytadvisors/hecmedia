@@ -1,0 +1,42 @@
+name: Jury diversity
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  mixed-jury:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out trusted base revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+
+      - name: Require a foreign-family approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+          reviews=""
+          for attempt in 1 2 3 4 5; do
+            candidate=$(gh api "repos/$REPO/pulls/$PR/reviews?per_page=100" --paginate --slurp 2>/dev/null || true)
+            if [ -n "$candidate" ] && printf '%s' "$candidate" | jq -e 'type == "array" and all(.[]; type == "array")' >/dev/null 2>&1; then
+              reviews="$candidate"
+              break
+            fi
+            sleep "$((attempt * 3))"
+          done
+          if [ -z "$reviews" ]; then
+            echo "::error title=Jury check unavailable::GitHub reviews could not be read after five attempts."
+            exit 1
+          fi
+          printf '%s' "$reviews" | node scripts/check-jury-diversity.js
