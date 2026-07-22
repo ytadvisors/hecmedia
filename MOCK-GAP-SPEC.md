@@ -194,10 +194,9 @@ Local acceptance, owned by the worker-mba WordPress gate:
    WPGraphQL coverage. The local API tests must prove both success and negative paths.
 
 Build and verify only against **local Docker WP** (`dev-infra/wordpress/`, worker-mba, port
-
-8091. — never `prod-wp.hectv.org`. The local instance has no ACF and stubs `hectv/v1`; do not
-      extend that stub. Register real native fields in the candidate plugin so the local code path is
-      the one proposed for review.
+8091) — never `prod-wp.hectv.org`. The local instance has no ACF and stubs `hectv/v1`; do not
+extend that stub. Register real native fields in the candidate plugin so the local code path is
+the one proposed for review.
 
 ### Then, in dependency order
 
@@ -250,6 +249,17 @@ today's rendering so existing posts don't shift. Editor-facing, per-post. Render
 strictly increasing desktop widths, and the meta-free `default` fixture must render at
 exactly the same width as explicit `full`. This is a visual contract, not merely a marker
 contract.
+
+**T6 fixture and rendering contract (required):** `dev-infra/wordpress/seed.sh` must
+idempotently create these five local posts:
+`/posts/header-image-size-small`, `-medium`, `-large`, `-full`, and `-default`.
+The first four carry `hectv_header_image_size` values `small`, `medium`, `large`, and
+`full`; `header-image-size-default` deliberately has no value. The real article template
+must render exactly one `.article-header-image` wrapper and resolve missing meta to
+`data-header-image-size="full"` before rendering. At the desktop acceptance viewport,
+the wrapper widths must be strictly increasing small → medium → large → full, while the
+meta-free default fixture must have exactly the explicit full width. A data marker without
+the measured layout is not evidence of sizing.
 
 **T7 — Mock-parity QA pass.**
 Side-by-side against the mock at desktop/tablet/mobile. No `STAGING PREVIEW` or
