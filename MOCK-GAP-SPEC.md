@@ -205,7 +205,11 @@ Add explicit `newsletter` routes to `route-list.json` (`/newsletter`,
 `/newsletter/thank-you`). Add to `scripts/verify-staging.js` a hard assertion that
 `/newsletter/thank-you` returns 200 on the deployed distribution, so this can never
 regress silently. A Jest-green route that 404s in Lambda@Edge is exactly the class of bug
-the deploy verifier exists to catch.
+the deploy verifier exists to catch. Keep staging server-side no-send protection, but retain
+the newsletter API route and make the rendered form call it; the endpoint's no-send response
+protects ordinary staging visitors while Playwright intercepts only that request for the
+browser redirect proof. Configure only Google's non-production reCAPTCHA v2 test site/secret
+pair in staging — never a production key.
 
 **T2 — (c) Trending Now replaces the newsletter, properly.**
 Remove the newsletter block from the right rail entirely (it now lives on `/newsletter`,
@@ -244,6 +248,16 @@ image wrapper as `data-testid="article-header-image"` with a
 strictly increasing desktop widths, and the meta-free `default` fixture must render at
 exactly the same width as explicit `full`. This is a visual contract, not merely a marker
 contract.
+
+**T6 fixture and rendering contract (required):** `seed.sh` must idempotently create the
+five stable local posts `/posts/fixture-header-small`, `-medium`, `-large`, `-full`, and
+`-default`. The first four carry `hectv_header_image_size` values `small`, `medium`,
+`large`, and `full`; `-default` deliberately has no meta. The real article template must
+render exactly one `.article-header-image` wrapper with
+`data-header-image-size="small|medium|large|full"`; absent meta resolves to `full` before
+render. At the desktop acceptance viewport, the wrapper's rendered widths must be strictly
+increasing small → medium → large → full, and the meta-free default width must equal the
+explicit full width. A data marker alone is not evidence of sizing.
 
 **T7 — Mock-parity QA pass.**
 Side-by-side against the mock at desktop/tablet/mobile. No `STAGING PREVIEW` or
@@ -317,10 +331,10 @@ adopted "test locally first" and stopped there would have declared (d) delivered
 
 The two layers catch disjoint classes of failure, so the batch needs both:
 
-| Layer                                            | Catches                                          | Blind to                   |
-| ------------------------------------------------ | ------------------------------------------------ | -------------------------- |
-| Local Docker WP + `yarn dev` + acceptance suite  | b, c, e, f, g — everything about what renders     | routing / deploy topology  |
-| Acceptance suite against deployed staging        | d — Lambda@Edge routing, build-target divergence  | nothing, but costs ~8 min  |
+| Layer                                           | Catches                                          | Blind to                  |
+| ----------------------------------------------- | ------------------------------------------------ | ------------------------- |
+| Local Docker WP + `yarn dev` + acceptance suite | b, c, e, f, g — everything about what renders    | routing / deploy topology |
+| Acceptance suite against deployed staging       | d — Lambda@Edge routing, build-target divergence | nothing, but costs ~8 min |
 
 This is why T1 ships a hard `/newsletter/thank-you` assertion in
 `scripts/verify-staging.js` and not only a test: the deploy verifier is the only layer
@@ -334,15 +348,13 @@ gate. Running the acceptance suite against `localhost:3000` reports `8 failed / 
 against staging's `12 failed / 2 passed`, and **the difference is almost entirely
 environmental, not real**:
 
-- `dev.log`: `ApolloError: GraphQL error: Cannot query field "scheduleBy" on type
-  "RootQuery"`. The local WPGraphQL is core-schema-only, exactly as
+- `dev.log`: `ApolloError: GraphQL error: Cannot query field "scheduleBy" on type "RootQuery"`. The local WPGraphQL is core-schema-only, exactly as
   `dev-infra/wordpress/RUNBOOK.md` warns, so the app's real queries fail against it.
 - A Next dev **error overlay is present on the home page** (`nextjs-portal` count 1), and
   Trending Now never resolves — it sits on `Loading trending stories…` forever.
 - Several local "passes" are therefore **vacuous**: `(b) old Spotlight logo is gone` and
   `(c) newsletter is not in the rail` pass because the local fixtures never render that
-  content at all, not because anything was fixed. At least one (`no STAGING PREVIEW
-  badges`) passed while the badge is demonstrably in the local DOM — i.e. it raced a page
+  content at all, not because anything was fixed. At least one (`no STAGING PREVIEW badges`) passed while the badge is demonstrably in the local DOM — i.e. it raced a page
   that never finishes loading.
 
 **A test suite that can pass because the page failed to render is worse than no suite.**
@@ -354,7 +366,7 @@ Two consequences:
    than passing vacuously.
 2. **Gate 0's real job is bigger than "register four fields."** It has to make the local
    stack render the home page faithfully — the same missing custom WP PHP (§2.3) is both
-   why c/f/g were hardcoded *and* why the local loop can't render. Until Gate 0 lands,
+   why c/f/g were hardcoded _and_ why the local loop can't render. Until Gate 0 lands,
    "test locally first" is not yet available to Jerome, and staging remains the only
    honest signal. That is a Gate-0 acceptance criterion, not a footnote: **the acceptance
    suite must produce the same verdict locally as against staging on the unchanged
@@ -378,6 +390,17 @@ Two consequences:
    spec-drift bugs (b, f) would have been caught by this alone.
 7. **Escalate blockers as blockers.** The missing ACF source should have blocked the epic
    on day one.
+8. **Newsletter acceptance submits the rendered form without sending a subscription.** Keep
+   direct HTTP 200 checks for both `/newsletter` and `/newsletter/thank-you`; separately
+   fill and submit the real form in Playwright, intercepting **only**
+   `/api/newsletter/subscribe` once with a synthetic success. The browser must navigate to
+   `/newsletter/thank-you` and show its `Thank You` heading. Staging must be configured with
+   Google's non-production reCAPTCHA v2 test site key (and matching test secret), never a
+   production key, so the real widget can yield a test token. No other request may be mocked.
+9. **Stale-logo checks identify the retired rail asset, not a word.** The regression selector
+   is the image `/static/assets/spotlight-img.jpg` inside the
+   `/posts/as-seen-on-spotlight` ProgramViewer rail link. The retained HEC-TV Spotlight list
+   may legitimately contain Spotlight images and must not make the check fail.
 
 ---
 
