@@ -4,7 +4,11 @@ jest.mock("dotenv", () => ({
   config: jest.fn(() => ({ parsed: {} }))
 }));
 
-const configuredEnvironment = ["APOLLO_CLIENT_URI", "WP_HOST"];
+const configuredEnvironment = [
+  "APOLLO_CLIENT_URI",
+  "WP_HOST",
+  "HECMEDIA_DISABLE_IMAGE_OPTIMIZER"
+];
 const savedEnvironment = {};
 
 beforeEach(() => {
@@ -31,4 +35,20 @@ test("inlines the SSR endpoints supplied by the staging build", () => {
     APOLLO_CLIENT_URI: "https://prod-wp.hectv.org/graphql",
     WP_HOST: "https://prod-wp.hectv.org"
   });
+});
+
+test("disables the unused image optimizer only for the staging build", () => {
+  process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER = "true";
+
+  const config = require("./next.config");
+
+  expect(config.images).toEqual({ loader: "akamai", path: "" });
+});
+
+test("keeps the default image loader outside the staging build", () => {
+  delete process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
+
+  const config = require("./next.config");
+
+  expect(config).not.toHaveProperty("images");
 });

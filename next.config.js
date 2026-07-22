@@ -9,8 +9,12 @@ const { parsed: localEnv } = require("dotenv").config({
   path: envFile
 });
 
+const disableImageOptimizer =
+  process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER === "true";
+
 const config = {
   target: "experimental-serverless-trace",
+  ...(disableImageOptimizer ? { images: { loader: "akamai", path: "" } } : {}),
   env: {
     ...localEnv,
     DEPLOY_SHA: process.env.DEPLOY_SHA,

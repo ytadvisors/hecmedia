@@ -75,6 +75,7 @@ jobs:
           HECMEDIA_NO_SEND_FORMS: "true"
           HECMEDIA_NAVIGATION_PREVIEW: "true"
           HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
+          HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true"
         run: |
           set -euo pipefail
           for name in HECMEDIA_STAGING_AWS_ROLE_ARN HECMEDIA_STAGING_APOLLO_CLIENT_URI HECMEDIA_STAGING_WP_HOST HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID; do
@@ -87,6 +88,7 @@ jobs:
           test "$HECMEDIA_NO_SEND_FORMS" = true
           test "$HECMEDIA_NAVIGATION_PREVIEW" = true
           test "$HECMEDIA_TOPBAR_CTA_PREVIEW" = true
+          test "$HECMEDIA_DISABLE_IMAGE_OPTIMIZER" = true
       # --ignore-engines: this job pins Node 16 on purpose — node-sass@7.0.1 must
       # actually compile here (unlike CI, which pins Node 22 and skips native
       # builds with --ignore-scripts) because the deploy step below runs a real
@@ -112,6 +114,7 @@ jobs:
           HECMEDIA_NO_SEND_FORMS: "true"
           HECMEDIA_NAVIGATION_PREVIEW: "true"
           HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
+          HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true"
         run: node scripts/staging-deploy.js build
       - uses: aws-actions/configure-aws-credentials@v4
         with:
