@@ -208,7 +208,11 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
     //      deliberately do NOT call route.continue()/route.fallback() here.
     // ------------------------------------------------------------------
     const subscribeRequests = [];
-    await page.route("**/api/newsletter/subscribe", async route => {
+    const subscribeUrl = new URL(
+      "/api/newsletter/subscribe",
+      process.env.STAGING_SITE_URL || "https://development.hecmedia.org"
+    ).toString();
+    await page.route(subscribeUrl, async route => {
       subscribeRequests.push({ method: route.request().method() });
       // Stubbed success. The request stops here and is never forwarded.
       await route.fulfill({
