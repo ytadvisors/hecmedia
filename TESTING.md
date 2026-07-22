@@ -56,18 +56,10 @@ props-in/markup-out functions, which RTL's queries suit well.
 - **`preview-deploy` job** runs after tests for pull requests and `develop`; it safely exits with a
   warning until human-gated deploy secrets are configured.
 
-**CI installs run with `--ignore-scripts`.** `node-sass@7.0.1` (its last-ever release; the package
-is deprecated in favor of Dart Sass) cannot build its native V8 binding on Node 22 — confirmed both
-on macOS/arm64 locally and on GitHub Actions' `ubuntu-latest`/x64 runners, same root cause: the
-binding's `SetAccessor` call uses a V8 API signature Node 22 removed, so it fails identically
-whether a prebuilt binary would be fetched or a from-source build is attempted (no prebuilt exists
-for this Node/arch combo). This is a **pre-existing repo/toolchain gap**, unrelated to Phase 1 —
-skipping install scripts in CI is safe only because neither `yarn lint` (pure JS) nor `yarn test`
-(Jest mocks all `.scss`/`.css` imports via `jest.moduleNameMapper`) ever load node-sass's native
-binding. Local `next build`/`next dev` still need a working node-sass — if that breaks for someone
-on Node 22, the fix is either pinning local dev to Node ≤17 (last version node-sass 7 has prebuilt
-binaries for) or migrating the app off node-sass to Dart Sass (`sass` package), which is a separate,
-larger follow-up outside this task's scope.
+**CI and staging builds run on Node 24.** The retired native `node-sass` binding was replaced by
+Dart Sass, with `sass-loader@10` pinned for the legacy `@zeit/next-sass` plugin and webpack 4.
+Install scripts now run normally; CI therefore exercises the same supported Node/Sass toolchain
+used to package the staging Lambda@Edge bundle.
 
 **Preview deployment remains human-gated.** Per Phase 0 D3 (`phase0-D3-access-and-preview.md`):
 deploy-capable AWS credentials (`hecadmin`) are intentionally human-gated (passphrase-unlocked,
