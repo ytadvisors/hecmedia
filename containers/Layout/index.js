@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
 import { Router } from "../../routes";
-import { GET_LAYOUT, GET_SCHEDULE, GET_LIVE_VIDEOS } from "../../lib/graphql";
+import { GET_LAYOUT, GET_LIVE_VIDEOS } from "../../lib/graphql";
 import "./styles.scss";
 import ProgramViewer from "../../components/ProgramViewer";
 import Header from "../../components/Header";
@@ -26,9 +26,6 @@ const Layout = props => {
   };
 
   const mDay = moment(new Date());
-  const currentMonth = moment(mDay)
-    .format("MMMM-YYYY")
-    .toLowerCase();
 
   const currentDate = moment(mDay)
     .format("YYYY-MM-DD HH:mm:ss")
@@ -46,11 +43,6 @@ const Layout = props => {
     }
   );
 
-  const { data: schedule } = useQuery(GET_SCHEDULE, {
-    variables: { currentMonth },
-    notifyOnNetworkStatusChange: true
-  });
-
   const { data: videos } = useQuery(GET_LIVE_VIDEOS, {
     variables: { keyStart, keyEnd, compareStart, compareEnd },
     notifyOnNetworkStatusChange: true
@@ -64,7 +56,6 @@ const Layout = props => {
     spotLight: { nodes: spotLightPosts = [] } = {}
   } = data || {};
   const { children, showBottomNav, absContent, style } = props;
-  const { programs } = schedule || {};
   const { liveVideos } = videos || [];
   let liveVideo = {};
   if (liveVideos && liveVideos.edges.length > 0) {
@@ -83,7 +74,6 @@ const Layout = props => {
         <Banner liveVideo={liveVideo} />
         <ProgramViewer
           style={style}
-          programs={programs}
           featuredMagazines={featuredMagazines}
           spotLightPosts={spotLightPosts}
           trendingNowLoading={layoutLoading}
