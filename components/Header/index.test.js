@@ -78,6 +78,27 @@ describe("Header (primary navigation)", () => {
     expect(screen.getByText("Our Team")).toBeInTheDocument();
   });
 
+  it("closes an open dropdown after a navigation link is selected", () => {
+    const header = buildMenu([
+      {
+        url: "https://hectv.org/about",
+        label: "About",
+        children: [{ url: "https://hectv.org/about/team", label: "Our Team" }]
+      }
+    ]);
+
+    const { container } = render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+    const dropdown = container.querySelector(".top-navigation > li.dropdown");
+
+    fireEvent.click(screen.getByText("About"));
+    expect(dropdown).toHaveClass("open");
+
+    fireEvent.click(screen.getByText("Our Team"), { ctrlKey: true });
+    expect(dropdown).not.toHaveClass("open");
+  });
+
   it("uses the five-item staging preview without changing CMS links", () => {
     process.env.HECMEDIA_NAVIGATION_PREVIEW = "true";
     const header = buildMenu([
