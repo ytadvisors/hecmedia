@@ -18,6 +18,10 @@ in depth.
 
 Production domains, CMS write credentials, mail credentials, invoices, and
 client-send configuration are neither requested nor accepted by this workflow.
+Because forms are forced into no-send mode, the staging package temporarily
+omits `pages/api` while building and restores it immediately afterward. This
+keeps the deployment on the existing single Lambda@Edge function; send-enabled
+and production builds retain the API routes.
 
 ## Least-privilege environment configuration
 
