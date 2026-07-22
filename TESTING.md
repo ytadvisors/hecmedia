@@ -22,6 +22,7 @@ yarn install       # or npm install
 yarn test          # runs `jest` once, with coverage
 yarn test:watch    # jest --watch
 yarn test:e2e      # read-only live WPGraphQL + WP REST contract suite
+yarn test:acceptance # deployed-DOM mock-parity suite; run only on worker-mba
 yarn smoke         # checks the shared development site
 ```
 
@@ -68,6 +69,23 @@ credential access. Two existing staging URLs (`development.hecmedia.org`, `devel
 are recommended as shared manual preview targets for Jayne's review in the near term; true
 per-branch ephemeral previews are a separate, larger project blocked on an unresolved ACM
 wildcard-certificate question (see D3 §2/§5) and are out of scope here.
+
+## Mock-parity acceptance gate (worker-mba owned)
+
+`yarn test:acceptance` runs the Playwright suite in `tests/acceptance/` against
+`STAGING_SITE_URL` (default: `https://development.hecmedia.org`). It is intentionally not a
+GitHub CI job: the suite drives the shared deployed staging site and is expected to expose
+unimplemented requirements until their remediation tasks land. CI would turn that diagnostic
+into a noisy, non-deterministic gate.
+
+The release owner runs it on **worker-mba** before requesting staging acceptance, using the
+repo's `scripts/run-acceptance-on-mba.sh` wrapper. The wrapper refuses other hosts, records no
+credentials, accepts only an approved staging URL, and bootstraps the pinned project-scoped Yarn
+version when the host does not provide Yarn. It installs the matching Playwright Chromium before
+launching the suite. A launch is proven when Playwright reports the desktop and mobile projects;
+a requirements failure remains a failure and must be attached to the remediation task rather than
+retried or softened. The worker-mba gate owns browser execution; GitHub CI continues to own
+lint/unit/API-contract checks.
 
 ## API e2e contracts
 

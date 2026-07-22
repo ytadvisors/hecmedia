@@ -13,12 +13,12 @@
 
 Tasks #68041–#68050 are all closed `done` and features A/B/C/D/E/F/G are reported
 delivered. Staging deployed successfully twice on 2026-07-22 (runs `29894688778`,
-`29896468330`), so the deployed bundle *is* current master. The client still reports the
+`29896468330`), so the deployed bundle _is_ current master. The client still reports the
 site does not look done.
 
 The audit below was run against the live staging DOM, not against the tickets. **One of
 the seven client requirements is genuinely met.** The other six were closed against the
-*ticket title* rather than the *client requirement text*, and every one of them shipped as
+_ticket title_ rather than the _client requirement text_, and every one of them shipped as
 a hardcoded, env-flag-gated preview rather than a CMS-driven feature.
 
 The tickets are not lying about what they built. They built something else.
@@ -32,15 +32,15 @@ Three compounding causes, in order of importance:
 **2.1 — Spec drift between the client requirement and the ticket title.**
 Two features were re-scoped somewhere between the client list and the queue row:
 
-| Client asked for | Ticket built |
-|---|---|
-| (f) adjust the **size of header images** on article pages | #68044 "Feature F — header **font** sizing" |
+| Client asked for                                                 | Ticket built                                                |
+| ---------------------------------------------------------------- | ----------------------------------------------------------- |
+| (f) adjust the **size of header images** on article pages        | #68044 "Feature F — header **font** sizing"                 |
 | (b) replace the Spotlight **logo** with a **new image and link** | #68042 "Feature B — Spotlight → 'For Educators' **rename**" |
 
 Nobody re-read the client requirement at close time, so both closed green.
 
 **2.2 — "Additive preview" instead of "replacement".**
-Features C and G were added *next to* the thing they were supposed to replace, behind
+Features C and G were added _next to_ the thing they were supposed to replace, behind
 `HECMEDIA_*_PREVIEW` env flags, with visible `STAGING PREVIEW` / `STAGING ONLY` badges.
 The old UI was never removed. To the client this reads as "nothing changed, and now
 there's a second half-built thing below it."
@@ -48,8 +48,8 @@ there's a second half-built thing below it."
 **2.3 — The real blocker nobody escalated: the ACF field source is unavailable.**
 `dev-infra/wordpress/RUNBOOK.md` documents it plainly — the custom WP-side PHP that
 registers `postDetails`, `requiredPosts`, `feedDesign`, `pageTemplate` etc. is not in this
-repo or any repo available to us. Every requirement with the word *customizable*,
-*manually feature*, or *adjust* (c, f, g) needs a CMS field to store the choice. With no
+repo or any repo available to us. Every requirement with the word _customizable_,
+_manually feature_, or _adjust_ (c, f, g) needs a CMS field to store the choice. With no
 way to register fields, Jerome hardcoded the values in JSX and shipped. **That was the
 right engineering call and the wrong reporting call** — it should have surfaced as a
 blocker on the epic, not as seven green tickets.
@@ -84,18 +84,18 @@ of the rail, and the image + destination must be editable, not compiled in.
 
 - `document.querySelectorAll('.col-lg-3 form').length === 1` — **the newsletter signup
   block is still in the rail.** It was never removed.
-- Trending Now was appended *below* it, so the rail is now newsletter → Trending Now,
+- Trending Now was appended _below_ it, so the rail is now newsletter → Trending Now,
   instead of Trending Now replacing the newsletter.
 - It renders a `STAGING PREVIEW` badge to the client.
 - `document.querySelectorAll('[class*=trending] img').length === 0` — **no thumbnails.**
   The mock is a thumbnail list. Ours is a text list.
 - Data source is wrong: `lib/trendingNow.js` maps `spotLightPosts`, and its own comment
-  says so — *"temporary staging data source. Replace spotlightPosts with a dedicated
-  WPGraphQL/ACF query when editorial support is available."* The requirement is **newest
+  says so — _"temporary staging data source. Replace spotlightPosts with a dedicated
+  WPGraphQL/ACF query when editorial support is available."_ The requirement is **newest
   video posted, auto-populated**, plus **manual featuring**. Neither is implemented.
 
-Note the mock keeps a separate **HEC-TV SPOTLIGHT** list *below* Trending Now. Trending
-Now replaces the *newsletter*, not the Spotlight list.
+Note the mock keeps a separate **HEC-TV SPOTLIGHT** list _below_ Trending Now. Trending
+Now replaces the _newsletter_, not the Spotlight list.
 
 ### (d) Newsletter signup page → Thank You redirect — ⚠️ **BROKEN IN PRODUCTION**
 
@@ -116,24 +116,25 @@ recursion. There is no second level anywhere in the nav.
 
 Separately, the nav that shipped does not match the mock:
 
-| Mock | Staging |
-|---|---|
+| Mock                                                          | Staging                                               |
+| ------------------------------------------------------------- | ----------------------------------------------------- |
 | ABOUT · PROGRAMS · PRODUCTION SERVICES · WATCH NOW · READ NOW | WATCH · LEARN & EXPLORE · CONNECT · SUPPORT HEC MEDIA |
 
 `lib/navigationPreview.js` is a hardcoded keyword-matcher that invents its own five
-groups and buckets anything unrecognised into `CONNECT`. That is why *HEC Films*,
-*Books*, *Genres* and *Business* are all filed under "Connect". The grouping must come
+groups and buckets anything unrecognised into `CONNECT`. That is why _HEC Films_,
+_Books_, _Genres_ and _Business_ are all filed under "Connect". The grouping must come
 from the WordPress menu tree, not from a keyword list in our bundle.
 
 ### (f) Adjust header image size on article pages — ❌ **NOT DONE AT ALL**
 
 Zero matches for `headerImage|imageSize|heroSize|featuredImageSize` across
-`components/`, `pages/`, `lib/`. #68044 shipped responsive *font* sizing instead. This
+`components/`, `pages/`, `lib/`. #68044 shipped responsive _font_ sizing instead. This
 requirement has no implementation of any kind.
 
 ### (g) Customizable linked buttons next to the social icons — ⚠️ **PARTIAL**
 
 Three buttons render, but:
+
 - Labels are `Watch Live` / `Subscribe` / `Donate`; the mock says **SUBSCRIBE · SUPPORT ·
   GET INVOLVED**.
 - `Donate` is a `<button>` that navigates nowhere and shows a visible
@@ -144,48 +145,65 @@ Three buttons render, but:
 
 ### Summary
 
-| Req | Client requirement | Status |
-|---|---|---|
-| a | Sticky header | ✅ done |
-| b | Replace Spotlight logo w/ new image + link | ❌ not done (built on an unrendered component) |
-| c | Newsletter → Trending Now (auto-newest video + manual feature) | ❌ partial, wrong data, newsletter still present |
-| d | Newsletter page → Thank You redirect | ⚠️ **404 in production** |
-| e | Sub-dropdown menus | ❌ not done (one flat level) |
-| f | Article header image sizing | ❌ no implementation |
-| g | Customizable top-bar buttons | ⚠️ partial, hardcoded, one dead button |
+| Req | Client requirement                                             | Status                                           |
+| --- | -------------------------------------------------------------- | ------------------------------------------------ |
+| a   | Sticky header                                                  | ✅ done                                          |
+| b   | Replace Spotlight logo w/ new image + link                     | ❌ not done (built on an unrendered component)   |
+| c   | Newsletter → Trending Now (auto-newest video + manual feature) | ❌ partial, wrong data, newsletter still present |
+| d   | Newsletter page → Thank You redirect                           | ⚠️ **404 in production**                         |
+| e   | Sub-dropdown menus                                             | ❌ not done (one flat level)                     |
+| f   | Article header image sizing                                    | ❌ no implementation                             |
+| g   | Customizable top-bar buttons                                   | ⚠️ partial, hardcoded, one dead button           |
 
 ---
 
 ## 4. Remediation plan
 
-### Gate 0 — unblock the CMS layer (blocks c, f, g; do this first)
+### Gate 0 — define and verify the CMS contract locally (blocks b, c, f, g; do this first)
 
-Ship a **checked-in mu-plugin we own**, `dev-infra/wordpress/mu-plugins/hectv-site-options.php`,
-that registers the fields the remaining work needs and exposes them over both REST and
-WPGraphQL. Owning the registration means we stop being blocked on the missing production
-ACF source, and the same plugin file is what gets installed on the client's WP.
+Build a **checked-in local mu-plugin candidate**,
+`dev-infra/wordpress/mu-plugins/hectv-site-options.php`. It is source code for the local
+Docker WordPress environment, not an authorization to install anything on production.
+It replaces the unavailable ACF source with a native WordPress contract we can test.
 
 Fields to register:
 
-| Field | Type | Serves |
-|---|---|---|
-| `hectv_rail_promo` (image, link, alt) | site option | (b) |
-| `hectv_featured_videos` (ordered post refs, nullable) | site option | (c) manual featuring |
-| `hectv_topbar_ctas` (repeater: label, url, style) | site option | (g) |
-| `hectv_header_image_size` (enum: small/medium/large/full) | per-post meta | (f) |
+| Field                     | Type                                                                                                                                    | Serves                                                                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Field                     | Native storage and validation                                                                                                           | REST / WPGraphQL shape                                                                                                    | Editing authority |
+| ---                       | ---                                                                                                                                     | ---                                                                                                                       | --- |
+| `hectv_rail_promo`        | option object `{image_id: positive int, url: esc_url_raw, alt: sanitize_text_field}`; reject missing image or invalid URL               | `GET/PUT /wp-json/hectv/v1/site-options`; GraphQL `hectvSiteOptions.railPromo { image { id sourceUrl altText } url alt }` | `manage_options` |
+| `hectv_featured_videos`   | option array of unique, ordered published video post IDs; `absint`, max 12, nullable                                                    | REST `featuredVideoIds: [ID!]!`; GraphQL `featuredVideos: [Post!]!`                                                       | `edit_others_posts` plus post-type capability |
+| `hectv_topbar_ctas`       | option array (max 5) of `{label: sanitize_text_field, url: esc_url_raw, style: enum(primary|secondary|tertiary)}`; drop incomplete rows | REST `topbarCtas`; GraphQL `topbarCtas { label url style }`                                                               | `manage_options` |
+| `hectv_header_image_size` | post meta enum `small|medium|large|full`; `sanitize_key`, default `full`, registered with `single: true`                                | REST `meta.hectv_header_image_size`; GraphQL `headerImageSize` on the supported post type                                 | `edit_post` for that post |
 
-Acceptance: each field is readable from `http://localhost:8091/graphql` **and**
-`/wp-json/`, seeded with fixture values by `seed.sh`, and covered by an e2e test that
-reads it through the real `store/api` module — the same bar `tests/e2e/rest/posts.e2e.test.js`
-already meets. Build and verify against the **local Docker WP** (`dev-infra/wordpress/`,
-worker-mba, port 8091) — never against `prod-wp.hectv.org`.
+The plugin must register settings/meta with `show_in_rest`, sanitizers, and `auth_callback`
+checks matching the capabilities above. Its WPGraphQL fields must return the same typed values
+as REST and never expose an edit mutation to an unauthenticated request. It must add an
+authenticated `wp-admin` Settings page for the three site options and a post editor metabox (or
+registered post-meta control) for image size. Saving is nonce-protected, checks the relevant
+capability, reports validation errors without partial writes, and renders the saved value when
+the editor reopens.
 
-Note the local instance has no ACF and stubs `hectv/v1`. Do not extend the stub; register
-real fields in the new plugin so the code path is the production code path.
+Local acceptance, owned by the worker-mba WordPress gate:
+
+1. Sync only `dev-infra/wordpress/` to worker-mba and start the local Docker stack.
+2. Log into local `wp-admin` as the seeded editor/admin; create, edit, save, and reopen each
+   field. Repeat one denied save as an insufficient-capability user and one invalid payload.
+3. Assert the saved values through authenticated REST and public/read-safe WPGraphQL, then run
+   the real `store/api` read path against `localhost:8091`.
+4. Keep fixtures in `seed.sh` and add automated save/edit, validation, authorization, REST, and
+   WPGraphQL coverage. The local API tests must prove both success and negative paths.
+
+Build and verify only against **local Docker WP** (`dev-infra/wordpress/`, worker-mba, port
+
+8091. — never `prod-wp.hectv.org`. The local instance has no ACF and stubs `hectv/v1`; do not
+      extend that stub. Register real native fields in the candidate plugin so the local code path is
+      the one proposed for review.
 
 ### Then, in dependency order
 
-**T1 — (d) Fix the Thank You 404.** *Highest priority — client-facing dead end.*
+**T1 — (d) Fix the Thank You 404.** _Highest priority — client-facing dead end._
 Add explicit `newsletter` routes to `route-list.json` (`/newsletter`,
 `/newsletter/thank-you`). Add to `scripts/verify-staging.js` a hard assertion that
 `/newsletter/thank-you` returns 200 on the deployed distribution, so this can never
@@ -203,9 +221,8 @@ set. Delete the `spotLightPosts` adapter and the `STAGING PREVIEW` badge.
 Make `Header.getNavDropDown` recursive to at least two levels, keyboard-accessible
 (arrow/escape) and touch-usable. Delete `lib/navigationPreview.js` and the
 `HECMEDIA_NAVIGATION_PREVIEW` flag — the top-level grouping is whatever the WordPress
-menu says it is. Configure the menu to the mock's five items (ABOUT, PROGRAMS,
-PRODUCTION SERVICES, WATCH NOW, READ NOW) in the local WP, and hand Jayne the same menu
-structure to apply in production.
+menu says it is. Configure the mock's five items (ABOUT, PROGRAMS, PRODUCTION SERVICES,
+WATCH NOW, READ NOW) only in local WP as test fixture data.
 
 **T4 — (g) Real customizable CTAs.**
 Render from `hectv_topbar_ctas`. No hardcoded labels, no dead buttons, no
@@ -225,6 +242,22 @@ today's rendering so existing posts don't shift. Editor-facing, per-post.
 **T7 — Mock-parity QA pass.**
 Side-by-side against the mock at desktop/tablet/mobile. No `STAGING PREVIEW` or
 `STAGING ONLY` badge anywhere. Attach screenshots to the task before it closes.
+
+### Production approval boundary (separate from this build)
+
+No remediation task may install the candidate plugin on `prod-wp.hectv.org`, alter the
+production navigation menu, seed production content, or hand anything to the client. Those are
+three separately approved, client-owned changes after local verification and code review:
+
+1. Jayne/Yomi approve a production plugin-install playbook with backup, rollback, exact plugin
+   checksum, and a named operator.
+2. Jayne approves the production menu configuration and content mapping after reviewing the
+   local fixture/export; the approved operator applies it and verifies it in production.
+3. Jayne accepts the staging/production evidence before the client handoff and Payment 2 flow.
+
+Until all three approvals are recorded, this branch produces only local source, fixtures, and
+verification evidence. The plugin candidate is not “the same plugin installed on the client’s
+WP”; it is an unapproved deployment artifact.
 
 ### Standing rules for this batch
 
