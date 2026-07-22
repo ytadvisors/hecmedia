@@ -23,9 +23,10 @@ omits `pages/api` while building and restores it immediately afterward. This
 keeps the deployment on the existing single Lambda@Edge function; send-enabled
 and production builds retain the API routes.
 The legacy packager still emits an `api-lambda` directory in this mode. The
-deploy script discards it only after its manifest contains zero routes and its
-compiled `pages/api` tree contains no files; missing, malformed, or non-empty
-output fails before AWS authentication.
+deploy script discards it only when the directory is completely file-empty, or
+after its manifest contains zero routes and its compiled `pages/api` tree
+contains no files. A manifest-less directory containing any file, a malformed
+manifest, or non-empty API output fails before AWS authentication.
 
 ## Least-privilege environment configuration
 

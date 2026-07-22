@@ -67,6 +67,31 @@ test("discards a generated API bundle only when its manifest and pages are empty
   });
 });
 
+test("discards a manifest-less API bundle only when the directory is file-empty", () => {
+  fs.existsSync.mockImplementation(file => file.endsWith("api-lambda"));
+  fs.readdirSync.mockReturnValue([]);
+
+  discardEmptyApiLambdaBundle();
+
+  expect(fs.readFileSync).not.toHaveBeenCalled();
+  expect(fs.rmSync).toHaveBeenCalledWith(expect.stringMatching(/api-lambda$/), {
+    recursive: true,
+    force: false
+  });
+});
+
+test("rejects files in a manifest-less API bundle", () => {
+  fs.existsSync.mockImplementation(file => file.endsWith("api-lambda"));
+  fs.readdirSync.mockReturnValue([
+    { name: "unexpected.js", isFile: () => true, isDirectory: () => false }
+  ]);
+
+  expect(() => discardEmptyApiLambdaBundle()).toThrow(
+    "no manifest but contains files"
+  );
+  expect(fs.rmSync).not.toHaveBeenCalled();
+});
+
 test.each([
   [{ apis: { dynamic: { "/api/[id]": {} }, nonDynamic: {} } }, "/api/[id]"],
   [
@@ -80,11 +105,11 @@ test.each([
   expect(fs.rmSync).not.toHaveBeenCalled();
 });
 
-test("rejects a missing or malformed API manifest", () => {
+test("rejects a malformed API manifest", () => {
   fs.existsSync.mockReturnValue(true);
   fs.readFileSync.mockReturnValue("not-json");
 
-  expect(() => discardEmptyApiLambdaBundle()).toThrow("missing or invalid");
+  expect(() => discardEmptyApiLambdaBundle()).toThrow("manifest is invalid");
   expect(fs.rmSync).not.toHaveBeenCalled();
 });
 
