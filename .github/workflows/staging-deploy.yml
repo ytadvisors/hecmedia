@@ -130,6 +130,14 @@ jobs:
           set -euo pipefail
           aws cloudfront get-distribution --id "$CLOUDFRONT_DISTRIBUTION_ID" --query 'Distribution.DistributionConfig.Aliases.Items' --output text > cloudfront-aliases.txt
           CLOUDFRONT_ALIASES="$(tr '\t' ',' < cloudfront-aliases.txt)" node scripts/verify-staging.js | tee staging-verification.json
+          BROWSER_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$BROWSER_BIN"
+          timeout 60 "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --virtual-time-budget=5000 --dump-dom "$STAGING_SITE_URL/" > staging-hydrated-home.html
+          grep -q 'Trending Now' staging-hydrated-home.html
+          if grep -q '>404 not found\.<' staging-hydrated-home.html; then
+            echo "::error title=Hydration failed::The hydrated staging DOM collapsed to 404 not found."
+            exit 1
+          fi
       - name: Record last known-good staging SHA
         if: success()
         env:
@@ -151,4 +159,5 @@ jobs:
             staging-deploy-evidence.json
             staging-verification.json
             cloudfront-aliases.txt
+            staging-hydrated-home.html
           if-no-files-found: warn

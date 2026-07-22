@@ -15,16 +15,19 @@ export default props => {
   };
 
   const callback = () => {};
+  const captchaSiteKey = process.env.RE_CAPTCHA_SITE_KEY;
 
   return (
     <div className="captcha">
-      <Recaptcha
-        sitekey={process.env.RE_CAPTCHA_SITE_KEY}
-        render="explicit"
-        verifyCallback={() => verifyCallback()}
-        onloadCallback={callback}
-        elementID={name}
-      />
+      {captchaSiteKey ? (
+        <Recaptcha
+          sitekey={captchaSiteKey}
+          render="explicit"
+          verifyCallback={() => verifyCallback()}
+          onloadCallback={callback}
+          elementID={name}
+        />
+      ) : null}
       {displayErrors && (
         <div
           className="errors"
