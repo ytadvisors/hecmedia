@@ -6,6 +6,18 @@ import { getHref } from "../../lib/getFunctions";
 import { cleanUrl, getQueryUpdate } from "../../lib/updateFunctions";
 import "./styles.scss";
 
+export const findCategoryForLink = (menus, cleanLink) =>
+  (menus || []).reduce((result, menu) => {
+    const { link: menuLink, children: { nodes: menuList = [] } = {} } =
+      menu || {};
+    if (menuLink && menuLink.replace(/\/$/g, "") === cleanLink) return menu;
+    return menuList.some(
+      childMenu => childMenu && childMenu.link.replace(/\/$/g, "") === cleanLink
+    )
+      ? menu
+      : result;
+  }, []);
+
 const CategoryNav = ({ link }) => {
   const [currentCursor, setCursor] = useState("");
   const [currentName, setName] = useState("");
@@ -39,28 +51,12 @@ const CategoryNav = ({ link }) => {
 
     /* Set current menu */
     if (menus) {
-      const categoryList = menus.reduce((acc, menu) => {
-        let { ...result } = acc;
-        const { link: menuLink, children: { nodes: menuList } = {} } =
-          menu || {};
-        if (menuLink && menuLink.replace(/\/$/g, "") === cleanLink) {
-          result = menu;
-        } else {
-          result = menuList.reduce((childResult, childMenu) => {
-            if (childMenu && childMenu.link.replace(/\/$/g, "") === cleanLink) {
-              result = menu;
-            }
-            return result;
-          }, result);
-        }
-
-        return result;
-      }, []);
+      const categoryList = findCategoryForLink(menus, cleanLink);
 
       const {
         name,
         link: categoryLink,
-        children: { nodes: subcategoryList } = {}
+        children: { nodes: subcategoryList = [] } = {}
       } = categoryList;
 
       setCategories(subcategoryList);
@@ -71,7 +67,6 @@ const CategoryNav = ({ link }) => {
 
   if (currentName) {
     const url = cleanUrl(currentLink);
-    const actualLink = getHref(url);
     return (
       <section className="sub-navigation">
         <div className="row heading">
@@ -79,13 +74,13 @@ const CategoryNav = ({ link }) => {
             <div className="pull-left">
               {currentLink && (
                 <h2>
-                  <Link as={url} href={actualLink}>
-                    <a
-                      dangerouslySetInnerHTML={{
-                        __html: currentName
-                      }}
-                    />
-                  </Link>
+                  <a
+                    href={url}
+                    aria-label={currentName.replace(/<[^>]*>/g, "")}
+                    dangerouslySetInnerHTML={{
+                      __html: currentName
+                    }}
+                  />
                 </h2>
               )}
             </div>

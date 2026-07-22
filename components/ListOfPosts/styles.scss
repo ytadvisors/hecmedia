@@ -289,8 +289,43 @@
       border-spacing: 12px;
     }
     .main-row {
+      display: block;
+
       .main-col {
-        //padding:10px;
+        display: block;
+        margin-bottom: 12px;
+        width: 100%;
+      }
+
+      .thumbnail-2-columns,
+      .thumbnail-3-columns {
+        height: auto;
+      }
+
+      .thumbnail-link,
+      .thumbnail-img {
+        height: auto;
+      }
+
+      .thumbnail-img {
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+      }
+
+      .no-spacing,
+      .no-spacing tbody,
+      .no-spacing tr,
+      .no-spacing td {
+        display: block;
+        width: 100%;
+      }
+
+      .no-spacing td:first-child {
+        padding: 12px;
+      }
+
+      .no-spacing td:last-child {
+        padding: 0 12px 12px !important;
       }
     }
     ul {

@@ -86,10 +86,12 @@ describe("NewsletterSignupForm", () => {
           resolveSubscribe = resolve;
         })
     );
+    const onSuccess = jest.fn();
     render(
       <NewsletterSignupForm
         onSubscribe={onSubscribe}
         captchaSiteKey="site-key"
+        onSuccess={onSuccess}
       />
     );
 
@@ -104,6 +106,7 @@ describe("NewsletterSignupForm", () => {
     resolveSubscribe({ ok: true, id: "mock-1" });
 
     expect(await screen.findByTestId("newsletter-success")).toBeInTheDocument();
+    expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 
   it("shows an error state when onSubscribe resolves not-ok", async () => {
