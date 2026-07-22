@@ -28,12 +28,12 @@ after its manifest contains zero routes and its compiled `pages/api` tree
 contains no files. A manifest-less directory containing any file, a malformed
 manifest, or non-empty API output fails before AWS authentication.
 
-The legacy packager also emits a separate image-optimizer Lambda whenever Next
-uses its default image loader, even though this application has no `next/image`
-imports. Staging sets `HECMEDIA_DISABLE_IMAGE_OPTIMIZER=true`, which selects the
-non-optimizing Akamai loader only for this build and prevents that unused Lambda
-from being packaged. Other builds keep Next's default loader, and the deploy
-script continues to reject any generated `image-lambda` before AWS access.
+The legacy packager emits a separate image-optimizer Lambda even when staging
+selects the non-optimizing Akamai loader. Staging sets
+`HECMEDIA_DISABLE_IMAGE_OPTIMIZER=true`; the deploy script discards that legacy
+bundle only when the flag is present and a recursive source scan confirms there
+are zero `next/image` imports. An unset flag or any future `next/image` usage
+fails before AWS access. Other builds keep Next's default loader.
 
 ## Least-privilege environment configuration
 

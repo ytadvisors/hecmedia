@@ -20,6 +20,8 @@ const fs = require("fs");
 const {
   build,
   discardEmptyApiLambdaBundle,
+  discardUnusedImageLambdaBundle,
+  sourceUsesNextImage,
   syncAssets,
   updateCloudFront
 } = require("./staging-deploy");
@@ -120,6 +122,52 @@ test("rejects compiled API files even when the manifest claims no routes", () =>
 
   expect(() => discardEmptyApiLambdaBundle()).toThrow("compiled API files");
   expect(fs.rmSync).not.toHaveBeenCalled();
+});
+
+test("discards the generated image bundle only for an explicitly disabled, unused optimizer", () => {
+  const original = process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
+  process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER = "true";
+  fs.existsSync.mockImplementation(file => file.endsWith("image-lambda"));
+  fs.readdirSync.mockReturnValue([]);
+
+  try {
+    discardUnusedImageLambdaBundle();
+  } finally {
+    if (original === undefined)
+      delete process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
+    else process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER = original;
+  }
+
+  expect(fs.rmSync).toHaveBeenCalledWith(
+    expect.stringMatching(/image-lambda$/),
+    { recursive: true, force: false }
+  );
+});
+
+test("rejects a generated image bundle unless the staging optimizer flag is set", () => {
+  const original = process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
+  delete process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
+  fs.existsSync.mockImplementation(file => file.endsWith("image-lambda"));
+
+  try {
+    expect(() => discardUnusedImageLambdaBundle()).toThrow(
+      "HECMEDIA_DISABLE_IMAGE_OPTIMIZER is not true"
+    );
+  } finally {
+    if (original === undefined)
+      delete process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
+    else process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER = original;
+  }
+  expect(fs.rmSync).not.toHaveBeenCalled();
+});
+
+test("detects next/image imports before discarding an image bundle", () => {
+  fs.readdirSync.mockReturnValueOnce([
+    { name: "page.js", isFile: () => true, isDirectory: () => false }
+  ]);
+  fs.readFileSync.mockReturnValue('import Image from "next/image";');
+
+  expect(sourceUsesNextImage("/repo")).toBe(true);
 });
 
 test("omits API routes only for a no-send staging build and restores them", async () => {
