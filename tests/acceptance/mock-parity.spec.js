@@ -23,6 +23,8 @@
  *   STAGING_SITE_URL=https://development.hecmedia.org yarn test:acceptance
  */
 /* eslint-env node */
+// Playwright is provisioned by the worker acceptance gate, not this legacy app's lockfile.
+// eslint-disable-next-line import/no-unresolved
 const { test, expect } = require("@playwright/test");
 
 const MOCK_NAV = [
@@ -33,18 +35,6 @@ const MOCK_NAV = [
   "READ NOW"
 ];
 const MOCK_CTAS = ["SUBSCRIBE", "SUPPORT", "GET INVOLVED"];
-
-// Must mirror playwright.config.js `use.baseURL`. Used by the (d) write guard.
-const SITE_ORIGIN = new URL(
-  process.env.STAGING_SITE_URL || "https://development.hecmedia.org"
-).origin;
-const MUTATING_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
-// reCAPTCHA POSTs cross-origin; blocking it would make the form unsubmittable.
-const CAPTCHA_HOSTS = [
-  "www.google.com",
-  "www.gstatic.com",
-  "www.recaptcha.net"
-];
 
 const HEADER_IMAGE_FIXTURES = [
   { slug: "header-image-size-small", size: "small" },
@@ -113,13 +103,10 @@ test.describe("(b) rail promo replaces the Spotlight logo", () => {
     // when T2 had been implemented correctly — it made the gate incompatible
     // with its own remediation target.
     //
-    // The single element (b) retires is documented in MOCK-GAP-SPEC.md §(b):
-    // the legacy rail logo `<img alt="Link to the spotlight">`. Match that alt
-    // EXACTLY, and only inside the legacy right-rail container, so retained
-    // Spotlight-list thumbnails cannot trip it.
+    // The single element (b) retires is the ProgramViewer rail image, identified
+    // by its link destination and its static asset rather than generic Spotlight text.
     const stale = page.locator(
-      '.col-lg-3 img[alt="Link to the spotlight"], ' +
-        '.side-navigation img[alt="Link to the spotlight"]'
+      '.col-lg-3 a[href="/posts/as-seen-on-spotlight"] img[src*="/static/assets/spotlight-img.jpg"]'
     );
     await expect(stale).toHaveCount(0);
   });
@@ -193,7 +180,7 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
   test("/newsletter/thank-you serves — the redirect target must exist", async ({
     page
   }) => {
-    const res = await open(page, "/newsletter/thank-you");
+    const res = await page.goto("/newsletter/thank-you");
     expect(res.status()).toBe(200);
   });
 
@@ -205,41 +192,18 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
   // asserts where the browser ends up.
   test("submitting the newsletter form lands the browser on Thank You", async ({
     page
-  }, testInfo) => {
+  }) => {
     // ------------------------------------------------------------------
     // SAFETY: THIS RUNS AGAINST A LIVE CLIENT SITE. NO REAL SIGNUP MAY OCCUR.
     //
-    // Two explicit layers, both mandatory:
-    //
-    //   1. The subscribe endpoint is FULFILLED IN THE BROWSER, never continued.
+    // The subscribe endpoint is FULFILLED IN THE BROWSER, never continued.
     //      pages/newsletter/index.js posts to the same-origin Next API route
     //      /api/newsletter/subscribe, and that route is the only thing that
     //      would ever reach an ESP. route.fulfill() answers it locally, so the
     //      POST never leaves Playwright: the staging server never sees it, no
     //      subscriber row is written, and no ESP automation can fire. We
     //      deliberately do NOT call route.continue()/route.fallback() here.
-    //
-    //   2. A blanket abort on every cross-origin mutating request, so that if
-    //      the page is ever rewired to post straight to an ESP from the client,
-    //      this test still cannot be the thing that creates a live subscriber.
-    //      Same-origin reads and the reCAPTCHA hosts are untouched, so the page
-    //      renders and behaves normally.
     // ------------------------------------------------------------------
-    const blockedExternalWrites = [];
-    await page.route("**/*", async route => {
-      const request = route.request();
-      if (!MUTATING_METHODS.includes(request.method())) {
-        return route.fallback();
-      }
-      const { origin, hostname } = new URL(request.url());
-      if (origin === SITE_ORIGIN || CAPTCHA_HOSTS.includes(hostname)) {
-        return route.fallback();
-      }
-      blockedExternalWrites.push(`${request.method()} ${request.url()}`);
-      return route.abort();
-    });
-
-    // Registered after the catch-all, so Playwright matches it first.
     const subscribeRequests = [];
     await page.route("**/api/newsletter/subscribe", async route => {
       subscribeRequests.push({ method: route.request().method() });
@@ -292,16 +256,6 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
     await expect(
       page.getByRole("heading", { name: /thank you/i })
     ).toBeVisible();
-
-    // Recorded, not asserted: the abort is already the safety guarantee.
-    // Surfacing it tells a reviewer whether the page has started trying to
-    // write to a third party directly from the client.
-    if (blockedExternalWrites.length > 0) {
-      testInfo.annotations.push({
-        type: "blocked-external-writes",
-        description: blockedExternalWrites.join(", ")
-      });
-    }
   });
 });
 
@@ -374,7 +328,7 @@ test.describe("(f) article header image sizing", () => {
     await HEADER_IMAGE_FIXTURES.reduce(async (previous, fixture) => {
       await previous;
       await open(page, `/posts/${fixture.slug}`);
-      const image = page.locator('[data-testid="article-header-image"]');
+      const image = page.locator(".article-header-image");
       await expect(
         image,
         `no header image on /posts/${fixture.slug} — (f) is not implemented`

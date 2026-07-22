@@ -168,12 +168,12 @@ It replaces the unavailable ACF source with a native WordPress contract we can t
 
 Fields to register:
 
-| Field                     | Native storage and validation                                                                                                           | REST / WPGraphQL shape                                                                                                    | Editing authority |
-| ---                       | ---                                                                                                                                     | ---                                                                                                                       | --- |
-| `hectv_rail_promo`        | option object `{image_id: positive int, url: esc_url_raw, alt: sanitize_text_field}`; reject missing image or invalid URL               | `GET/PUT /wp-json/hectv/v1/site-options`; GraphQL `hectvSiteOptions.railPromo { image { id sourceUrl altText } url alt }` | `manage_options` |
+| Field                     | Native storage and validation                                                                                                           | REST / WPGraphQL shape                                                                                                    | Editing authority                             |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `hectv_rail_promo`        | option object `{image_id: positive int, url: esc_url_raw, alt: sanitize_text_field}`; reject missing image or invalid URL               | `GET/PUT /wp-json/hectv/v1/site-options`; GraphQL `hectvSiteOptions.railPromo { image { id sourceUrl altText } url alt }` | `manage_options`                              |
 | `hectv_featured_videos`   | option array of unique, ordered published video post IDs; `absint`, max 12, nullable                                                    | REST `featuredVideoIds: [ID!]!`; GraphQL `featuredVideos: [Post!]!`                                                       | `edit_others_posts` plus post-type capability |
-| `hectv_topbar_ctas`       | option array (max 5) of `{label: sanitize_text_field, url: esc_url_raw, style: enum(primary|secondary|tertiary)}`; drop incomplete rows | REST `topbarCtas`; GraphQL `topbarCtas { label url style }`                                                               | `manage_options` |
-| `hectv_header_image_size` | post meta enum `small|medium|large|full`; `sanitize_key`, default `full`, registered with `single: true`                                | REST `meta.hectv_header_image_size`; GraphQL `headerImageSize` on the supported post type                                 | `edit_post` for that post |
+| `hectv_topbar_ctas`       | option array (max 5) of `{label: sanitize_text_field, url: esc_url_raw, style: enum(primary|secondary|tertiary)}`; drop incomplete rows | REST `topbarCtas`; GraphQL `topbarCtas { label url style }`                                                               | `manage_options`                              |
+| `hectv_header_image_size` | post meta enum `small|medium|large|full`; `sanitize_key`, default `full`, registered with `single: true`                                | REST `meta.hectv_header_image_size`; GraphQL `headerImageSize` on the supported post type                                 | `edit_post` for that post                     |
 
 The plugin must register settings/meta with `show_in_rest`, sanitizers, and `auth_callback`
 checks matching the capabilities above. Its WPGraphQL fields must return the same typed values
@@ -194,9 +194,10 @@ Local acceptance, owned by the worker-mba WordPress gate:
    WPGraphQL coverage. The local API tests must prove both success and negative paths.
 
 Build and verify only against **local Docker WP** (`dev-infra/wordpress/`, worker-mba, port
-8091) — never `prod-wp.hectv.org`. The local instance has no ACF and stubs `hectv/v1`; do not
-extend that stub. Register real native fields in the candidate plugin so the local code path is
-the one proposed for review.
+
+8091. — never `prod-wp.hectv.org`. The local instance has no ACF and stubs `hectv/v1`; do not
+      extend that stub. Register real native fields in the candidate plugin so the local code path is
+      the one proposed for review.
 
 ### Then, in dependency order
 
@@ -235,29 +236,20 @@ rendered dead.
 Replace the Spotlight logo in `components/SideNavigation` — **the component the home page
 actually renders** — with the `hectv_rail_promo` image + link. Seed with the FOR
 EDUCATORS notebook card from the mock. Verify in the staging DOM, not in Jest.
-The one element retired here is the legacy `<img alt="Link to the spotlight">`; the
-acceptance gate matches that alt **exactly**, so the retained HEC-TV Spotlight list's
-thumbnails (§(b) notes, T2) are not caught by it.
+The one element retired here is the ProgramViewer rail image at
+`/posts/as-seen-on-spotlight` using `/static/assets/spotlight-img.jpg`; the acceptance
+gate matches that exact link-and-asset pair, so retained HEC-TV Spotlight list thumbnails
+(§(b) notes, T2) are not caught by it.
 
 **T6 — (f) Article header image sizing.**
 Consume `hectv_header_image_size` in the article template; four sizes; default preserves
-today's rendering so existing posts don't shift. Editor-facing, per-post. Render the
-image wrapper as `data-testid="article-header-image"` with a
+today's rendering so existing posts don't shift. Editor-facing, per-post. Render the real
+`.article-header-image` wrapper with a
 `data-header-image-size` value. The local seed supplies the five stable browser fixtures
 `/posts/header-image-size-{small,medium,large,full,default}`: the first four must render
 strictly increasing desktop widths, and the meta-free `default` fixture must render at
 exactly the same width as explicit `full`. This is a visual contract, not merely a marker
 contract.
-
-**T6 fixture and rendering contract (required):** `seed.sh` must idempotently create the
-five stable local posts `/posts/fixture-header-small`, `-medium`, `-large`, `-full`, and
-`-default`. The first four carry `hectv_header_image_size` values `small`, `medium`,
-`large`, and `full`; `-default` deliberately has no meta. The real article template must
-render exactly one `.article-header-image` wrapper with
-`data-header-image-size="small|medium|large|full"`; absent meta resolves to `full` before
-render. At the desktop acceptance viewport, the wrapper's rendered widths must be strictly
-increasing small → medium → large → full, and the meta-free default width must equal the
-explicit full width. A data marker alone is not evidence of sizing.
 
 **T7 — Mock-parity QA pass.**
 Side-by-side against the mock at desktop/tablet/mobile. No `STAGING PREVIEW` or

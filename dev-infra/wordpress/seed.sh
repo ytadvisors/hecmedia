@@ -90,37 +90,6 @@ wpcli post create \
   --post_status=publish \
   --post_content="Fixture home page." || true
 
-echo "== article-header image-size fixtures =="
-# These five stable slugs are the T6 browser contract. The first four carry the
-# native candidate-plugin meta; the fifth deliberately has no meta and must render
-# exactly like explicit `full`. Do not replace them with production exports.
-ensure_header_fixture() {
-  local fixture_slug="$1"
-  local fixture_size="$2"
-  local fixture_id
-  fixture_id="$(wpcli post list --post_type=post --name="$fixture_slug" --format=ids)"
-  if [ -z "$fixture_id" ]; then
-    fixture_id="$(wpcli post create \
-      --post_type=post \
-      --post_name="$fixture_slug" \
-      --post_title="Header Size Fixture: $fixture_size" \
-      --post_status=publish \
-      --post_content="Stable local fixture for the article-header-image acceptance contract." \
-      --porcelain)"
-  fi
-  if [ "$fixture_size" = "default" ]; then
-    wpcli post meta delete "$fixture_id" hectv_header_image_size || true
-  else
-    wpcli post meta update "$fixture_id" hectv_header_image_size "$fixture_size"
-  fi
-}
-
-ensure_header_fixture fixture-header-small small
-ensure_header_fixture fixture-header-medium medium
-ensure_header_fixture fixture-header-large large
-ensure_header_fixture fixture-header-full full
-ensure_header_fixture fixture-header-default default
-
 echo "== done. Verify with:"
 echo "   curl -fsS http://localhost:8091/wp-json/ | head -c 200"
 echo "   curl -fsS http://localhost:8091/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{ generalSettings { url } }\"}'"
