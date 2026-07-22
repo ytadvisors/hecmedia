@@ -25,7 +25,13 @@
 /* eslint-env node */
 const { test, expect } = require("@playwright/test");
 
-const MOCK_NAV = ["ABOUT", "PROGRAMS", "PRODUCTION SERVICES", "WATCH NOW", "READ NOW"];
+const MOCK_NAV = [
+  "ABOUT",
+  "PROGRAMS",
+  "PRODUCTION SERVICES",
+  "WATCH NOW",
+  "READ NOW"
+];
 const MOCK_CTAS = ["SUBSCRIBE", "SUPPORT", "GET INVOLVED"];
 const HEADER_IMAGE_FIXTURES = [
   { slug: "header-image-size-small", size: "small" },
@@ -79,7 +85,9 @@ test.describe("(a) sticky header", () => {
 });
 
 test.describe("(b) rail promo replaces the Spotlight logo", () => {
-  test("the old Spotlight logo is gone from the right rail", async ({ page }) => {
+  test("the old Spotlight logo is gone from the right rail", async ({
+    page
+  }) => {
     await open(page, "/");
     // This is the one retired logo from the old ProgramViewer rail. Do not
     // match every image mentioning "spotlight": the retained HEC-TV Spotlight
@@ -90,9 +98,13 @@ test.describe("(b) rail promo replaces the Spotlight logo", () => {
     await expect(stale).toHaveCount(0);
   });
 
-  test("a promo card renders with both an image and a link", async ({ page }) => {
+  test("a promo card renders with both an image and a link", async ({
+    page
+  }) => {
     await open(page, "/");
-    const promo = page.locator(".col-lg-3 a.rail-promo, .col-lg-3 a.educators-card");
+    const promo = page.locator(
+      ".col-lg-3 a.rail-promo, .col-lg-3 a.educators-card"
+    );
     await expect(promo).toHaveCount(1);
     await expect(promo).toHaveAttribute("href", /.+/);
     await expect(promo.locator("img")).toHaveCount(1);
@@ -100,7 +112,9 @@ test.describe("(b) rail promo replaces the Spotlight logo", () => {
 });
 
 test.describe("(c) Trending Now replaces the rail newsletter", () => {
-  test("the newsletter signup is no longer in the right rail", async ({ page }) => {
+  test("the newsletter signup is no longer in the right rail", async ({
+    page
+  }) => {
     await open(page, "/");
     // "Replace" means the old one is gone. It lives on /newsletter now (req d).
     await expect(page.locator(".col-lg-3 form")).toHaveCount(0);
@@ -114,24 +128,31 @@ test.describe("(c) Trending Now replaces the rail newsletter", () => {
     expect(await trending.locator("img").count()).toBeGreaterThan(0);
   });
 
-  test("Trending Now sits above the retained HEC-TV Spotlight list", async ({ page }) => {
+  test("Trending Now sits above the retained HEC-TV Spotlight list", async ({
+    page
+  }) => {
     await open(page, "/");
     const order = await page.evaluate(() => {
+      const all = [...document.querySelectorAll("*")];
       const trending = document.querySelector("[class*=trending]");
-      const spotlight = [...document.querySelectorAll("*")].find(
-        el => el.children.length === 0 && /HEC-TV SPOTLIGHT/i.test(el.textContent || "")
+      const spotlight = all.find(
+        el =>
+          el.children.length === 0 &&
+          /HEC-TV SPOTLIGHT/i.test(el.textContent || "")
       );
-      if (!trending || !spotlight) return { trending: !!trending, spotlight: !!spotlight };
+      if (!trending || !spotlight)
+        return { trending: !!trending, spotlight: !!spotlight };
       return {
         trending: true,
         spotlight: true,
-        trendingFirst: !!(
-          trending.compareDocumentPosition(spotlight) &
-          Node.DOCUMENT_POSITION_FOLLOWING
-        )
+        trendingFirst: all.indexOf(trending) < all.indexOf(spotlight)
       };
     });
-    expect(order).toEqual({ trending: true, spotlight: true, trendingFirst: true });
+    expect(order).toEqual({
+      trending: true,
+      spotlight: true,
+      trendingFirst: true
+    });
   });
 });
 
@@ -143,12 +164,16 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
 
   // The regression that shipped: Jest-green, Lambda@Edge-404. route-list.json's
   // catch-all is single-segment, so nothing matches /newsletter/thank-you.
-  test("/newsletter/thank-you serves — the redirect target must exist", async ({ page }) => {
+  test("/newsletter/thank-you serves — the redirect target must exist", async ({
+    page
+  }) => {
     const res = await open(page, "/newsletter/thank-you");
     expect(res.status()).toBe(200);
   });
 
-  test("a successful newsletter submission reaches the Thank You page", async ({ page }) => {
+  test("a successful newsletter submission reaches the Thank You page", async ({
+    page
+  }) => {
     // Do not send a real subscription from staging. The browser still exercises
     // the page's form handler and client-side redirect; only its API response is
     // safely intercepted.
@@ -166,7 +191,9 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
     await expect(form).toBeVisible();
     await page.locator("#newsletter-first-name").fill("Acceptance");
     await page.locator("#newsletter-last-name").fill("Test");
-    await page.locator("#newsletter-email").fill("acceptance-test@example.invalid");
+    await page
+      .locator("#newsletter-email")
+      .fill("acceptance-test@example.invalid");
     await page.locator("#newsletter-consent").check();
 
     // Staging must use a non-production reCAPTCHA test key. The widget remains
@@ -177,7 +204,9 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
 
     await expect.poll(() => subscribeCalls).toBe(1);
     await expect(page).toHaveURL(/\/newsletter\/thank-you\/?$/);
-    await expect(page.getByRole("heading", { name: "Thank You" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Thank You" })
+    ).toBeVisible();
   });
 });
 
@@ -189,39 +218,59 @@ test.describe("(e) navigation sub-dropdowns", () => {
     });
     expect(await parent.count()).toBeGreaterThan(0);
     await parent.first().hover();
-    await expect(parent.first().locator(".dropdown-menu, ul").first()).toBeVisible();
+    await expect(
+      parent
+        .first()
+        .locator(".dropdown-menu, ul")
+        .first()
+    ).toBeVisible();
   });
 
-  test("top-level labels come from the CMS menu, matching the mock", async ({ page }) => {
+  test("top-level labels come from the CMS menu, matching the mock", async ({
+    page
+  }) => {
     await open(page, "/");
     const labels = await page.$$eval("#main-nav .nav > li", items =>
-      items.map(li => (li.textContent || "").trim().split("\n")[0].toUpperCase())
+      items.map(li =>
+        (li.textContent || "")
+          .trim()
+          .split("\n")[0]
+          .toUpperCase()
+      )
     );
-    for (const expected of MOCK_NAV) expect(labels).toContain(expected);
+    MOCK_NAV.forEach(expected => expect(labels).toContain(expected));
   });
 });
 
 test.describe("(f) article header image sizing", () => {
-  test("all four configured sizes visibly differ and the default preserves full", async (
-    { page },
-    testInfo
-  ) => {
+  test("all four configured sizes visibly differ and the default preserves full", async ({
+    page
+  }, testInfo) => {
     // The width contract is evaluated at desktop size; responsive CSS may
     // deliberately collapse these widths on a narrow viewport.
-    test.skip(testInfo.project.name !== "desktop", "desktop visual sizing contract");
+    test.skip(
+      testInfo.project.name !== "desktop",
+      "desktop visual sizing contract"
+    );
 
     const measurements = {};
-    for (const fixture of HEADER_IMAGE_FIXTURES) {
+    // Sequential by necessity: every fixture navigates the same shared `page`.
+    // A reduce-chain (not a for-loop) keeps that serial order lint-clean.
+    await HEADER_IMAGE_FIXTURES.reduce(async (previous, fixture) => {
+      await previous;
       await open(page, `/posts/${fixture.slug}`);
       const image = page.locator('[data-testid="article-header-image"]');
       await expect(image).toHaveCount(1);
-      await expect(image).toHaveAttribute("data-header-image-size", fixture.size);
+      await expect(image).toHaveAttribute(
+        "data-header-image-size",
+        fixture.size
+      );
       measurements[fixture.slug] = await image.evaluate(element => {
         const { width } = element.getBoundingClientRect();
         return width;
       });
       expect(measurements[fixture.slug]).toBeGreaterThan(0);
-    }
+    }, Promise.resolve());
 
     expect(measurements["header-image-size-small"]).toBeLessThan(
       measurements["header-image-size-medium"]
@@ -244,12 +293,14 @@ test.describe("(g) customizable top-bar buttons", () => {
     const labels = await page.$$eval(".top-bar-actions a, .top-bar-cta", els =>
       els.map(el => (el.textContent || "").trim().toUpperCase())
     );
-    for (const expected of MOCK_CTAS) {
+    MOCK_CTAS.forEach(expected => {
       expect(labels.some(l => l.includes(expected))).toBe(true);
-    }
+    });
   });
 
-  test("no dead CTAs — every one is a real link with an href", async ({ page }) => {
+  test("no dead CTAs — every one is a real link with an href", async ({
+    page
+  }) => {
     await open(page, "/");
     await expect(page.locator(".top-bar-actions button")).toHaveCount(0);
     await expect(page.locator(".top-bar-actions a:not([href])")).toHaveCount(0);
@@ -257,7 +308,9 @@ test.describe("(g) customizable top-bar buttons", () => {
 });
 
 test.describe("no staging scaffolding is visible to the client", () => {
-  test("no STAGING PREVIEW / STAGING ONLY badges anywhere on the home page", async ({ page }) => {
+  test("no STAGING PREVIEW / STAGING ONLY badges anywhere on the home page", async ({
+    page
+  }) => {
     await open(page, "/");
     const body = (await page.locator("body").innerText()).toUpperCase();
     expect(body).not.toContain("STAGING PREVIEW");
