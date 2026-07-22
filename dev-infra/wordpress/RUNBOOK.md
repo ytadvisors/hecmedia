@@ -10,7 +10,7 @@ that host only — nothing is exposed to the wider network.
 | Surface                                                                                | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | WP REST v2 (`/wp-json/wp/v2/*`)                                                        | Full — core WordPress                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| WPGraphQL (`/graphql`)                                                                 | Core schema + posts/pages/menus. **Does not** include the ACF-registered custom fields production uses (`postDetails`, `magazines`, `pageTemplate`, `taxQuery`, etc.) — that field-registration code is custom WP-side PHP that isn't checked into this repo or any repo available in this environment, so it couldn't be audited or ported. `tests/e2e/graphql/home-layout.e2e.test.js`'s `HomePageInfo` case passes against this instance; the `PageLayout`/`PageTemplate` cases fail on the missing custom fields — expected, not a bug in this harness. |
+| WPGraphQL (`/graphql`)                                                                 | Core schema only (posts/pages/menus/generalSettings). **Does not** include the ACF-registered custom fields production uses (`postDetails`, `requiredPosts`, `feedDesign`, `magazines`, `pageTemplate`, `shouldOutputInFlatList`, etc.) — that field-registration code is custom WP-side PHP that isn't checked into this repo or any repo available in this environment, so it couldn't be audited or ported. All four `tests/e2e/graphql/*.e2e.test.js` suites query these fields and fail against this instance for that reason — expected, not a bug in this harness, but be aware **no** app-level GraphQL flow is exercisable here yet, only raw core-schema queries. |
 | `wp-api-menus` v2 (`/wp-json/wp-api-menus/v2/menus`)                                   | Full — real plugin, installed by `seed.sh`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `hectv/v1` (`livevideos/live`, `token/email`, `token/thirdparty`, `users/me`, `users`) | **Local stub only** (`mu-plugins/hectv-v1-stub.php`). Same for the same reason as the GraphQL gap above: this is custom WP-side plugin code with no source available to this environment. The stub returns well-formed fixture JSON at the correct URLs so the app doesn't 404, but implements no real auth/video logic. Do not trust it for anything auth- or video-related.                                                                                                                                                                               |
 
@@ -58,6 +58,28 @@ curl -fsS http://localhost:8091/wp-json/hectv/v1/livevideos/live
 wp-admin: `http://localhost:8091/wp-admin` — user `devadmin` / pass `devadmin`
 (local-only fixture credentials, not real secrets).
 
+### Verified app data flow
+
+`tests/e2e/rest/posts.e2e.test.js` exercises the real `store/api/PostApi.js`
+module the Next.js app uses, against this instance, via an SSH tunnel
+(`ssh -L 8091:localhost:8091 worker-mba`):
+
+```bash
+export GATSBY_WP_HOST=http://localhost:8091 WP_HOST=http://localhost:8091
+yarn test:e2e -- tests/e2e/rest/posts.e2e.test.js
+```
+
+`getAllPosts`, `getPostBySlug`, `getComments`, and `getArticles` pass — a real
+app code path reading real (fixture) data end-to-end through this harness.
+`getCategory` is skipped on a pre-existing app↔API contract break confirmed
+against production (documented in that test file, dated 2026-07-16 —
+`categoryList` route doesn't exist anywhere, not a harness gap). `getLiveVideos`
+fails here because `mu-plugins/hectv-v1-stub.php`'s fixture response shape
+(`{live, items, _stub}`) doesn't match what `PostApi.getLiveVideos()` expects
+(`res.data` as a bare array) — a stub-fidelity gap in this harness, not a
+production bug; fix the stub shape if this flow needs to be exercised locally.
+No GraphQL app flow is exercisable yet — see the WPGraphQL row above.
+
 ## Reset
 
 ```bash
@@ -79,7 +101,7 @@ colima stop                                     # only if nothing else on worker
 Copy `.env.local.example` (repo root) to `.env.local`, or export directly:
 
 ```bash
-export GATSBY_WP_HOST=http://localhost:8091      # or http://192.168.1.6:8091 from another machine on the LAN
+export GATSBY_WP_HOST=http://localhost:8091
 export WP_HOST=http://localhost:8091
 export APOLLO_CLIENT_URI=http://localhost:8091/graphql
 yarn dev
@@ -93,10 +115,14 @@ independently refuses to allow writes against `prod-wp.hectv.org` /
 process — a local override can never accidentally make a production target
 writable.
 
-From a machine other than worker-mba (e.g. this repo's usual dev laptop),
-either run the app there and point `GATSBY_WP_HOST`/`APOLLO_CLIENT_URI` at
-`http://192.168.1.6:8091` directly (LAN-reachable, still not exposed beyond
-the local network), or tunnel: `ssh -L 8091:localhost:8091 worker-mba`.
+From a machine other than worker-mba (e.g. this repo's usual dev laptop): the
+compose file binds every port to `127.0.0.1` on worker-mba only (`docker port
+hecmedia-dev-wp` confirms `80/tcp -> 127.0.0.1:8091`, not `0.0.0.0`), so
+`http://192.168.1.6:8091` is **not** reachable directly, even from the same
+LAN — that's intentional, not a bug, per the "Production safety" section
+below. Use an SSH tunnel instead: `ssh -L 8091:localhost:8091 worker-mba`,
+then point `GATSBY_WP_HOST`/`APOLLO_CLIENT_URI` at `http://localhost:8091` as
+above. Verified working 2026-07-22.
 
 ## Deploying this config to worker-mba
 
