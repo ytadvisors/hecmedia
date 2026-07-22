@@ -40,6 +40,7 @@ const REPO_ROOT = path.join(__dirname, "..");
 const BUILD_DIR = path.join(REPO_ROOT, ".serverless_nextjs");
 const ASSETS_DIR = path.join(BUILD_DIR, "assets");
 const DEFAULT_LAMBDA_DIR = path.join(BUILD_DIR, "default-lambda");
+const API_LAMBDA_DIR = path.join(BUILD_DIR, "api-lambda");
 const API_PAGES_DIR = path.join(REPO_ROOT, "pages", "api");
 const STAGED_API_PAGES_DIR = path.join(
   REPO_ROOT,
@@ -51,6 +52,67 @@ const CLOUDFRONT_CONFIG_PATH = path.join(BUILD_DIR, "cloudfront-config.json");
 function run(cmd, args, opts = {}) {
   console.log(`+ ${cmd} ${args.join(" ")}`);
   return execFileSync(cmd, args, { encoding: "utf8", ...opts });
+}
+
+function directoryHasFiles(directory) {
+  if (!fs.existsSync(directory)) return false;
+  return fs.readdirSync(directory, { withFileTypes: true }).some(entry => {
+    const entryPath = path.join(directory, entry.name);
+    return (
+      entry.isFile() || (entry.isDirectory() && directoryHasFiles(entryPath))
+    );
+  });
+}
+
+function discardEmptyApiLambdaBundle() {
+  if (!fs.existsSync(API_LAMBDA_DIR)) return;
+
+  const manifestPath = path.join(API_LAMBDA_DIR, "manifest.json");
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  } catch (err) {
+    throw new Error(
+      `Generated api-lambda manifest is missing or invalid (${err.message}). ` +
+        "Refusing to assume the bundle is empty."
+    );
+  }
+
+  const dynamic = manifest && manifest.apis && manifest.apis.dynamic;
+  const nonDynamic = manifest && manifest.apis && manifest.apis.nonDynamic;
+  if (
+    !dynamic ||
+    Array.isArray(dynamic) ||
+    typeof dynamic !== "object" ||
+    !nonDynamic ||
+    Array.isArray(nonDynamic) ||
+    typeof nonDynamic !== "object"
+  ) {
+    throw new Error(
+      "Generated api-lambda manifest has an unexpected shape. Refusing to discard it."
+    );
+  }
+
+  const routes = [...Object.keys(dynamic), ...Object.keys(nonDynamic)];
+  if (routes.length > 0) {
+    throw new Error(
+      `Generated api-lambda contains API routes: ${routes.join(", ")}. ` +
+        "The staging IAM policy deliberately cannot deploy an API Lambda."
+    );
+  }
+
+  const compiledApiPages = path.join(API_LAMBDA_DIR, "pages", "api");
+  if (directoryHasFiles(compiledApiPages)) {
+    throw new Error(
+      "Generated api-lambda contains compiled API files despite an empty manifest. " +
+        "Refusing to discard it."
+    );
+  }
+
+  fs.rmSync(API_LAMBDA_DIR, { recursive: true, force: false });
+  console.log(
+    "Discarded generated api-lambda after verifying it has zero API routes."
+  );
 }
 
 async function build() {
@@ -100,6 +162,8 @@ async function build() {
         "sls-next output layout may have changed; do not guess at new paths."
     );
   }
+
+  discardEmptyApiLambdaBundle();
 
   // The granted role has permission to update exactly one Lambda@Edge
   // function. If the no-send exclusion regresses or the app needs image
@@ -301,4 +365,9 @@ if (require.main === module) {
   });
 }
 
-module.exports = { build, syncAssets, updateCloudFront };
+module.exports = {
+  build,
+  discardEmptyApiLambdaBundle,
+  syncAssets,
+  updateCloudFront
+};

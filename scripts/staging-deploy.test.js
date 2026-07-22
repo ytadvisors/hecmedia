@@ -1,6 +1,8 @@
 jest.mock("child_process", () => ({ execFileSync: jest.fn() }));
 jest.mock("fs", () => ({
   writeFileSync: jest.fn(),
+  readFileSync: jest.fn(),
+  readdirSync: jest.fn(),
   existsSync: jest.fn(),
   rmSync: jest.fn(),
   renameSync: jest.fn()
@@ -15,7 +17,12 @@ const path = require("path");
 const realFs = jest.requireActual("fs");
 
 const fs = require("fs");
-const { build, syncAssets, updateCloudFront } = require("./staging-deploy");
+const {
+  build,
+  discardEmptyApiLambdaBundle,
+  syncAssets,
+  updateCloudFront
+} = require("./staging-deploy");
 
 const lambdaArn =
   "arn:aws:lambda:us-east-1:123456789012:function:mf64oua-5ao6wt";
@@ -32,7 +39,62 @@ const distributionConfig = {
 beforeEach(() => {
   execFileSync.mockReset();
   fs.existsSync.mockReset();
+  fs.readFileSync.mockReset();
+  fs.readdirSync.mockReset();
   fs.renameSync.mockReset();
+  fs.rmSync.mockReset();
+});
+
+function mockApiBundle(manifest, compiledEntries = []) {
+  fs.existsSync.mockImplementation(
+    file =>
+      file.endsWith("api-lambda") ||
+      file.endsWith("api-lambda/manifest.json") ||
+      file.endsWith("api-lambda/pages/api")
+  );
+  fs.readFileSync.mockReturnValue(JSON.stringify(manifest));
+  fs.readdirSync.mockReturnValue(compiledEntries);
+}
+
+test("discards a generated API bundle only when its manifest and pages are empty", () => {
+  mockApiBundle({ apis: { dynamic: {}, nonDynamic: {} } });
+
+  discardEmptyApiLambdaBundle();
+
+  expect(fs.rmSync).toHaveBeenCalledWith(expect.stringMatching(/api-lambda$/), {
+    recursive: true,
+    force: false
+  });
+});
+
+test.each([
+  [{ apis: { dynamic: { "/api/[id]": {} }, nonDynamic: {} } }, "/api/[id]"],
+  [
+    { apis: { dynamic: {}, nonDynamic: { "/api/newsletter": {} } } },
+    "/api/newsletter"
+  ]
+])("rejects a generated API bundle containing routes", (manifest, route) => {
+  mockApiBundle(manifest);
+
+  expect(() => discardEmptyApiLambdaBundle()).toThrow(route);
+  expect(fs.rmSync).not.toHaveBeenCalled();
+});
+
+test("rejects a missing or malformed API manifest", () => {
+  fs.existsSync.mockReturnValue(true);
+  fs.readFileSync.mockReturnValue("not-json");
+
+  expect(() => discardEmptyApiLambdaBundle()).toThrow("missing or invalid");
+  expect(fs.rmSync).not.toHaveBeenCalled();
+});
+
+test("rejects compiled API files even when the manifest claims no routes", () => {
+  mockApiBundle({ apis: { dynamic: {}, nonDynamic: {} } }, [
+    { name: "newsletter.js", isFile: () => true, isDirectory: () => false }
+  ]);
+
+  expect(() => discardEmptyApiLambdaBundle()).toThrow("compiled API files");
+  expect(fs.rmSync).not.toHaveBeenCalled();
 });
 
 test("omits API routes only for a no-send staging build and restores them", async () => {

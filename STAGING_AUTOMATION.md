@@ -22,6 +22,10 @@ Because forms are forced into no-send mode, the staging package temporarily
 omits `pages/api` while building and restores it immediately afterward. This
 keeps the deployment on the existing single Lambda@Edge function; send-enabled
 and production builds retain the API routes.
+The legacy packager still emits an `api-lambda` directory in this mode. The
+deploy script discards it only after its manifest contains zero routes and its
+compiled `pages/api` tree contains no files; missing, malformed, or non-empty
+output fails before AWS authentication.
 
 ## Least-privilege environment configuration
 
