@@ -168,8 +168,6 @@ It replaces the unavailable ACF source with a native WordPress contract we can t
 
 Fields to register:
 
-| Field                     | Type                                                                                                                                    | Serves                                                                                                                    |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | Field                     | Native storage and validation                                                                                                           | REST / WPGraphQL shape                                                                                                    | Editing authority |
 | ---                       | ---                                                                                                                                     | ---                                                                                                                       | --- |
 | `hectv_rail_promo`        | option object `{image_id: positive int, url: esc_url_raw, alt: sanitize_text_field}`; reject missing image or invalid URL               | `GET/PUT /wp-json/hectv/v1/site-options`; GraphQL `hectvSiteOptions.railPromo { image { id sourceUrl altText } url alt }` | `manage_options` |
@@ -196,10 +194,9 @@ Local acceptance, owned by the worker-mba WordPress gate:
    WPGraphQL coverage. The local API tests must prove both success and negative paths.
 
 Build and verify only against **local Docker WP** (`dev-infra/wordpress/`, worker-mba, port
-
-8091. — never `prod-wp.hectv.org`. The local instance has no ACF and stubs `hectv/v1`; do not
-      extend that stub. Register real native fields in the candidate plugin so the local code path is
-      the one proposed for review.
+8091) — never `prod-wp.hectv.org`. The local instance has no ACF and stubs `hectv/v1`; do not
+extend that stub. Register real native fields in the candidate plugin so the local code path is
+the one proposed for review.
 
 ### Then, in dependency order
 
@@ -234,6 +231,9 @@ rendered dead.
 Replace the Spotlight logo in `components/SideNavigation` — **the component the home page
 actually renders** — with the `hectv_rail_promo` image + link. Seed with the FOR
 EDUCATORS notebook card from the mock. Verify in the staging DOM, not in Jest.
+The one element retired here is the legacy `<img alt="Link to the spotlight">`; the
+acceptance gate matches that alt **exactly**, so the retained HEC-TV Spotlight list's
+thumbnails (§(b) notes, T2) are not caught by it.
 
 **T6 — (f) Article header image sizing.**
 Consume `hectv_header_image_size` in the article template; four sizes; default preserves

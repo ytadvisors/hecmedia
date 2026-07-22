@@ -33,6 +33,19 @@ const MOCK_NAV = [
   "READ NOW"
 ];
 const MOCK_CTAS = ["SUBSCRIBE", "SUPPORT", "GET INVOLVED"];
+
+// Must mirror playwright.config.js `use.baseURL`. Used by the (d) write guard.
+const SITE_ORIGIN = new URL(
+  process.env.STAGING_SITE_URL || "https://development.hecmedia.org"
+).origin;
+const MUTATING_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
+// reCAPTCHA POSTs cross-origin; blocking it would make the form unsubmittable.
+const CAPTCHA_HOSTS = [
+  "www.google.com",
+  "www.gstatic.com",
+  "www.recaptcha.net"
+];
+
 const HEADER_IMAGE_FIXTURES = [
   { slug: "header-image-size-small", size: "small" },
   { slug: "header-image-size-medium", size: "medium" },
@@ -89,11 +102,24 @@ test.describe("(b) rail promo replaces the Spotlight logo", () => {
     page
   }) => {
     await open(page, "/");
-    // This is the one retired logo from the old ProgramViewer rail. Do not
-    // match every image mentioning "spotlight": the retained HEC-TV Spotlight
-    // list is explicitly required by (c) and may legitimately contain those.
+    // WHY THIS SELECTOR IS EXACT, NOT A SUBSTRING MATCH.
+    //
+    // It previously read
+    //   '.col-lg-3 img[alt*="spotlight" i], .col-lg-3 img[src*="spotlight" i]'
+    // which is wrong on the merits. The mock RETAINS a separate "HEC-TV
+    // SPOTLIGHT" list below Trending Now (see §(b) notes and T2), and that
+    // list's legitimate post thumbnails can carry "spotlight" in their alt text
+    // or in their CDN src. The broad matcher would therefore fail (b) precisely
+    // when T2 had been implemented correctly — it made the gate incompatible
+    // with its own remediation target.
+    //
+    // The single element (b) retires is documented in MOCK-GAP-SPEC.md §(b):
+    // the legacy rail logo `<img alt="Link to the spotlight">`. Match that alt
+    // EXACTLY, and only inside the legacy right-rail container, so retained
+    // Spotlight-list thumbnails cannot trip it.
     const stale = page.locator(
-      '.side-navigation a[href="/posts/as-seen-on-spotlight"] > img[src="/static/assets/spotlight-img.jpg"]'
+      '.col-lg-3 img[alt="Link to the spotlight"], ' +
+        '.side-navigation img[alt="Link to the spotlight"]'
     );
     await expect(stale).toHaveCount(0);
   });
@@ -171,42 +197,111 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
     expect(res.status()).toBe(200);
   });
 
-  test("a successful newsletter submission reaches the Thank You page", async ({
+  // The requirement is a REDIRECT, and a redirect is only proven by performing
+  // the navigation that is supposed to cause it. Visiting /newsletter and
+  // /newsletter/thank-you independently still passes when the form posts
+  // nowhere, posts to the wrong route, or never redirects — which is exactly
+  // the class of bug that shipped here. So this test submits the real form and
+  // asserts where the browser ends up.
+  test("submitting the newsletter form lands the browser on Thank You", async ({
     page
-  }) => {
-    // Do not send a real subscription from staging. The browser still exercises
-    // the page's form handler and client-side redirect; only its API response is
-    // safely intercepted.
-    let subscribeCalls = 0;
+  }, testInfo) => {
+    // ------------------------------------------------------------------
+    // SAFETY: THIS RUNS AGAINST A LIVE CLIENT SITE. NO REAL SIGNUP MAY OCCUR.
+    //
+    // Two explicit layers, both mandatory:
+    //
+    //   1. The subscribe endpoint is FULFILLED IN THE BROWSER, never continued.
+    //      pages/newsletter/index.js posts to the same-origin Next API route
+    //      /api/newsletter/subscribe, and that route is the only thing that
+    //      would ever reach an ESP. route.fulfill() answers it locally, so the
+    //      POST never leaves Playwright: the staging server never sees it, no
+    //      subscriber row is written, and no ESP automation can fire. We
+    //      deliberately do NOT call route.continue()/route.fallback() here.
+    //
+    //   2. A blanket abort on every cross-origin mutating request, so that if
+    //      the page is ever rewired to post straight to an ESP from the client,
+    //      this test still cannot be the thing that creates a live subscriber.
+    //      Same-origin reads and the reCAPTCHA hosts are untouched, so the page
+    //      renders and behaves normally.
+    // ------------------------------------------------------------------
+    const blockedExternalWrites = [];
+    await page.route("**/*", async route => {
+      const request = route.request();
+      if (!MUTATING_METHODS.includes(request.method())) {
+        return route.fallback();
+      }
+      const { origin, hostname } = new URL(request.url());
+      if (origin === SITE_ORIGIN || CAPTCHA_HOSTS.includes(hostname)) {
+        return route.fallback();
+      }
+      blockedExternalWrites.push(`${request.method()} ${request.url()}`);
+      return route.abort();
+    });
+
+    // Registered after the catch-all, so Playwright matches it first.
+    const subscribeRequests = [];
     await page.route("**/api/newsletter/subscribe", async route => {
-      subscribeCalls += 1;
+      subscribeRequests.push({ method: route.request().method() });
+      // Stubbed success. The request stops here and is never forwarded.
       await route.fulfill({
+        status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ ok: true })
+        body: JSON.stringify({ ok: true, id: "stubbed-acceptance-run" })
       });
     });
 
     await open(page, "/newsletter");
+
     const form = page.locator("form.newsletter-signup-form");
-    await expect(form).toBeVisible();
+    await expect(
+      form,
+      "the newsletter signup form must render on /newsletter"
+    ).toBeVisible();
+
     await page.locator("#newsletter-first-name").fill("Acceptance");
     await page.locator("#newsletter-last-name").fill("Test");
+    // .invalid is reserved by RFC 2606 and can never be a real mailbox.
     await page
       .locator("#newsletter-email")
       .fill("acceptance-test@example.invalid");
     await page.locator("#newsletter-consent").check();
 
-    // Staging must use a non-production reCAPTCHA test key. The widget remains
-    // part of the browser flow, while the subscription API stays intercepted.
-    const captcha = page.frameLocator('iframe[title*="reCAPTCHA"]');
-    await captcha.getByRole("checkbox").check();
-    await form.getByRole("button", { name: "Subscribe" }).click();
+    // The form refuses to submit without a captcha token, so the widget stays
+    // in the flow. Staging must be configured with a reCAPTCHA *test* site key
+    // (see the staging captcha guard); against a production key this step fails
+    // loudly, which is the correct outcome — it must never be softened into
+    // skipping the submission.
+    await page
+      .frameLocator('iframe[title*="reCAPTCHA" i]')
+      .getByRole("checkbox")
+      .check();
 
-    await expect.poll(() => subscribeCalls).toBe(1);
+    await form.getByRole("button", { name: /subscribe/i }).click();
+
+    // The form actually posted, and posted to the route it is meant to.
+    await expect
+      .poll(() => subscribeRequests.length, {
+        message: "the form never posted to /api/newsletter/subscribe"
+      })
+      .toBe(1);
+    expect(subscribeRequests[0].method).toBe("POST");
+
+    // ...and that submission is what moved the browser to the Thank You route.
     await expect(page).toHaveURL(/\/newsletter\/thank-you\/?$/);
     await expect(
-      page.getByRole("heading", { name: "Thank You" })
+      page.getByRole("heading", { name: /thank you/i })
     ).toBeVisible();
+
+    // Recorded, not asserted: the abort is already the safety guarantee.
+    // Surfacing it tells a reviewer whether the page has started trying to
+    // write to a third party directly from the client.
+    if (blockedExternalWrites.length > 0) {
+      testInfo.annotations.push({
+        type: "blocked-external-writes",
+        description: blockedExternalWrites.join(", ")
+      });
+    }
   });
 });
 
@@ -243,6 +338,26 @@ test.describe("(e) navigation sub-dropdowns", () => {
 });
 
 test.describe("(f) article header image sizing", () => {
+  /**
+   * WHY THIS IS A MEASUREMENT, NOT A MARKER CHECK.
+   *
+   * This assertion used to be
+   *   expect('[data-header-image-size], [class*=header-image--]').toHaveCount(1)
+   * which is satisfied by a hardcoded attribute with no CSS behind it — i.e. by
+   * exactly the "shipped a marker, shipped no feature" failure mode this whole
+   * suite exists to catch. `hectv_header_image_size` is a post-meta enum
+   * (small|medium|large|full, default full) and the requirement is that the
+   * four values RENDER DIFFERENTLY and that the default preserves today's
+   * rendering. So we measure the laid-out box of the header image on one post
+   * per value and assert the widths are strictly ordered and distinct.
+   *
+   * ON STAGING TODAY THIS FAILS AT THE FIRST FIXTURE — /posts/header-image-size-*
+   * do not exist there, because (f) is unimplemented and the meta is not
+   * registered. That is the intended state (see the file header): the fixtures
+   * are created by dev-infra/wordpress/seed.sh and become reachable when T6
+   * lands. Do NOT weaken this back toward an existence/marker check to get a
+   * green run — a loudly failing (f) is the accurate report.
+   */
   test("all four configured sizes visibly differ and the default preserves full", async ({
     page
   }, testInfo) => {
@@ -260,7 +375,11 @@ test.describe("(f) article header image sizing", () => {
       await previous;
       await open(page, `/posts/${fixture.slug}`);
       const image = page.locator('[data-testid="article-header-image"]');
-      await expect(image).toHaveCount(1);
+      await expect(
+        image,
+        `no header image on /posts/${fixture.slug} — (f) is not implemented`
+      ).toHaveCount(1);
+      // The meta-free fixture must resolve to the documented default, `full`.
       await expect(image).toHaveAttribute(
         "data-header-image-size",
         fixture.size
@@ -272,6 +391,7 @@ test.describe("(f) article header image sizing", () => {
       expect(measurements[fixture.slug]).toBeGreaterThan(0);
     }, Promise.resolve());
 
+    // A constant marker produces four identical widths and fails right here.
     expect(measurements["header-image-size-small"]).toBeLessThan(
       measurements["header-image-size-medium"]
     );
