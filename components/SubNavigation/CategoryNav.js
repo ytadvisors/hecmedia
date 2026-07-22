@@ -11,12 +11,11 @@ export const findCategoryForLink = (menus, cleanLink) =>
     const { link: menuLink, children: { nodes: menuList = [] } = {} } =
       menu || {};
     if (menuLink && menuLink.replace(/\/$/g, "") === cleanLink) return menu;
-    return (
-      menuList.find(
-        childMenu =>
-          childMenu && childMenu.link.replace(/\/$/g, "") === cleanLink
-      ) || result
-    );
+    return menuList.some(
+      childMenu => childMenu && childMenu.link.replace(/\/$/g, "") === cleanLink
+    )
+      ? menu
+      : result;
   }, []);
 
 const CategoryNav = ({ link }) => {
@@ -57,7 +56,7 @@ const CategoryNav = ({ link }) => {
       const {
         name,
         link: categoryLink,
-        children: { nodes: subcategoryList } = {}
+        children: { nodes: subcategoryList = [] } = {}
       } = categoryList;
 
       setCategories(subcategoryList);
@@ -68,7 +67,6 @@ const CategoryNav = ({ link }) => {
 
   if (currentName) {
     const url = cleanUrl(currentLink);
-    const actualLink = getHref(url);
     return (
       <section className="sub-navigation">
         <div className="row heading">
@@ -76,13 +74,13 @@ const CategoryNav = ({ link }) => {
             <div className="pull-left">
               {currentLink && (
                 <h2>
-                  <Link as={url} href={actualLink}>
-                    <a
-                      dangerouslySetInnerHTML={{
-                        __html: currentName
-                      }}
-                    />
-                  </Link>
+                  <a
+                    href={url}
+                    aria-label={currentName.replace(/<[^>]*>/g, "")}
+                    dangerouslySetInnerHTML={{
+                      __html: currentName
+                    }}
+                  />
                 </h2>
               )}
             </div>

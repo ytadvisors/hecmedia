@@ -7,7 +7,8 @@ jest.mock("dotenv", () => ({
 const configuredEnvironment = [
   "APOLLO_CLIENT_URI",
   "WP_HOST",
-  "HECMEDIA_DISABLE_IMAGE_OPTIMIZER"
+  "HECMEDIA_DISABLE_IMAGE_OPTIMIZER",
+  "RE_CAPTCHA_SITE_KEY"
 ];
 const savedEnvironment = {};
 
@@ -35,6 +36,14 @@ test("inlines the SSR endpoints supplied by the staging build", () => {
     APOLLO_CLIENT_URI: "https://prod-wp.hectv.org/graphql",
     WP_HOST: "https://prod-wp.hectv.org"
   });
+});
+
+test("inlines the staging reCAPTCHA site key for the newsletter preview", () => {
+  process.env.RE_CAPTCHA_SITE_KEY = "staging-site-key";
+
+  const config = require("./next.config");
+
+  expect(config.env.RE_CAPTCHA_SITE_KEY).toBe("staging-site-key");
 });
 
 test("disables the unused image optimizer only for the staging build", () => {
