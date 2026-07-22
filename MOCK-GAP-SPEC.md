@@ -259,17 +259,84 @@ Until all three approvals are recorded, this branch produces only local source, 
 verification evidence. The plugin candidate is not “the same plugin installed on the client’s
 WP”; it is an unapproved deployment artifact.
 
+### The development loop: local first, staging to confirm
+
+**Nobody deploys to staging to find out whether a change works.** In the 24h to
+2026-07-22 the staging-deploy workflow ran 11 times: **9 failures, 2 successes**, at ~7–8
+minutes each. That is the team using a CloudFront/Lambda@Edge pipeline as its
+edit-refresh cycle. It is the second reason this batch went wrong — the first being that
+unit tests cannot see the deployed page (§2).
+
+The local loop already existed and was simply never pointed at the app. Stood up and
+verified working on worker-mba on 2026-07-22 (browser and container work stays off the
+iMac orchestrator):
+
+```bash
+ssh worker-mba
+cd ~/hecmedia-dev-wp && docker compose up -d          # WP 6.8 + MySQL 5.7, content fixtures, :8091
+cd ~/hecmedia-local
+WP_HOST=http://localhost:8091 GATSBY_WP_HOST=http://localhost:8091 \
+  APOLLO_CLIENT_URI=http://localhost:8091/graphql \
+  NODE_OPTIONS=--openssl-legacy-provider yarn dev      # app on :3000, real content
+
+STAGING_SITE_URL=http://localhost:3000 yarn test:acceptance   # same suite, seconds not minutes
+```
+
+`tests/acceptance/mock-parity.spec.js` takes its target from `STAGING_SITE_URL`, so the
+**identical** suite runs against localhost and against staging. That is deliberate: the
+assertion that gates the merge is the assertion the developer already ran locally.
+
+Required order for T1–T6:
+
+1. Change the code.
+2. `yarn test` — unit. Necessary, not sufficient; all six gaps passed this.
+3. `yarn test:acceptance` against **localhost:3000 + the local Docker WP**. This is where
+   the requirement is proven and the loop is seconds long.
+4. Only then open the PR and let staging deploy.
+5. Re-run the acceptance suite against staging once.
+
+**Step 5 is not optional, and this is the part that is easy to get wrong.** Measured on
+the freshly-built local stack, 2026-07-22:
+
+```
+local   (yarn dev, :3000)            GET /newsletter/thank-you -> 200
+staging (Lambda@Edge, CloudFront)    GET /newsletter/thank-you -> 404
+```
+
+Requirement (d) **cannot fail locally**. `yarn dev` runs `server.js` with next-routes
+against the filesystem, so the page resolves. The 404 exists only once the app is built to
+`target: "experimental-serverless-trace"` and served through Lambda@Edge, where
+`route-list.json` is the routing table and its catch-all is single-segment. A team that
+adopted "test locally first" and stopped there would have declared (d) delivered — again.
+
+The two layers catch disjoint classes of failure, so the batch needs both:
+
+| Layer                                            | Catches                                          | Blind to                   |
+| ------------------------------------------------ | ------------------------------------------------ | -------------------------- |
+| Local Docker WP + `yarn dev` + acceptance suite  | b, c, e, f, g — everything about what renders     | routing / deploy topology  |
+| Acceptance suite against deployed staging        | d — Lambda@Edge routing, build-target divergence  | nothing, but costs ~8 min  |
+
+This is why T1 ships a hard `/newsletter/thank-you` assertion in
+`scripts/verify-staging.js` and not only a test: the deploy verifier is the only layer
+that can structurally see that class of failure.
+
 ### Standing rules for this batch
 
-1. **Verify in the deployed DOM, not in Jest.** Every one of these six gaps passed its
-   unit tests. A task closes on a staging DOM query or a screenshot, not a green suite.
-2. **No new `HECMEDIA_*_PREVIEW` flags.** The four existing ones are deletions T2–T4 owe.
+1. **Prove it locally before staging.** Local Docker WP + `yarn dev` + the acceptance
+   suite at `localhost:3000`. Staging confirms the deploy; it is not where you find out
+   whether the feature works.
+2. **Verify in a real browser's DOM, not in Jest.** All six gaps passed their unit tests.
+   A task closes on an acceptance-suite pass plus a screenshot, not a green unit run.
+3. **Assert deploy-topology bugs in the deploy verifier.** Anything that can only break
+   in Lambda@Edge (routing, redirects, rewrites) needs an assertion in
+   `scripts/verify-staging.js`, because no local run will ever catch it.
+4. **No new `HECMEDIA_*_PREVIEW` flags.** The four existing ones are deletions T2–T4 owe.
    Env-gated half-features are what produced this outcome.
-3. **Replace, don't append.** If a requirement says "replace X with Y", X is gone when the
+5. **Replace, don't append.** If a requirement says "replace X with Y", X is gone when the
    task closes.
-4. **Re-read the client requirement text at close time,** not the ticket title. Both
+6. **Re-read the client requirement text at close time,** not the ticket title. Both
    spec-drift bugs (b, f) would have been caught by this alone.
-5. **Escalate blockers as blockers.** The missing ACF source should have blocked the epic
+7. **Escalate blockers as blockers.** The missing ACF source should have blocked the epic
    on day one.
 
 ---
