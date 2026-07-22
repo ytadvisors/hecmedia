@@ -1,16 +1,16 @@
-import handler from "./subscribe";
-import formsAreNoSend from "../../../lib/noSend";
-import { getNewsletterAdapter } from "../../../lib/newsletter/adapter";
+import handler from "../../../../pages/api/newsletter/subscribe";
+import formsAreNoSend from "../../../../lib/noSend";
+import { getNewsletterAdapter } from "../../../../lib/newsletter/adapter";
 import {
   captchaIsConfigured,
   verifyCaptcha
-} from "../../../lib/newsletter/captcha";
+} from "../../../../lib/newsletter/captcha";
 
-jest.mock("../../../lib/noSend", () => jest.fn());
-jest.mock("../../../lib/newsletter/adapter", () => ({
+jest.mock("../../../../lib/noSend", () => jest.fn());
+jest.mock("../../../../lib/newsletter/adapter", () => ({
   getNewsletterAdapter: jest.fn()
 }));
-jest.mock("../../../lib/newsletter/captcha", () => ({
+jest.mock("../../../../lib/newsletter/captcha", () => ({
   captchaIsConfigured: jest.fn(),
   verifyCaptcha: jest.fn()
 }));
