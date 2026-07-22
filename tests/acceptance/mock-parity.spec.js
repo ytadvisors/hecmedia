@@ -27,6 +27,14 @@ const { test, expect } = require("@playwright/test");
 
 const MOCK_NAV = ["ABOUT", "PROGRAMS", "PRODUCTION SERVICES", "WATCH NOW", "READ NOW"];
 const MOCK_CTAS = ["SUBSCRIBE", "SUPPORT", "GET INVOLVED"];
+const HEADER_IMAGE_FIXTURES = [
+  { slug: "header-image-size-small", size: "small" },
+  { slug: "header-image-size-medium", size: "medium" },
+  { slug: "header-image-size-large", size: "large" },
+  { slug: "header-image-size-full", size: "full" },
+  // No meta value: this is the backwards-compatibility fixture, not a fifth size.
+  { slug: "header-image-size-default", size: "full", defaultValue: true }
+];
 
 /**
  * HEALTH GATE — run before every requirement assertion.
@@ -73,8 +81,11 @@ test.describe("(a) sticky header", () => {
 test.describe("(b) rail promo replaces the Spotlight logo", () => {
   test("the old Spotlight logo is gone from the right rail", async ({ page }) => {
     await open(page, "/");
+    // This is the one retired logo from the old ProgramViewer rail. Do not
+    // match every image mentioning "spotlight": the retained HEC-TV Spotlight
+    // list is explicitly required by (c) and may legitimately contain those.
     const stale = page.locator(
-      '.col-lg-3 img[alt*="spotlight" i], .col-lg-3 img[src*="spotlight" i]'
+      '.side-navigation a[href="/posts/as-seen-on-spotlight"] > img[src="/static/assets/spotlight-img.jpg"]'
     );
     await expect(stale).toHaveCount(0);
   });
@@ -133,8 +144,40 @@ test.describe("(d) newsletter page redirects to a Thank You page", () => {
   // The regression that shipped: Jest-green, Lambda@Edge-404. route-list.json's
   // catch-all is single-segment, so nothing matches /newsletter/thank-you.
   test("/newsletter/thank-you serves — the redirect target must exist", async ({ page }) => {
-    const res = await page.goto("/newsletter/thank-you");
+    const res = await open(page, "/newsletter/thank-you");
     expect(res.status()).toBe(200);
+  });
+
+  test("a successful newsletter submission reaches the Thank You page", async ({ page }) => {
+    // Do not send a real subscription from staging. The browser still exercises
+    // the page's form handler and client-side redirect; only its API response is
+    // safely intercepted.
+    let subscribeCalls = 0;
+    await page.route("**/api/newsletter/subscribe", async route => {
+      subscribeCalls += 1;
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true })
+      });
+    });
+
+    await open(page, "/newsletter");
+    const form = page.locator("form.newsletter-signup-form");
+    await expect(form).toBeVisible();
+    await page.locator("#newsletter-first-name").fill("Acceptance");
+    await page.locator("#newsletter-last-name").fill("Test");
+    await page.locator("#newsletter-email").fill("acceptance-test@example.invalid");
+    await page.locator("#newsletter-consent").check();
+
+    // Staging must use a non-production reCAPTCHA test key. The widget remains
+    // part of the browser flow, while the subscription API stays intercepted.
+    const captcha = page.frameLocator('iframe[title*="reCAPTCHA"]');
+    await captcha.getByRole("checkbox").check();
+    await form.getByRole("button", { name: "Subscribe" }).click();
+
+    await expect.poll(() => subscribeCalls).toBe(1);
+    await expect(page).toHaveURL(/\/newsletter\/thank-you\/?$/);
+    await expect(page.getByRole("heading", { name: "Thank You" })).toBeVisible();
   });
 });
 
@@ -159,14 +202,39 @@ test.describe("(e) navigation sub-dropdowns", () => {
 });
 
 test.describe("(f) article header image sizing", () => {
-  test("an article exposes a per-post header image size", async ({ page }) => {
-    await open(page, "/");
-    const href = await page.locator("a[href*='/posts/']").first().getAttribute("href");
-    expect(href).toBeTruthy();
-    await open(page, href);
-    await expect(
-      page.locator("[data-header-image-size], [class*=header-image--]")
-    ).toHaveCount(1);
+  test("all four configured sizes visibly differ and the default preserves full", async (
+    { page },
+    testInfo
+  ) => {
+    // The width contract is evaluated at desktop size; responsive CSS may
+    // deliberately collapse these widths on a narrow viewport.
+    test.skip(testInfo.project.name !== "desktop", "desktop visual sizing contract");
+
+    const measurements = {};
+    for (const fixture of HEADER_IMAGE_FIXTURES) {
+      await open(page, `/posts/${fixture.slug}`);
+      const image = page.locator('[data-testid="article-header-image"]');
+      await expect(image).toHaveCount(1);
+      await expect(image).toHaveAttribute("data-header-image-size", fixture.size);
+      measurements[fixture.slug] = await image.evaluate(element => {
+        const { width } = element.getBoundingClientRect();
+        return width;
+      });
+      expect(measurements[fixture.slug]).toBeGreaterThan(0);
+    }
+
+    expect(measurements["header-image-size-small"]).toBeLessThan(
+      measurements["header-image-size-medium"]
+    );
+    expect(measurements["header-image-size-medium"]).toBeLessThan(
+      measurements["header-image-size-large"]
+    );
+    expect(measurements["header-image-size-large"]).toBeLessThan(
+      measurements["header-image-size-full"]
+    );
+    expect(measurements["header-image-size-default"]).toBe(
+      measurements["header-image-size-full"]
+    );
   });
 });
 

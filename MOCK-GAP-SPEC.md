@@ -237,7 +237,13 @@ EDUCATORS notebook card from the mock. Verify in the staging DOM, not in Jest.
 
 **T6 — (f) Article header image sizing.**
 Consume `hectv_header_image_size` in the article template; four sizes; default preserves
-today's rendering so existing posts don't shift. Editor-facing, per-post.
+today's rendering so existing posts don't shift. Editor-facing, per-post. Render the
+image wrapper as `data-testid="article-header-image"` with a
+`data-header-image-size` value. The local seed supplies the five stable browser fixtures
+`/posts/header-image-size-{small,medium,large,full,default}`: the first four must render
+strictly increasing desktop widths, and the meta-free `default` fixture must render at
+exactly the same width as explicit `full`. This is a visual contract, not merely a marker
+contract.
 
 **T7 — Mock-parity QA pass.**
 Side-by-side against the mock at desktop/tablet/mobile. No `STAGING PREVIEW` or
