@@ -83,3 +83,15 @@ test("uses build-time SSR config and never checks a Lambda runtime environment",
   expect(deployScript).not.toContain("checkLambdaEnvironment");
   expect(deployScript).not.toContain("get-function-configuration");
 });
+
+test("requires Yomi to authorize every staging workflow dispatch", () => {
+  const workflow = realFs.readFileSync(
+    path.join(__dirname, "../.github/workflows/staging-deploy.yml"),
+    "utf8"
+  );
+
+  expect(workflow).toMatch(
+    /authorize:[\s\S]*?DISPATCH_ACTOR: \$\{\{ github\.actor \}\}[\s\S]*?"ytwguru"[\s\S]*?exit 1/
+  );
+  expect(workflow).toMatch(/deploy-and-verify:[\s\S]*?needs: authorize/);
+});
