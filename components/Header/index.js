@@ -12,7 +12,6 @@ import {
   getSocialMenuObject,
   getHref
 } from "../../lib/getFunctions";
-import { buildNavigationPreview } from "../../lib/navigationPreview";
 import { isServer } from "../../lib/serverFunctions";
 import "./styles.scss";
 
@@ -238,10 +237,10 @@ export default class Header extends Component {
       ? social.edges[0]
       : {};
 
+    // The CMS menu tree is the source of both labels and hierarchy. This
+    // component only composes and styles that tree; it must not regroup it.
     const topLinks =
-      headerList.length > 0
-        ? buildNavigationPreview(getHeaderMenuObject(headerList))
-        : [];
+      headerList.length > 0 ? getHeaderMenuObject(headerList) : [];
     const socialLinks =
       socialList.length > 0
         ? getSocialMenuObject(socialList, isMobile ? 15 : 25, "white")
