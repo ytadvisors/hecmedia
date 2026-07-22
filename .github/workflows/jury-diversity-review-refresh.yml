@@ -1,0 +1,44 @@
+name: Refresh jury diversity
+
+on:
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: jury-refresh-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  refresh-jury:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rerun the canonical jury check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            runs=$(gh api "repos/$REPO/actions/workflows/jury-diversity.yml/runs?event=pull_request_target&per_page=100")
+            run_id=$(printf '%s' "$runs" | jq -r \
+              --argjson pr "$PR" --arg head "$HEAD_SHA" \
+              '[.workflow_runs[]
+                | select(.head_sha == $head)
+                | select(any(.pull_requests[]?; .number == $pr))
+                | select(.status == "completed")]
+               | sort_by(.created_at) | last | .id // empty')
+            if [ -n "$run_id" ]; then
+              gh api --method POST "repos/$REPO/actions/runs/$run_id/rerun"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error title=Canonical jury run not found::No completed jury run exists for this PR head."
+          exit 1
