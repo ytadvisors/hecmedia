@@ -3,10 +3,10 @@ import { render, screen } from "@testing-library/react";
 import TrendingNow from "./index";
 
 describe("TrendingNow", () => {
-  it("labels the fixture-driven experience as a staging preview", () => {
+  it("renders thumbnail links without a staging-only label", () => {
     const { container } = render(
       <TrendingNow
-        spotlightPosts={[
+        posts={[
           {
             postId: 1,
             title: "A current story",
@@ -20,7 +20,7 @@ describe("TrendingNow", () => {
     );
 
     expect(screen.getByText("Trending Now")).toBeInTheDocument();
-    expect(screen.getByText("Staging preview")).toBeInTheDocument();
+    expect(screen.queryByText(/Staging preview/i)).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "A current story" })
     ).toHaveAttribute("href", "/posts/current");
@@ -37,7 +37,7 @@ describe("TrendingNow", () => {
   });
 
   it("renders an empty state", () => {
-    render(<TrendingNow spotlightPosts={[]} />);
+    render(<TrendingNow posts={[]} />);
 
     expect(
       screen.getByText("No trending stories are available yet.")

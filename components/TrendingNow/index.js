@@ -2,14 +2,13 @@ import React from "react";
 import toTrendingNowItems from "../../lib/trendingNow";
 import "./styles.scss";
 
-const TrendingNow = ({ spotlightPosts, loading, error }) => {
-  const items = toTrendingNowItems(spotlightPosts);
+const TrendingNow = ({ posts, loading, error }) => {
+  const items = toTrendingNowItems(posts);
 
   return (
     <section className="trending-now" aria-labelledby="trending-now-title">
       <div className="title">
         <b id="trending-now-title">Trending Now</b>
-        <span className="staging-indicator">Staging preview</span>
       </div>
       {loading && <p className="status">Loading trending stories…</p>}
       {!loading && error && (

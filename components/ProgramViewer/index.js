@@ -3,8 +3,7 @@ import $ from "jquery";
 
 import SideNavigation from "../SideNavigation";
 import TrendingNow from "../TrendingNow";
-
-import Schedule from "../Schedule";
+import ListOfFeaturedPosts from "../ListOfFeaturedPosts";
 import "./styles.scss";
 
 export default class extends Component {
@@ -15,8 +14,8 @@ export default class extends Component {
   render() {
     const {
       style,
-      programs,
       spotLightPosts,
+      trendingPosts,
       trendingNowLoading,
       trendingNowError,
       children
@@ -45,14 +44,18 @@ export default class extends Component {
                   </div>
                 </div>
                 <div className="row">
-                  <div className="col-sm-4 col-sm-push-8 col-lg-12 col-lg-push-0 no-padding">
-                    <Schedule programs={programs} />
-                  </div>
-                  <div className="col-sm-8 col-sm-pull-4  col-lg-12 col-lg-pull-0  no-padding">
+                  <div className="col-lg-12 no-padding">
                     <TrendingNow
-                      spotlightPosts={spotLightPosts}
+                      posts={trendingPosts}
                       loading={trendingNowLoading}
                       error={trendingNowError}
+                    />
+                  </div>
+                  <div className="col-lg-12 no-padding">
+                    <ListOfFeaturedPosts
+                      title="HEC-TV SPOTLIGHT"
+                      spotLightPosts={spotLightPosts}
+                      maxItems={5}
                     />
                   </div>
                 </div>

@@ -4,19 +4,25 @@ import { getPostImgSrc } from "../../lib/getFunctions";
 import "./styles.scss";
 
 export default props => {
-  const { spotLightPosts } = props;
+  const {
+    spotLightPosts = [],
+    title = "FOR EDUCATORS",
+    titleHref = "/spotlight",
+    maxItems
+  } = props;
+  const entries = maxItems ? spotLightPosts.slice(0, maxItems) : spotLightPosts;
   return (
     <section className="list-of-featured-posts">
       <div className="title">
         <div>
           <b>
-            <a href="/spotlight">FOR EDUCATORS</a>
+            {titleHref ? <a href={titleHref}>{title}</a> : title}
           </b>
         </div>
       </div>
       <ul className="magazine-list">
-        {spotLightPosts.map(entry => {
-          const { title, link } = entry;
+        {entries.map(entry => {
+          const { title: entryTitle, link } = entry;
           const img = getPostImgSrc(entry);
           const url = link.replace(/https?:\/\/[^/]+/, "");
 
@@ -36,7 +42,7 @@ export default props => {
                   <div
                     className="magazine-info col-xs-7 no-padding"
                     style={{ paddingLeft: "1em" }}
-                    dangerouslySetInnerHTML={{ __html: title }}
+                    dangerouslySetInnerHTML={{ __html: entryTitle }}
                   />
                 </div>
               </a>
