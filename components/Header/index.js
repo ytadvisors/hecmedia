@@ -282,29 +282,7 @@ export default class Header extends Component {
         )
       }
     ];
-    const seenCtas = new Set();
-    const ctas = Array.isArray(topbarCtas)
-      ? topbarCtas
-          .filter(
-            cta =>
-              cta &&
-              typeof cta.label === "string" &&
-              cta.label.trim() &&
-              typeof cta.url === "string" &&
-              cta.url.trim()
-          )
-          .map(cta => ({
-            ...cta,
-            label: cta.label.trim(),
-            url: cta.url.trim()
-          }))
-          .filter(cta => {
-            const key = `${cta.url}-${cta.label}`;
-            if (seenCtas.has(key)) return false;
-            seenCtas.add(key);
-            return true;
-          })
-      : [];
+    const ctas = topbarCtas && topbarCtas.length > 0 ? topbarCtas : [];
 
     return (
       <header
@@ -343,11 +321,7 @@ export default class Header extends Component {
               {ctas.length > 0 && (
                 <nav className="top-bar-actions" aria-label="Featured actions">
                   {ctas.map(cta => (
-                    <a
-                      key={`${cta.url}-${cta.label}`}
-                      className="top-bar-cta"
-                      href={cta.url}
-                    >
+                    <a key={cta.url} className="top-bar-cta" href={cta.url}>
                       {cta.label}
                     </a>
                   ))}

@@ -53,7 +53,6 @@ export const Layout = props => {
     social,
     footer,
     featuredMagazines,
-    hectvSiteOptions: { topbarCtas = [] } = {},
     spotLight: { nodes: spotLightPosts = [] } = {}
   } = data || {};
   const { children, showBottomNav, absContent, style } = props;
@@ -71,12 +70,7 @@ export const Layout = props => {
     <>
       <div className="layout">
         {absContent}
-        <Header
-          searchFunc={searchFunc}
-          header={header}
-          social={social}
-          topbarCtas={topbarCtas}
-        />
+        <Header searchFunc={searchFunc} header={header} social={social} />
         <Banner liveVideo={liveVideo} />
         <ProgramViewer
           style={style}
