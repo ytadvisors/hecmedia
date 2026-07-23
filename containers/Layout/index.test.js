@@ -17,13 +17,21 @@ jest.mock("../../components/ProgramViewer", () => ({ trendingPosts }) => (
   </div>
 ));
 
-jest.mock("../../components/Header", () => () => <div />);
+jest.mock("../../components/Header", () => ({ topbarCtas = [] }) => (
+  <div data-testid="header">
+    {topbarCtas.map(cta => `${cta.label}:${cta.url}`).join(", ")}
+  </div>
+));
 jest.mock("../../components/Banner", () => () => <div />);
 jest.mock("../../components/Footer", () => () => <div />);
 jest.mock("../../components/BottomNav", () => () => <div />);
 jest.mock("../Modals", () => ({ BasicModal: () => <div /> }));
 
 describe("Layout", () => {
+  beforeEach(() => {
+    useQuery.mockReset();
+  });
+
   it("supplies spotlight posts to Trending Now until a dedicated feed exists", () => {
     const spotLightPosts = [
       { postId: 1, title: "A current story", link: "/posts/current" }
@@ -41,5 +49,35 @@ describe("Layout", () => {
     expect(screen.getByTestId("program-viewer")).toHaveTextContent(
       "A current story"
     );
+  });
+
+  it("passes top-bar CTA rows from the layout query to Header", () => {
+    const topbarCtas = [
+      { label: "Watch Live", url: "/live", style: "primary" },
+      { label: "Donate", url: "/donate", style: "secondary" }
+    ];
+
+    useQuery
+      .mockReturnValueOnce({
+        data: { topbarCtas },
+        loading: false
+      })
+      .mockReturnValueOnce({ data: undefined });
+
+    render(<Layout dispatch={jest.fn()} />);
+
+    expect(screen.getByTestId("header")).toHaveTextContent(
+      "Watch Live:/live, Donate:/donate"
+    );
+  });
+
+  it("passes an absent CTA result through without inventing fallback links", () => {
+    useQuery
+      .mockReturnValueOnce({ data: {}, loading: false })
+      .mockReturnValueOnce({ data: undefined });
+
+    render(<Layout dispatch={jest.fn()} />);
+
+    expect(screen.getByTestId("header")).toBeEmptyDOMElement();
   });
 });

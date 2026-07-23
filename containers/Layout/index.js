@@ -51,6 +51,7 @@ export const Layout = props => {
   const {
     header,
     social,
+    topbarCtas,
     footer,
     featuredMagazines,
     spotLight: { nodes: spotLightPosts = [] } = {}
@@ -70,7 +71,12 @@ export const Layout = props => {
     <>
       <div className="layout">
         {absContent}
-        <Header searchFunc={searchFunc} header={header} social={social} />
+        <Header
+          searchFunc={searchFunc}
+          header={header}
+          social={social}
+          topbarCtas={topbarCtas}
+        />
         <Banner liveVideo={liveVideo} />
         <ProgramViewer
           style={style}
