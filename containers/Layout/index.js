@@ -14,7 +14,7 @@ import { setPlayingLiveAction } from "../../store/actions/postActions";
 
 import { BasicModal } from "../Modals";
 
-const Layout = props => {
+export const Layout = props => {
   const { pageForm: { search: { values } = {} } = {}, dispatch } = props;
 
   const [currentlyPlaying, setPlaying] = useState(false);
@@ -76,6 +76,7 @@ const Layout = props => {
           style={style}
           featuredMagazines={featuredMagazines}
           spotLightPosts={spotLightPosts}
+          trendingPosts={spotLightPosts}
           trendingNowLoading={layoutLoading}
           trendingNowError={layoutError}
         >
