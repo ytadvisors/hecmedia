@@ -3,7 +3,11 @@ import { connect } from "react-redux";
 import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
 import { Router } from "../../routes";
-import { GET_LAYOUT, GET_LIVE_VIDEOS } from "../../lib/graphql";
+import {
+  GET_LAYOUT,
+  GET_LIVE_VIDEOS,
+  GET_TOPBAR_CTAS
+} from "../../lib/graphql";
 import "./styles.scss";
 import ProgramViewer from "../../components/ProgramViewer";
 import Header from "../../components/Header";
@@ -43,6 +47,12 @@ export const Layout = props => {
     }
   );
 
+  // This custom WordPress field deploys independently. Keeping it in a
+  // separate operation means an unavailable field cannot blank the shell.
+  const { data: topbarData } = useQuery(GET_TOPBAR_CTAS, {
+    notifyOnNetworkStatusChange: true
+  });
+
   const { data: videos } = useQuery(GET_LIVE_VIDEOS, {
     variables: { keyStart, keyEnd, compareStart, compareEnd },
     notifyOnNetworkStatusChange: true
@@ -51,11 +61,11 @@ export const Layout = props => {
   const {
     header,
     social,
-    topbarCtas,
     footer,
     featuredMagazines,
     spotLight: { nodes: spotLightPosts = [] } = {}
   } = data || {};
+  const { topbarCtas } = topbarData || {};
   const { children, showBottomNav, absContent, style } = props;
   const { liveVideos } = videos || [];
   let liveVideo = {};

@@ -12,6 +12,8 @@ import { executeQuery } from "../support/graphqlClient";
  * pages/[page].js — every field asserted here is a field one of those
  * consumers destructures. Shape only: this is a live external WP backend, so
  * we assert types/structure, never exact titles/counts (see TESTING.md#e2e).
+ * Optional custom fields are queried separately so their rollout cannot
+ * invalidate this site-shell operation.
  */
 describe("HomePageInfo (pages/index.js)", () => {
   it("returns pageData + postData shaped for the home page", async () => {

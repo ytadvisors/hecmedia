@@ -42,6 +42,7 @@ describe("Layout", () => {
         data: { spotLight: { nodes: spotLightPosts } },
         loading: false
       })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -59,9 +60,10 @@ describe("Layout", () => {
 
     useQuery
       .mockReturnValueOnce({
-        data: { topbarCtas },
+        data: {},
         loading: false
       })
+      .mockReturnValueOnce({ data: { topbarCtas } })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -71,9 +73,13 @@ describe("Layout", () => {
     );
   });
 
-  it("passes an absent CTA result through without inventing fallback links", () => {
+  it("keeps the shell usable when the optional CTA query fails", () => {
     useQuery
       .mockReturnValueOnce({ data: {}, loading: false })
+      .mockReturnValueOnce({
+        data: undefined,
+        error: new Error('Cannot query field "topbarCtas" on type "RootQuery".')
+      })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
