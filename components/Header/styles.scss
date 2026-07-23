@@ -54,46 +54,74 @@
     padding-left: 1em;
     width: 100%;
   }
+  // Row 1: compact logo lockup on the left, search alone at the far right.
+  .header-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    padding: 8px 12px 4px 0;
+  }
+  // Row 2: social icons + CTA pills, one left-aligned group, away from search.
+  .header-secondary-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 0 12px 8px 0;
+  }
   .top-logo {
-    display: inline-block;
-    vertical-align: top;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
     a {
+      display: block;
+    }
+    img {
+      height: 40px;
+      width: auto;
       display: block;
     }
   }
   .navbar-brand-class {
-    width: 165px;
+    width: auto;
     height: auto !important;
-    padding: 10px 10px 0 0 !important;
+    padding: 0 !important;
     margin: 0 !important;
   }
-  .brand-details {
-    display: inline-block;
+  .brand-tagline {
     color: #ddd;
-    text-transform: uppercase;
-    line-height: 20px;
+    font-variant: small-caps;
+    letter-spacing: 0.02em;
+    white-space: normal;
     // Keep the existing desktop scale, while preventing the tagline from
     // overpowering the logo as the available header width tightens.
-    font-size: clamp(14px, calc(13px + 0.25vw), 17px);
-    .brand-text {
-      padding: 10px 5px;
+    font-size: clamp(12px, calc(10px + 0.3vw), 15px);
+  }
+  @media (min-width: 1280px) {
+    .brand-tagline {
+      white-space: nowrap;
     }
+  }
+  .header-top-actions {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    flex-shrink: 0;
   }
   .top-bar-actions {
     display: flex;
-    float: right;
     align-items: center;
-    gap: 6px;
-    margin: 14px 8px 8px auto;
-    position: relative;
+    gap: 8px;
 
     .top-bar-cta {
-      min-height: 36px;
-      padding: 8px 11px;
+      min-height: 32px;
+      padding: 6px 14px;
       border: 1px solid #fff;
-      border-radius: 4px;
-      background: #fff;
-      color: #004c8e;
+      border-radius: 999px;
+      background: transparent;
+      color: #fff;
       font-size: 13px;
       font-weight: 700;
       line-height: 18px;
@@ -101,37 +129,11 @@
 
       &:hover,
       &:focus {
-        background: #004c8e;
-        color: #fff;
+        background: #fff;
+        color: #004c8e;
         outline: 2px solid #fff;
         outline-offset: 2px;
       }
-    }
-    .top-bar-cta--placeholder {
-      cursor: pointer;
-      text-align: center;
-    }
-    .cta-staging-badge {
-      display: block;
-      font-size: 9px;
-      font-weight: 600;
-      line-height: 11px;
-      text-transform: uppercase;
-    }
-    .cta-placeholder-message {
-      position: absolute;
-      right: 0;
-      top: calc(100% + 4px);
-      width: 240px;
-      margin: 0;
-      padding: 8px;
-      border-radius: 4px;
-      background: #fff;
-      color: #222;
-      font-size: 12px;
-      line-height: 16px;
-      text-align: center;
-      z-index: 101;
     }
   }
   ul.brand-social {
@@ -370,13 +372,18 @@
     }
   }
 
+  // Row 3: rounded, left-aligned nav bar — not full-bleed at desktop.
   .bottom-nav {
-    background: #0065bc;
     clear: both;
+    padding: 4px 12px 16px 0;
     .nav-tabs {
+      display: inline-flex;
       padding: 0;
       margin-left: 1em;
+      background: #0065bc;
+      border-radius: 999px;
       border-bottom: 0;
+      overflow: hidden;
       .nav-item:first-child {
         border-left: 0;
       }
@@ -420,12 +427,6 @@
 
 @media (max-width: 1170px) {
   .header {
-    .top-bar-actions {
-      margin: 0;
-      position: absolute;
-      right: 88px;
-      top: 10px;
-    }
     .donate-btn {
       padding-top: 8px !important;
     }
@@ -448,8 +449,6 @@
     }
     .navbar-header-class {
       padding-left: 0;
-      min-height: 112px;
-      position: relative;
     }
     .navbar-header {
       float: none;
@@ -457,17 +456,6 @@
     }
     .navbar-class {
       height: auto !important;
-      min-height: 112px;
-    }
-    .navbar-brand-class {
-      width: 120px;
-      padding: 10px !important;
-    }
-    .brand-details {
-      font-size: 13px;
-      .brand-text {
-        padding: 12px 5px 0;
-      }
     }
     .navbar-left,
     .navbar-right {
@@ -476,9 +464,6 @@
     .navbar-toggle {
       display: block;
       margin: 0;
-      position: absolute;
-      right: 12px;
-      top: 12px;
     }
     .navbar-collapse {
       border-top: 1px solid transparent;
@@ -568,12 +553,7 @@
     }
 
     ul.user-admin {
-      clear: none;
       padding: 0;
-      position: absolute;
-      right: 12px;
-      top: 54px;
-      width: auto;
       li {
         display: inline-block;
         .search-btn-icon {
@@ -604,47 +584,19 @@
 
 @media (max-width: 620px) {
   .header {
-    .navbar-class {
-      min-height: 142px;
-    }
-    .navbar-header-class {
-      min-height: 142px;
-    }
-    .navbar-brand-class {
-      width: 105px;
-    }
-    .brand-details {
-      font-size: 12px;
-      line-height: 17px;
-
-      .brand-text {
-        padding-top: 10px;
-      }
-    }
+    // Row 2 stays in normal flow (see .header-secondary-row); only the pill
+    // sizing shrinks to fit three CTAs without overflowing at 375px.
     .top-bar-actions {
-      position: absolute;
-      top: 91px;
-      right: 8px;
-      left: 8px;
-      justify-content: center;
-      margin: 0;
+      flex-wrap: wrap;
 
       .top-bar-cta {
-        flex: 1 1 0;
+        flex: 1 1 auto;
         min-width: 0;
-        padding: 7px 4px;
+        padding: 7px 10px;
         font-size: 12px;
-      }
-      .cta-placeholder-message {
-        right: 0;
-        left: 0;
-        width: auto;
       }
     }
     ul.user-admin {
-      right: 8px;
-      top: 48px;
-
       li .search-btn-icon {
         margin: 0;
       }

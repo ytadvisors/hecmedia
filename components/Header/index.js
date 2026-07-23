@@ -12,11 +12,11 @@ import {
   getSocialMenuObject,
   getHref
 } from "../../lib/getFunctions";
-import { buildNavigationPreview } from "../../lib/navigationPreview";
 import { isServer } from "../../lib/serverFunctions";
 import "./styles.scss";
 
 const logo = "/static/assets/white_hec.png";
+const TAGLINE = "St. Louis' Home of Education Arts, and Culture";
 
 export default class Header extends Component {
   constructor(props) {
@@ -27,8 +27,7 @@ export default class Header extends Component {
       navExpanded: false,
       activeDropdown: null,
       isMobile: false,
-      scrolled: false,
-      showDonatePlaceholder: false
+      scrolled: false
     };
   }
 
@@ -96,10 +95,6 @@ export default class Header extends Component {
     if (this.mounted) {
       this.setState({ activeDropdown: isOpen ? url : null });
     }
-  };
-
-  showDonatePlaceholder = () => {
-    if (this.mounted) this.setState({ showDonatePlaceholder: true });
   };
 
   getNavDropDown = link => {
@@ -230,13 +225,8 @@ export default class Header extends Component {
     );
 
   render() {
-    const { header, social } = this.props;
-    const {
-      navExpanded,
-      isMobile,
-      scrolled,
-      showDonatePlaceholder
-    } = this.state;
+    const { header, social, topbarCtas } = this.props;
+    const { navExpanded, isMobile, scrolled } = this.state;
     const style = isMobile
       ? { width: `${window.innerWidth - 50}px`, right: "12px" }
       : {};
@@ -248,9 +238,7 @@ export default class Header extends Component {
       : {};
 
     const topLinks =
-      headerList.length > 0
-        ? buildNavigationPreview(getHeaderMenuObject(headerList))
-        : [];
+      headerList.length > 0 ? getHeaderMenuObject(headerList) : [];
     const socialLinks =
       socialList.length > 0
         ? getSocialMenuObject(socialList, isMobile ? 15 : 25, "white")
@@ -292,7 +280,7 @@ export default class Header extends Component {
         )
       }
     ];
-    const showTopBarCtas = process.env.HECMEDIA_TOPBAR_CTA_PREVIEW === "true";
+    const ctas = topbarCtas && topbarCtas.length > 0 ? topbarCtas : [];
 
     return (
       <header
@@ -308,56 +296,36 @@ export default class Header extends Component {
           expanded={navExpanded}
         >
           <Navbar.Header className="navbar-header-class">
-            <div className="top-logo">
-              <Navbar.Brand className="navbar-brand-class">
-                <div className="navbar-brand-class navbar-brand">
-                  <Link as="/" href="/">
-                    <img src={logo} alt="HECTV logo" />
-                  </Link>
-                </div>
-              </Navbar.Brand>
-            </div>
-            <div className="brand-details">
-              <div className="brand-text">
-                <div>St. Louis&apos; home of Education</div>
-                <div>Arts, and Culture</div>
+            <div className="header-top-row">
+              <div className="top-logo">
+                <Navbar.Brand className="navbar-brand-class">
+                  <div className="navbar-brand-class navbar-brand">
+                    <Link as="/" href="/">
+                      <img src={logo} alt="HECTV logo" />
+                    </Link>
+                  </div>
+                </Navbar.Brand>
+                <span className="brand-tagline">{TAGLINE}</span>
               </div>
-              <SocialLinks links={socialLinks} />
+              <div className="header-top-actions">
+                <Navbar.Toggle className="nav-toggle " />
+                <Nav onSelect={this.closeNav} className="user-admin">
+                  {this.getLinks(userAdmin)}
+                </Nav>
+              </div>
             </div>
-            {showTopBarCtas && (
-              <nav className="top-bar-actions" aria-label="Featured actions">
-                <a className="top-bar-cta" href="/#watch-live">
-                  Watch Live
-                </a>
-                <a className="top-bar-cta" href="/newsletter">
-                  Subscribe
-                </a>
-                <button
-                  type="button"
-                  className="top-bar-cta top-bar-cta--placeholder"
-                  aria-describedby="donate-staging-description"
-                  onClick={this.showDonatePlaceholder}
-                >
-                  Donate <span className="cta-staging-badge">Staging only</span>
-                </button>
-                <span id="donate-staging-description" className="sr-only">
-                  Staging placeholder. Donations are disabled and no transaction
-                  can be created.
-                </span>
-                {showDonatePlaceholder && (
-                  <p className="cta-placeholder-message" role="status">
-                    Donations are disabled in this staging preview.
-                  </p>
-                )}
-              </nav>
-            )}
-            <Navbar.Toggle className="nav-toggle " />
-            <Nav
-              onSelect={this.closeNav}
-              className="user-admin pull-right clearfix"
-            >
-              {this.getLinks(userAdmin)}
-            </Nav>
+            <div className="header-secondary-row">
+              <SocialLinks links={socialLinks} />
+              {ctas.length > 0 && (
+                <nav className="top-bar-actions" aria-label="Featured actions">
+                  {ctas.map(cta => (
+                    <a key={cta.url} className="top-bar-cta" href={cta.url}>
+                      {cta.label}
+                    </a>
+                  ))}
+                </nav>
+              )}
+            </div>
           </Navbar.Header>
           <div className="bottom-nav row">
             <Navbar.Collapse>
