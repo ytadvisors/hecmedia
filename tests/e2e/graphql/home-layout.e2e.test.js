@@ -49,7 +49,8 @@ describe("PageLayout (containers/Layout/index.js)", () => {
       spotLight,
       header,
       footer,
-      social
+      social,
+      hectvSiteOptions
     } = result.data;
 
     expect(Array.isArray(featuredMagazines.edges)).toBe(true);
@@ -66,6 +67,15 @@ describe("PageLayout (containers/Layout/index.js)", () => {
         });
       });
     });
+
+    if (hectvSiteOptions !== null) {
+      expect(Array.isArray(hectvSiteOptions.topbarCtas)).toBe(true);
+      hectvSiteOptions.topbarCtas.forEach(cta => {
+        expect(typeof cta.label).toBe("string");
+        expect(typeof cta.url).toBe("string");
+        expect(typeof cta.style).toBe("string");
+      });
+    }
   });
 });
 
