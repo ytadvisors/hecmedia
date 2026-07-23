@@ -36,4 +36,9 @@ describe("Header responsive typography", () => {
     expect(responsiveStyles).not.toContain("top: 54px;");
     expect(responsiveStyles).not.toContain("top: 91px;");
   });
+
+  it("uses a compact logo with auto width", () => {
+    expect(headerStyles).toContain("height: 40px;");
+    expect(headerStyles).toContain("width: auto;");
+  });
 });

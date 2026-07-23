@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import ProgramViewer from "./index";
 
 describe("ProgramViewer", () => {
-  it("replaces the legacy Spotlight/newsletter block with the educators link", () => {
+  it("stacks the home rail in mock order without Playing Now", () => {
     render(
       <ProgramViewer>
         <div>content</div>
@@ -16,5 +16,18 @@ describe("ProgramViewer", () => {
     );
     expect(document.getElementById("subscribe")).not.toBeInTheDocument();
     expect(screen.queryByText("HEC-TV NewsLetter")).not.toBeInTheDocument();
+    expect(screen.getByText("Trending Now")).toBeInTheDocument();
+    expect(screen.getByText("HEC-TV SPOTLIGHT")).toBeInTheDocument();
+    expect(screen.queryByText("Playing Now")).toBeNull();
+
+    const railText = screen
+      .getByText("For Educators")
+      .closest(".side-navigation").textContent;
+    expect(railText.indexOf("For Educators")).toBeLessThan(
+      railText.indexOf("Trending Now")
+    );
+    expect(railText.indexOf("Trending Now")).toBeLessThan(
+      railText.indexOf("HEC-TV SPOTLIGHT")
+    );
   });
 });
