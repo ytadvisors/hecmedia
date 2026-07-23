@@ -151,6 +151,27 @@ describe("Header (primary navigation)", () => {
     );
   });
 
+  it("drops CTA rows with a missing or empty label or URL", () => {
+    const topbarCtas = [
+      { label: "Watch Live", url: " /live " },
+      { label: "Watch Live", url: "/live" },
+      { label: "No URL" },
+      { label: "Empty URL", url: "   " },
+      { label: "", url: "/missing-label" },
+      null
+    ];
+
+    render(<Header searchFunc={() => {}} topbarCtas={topbarCtas} />);
+
+    expect(screen.getByRole("link", { name: "Watch Live" })).toHaveAttribute(
+      "href",
+      "/live"
+    );
+    expect(screen.queryByText("No URL")).not.toBeInTheDocument();
+    expect(screen.queryByText("Empty URL")).not.toBeInTheDocument();
+    expect(document.querySelectorAll(".top-bar-cta")).toHaveLength(1);
+  });
+
   it("groups social links and CTA pills together on the second row, away from search", () => {
     const social = buildMenu([
       { url: "https://facebook.com/hectv", label: "Facebook" }
