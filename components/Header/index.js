@@ -12,7 +12,6 @@ import {
   getSocialMenuObject,
   getHref
 } from "../../lib/getFunctions";
-import { buildNavigationPreview } from "../../lib/navigationPreview";
 import { isServer } from "../../lib/serverFunctions";
 import "./styles.scss";
 
@@ -239,9 +238,7 @@ export default class Header extends Component {
       : {};
 
     const topLinks =
-      headerList.length > 0
-        ? buildNavigationPreview(getHeaderMenuObject(headerList))
-        : [];
+      headerList.length > 0 ? getHeaderMenuObject(headerList) : [];
     const socialLinks =
       socialList.length > 0
         ? getSocialMenuObject(socialList, isMobile ? 15 : 25, "white")

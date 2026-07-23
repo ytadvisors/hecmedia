@@ -93,8 +93,7 @@ describe("Header (primary navigation)", () => {
     expect(dropdown).not.toHaveClass("open");
   });
 
-  it("uses the five-item staging preview without changing CMS links", () => {
-    process.env.HECMEDIA_NAVIGATION_PREVIEW = "true";
+  it("renders CMS nav labels directly without synthetic preview grouping", () => {
     const header = buildMenu([
       { url: "https://hectv.org/", label: "Home" },
       { url: "https://hectv.org/programs", label: "Programs" },
@@ -111,20 +110,12 @@ describe("Header (primary navigation)", () => {
       <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
     );
 
-    expect(
-      document.querySelectorAll(".top-navigation > li.dropdown")
-    ).toHaveLength(5);
-    [
-      "Home",
-      "Watch",
-      "Learn & Explore",
-      "Connect",
-      "Support HEC Media"
-    ].forEach(label =>
-      expect(screen.getAllByText(label).length).toBeGreaterThan(0)
-    );
+    // CMS labels appear directly — no synthetic grouping layer
     expect(screen.getByText("Programs")).toBeInTheDocument();
     expect(screen.getByText("Underwriting")).toBeInTheDocument();
+    // Synthetic preview group labels must not appear
+    expect(screen.queryByText("Watch")).not.toBeInTheDocument();
+    expect(screen.queryByText("Learn & Explore")).not.toBeInTheDocument();
   });
 
   it("renders a search toggle button in the nav", () => {

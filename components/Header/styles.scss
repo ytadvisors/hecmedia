@@ -449,8 +449,6 @@
     }
     .navbar-header-class {
       padding-left: 0;
-      min-height: 112px;
-      position: relative;
     }
     .navbar-header {
       float: none;
@@ -458,7 +456,6 @@
     }
     .navbar-class {
       height: auto !important;
-      min-height: 112px;
     }
     .navbar-left,
     .navbar-right {
@@ -467,9 +464,6 @@
     .navbar-toggle {
       display: block;
       margin: 0;
-      position: absolute;
-      right: 12px;
-      top: 12px;
     }
     .navbar-collapse {
       border-top: 1px solid transparent;
@@ -559,12 +553,7 @@
     }
 
     ul.user-admin {
-      clear: none;
       padding: 0;
-      position: absolute;
-      right: 12px;
-      top: 54px;
-      width: auto;
       li {
         display: inline-block;
         .search-btn-icon {
@@ -595,12 +584,6 @@
 
 @media (max-width: 620px) {
   .header {
-    .navbar-class {
-      min-height: 142px;
-    }
-    .navbar-header-class {
-      min-height: 142px;
-    }
     // Row 2 stays in normal flow (see .header-secondary-row); only the pill
     // sizing shrinks to fit three CTAs without overflowing at 375px.
     .top-bar-actions {
@@ -614,9 +597,6 @@
       }
     }
     ul.user-admin {
-      right: 8px;
-      top: 48px;
-
       li .search-btn-icon {
         margin: 0;
       }
