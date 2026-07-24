@@ -13,11 +13,18 @@ describe("write safety gate", () => {
     else process.env.E2E_ALLOW_WRITES = originalAllowWrites;
   });
 
-  it("keeps the configured default endpoints read-only", () => {
+  it("keeps production endpoints read-only even with the write opt-in", () => {
     process.env.E2E_ALLOW_WRITES = "1";
+    const productionGraphql = "https://prod-wp.hectv.org/graphql";
+    const productionRest = "https://prod-wp.hectv.org";
 
-    expect(isProductionHost(GRAPHQL_URI)).toBe(true);
-    expect(isProductionHost(REST_HOST)).toBe(true);
+    expect(isProductionHost(productionGraphql)).toBe(true);
+    expect(isProductionHost(productionRest)).toBe(true);
+    expect(writesAllowed(productionGraphql, productionRest)).toBe(false);
+  });
+
+  it("keeps configured endpoints read-only without the write opt-in", () => {
+    delete process.env.E2E_ALLOW_WRITES;
     expect(writesAllowed(GRAPHQL_URI, REST_HOST)).toBe(false);
   });
 
