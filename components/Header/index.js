@@ -374,10 +374,11 @@ export default class Header extends Component {
               typeof cta.url === "string" &&
               cta.url.trim()
           )
-          .map(cta => ({
+          .map((cta, sourceIndex) => ({
             ...cta,
             label: cta.label.trim(),
-            url: cta.url.trim()
+            url: cta.url.trim(),
+            sourceIndex
           }))
       : [];
 
@@ -417,9 +418,9 @@ export default class Header extends Component {
               <SocialLinks links={socialLinks} />
               {ctas.length > 0 && (
                 <nav className="top-bar-actions" aria-label="Featured actions">
-                  {ctas.map((cta, index) => (
+                  {ctas.map(cta => (
                     <a
-                      key={`${cta.url}-${cta.label}-${index}`}
+                      key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
                       className="top-bar-cta"
                       href={cta.url}
                     >

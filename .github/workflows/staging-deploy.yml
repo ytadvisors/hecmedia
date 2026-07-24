@@ -73,7 +73,6 @@ jobs:
           HECMEDIA_STAGING_WP_HOST: ${{ secrets.HECMEDIA_STAGING_WP_HOST }}
           HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID }}
           HECMEDIA_NO_SEND_FORMS: "true"
-          HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
           HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true"
         run: |
           set -euo pipefail
@@ -85,7 +84,6 @@ jobs:
           test "$STAGING_SUBDOMAIN" = development
           test "$STAGING_DOMAIN" = hecmedia.org
           test "$HECMEDIA_NO_SEND_FORMS" = true
-          test "$HECMEDIA_TOPBAR_CTA_PREVIEW" = true
           test "$HECMEDIA_DISABLE_IMAGE_OPTIMIZER" = true
       # Build on the same supported runtime configured for the staging Lambda.
       # Dart Sass replaces the retired native node-sass binding, so installation
@@ -108,7 +106,6 @@ jobs:
           APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_STAGING_APOLLO_CLIENT_URI }}
           WP_HOST: ${{ secrets.HECMEDIA_STAGING_WP_HOST }}
           HECMEDIA_NO_SEND_FORMS: "true"
-          HECMEDIA_TOPBAR_CTA_PREVIEW: "true"
           HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true"
           RE_CAPTCHA_SITE_KEY: ${{ secrets.HECMEDIA_STAGING_RECAPTCHA_SITE_KEY }}
         run: |
