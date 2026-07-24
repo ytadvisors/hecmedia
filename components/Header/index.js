@@ -175,9 +175,7 @@ export default class Header extends Component {
             <span aria-hidden="true">▸</span>
           </button>
         </div>
-        <ul className="dropdown-menu">
-          {children.map(this.getDropdownItem)}
-        </ul>
+        <ul className="dropdown-menu">{children.map(this.getDropdownItem)}</ul>
       </li>
     );
   };
@@ -418,7 +416,7 @@ export default class Header extends Component {
               <SocialLinks links={socialLinks} />
               {ctas.length > 0 && (
                 <nav className="top-bar-actions" aria-label="Featured actions">
-                  {ctas.map((cta, index) => (
+                  {ctas.map(cta => (
                     <a
                       key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
                       className="top-bar-cta"
