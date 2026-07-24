@@ -49,12 +49,49 @@ wpcli menu item add-custom social "Facebook" "https://facebook.com/hectv" || tru
 echo "== categories + sample posts =="
 wpcli term create category "Programs" --slug=programs || true
 wpcli term create category "Events" --slug=events || true
-wpcli post create \
-  --post_type=post \
-  --post_title="Dev Seed Post 1" \
-  --post_status=publish \
-  --post_category=programs \
-  --post_content="Fixture content for local API development." || true
+dev_seed_post_1_id=$(wpcli post list --post_type=post --name="dev-seed-post-1" --field=ID 2>/dev/null || true)
+if [ -z "$dev_seed_post_1_id" ]; then
+  dev_seed_post_1_id=$(wpcli post create \
+    --post_type=post \
+    --post_name="dev-seed-post-1" \
+    --post_title="Dev Seed Post 1" \
+    --post_status=publish \
+    --post_category=programs \
+    --post_content="Fixture content for local API development." \
+    --porcelain)
+fi
+
+echo "== hectv-site-options fixtures (task #82688) =="
+# (b) rail promo — real attachment created + attached so REST/GraphQL both
+# resolve a sourceUrl, not just a bare ID.
+wpcli eval "
+\$upload = wp_upload_dir();
+\$file = \$upload['path'] . '/hectv-rail-promo-fixture.png';
+file_put_contents(\$file, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='));
+\$existing = get_page_by_title('hectv-rail-promo-fixture', OBJECT, 'attachment');
+if (\$existing) {
+  \$id = \$existing->ID;
+} else {
+  \$id = wp_insert_attachment([ 'post_title' => 'hectv-rail-promo-fixture', 'post_mime_type' => 'image/png', 'post_status' => 'inherit' ], \$file);
+  require_once ABSPATH . 'wp-admin/includes/image.php';
+  wp_update_attachment_metadata(\$id, wp_generate_attachment_metadata(\$id, \$file));
+  update_post_meta(\$id, '_wp_attachment_image_alt', 'FOR EDUCATORS notebook card');
+}
+update_option('hectv_rail_promo', [ 'image_id' => \$id, 'url' => 'http://localhost:8091/for-educators', 'alt' => 'FOR EDUCATORS notebook card' ]);
+echo \$id;
+"
+
+# (c) featured videos — override auto-population with two real published posts.
+wpcli eval "update_option('hectv_featured_videos', [ ${dev_seed_post_1_id} ]);"
+
+# (g) topbar CTAs — SUBSCRIBE / SUPPORT / GET INVOLVED per the mock.
+wpcli eval "
+update_option('hectv_topbar_ctas', [
+  [ 'label' => 'SUBSCRIBE',    'url' => 'http://localhost:8091/subscribe',    'style' => 'primary' ],
+  [ 'label' => 'SUPPORT',      'url' => 'http://localhost:8091/support',      'style' => 'secondary' ],
+  [ 'label' => 'GET INVOLVED', 'url' => 'http://localhost:8091/get-involved', 'style' => 'tertiary' ],
+]);
+"
 
 echo "== header-image-size acceptance fixtures =="
 # These posts make every supported setting observable in the real browser.

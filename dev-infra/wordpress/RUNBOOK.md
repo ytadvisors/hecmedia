@@ -13,6 +13,7 @@ that host only — nothing is exposed to the wider network.
 | WPGraphQL (`/graphql`)                                                                 | Core schema only (posts/pages/menus/generalSettings). **Does not** include the ACF-registered custom fields production uses (`postDetails`, `requiredPosts`, `feedDesign`, `magazines`, `pageTemplate`, `shouldOutputInFlatList`, etc.) — that field-registration code is custom WP-side PHP that isn't checked into this repo or any repo available in this environment, so it couldn't be audited or ported. All four `tests/e2e/graphql/*.e2e.test.js` suites query these fields and fail against this instance for that reason — expected, not a bug in this harness, but be aware **no** app-level GraphQL flow is exercisable here yet, only raw core-schema queries. |
 | `wp-api-menus` v2 (`/wp-json/wp-api-menus/v2/menus`)                                   | Full — real plugin, installed by `seed.sh`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `hectv/v1` (`livevideos/live`, `token/email`, `token/thirdparty`, `users/me`, `users`) | **Local stub only** (`mu-plugins/hectv-v1-stub.php`). Same for the same reason as the GraphQL gap above: this is custom WP-side plugin code with no source available to this environment. The stub returns well-formed fixture JSON at the correct URLs so the app doesn't 404, but implements no real auth/video logic. Do not trust it for anything auth- or video-related.                                                                                                                                                                               |
+| `hectv/v1/site-options` (rail promo, featured videos, topbar CTAs) + `headerImageSize` post meta | **Real, native fields** (`mu-plugins/hectv-site-options.php`, task #82688 / MOCK-GAP-SPEC.md §4 Gate 0). Unlike the stub above, this is not a fixture shim — it's a genuine WordPress options group + post meta field this repo owns, with sanitizers, capability checks, a wp-admin settings page, and REST + WPGraphQL registration. The app's real read path (`store/api/SiteOptionsApi.js`, `lib/graphql.js#GET_HECTV_SITE_OPTIONS`) exercises it end-to-end. |
 
 If the real ACF field registrations or the real `hectv/v1` plugin source
 become available (e.g. exported from the production WP admin, or found in a
@@ -53,6 +54,9 @@ curl -fsS "http://localhost:8091/wp-json/wp-api-menus/v2/menus"
 curl -fsS http://localhost:8091/graphql -H 'Content-Type: application/json' \
   -d '{"query":"{ generalSettings { url } }"}'
 curl -fsS http://localhost:8091/wp-json/hectv/v1/livevideos/live
+curl -fsS http://localhost:8091/wp-json/hectv/v1/site-options
+curl -fsS http://localhost:8091/graphql -H 'Content-Type: application/json' \
+  -d '{"query":"{ hectvSiteOptions { railPromo { url } } topbarCtas { label } featuredVideos { slug } }"}'
 ```
 
 wp-admin: `http://localhost:8091/wp-admin` — user `devadmin` / pass `devadmin`
