@@ -1,7 +1,7 @@
 import React from "react";
 import { render } from "@testing-library/react";
 import { useQuery } from "@apollo/react-hooks";
-import SinglePost, { normalizeHeaderImageSize } from "./index";
+import SinglePost, { resolveHeaderImageSize } from "./index";
 import { GET_POST_HEADER_IMAGE_SIZE } from "../../lib/graphql";
 
 jest.mock("@apollo/react-hooks", () => ({
@@ -35,15 +35,30 @@ function renderPost(queryResult) {
   return render(<SinglePost post={post} />);
 }
 
-describe("article header image sizing", () => {
-  afterEach(() => jest.clearAllMocks());
-
-  it.each([undefined, null, "", "unexpected"])(
-    "uses full width when the optional field is %p",
+describe("resolveHeaderImageSize", () => {
+  it.each(["small", "medium", "large", "full"])(
+    "preserves the supported %s value",
     value => {
-      expect(normalizeHeaderImageSize(value)).toBe("full");
+      expect(resolveHeaderImageSize({ post: { headerImageSize: value } })).toBe(
+        value
+      );
     }
   );
+
+  it.each([undefined, null, "", "unexpected"])(
+    "falls back to full for missing or invalid metadata (%s)",
+    value => {
+      expect(
+        resolveHeaderImageSize(
+          value === undefined ? undefined : { post: { headerImageSize: value } }
+        )
+      ).toBe("full");
+    }
+  );
+});
+
+describe("article header image sizing (component)", () => {
+  afterEach(() => jest.clearAllMocks());
 
   it("uses the isolated query value when it is configured", () => {
     const { container } = renderPost({

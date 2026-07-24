@@ -102,6 +102,9 @@
 
 @media (max-width: 767px) {
   .post-container {
+    .article-header-image[data-header-image-size] {
+      width: 100%;
+    }
     .blog-image {
       img.blog-thumbnail {
         width: 120px;
