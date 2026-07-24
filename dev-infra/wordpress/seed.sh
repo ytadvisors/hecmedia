@@ -41,8 +41,23 @@ echo "== menus =="
 for slug in header footer social podcasts; do
   wpcli menu create "$slug" || true
 done
-wpcli menu item add-custom header "Home" "http://localhost:8091/" || true
-wpcli menu item add-custom header "Programs" "http://localhost:8091/programs" || true
+# The header fixture mirrors the approved mock exactly.  Parent/child IDs are
+# intentional: this is the CMS tree the app consumes, including a true second
+# dropdown level under About -> Our Organization -> Leadership.
+for item_id in $(wpcli menu item list header --format=ids | tr ' ' '\n' | sort -rn); do
+  wpcli menu item delete "$item_id"
+done
+about_id=$(wpcli menu item add-custom header "ABOUT" "http://localhost:8091/about" --porcelain)
+organization_id=$(wpcli menu item add-custom header "Our Organization" "http://localhost:8091/about/organization" --parent-id="$about_id" --porcelain)
+wpcli menu item add-custom header "Leadership" "http://localhost:8091/about/leadership" --parent-id="$organization_id" --porcelain >/dev/null
+programs_id=$(wpcli menu item add-custom header "PROGRAMS" "http://localhost:8091/programs" --porcelain)
+wpcli menu item add-custom header "Classroom" "http://localhost:8091/programs/classroom" --parent-id="$programs_id" --porcelain >/dev/null
+production_id=$(wpcli menu item add-custom header "PRODUCTION SERVICES" "http://localhost:8091/production-services" --porcelain)
+wpcli menu item add-custom header "Studio Rental" "http://localhost:8091/production-services/studio-rental" --parent-id="$production_id" --porcelain >/dev/null
+watch_id=$(wpcli menu item add-custom header "WATCH NOW" "http://localhost:8091/watch" --porcelain)
+wpcli menu item add-custom header "HEC-TV Spotlight" "http://localhost:8091/watch/spotlight" --parent-id="$watch_id" --porcelain >/dev/null
+read_id=$(wpcli menu item add-custom header "READ NOW" "http://localhost:8091/read" --porcelain)
+wpcli menu item add-custom header "Books" "http://localhost:8091/read/books" --parent-id="$read_id" --porcelain >/dev/null
 wpcli menu item add-custom footer "About" "http://localhost:8091/about" || true
 wpcli menu item add-custom social "Facebook" "https://facebook.com/hectv" || true
 
