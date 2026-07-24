@@ -1,47 +1,4 @@
 .program-viewer {
-  .educators-card {
-    align-items: center;
-    background: #35ad9c;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    font-size: 24px;
-    font-weight: 800;
-    justify-content: center;
-    min-height: 145px;
-    padding: 16px;
-    text-align: center;
-    text-transform: uppercase;
-
-    &:hover,
-    &:focus {
-      background: #238f82;
-      color: #fff;
-      text-decoration: none;
-    }
-  }
-
-  .educators-card__notebook {
-    background: #fff;
-    border-radius: 8px;
-    display: block;
-    height: 58px;
-    margin-bottom: 8px;
-    position: relative;
-    width: 88px;
-
-    &::before {
-      color: #35ad9c;
-      content: "HEC";
-      font-size: 18px;
-      font-weight: 800;
-      left: 0;
-      position: absolute;
-      right: 0;
-      top: 18px;
-    }
-  }
-
   .program-viewer-container {
     .program-header {
       padding: 10px 15px;
@@ -54,11 +11,5 @@
         width: 80px;
       }
     }
-  }
-}
-
-@media (max-width: 1170px) {
-  .program-viewer .educators-card {
-    min-height: 112px;
   }
 }
