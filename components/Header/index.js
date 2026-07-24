@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import Link from "next/link";
 import $ from "jquery";
 import { FaSearch } from "react-icons/fa";
-import shortid from "shortid";
 import { Navbar, Nav, NavDropdown, Button } from "react-bootstrap";
 import SearchForm from "../Forms/SearchForm";
 import SocialLinks from "../SocialLinks";
@@ -97,6 +96,92 @@ export default class Header extends Component {
     }
   };
 
+  setNestedDropdown = (url, isOpen) => {
+    if (this.mounted) {
+      this.setState(prevState => ({
+        open: { ...prevState.open, [url]: isOpen }
+      }));
+    }
+  };
+
+  focusNestedMenu = trigger => {
+    const submenu = trigger
+      .closest(".dropdown-submenu")
+      .querySelector(".dropdown-menu a, .dropdown-menu button");
+    if (submenu) submenu.focus();
+  };
+
+  handleNestedDropdownKeyDown = (event, url) => {
+    const { key, currentTarget } = event;
+    if (key === "ArrowRight" || key === "ArrowDown") {
+      event.preventDefault();
+      this.setNestedDropdown(url, true);
+      window.setTimeout(() => this.focusNestedMenu(currentTarget), 0);
+    }
+    if (key === "ArrowLeft" || key === "Escape") {
+      event.preventDefault();
+      this.setNestedDropdown(url, false);
+      if (key === "Escape") {
+        const topToggle = currentTarget
+          .closest(".dropdown")
+          .querySelector(".dropdown-toggle");
+        if (topToggle) topToggle.focus();
+      }
+    }
+  };
+
+  handleTopDropdownKeyDown = (event, url) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      this.setActiveDropdown(url, false);
+    }
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      event.preventDefault();
+      this.setActiveDropdown(url, true);
+      window.setTimeout(() => {
+        const topMenu = event.currentTarget.querySelector(".dropdown-menu a");
+        if (topMenu) topMenu.focus();
+      }, 0);
+    }
+  };
+
+  getDropdownItem = link => {
+    const { url, label, children = [] } = link;
+    const { open } = this.state;
+    const isOpen = open[url] === true;
+    const hasChildren = children.length > 0;
+
+    if (!hasChildren) {
+      return <NavWrap key={`${label} ${url}`}>{this.getLink(link)}</NavWrap>;
+    }
+
+    return (
+      <li
+        key={`${label} ${url}`}
+        className={`dropdown-submenu${isOpen ? " open" : ""}`}
+        onMouseEnter={() => this.setNestedDropdown(url, true)}
+        onMouseLeave={() => this.setNestedDropdown(url, false)}
+      >
+        <div className="dropdown-submenu__item">
+          {this.getLink(link)}
+          <button
+            type="button"
+            className="dropdown-submenu__toggle"
+            aria-label={`Show ${label} submenu`}
+            aria-expanded={isOpen}
+            onClick={() => this.setNestedDropdown(url, !isOpen)}
+            onKeyDown={event => this.handleNestedDropdownKeyDown(event, url)}
+          >
+            <span aria-hidden="true">▸</span>
+          </button>
+        </div>
+        <ul className="dropdown-menu">
+          {children.map(this.getDropdownItem)}
+        </ul>
+      </li>
+    );
+  };
+
   getNavDropDown = link => {
     const { url, label } = link;
     const { activeDropdown } = this.state;
@@ -110,10 +195,9 @@ export default class Header extends Component {
         id={url}
         open={activeDropdown === url}
         onToggle={isOpen => this.setActiveDropdown(url, isOpen)}
+        onKeyDown={event => this.handleTopDropdownKeyDown(event, url)}
       >
-        {link.children.map(menu => (
-          <NavWrap key={shortid.generate()}>{this.getLink(menu)}</NavWrap>
-        ))}
+        {link.children.map(this.getDropdownItem)}
       </NavDropdown>
     );
   };
@@ -290,10 +374,11 @@ export default class Header extends Component {
               typeof cta.url === "string" &&
               cta.url.trim()
           )
-          .map(cta => ({
+          .map((cta, sourceIndex) => ({
             ...cta,
             label: cta.label.trim(),
-            url: cta.url.trim()
+            url: cta.url.trim(),
+            sourceIndex
           }))
       : [];
 
@@ -335,7 +420,7 @@ export default class Header extends Component {
                 <nav className="top-bar-actions" aria-label="Featured actions">
                   {ctas.map((cta, index) => (
                     <a
-                      key={`${cta.url}-${cta.label}-${index}`}
+                      key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
                       className="top-bar-cta"
                       href={cta.url}
                     >
