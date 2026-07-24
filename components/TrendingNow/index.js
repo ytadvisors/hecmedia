@@ -2,8 +2,8 @@ import React from "react";
 import toTrendingNowItems from "../../lib/trendingNow";
 import "./styles.scss";
 
-const TrendingNow = ({ posts, loading, error }) => {
-  const items = toTrendingNowItems(posts);
+const TrendingNow = ({ featuredVideos, newestVideos, loading, error }) => {
+  const items = toTrendingNowItems(featuredVideos, newestVideos);
 
   return (
     <section className="trending-now" aria-labelledby="trending-now-title">
