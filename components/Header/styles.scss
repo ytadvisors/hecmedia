@@ -240,6 +240,45 @@
             li:last-child:after {
               height: 0;
             }
+            .dropdown-submenu {
+              position: relative;
+
+              .dropdown-submenu__item {
+                display: flex;
+                align-items: stretch;
+
+                > a {
+                  flex: 1;
+                }
+              }
+
+              .dropdown-submenu__toggle {
+                min-width: 36px;
+                padding: 0.5em 0.75em;
+                border: 0;
+                background: #fff;
+                color: #337ab7;
+                font-size: 16px;
+                line-height: initial;
+
+                &:focus {
+                  outline: 2px solid #0065bc;
+                  outline-offset: -2px;
+                }
+              }
+
+              > .dropdown-menu {
+                top: 0;
+                left: 100%;
+                display: none;
+              }
+
+              &.open > .dropdown-menu,
+              &:hover > .dropdown-menu,
+              &:focus-within > .dropdown-menu {
+                display: block;
+              }
+            }
           }
         }
       }
