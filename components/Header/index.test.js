@@ -131,21 +131,21 @@ describe("Header (primary navigation)", () => {
 
   it("renders top-bar CTAs from the topbarCtas prop, not hardcoded links", () => {
     const topbarCtas = [
-      { label: "Subscribe", url: "/newsletter" },
-      { label: "Support", url: "/support" },
-      { label: "Get Involved", url: "/get-involved" }
+      { label: "SUBSCRIBE", url: "/newsletter" },
+      { label: "SUPPORT", url: "/support" },
+      { label: "GET INVOLVED", url: "/get-involved" }
     ];
     render(<Header searchFunc={() => {}} topbarCtas={topbarCtas} />);
 
-    expect(screen.getByRole("link", { name: "Subscribe" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "SUBSCRIBE" })).toHaveAttribute(
       "href",
       "/newsletter"
     );
-    expect(screen.getByRole("link", { name: "Support" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "SUPPORT" })).toHaveAttribute(
       "href",
       "/support"
     );
-    expect(screen.getByRole("link", { name: "Get Involved" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "GET INVOLVED" })).toHaveAttribute(
       "href",
       "/get-involved"
     );
@@ -170,6 +170,23 @@ describe("Header (primary navigation)", () => {
     expect(screen.queryByText("No URL")).not.toBeInTheDocument();
     expect(screen.queryByText("Empty URL")).not.toBeInTheDocument();
     expect(document.querySelectorAll(".top-bar-cta")).toHaveLength(1);
+  });
+
+  it("preserves the CMS CTA order and count without synthesizing fallback links", () => {
+    const topbarCtas = [
+      { label: "GET INVOLVED", url: "/get-involved" },
+      { label: "SUBSCRIBE", url: "/subscribe" }
+    ];
+    const { container } = render(
+      <Header searchFunc={() => {}} topbarCtas={topbarCtas} />
+    );
+
+    expect(
+      Array.from(container.querySelectorAll(".top-bar-cta")).map(link => ({
+        label: link.textContent,
+        url: link.getAttribute("href")
+      }))
+    ).toEqual(topbarCtas);
   });
 
   it("groups social links and CTA pills together on the second row, away from search", () => {

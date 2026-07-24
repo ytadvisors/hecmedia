@@ -129,7 +129,7 @@ wpcli eval "\$result = hectv_sanitize_rail_promo( ['image_id' => ${FEATURED_PUBL
 
 # Top-bar CTAs (feature g fixture: SUBSCRIBE / SUPPORT / GET INVOLVED)
 wpcli option set hectv_topbar_ctas \
-  '[{"label":"Subscribe","url":"https://hecmedia.org/subscribe","style":"primary"},{"label":"Support","url":"https://hecmedia.org/support","style":"secondary"},{"label":"Get Involved","url":"https://hecmedia.org/get-involved","style":"tertiary"}]' \
+  '[{"label":"SUBSCRIBE","url":"https://hecmedia.org/subscribe","style":"primary"},{"label":"SUPPORT","url":"https://hecmedia.org/support","style":"secondary"},{"label":"GET INVOLVED","url":"https://hecmedia.org/get-involved","style":"tertiary"}]' \
   --format=json || true
 
 echo "== done. Verify with:"
