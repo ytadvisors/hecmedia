@@ -51,6 +51,16 @@
       "pattern": "/search/:words"
     }
   ],
+  "newsletter": [
+    {
+      "page": "newsletter/",
+      "pattern": "/newsletter"
+    },
+    {
+      "page": "newsletter/thank-you",
+      "pattern": "/newsletter/thank-you"
+    }
+  ],
   "": [
     {
       "page": "[page]/",

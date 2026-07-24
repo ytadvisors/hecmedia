@@ -24,18 +24,12 @@ const buildMenu = links => ({
 
 describe("Header (primary navigation)", () => {
   const originalNavigationPreview = process.env.HECMEDIA_NAVIGATION_PREVIEW;
-  const originalTopBarPreview = process.env.HECMEDIA_TOPBAR_CTA_PREVIEW;
 
   afterEach(() => {
     if (originalNavigationPreview === undefined) {
       delete process.env.HECMEDIA_NAVIGATION_PREVIEW;
     } else {
       process.env.HECMEDIA_NAVIGATION_PREVIEW = originalNavigationPreview;
-    }
-    if (originalTopBarPreview === undefined) {
-      delete process.env.HECMEDIA_TOPBAR_CTA_PREVIEW;
-    } else {
-      process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = originalTopBarPreview;
     }
   });
 
@@ -99,8 +93,7 @@ describe("Header (primary navigation)", () => {
     expect(dropdown).not.toHaveClass("open");
   });
 
-  it("uses the five-item staging preview without changing CMS links", () => {
-    process.env.HECMEDIA_NAVIGATION_PREVIEW = "true";
+  it("renders CMS nav labels directly without synthetic preview grouping", () => {
     const header = buildMenu([
       { url: "https://hectv.org/", label: "Home" },
       { url: "https://hectv.org/programs", label: "Programs" },
@@ -117,20 +110,12 @@ describe("Header (primary navigation)", () => {
       <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
     );
 
-    expect(
-      document.querySelectorAll(".top-navigation > li.dropdown")
-    ).toHaveLength(5);
-    [
-      "Home",
-      "Watch",
-      "Learn & Explore",
-      "Connect",
-      "Support HEC Media"
-    ].forEach(label =>
-      expect(screen.getAllByText(label).length).toBeGreaterThan(0)
-    );
+    // CMS labels appear directly — no synthetic grouping layer
     expect(screen.getByText("Programs")).toBeInTheDocument();
     expect(screen.getByText("Underwriting")).toBeInTheDocument();
+    // Synthetic preview group labels must not appear
+    expect(screen.queryByText("Watch")).not.toBeInTheDocument();
+    expect(screen.queryByText("Learn & Explore")).not.toBeInTheDocument();
   });
 
   it("renders a search toggle button in the nav", () => {
@@ -138,58 +123,72 @@ describe("Header (primary navigation)", () => {
     expect(container.querySelector(".search-btn-icon")).toBeInTheDocument();
   });
 
-  it("renders staging-safe Watch Live, Subscribe, and Donate top-bar CTAs", () => {
-    process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = "true";
-    render(<Header searchFunc={() => {}} />);
+  it("does not render top-bar CTAs when no CTA data is provided", () => {
+    const { container } = render(<Header searchFunc={() => {}} />);
 
-    expect(screen.getByRole("link", { name: "Watch Live" })).toHaveAttribute(
-      "href",
-      "/#watch-live"
-    );
+    expect(container.querySelector(".top-bar-actions")).not.toBeInTheDocument();
+  });
+
+  it("renders top-bar CTAs from the topbarCtas prop, not hardcoded links", () => {
+    const topbarCtas = [
+      { label: "Subscribe", url: "/newsletter" },
+      { label: "Support", url: "/support" },
+      { label: "Get Involved", url: "/get-involved" }
+    ];
+    render(<Header searchFunc={() => {}} topbarCtas={topbarCtas} />);
+
     expect(screen.getByRole("link", { name: "Subscribe" })).toHaveAttribute(
       "href",
       "/newsletter"
     );
-    expect(
-      screen.getByRole("button", { name: /Donate Staging only/i })
-    ).toBeInTheDocument();
-    expect(screen.getByText("Staging only")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Support" })).toHaveAttribute(
+      "href",
+      "/support"
+    );
+    expect(screen.getByRole("link", { name: "Get Involved" })).toHaveAttribute(
+      "href",
+      "/get-involved"
+    );
   });
 
-  it("keeps the donation placeholder keyboard-accessible and transaction-free", () => {
-    process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = "true";
-    render(<Header searchFunc={() => {}} />);
+  it("drops CTA rows with a missing or empty label or URL", () => {
+    const topbarCtas = [
+      { label: "Watch Live", url: " /live " },
+      { label: "Watch Live", url: "/live" },
+      { label: "No URL" },
+      { label: "Empty URL", url: "   " },
+      { label: "", url: "/missing-label" },
+      null
+    ];
 
-    const donate = screen.getByRole("button", {
-      name: /Donate Staging only/i
-    });
-    donate.focus();
-    expect(donate).toHaveFocus();
-    fireEvent.keyDown(donate, { key: "Enter", code: "Enter" });
-    fireEvent.click(donate);
-    expect(
-      screen.getByRole("status", {
-        name: ""
-      })
-    ).toHaveTextContent("Donations are disabled in this staging preview.");
-    expect(donate).not.toHaveAttribute("href");
+    render(<Header searchFunc={() => {}} topbarCtas={topbarCtas} />);
+
+    expect(screen.getByRole("link", { name: "Watch Live" })).toHaveAttribute(
+      "href",
+      "/live"
+    );
+    expect(screen.queryByText("No URL")).not.toBeInTheDocument();
+    expect(screen.queryByText("Empty URL")).not.toBeInTheDocument();
+    expect(document.querySelectorAll(".top-bar-cta")).toHaveLength(1);
   });
 
-  it("keeps all three CTAs available in the mobile header", () => {
-    process.env.HECMEDIA_TOPBAR_CTA_PREVIEW = "true";
-    Object.defineProperty(window, "innerWidth", {
-      configurable: true,
-      value: 375
-    });
-    const { container } = render(<Header searchFunc={() => {}} />);
+  it("groups social links and CTA pills together on the second row, away from search", () => {
+    const social = buildMenu([
+      { url: "https://facebook.com/hectv", label: "Facebook" }
+    ]);
+    const topbarCtas = [{ label: "Subscribe", url: "/newsletter" }];
+    const { container } = render(
+      <Header searchFunc={() => {}} social={social} topbarCtas={topbarCtas} />
+    );
 
-    expect(container.querySelector(".top-bar-actions")).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("link", { name: /Watch Live|Subscribe/ })
-    ).toHaveLength(2);
-    expect(
-      screen.getByRole("button", { name: /Donate Staging only/i })
-    ).toBeVisible();
+    const secondaryRow = container.querySelector(".header-secondary-row");
+    expect(secondaryRow).toBeInTheDocument();
+    expect(secondaryRow.querySelector(".social-links")).toBeInTheDocument();
+    expect(secondaryRow.querySelector(".top-bar-actions")).toBeInTheDocument();
+
+    const topRow = container.querySelector(".header-top-row");
+    expect(topRow.querySelector(".search-btn-icon")).toBeInTheDocument();
+    expect(topRow.querySelector(".top-bar-actions")).not.toBeInTheDocument();
   });
 
   it("keeps its layout space while applying the sticky, scrolled treatment", () => {
