@@ -1,5 +1,3 @@
-"use strict";
-
 const http = require("http");
 const { URL } = require("url");
 
@@ -20,6 +18,11 @@ function getOperationName(body) {
   const query = body && typeof body.query === "string" ? body.query : "";
   const match = query.match(/\b(?:query|mutation)\s+([_A-Za-z][_0-9A-Za-z]*)/);
   return match ? match[1] : "";
+}
+
+function isMutation(body) {
+  const query = body && typeof body.query === "string" ? body.query : "";
+  return /\bmutation\b/.test(query);
 }
 
 function chooseOrigin({ pathname, body, localOrigin, upstreamOrigin }) {
@@ -79,12 +82,37 @@ function createRouter({
       const incoming = new URL(request.url, "http://router.invalid");
       const rawBody = await readBody(request);
       let parsedBody = null;
-      if (
-        incoming.pathname === "/graphql" &&
-        rawBody.length &&
-        (request.headers["content-type"] || "").includes("application/json")
-      ) {
-        parsedBody = JSON.parse(rawBody.toString("utf8"));
+      if (incoming.pathname === "/graphql") {
+        if (request.method === "GET") {
+          parsedBody = { query: incoming.searchParams.get("query") || "" };
+        } else if (request.method === "POST") {
+          if (
+            !(request.headers["content-type"] || "").includes(
+              "application/json"
+            )
+          ) {
+            throw Object.assign(
+              new Error("GraphQL requires application/json"),
+              {
+                status: 415
+              }
+            );
+          }
+          parsedBody = JSON.parse(rawBody.toString("utf8"));
+        } else {
+          throw Object.assign(new Error("method not allowed"), { status: 405 });
+        }
+
+        if (isMutation(parsedBody)) {
+          throw Object.assign(
+            new Error("GraphQL mutations are disabled on staging"),
+            { status: 405 }
+          );
+        }
+      } else if (!["GET", "HEAD"].includes(request.method)) {
+        throw Object.assign(new Error("REST writes are disabled on staging"), {
+          status: 405
+        });
       }
 
       const origin = chooseOrigin({
@@ -145,4 +173,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { chooseOrigin, createRouter, getOperationName };
+module.exports = { chooseOrigin, createRouter, getOperationName, isMutation };
