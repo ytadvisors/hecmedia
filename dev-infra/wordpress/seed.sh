@@ -47,6 +47,9 @@ done
 for item_id in $(wpcli menu item list header --format=ids | tr ' ' '\n' | sort -rn); do
   wpcli menu item delete "$item_id"
 done
+for item_id in $(wpcli menu item list bottomnav --format=ids | tr ' ' '\n' | sort -rn); do
+  wpcli menu item delete "$item_id"
+done
 about_id=$(wpcli menu item add-custom header "ABOUT" "http://localhost:8091/about" --porcelain)
 organization_id=$(wpcli menu item add-custom header "Our Organization" "http://localhost:8091/about/organization" --parent-id="$about_id" --porcelain)
 wpcli menu item add-custom header "Leadership" "http://localhost:8091/about/leadership" --parent-id="$organization_id" --porcelain >/dev/null
