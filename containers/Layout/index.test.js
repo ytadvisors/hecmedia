@@ -13,10 +13,13 @@ jest.mock("../../routes", () => ({
 
 jest.mock("../../components/ProgramViewer", () => ({
   featuredVideos = [],
-  newestVideos = []
+  newestVideos = [],
+  trendingNowError
 }) => (
   <div data-testid="program-viewer">
-    {featuredVideos.concat(newestVideos).map(post => post.title).join(", ")}
+    {trendingNowError
+      ? "Trending stories are unavailable right now."
+      : featuredVideos.concat(newestVideos).map(post => post.title).join(", ")}
   </div>
 ));
 
@@ -94,5 +97,35 @@ describe("Layout", () => {
     render(<Layout dispatch={jest.fn()} />);
 
     expect(screen.getByTestId("header")).toBeEmptyDOMElement();
+  });
+
+  it("keeps newest videos visible when optional curation is unavailable", () => {
+    const newestVideos = [
+      { postId: 2, title: "Newest video", link: "/posts/newest" }
+    ];
+
+    useQuery
+      .mockReturnValueOnce({ data: {}, loading: false })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({
+        data: { newestVideos: { nodes: newestVideos } },
+        loading: false
+      })
+      .mockReturnValueOnce({
+        data: undefined,
+        error: new Error(
+          'Cannot query field "featuredVideos" on type "RootQuery".'
+        )
+      })
+      .mockReturnValueOnce({ data: undefined });
+
+    render(<Layout dispatch={jest.fn()} />);
+
+    expect(screen.getByTestId("program-viewer")).toHaveTextContent(
+      "Newest video"
+    );
+    expect(screen.getByTestId("program-viewer")).not.toHaveTextContent(
+      "unavailable"
+    );
   });
 });

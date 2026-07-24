@@ -64,9 +64,7 @@ export const Layout = props => {
   });
 
   const {
-    data: featuredVideosData,
-    loading: featuredVideosLoading,
-    error: featuredVideosError
+    data: featuredVideosData
   } = useQuery(GET_FEATURED_VIDEOS, {
     notifyOnNetworkStatusChange: true
   });
@@ -84,8 +82,11 @@ export const Layout = props => {
     spotLight: { nodes: spotLightPosts = [] } = {}
   } = data || {};
   const { topbarCtas } = topbarData || {};
-  const { newestVideos: { nodes: newestVideos = [] } = {} } =
-    newestVideosData || {};
+  const newestVideos =
+    (newestVideosData &&
+      newestVideosData.newestVideos &&
+      newestVideosData.newestVideos.nodes) ||
+    [];
   const { featuredVideos = [] } = featuredVideosData || {};
   const { children, showBottomNav, absContent, style } = props;
   const { liveVideos } = videos || [];
@@ -115,8 +116,8 @@ export const Layout = props => {
           spotLightPosts={spotLightPosts}
           featuredVideos={featuredVideos}
           newestVideos={newestVideos}
-          trendingNowLoading={newestVideosLoading || featuredVideosLoading}
-          trendingNowError={newestVideosError || featuredVideosError}
+          trendingNowLoading={newestVideosLoading}
+          trendingNowError={newestVideosError}
         >
           {children}
           {showBottomNav && <BottomNav title="more from" />}
