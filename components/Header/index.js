@@ -364,7 +364,6 @@ export default class Header extends Component {
         )
       }
     ];
-    const seenCtas = new Set();
     const ctas = Array.isArray(topbarCtas)
       ? topbarCtas
           .filter(
@@ -375,17 +374,12 @@ export default class Header extends Component {
               typeof cta.url === "string" &&
               cta.url.trim()
           )
-          .map(cta => ({
+          .map((cta, sourceIndex) => ({
             ...cta,
             label: cta.label.trim(),
-            url: cta.url.trim()
+            url: cta.url.trim(),
+            sourceIndex
           }))
-          .filter(cta => {
-            const key = `${cta.url}-${cta.label}`;
-            if (seenCtas.has(key)) return false;
-            seenCtas.add(key);
-            return true;
-          })
       : [];
 
     return (
@@ -426,7 +420,7 @@ export default class Header extends Component {
                 <nav className="top-bar-actions" aria-label="Featured actions">
                   {ctas.map(cta => (
                     <a
-                      key={`${cta.url}-${cta.label}`}
+                      key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
                       className="top-bar-cta"
                       href={cta.url}
                     >

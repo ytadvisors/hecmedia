@@ -15,7 +15,8 @@ export default class extends Component {
     const {
       style,
       spotLightPosts,
-      trendingPosts,
+      featuredVideos,
+      newestVideos,
       trendingNowLoading,
       trendingNowError,
       children
@@ -35,7 +36,8 @@ export default class extends Component {
                 <div className="row">
                   <div className="col-lg-12 no-padding">
                     <TrendingNow
-                      posts={trendingPosts}
+                      featuredVideos={featuredVideos}
+                      newestVideos={newestVideos}
                       loading={trendingNowLoading}
                       error={trendingNowError}
                     />
