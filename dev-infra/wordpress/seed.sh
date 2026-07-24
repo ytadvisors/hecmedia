@@ -90,6 +90,30 @@ wpcli post create \
   --post_status=publish \
   --post_content="Fixture home page." || true
 
+echo "== hectv-site-options fixtures =="
+# Seed fixture values for Gate 0 fields so curl/graphql/e2e tests pass
+# without manual wp-admin interaction.
+
+# Rail promo — image_id 1 is the placeholder auto-created by WordPress on
+# fresh installs; any valid positive int is acceptable for fixture purposes.
+wpcli option set hectv_rail_promo \
+  '{"image_id":1,"url":"https://hecmedia.org/for-educators","alt":"For Educators"}' \
+  --format=json || true
+
+# Featured video IDs — reference the seeded post IDs (use real IDs from earlier
+# wpcli post create steps; fall back to any existing post ID if not present).
+FV_POST_ID=$(wpcli post list --post_type=post --name=dev-seed-post-1 --field=ID 2>/dev/null || true)
+if [ -n "$FV_POST_ID" ]; then
+  wpcli option set hectv_featured_videos "[${FV_POST_ID}]" --format=json || true
+fi
+
+# Top-bar CTAs (feature g fixture: SUBSCRIBE / SUPPORT / GET INVOLVED)
+wpcli option set hectv_topbar_ctas \
+  '[{"label":"Subscribe","url":"https://hecmedia.org/subscribe","style":"primary"},{"label":"Support","url":"https://hecmedia.org/support","style":"secondary"},{"label":"Get Involved","url":"https://hecmedia.org/get-involved","style":"tertiary"}]' \
+  --format=json || true
+
 echo "== done. Verify with:"
 echo "   curl -fsS http://localhost:8091/wp-json/ | head -c 200"
 echo "   curl -fsS http://localhost:8091/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{ generalSettings { url } }\"}'"
+echo "   curl -fsS http://localhost:8091/wp-json/hectv/v1/site-options"
+echo "   curl -fsS http://localhost:8091/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{ hectvSiteOptions { railPromo { imageId url alt } featuredVideoIds topbarCtas { label url style } } }\"}'"
