@@ -26,6 +26,7 @@ export default class Header extends Component {
       open: {},
       navExpanded: false,
       activeDropdown: null,
+      openSubmenus: [],
       isMobile: false,
       scrolled: false
     };
@@ -87,14 +88,102 @@ export default class Header extends Component {
 
   closeNav = () => {
     if (this.mounted) {
-      this.setState({ navExpanded: false, activeDropdown: null });
+      this.setState({ navExpanded: false, activeDropdown: null, openSubmenus: [] });
     }
   };
 
   setActiveDropdown = (url, isOpen) => {
     if (this.mounted) {
-      this.setState({ activeDropdown: isOpen ? url : null });
+      this.setState({
+        activeDropdown: isOpen ? url : null,
+        ...(isOpen ? null : { openSubmenus: [] })
+      });
     }
+  };
+
+  handleNavKeyDown = event => {
+    if (event.key === "Escape" && this.mounted) {
+      this.setState({ activeDropdown: null, openSubmenus: [] });
+    }
+  };
+
+  openSubmenu = path => {
+    if (this.mounted) {
+      this.setState(prevState =>
+        prevState.openSubmenus.includes(path)
+          ? null
+          : { openSubmenus: [...prevState.openSubmenus, path] }
+      );
+    }
+  };
+
+  closeSubmenu = path => {
+    if (this.mounted) {
+      this.setState(prevState => ({
+        openSubmenus: prevState.openSubmenus.filter(
+          openPath => openPath !== path && !openPath.startsWith(`${path}>`)
+        )
+      }));
+    }
+  };
+
+  toggleSubmenu = path => {
+    const { openSubmenus } = this.state;
+    if (openSubmenus.includes(path)) this.closeSubmenu(path);
+    else this.openSubmenu(path);
+  };
+
+  handleSubmenuKeyDown = (event, path, parentPath) => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      this.closeSubmenu(path);
+      this.setState({ activeDropdown: null });
+    } else if (event.key === "ArrowRight" || event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.openSubmenu(path);
+    } else if (event.key === "ArrowLeft") {
+      event.stopPropagation();
+      this.closeSubmenu(path);
+      if (parentPath) this.closeSubmenu(parentPath);
+    }
+  };
+
+  getSubMenuItem = (link, parentPath) => {
+    const { label } = link;
+    const path = `${parentPath}>${link.url}`;
+    const hasChildren = link.children && link.children.length > 0;
+
+    if (!hasChildren) {
+      return <NavWrap key={path}>{this.getLink(link)}</NavWrap>;
+    }
+
+    const { openSubmenus } = this.state;
+    const isOpen = openSubmenus.includes(path);
+
+    return (
+      <li
+        key={path}
+        className={`dropdown-submenu${isOpen ? " open" : ""}`}
+        onMouseEnter={() => this.openSubmenu(path)}
+        onMouseLeave={() => this.closeSubmenu(path)}
+      >
+        <a
+          href="#"
+          role="button"
+          aria-haspopup="true"
+          aria-expanded={isOpen}
+          onClick={event => {
+            event.preventDefault();
+            this.toggleSubmenu(path);
+          }}
+          onKeyDown={event => this.handleSubmenuKeyDown(event, path, parentPath)}
+          dangerouslySetInnerHTML={{ __html: label }}
+        />
+        <ul className="dropdown-menu" role="menu">
+          {link.children.map(child => this.getSubMenuItem(child, path))}
+        </ul>
+      </li>
+    );
   };
 
   getNavDropDown = link => {
@@ -111,9 +200,7 @@ export default class Header extends Component {
         open={activeDropdown === url}
         onToggle={isOpen => this.setActiveDropdown(url, isOpen)}
       >
-        {link.children.map(menu => (
-          <NavWrap key={shortid.generate()}>{this.getLink(menu)}</NavWrap>
-        ))}
+        {link.children.map(menu => this.getSubMenuItem(menu, url))}
       </NavDropdown>
     );
   };
@@ -331,6 +418,7 @@ export default class Header extends Component {
             <Navbar.Collapse>
               <Nav
                 onSelect={this.closeNav}
+                onKeyDown={this.handleNavKeyDown}
                 className="pull-left top-navigation left-links"
               >
                 {this.getLinks(topLinks)}

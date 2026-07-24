@@ -2,20 +2,21 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import Header from "./index";
 
+const toMenuEdges = links =>
+  links.map(({ url, label, children }) => ({
+    node: {
+      url,
+      label,
+      childItems: children ? { edges: toMenuEdges(children) } : undefined
+    }
+  }));
+
 const buildMenu = links => ({
   edges: [
     {
       node: {
         menuItems: {
-          edges: links.map(({ url, label, children }) => ({
-            node: {
-              url,
-              label,
-              childItems: children
-                ? { edges: children.map(c => ({ node: c })) }
-                : undefined
-            }
-          }))
+          edges: toMenuEdges(links)
         }
       }
     }
@@ -23,16 +24,6 @@ const buildMenu = links => ({
 });
 
 describe("Header (primary navigation)", () => {
-  const originalNavigationPreview = process.env.HECMEDIA_NAVIGATION_PREVIEW;
-
-  afterEach(() => {
-    if (originalNavigationPreview === undefined) {
-      delete process.env.HECMEDIA_NAVIGATION_PREVIEW;
-    } else {
-      process.env.HECMEDIA_NAVIGATION_PREVIEW = originalNavigationPreview;
-    }
-  });
-
   it("renders without crashing when no menu data is provided yet", () => {
     render(<Header searchFunc={() => {}} />);
     expect(screen.getByAltText("HECTV logo")).toBeInTheDocument();
@@ -91,6 +82,46 @@ describe("Header (primary navigation)", () => {
 
     fireEvent.click(screen.getByText("Our Team"), { ctrlKey: true });
     expect(dropdown).not.toHaveClass("open");
+  });
+
+  it("renders a real second-level submenu from nested CMS menu children", () => {
+    const header = buildMenu([
+      {
+        url: "https://hectv.org/watch",
+        label: "Watch",
+        children: [
+          {
+            url: "https://hectv.org/watch/programs",
+            label: "Programs",
+            children: [
+              {
+                url: "https://hectv.org/watch/programs/spotlight",
+                label: "Spotlight"
+              }
+            ]
+          }
+        ]
+      }
+    ]);
+
+    const { container } = render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    expect(
+      container.querySelectorAll(
+        ".dropdown-menu .dropdown-menu, .dropdown-menu li ul"
+      ).length
+    ).toBeGreaterThan(0);
+
+    const submenuToggle = screen.getByText("Programs").closest("a");
+    fireEvent.click(submenuToggle);
+    const submenu = container.querySelector(".dropdown-submenu");
+    expect(submenu).toHaveClass("open");
+    expect(screen.getByText("Spotlight")).toBeInTheDocument();
+
+    fireEvent.keyDown(submenuToggle, { key: "Escape" });
+    expect(submenu).not.toHaveClass("open");
   });
 
   it("renders CMS nav labels directly without synthetic preview grouping", () => {

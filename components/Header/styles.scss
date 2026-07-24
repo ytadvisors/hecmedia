@@ -240,6 +240,24 @@
             li:last-child:after {
               height: 0;
             }
+            .dropdown-submenu {
+              position: relative;
+              > a::after {
+                content: "\25B8";
+                float: right;
+                margin-left: 0.5em;
+              }
+              > .dropdown-menu {
+                display: none;
+                position: absolute;
+                top: 0;
+                left: 100%;
+                margin-top: 0;
+              }
+              &.open > .dropdown-menu {
+                display: block;
+              }
+            }
           }
         }
       }
@@ -529,6 +547,17 @@
               }
               li:after {
                 height: 0;
+              }
+              .dropdown-submenu {
+                > a::after {
+                  content: "\25BE";
+                }
+                > .dropdown-menu {
+                  position: relative;
+                  left: 0;
+                  top: 0;
+                  padding-left: 1em;
+                }
               }
             }
           }
