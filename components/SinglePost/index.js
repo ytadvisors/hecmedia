@@ -9,9 +9,19 @@ import ShareSocialLinks from "../ShareSocialLinks";
 import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
 import { isServer } from "../../lib/serverFunctions";
-import { GET_PAGE_INFO } from "../../lib/graphql";
+import {
+  GET_PAGE_INFO,
+  GET_POST_HEADER_IMAGE_SIZE
+} from "../../lib/graphql";
 import PodcastLinks from "../PodcastLinks";
 import "./styles.scss";
+
+const HEADER_IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
+
+export const resolveHeaderImageSize = data => {
+  const value = data && data.post && data.post.headerImageSize;
+  return HEADER_IMAGE_SIZES.has(value) ? value : "full";
+};
 
 const SinglePost = props => {
   const {
@@ -26,6 +36,12 @@ const SinglePost = props => {
   const { slug, postDetails: { pollForUpdates } = {} } = post || {};
 
   const variables = { slug };
+
+  const { data: headerImageData } = useQuery(GET_POST_HEADER_IMAGE_SIZE, {
+    variables,
+    skip: !slug,
+    errorPolicy: "all"
+  });
 
   const { data } =
     pollForUpdates && pollForUpdates !== 0
@@ -44,9 +60,9 @@ const SinglePost = props => {
     content,
     link = "",
     postDetails,
-    eventDetails,
-    headerImageSize
+    eventDetails
   } = currentPost || {};
+  const headerImageSize = resolveHeaderImageSize(headerImageData);
 
   const {
     youtubeId,
@@ -206,7 +222,7 @@ const SinglePost = props => {
           className={`blog-image article-header-image ${(classes &&
             classes.thumbnail) ||
             "default-img"}`}
-          data-header-image-size={headerImageSize || "full"}
+          data-header-image-size={headerImageSize}
         >
           {imgThumbnail && (
             <LazyLoad height={500}>
