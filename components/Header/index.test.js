@@ -2,20 +2,21 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import Header from "./index";
 
+const buildMenuItems = links =>
+  links.map(({ url, label, children }) => ({
+    node: {
+      url,
+      label,
+      childItems: children ? { edges: buildMenuItems(children) } : undefined
+    }
+  }));
+
 const buildMenu = links => ({
   edges: [
     {
       node: {
         menuItems: {
-          edges: links.map(({ url, label, children }) => ({
-            node: {
-              url,
-              label,
-              childItems: children
-                ? { edges: children.map(c => ({ node: c })) }
-                : undefined
-            }
-          }))
+          edges: buildMenuItems(links)
         }
       }
     }
@@ -23,16 +24,6 @@ const buildMenu = links => ({
 });
 
 describe("Header (primary navigation)", () => {
-  const originalNavigationPreview = process.env.HECMEDIA_NAVIGATION_PREVIEW;
-
-  afterEach(() => {
-    if (originalNavigationPreview === undefined) {
-      delete process.env.HECMEDIA_NAVIGATION_PREVIEW;
-    } else {
-      process.env.HECMEDIA_NAVIGATION_PREVIEW = originalNavigationPreview;
-    }
-  });
-
   it("renders without crashing when no menu data is provided yet", () => {
     render(<Header searchFunc={() => {}} />);
     expect(screen.getByAltText("HECTV logo")).toBeInTheDocument();
@@ -70,6 +61,44 @@ describe("Header (primary navigation)", () => {
 
     expect(screen.getByText("About")).toBeInTheDocument();
     expect(screen.getByText("Our Team")).toBeInTheDocument();
+  });
+
+  it("renders a second CMS menu level and supports touch and keyboard controls", () => {
+    const header = buildMenu([
+      {
+        url: "https://hectv.org/about",
+        label: "About",
+        children: [
+          {
+            url: "https://hectv.org/about/organization",
+            label: "Our Organization",
+            children: [
+              {
+                url: "https://hectv.org/about/leadership",
+                label: "Leadership"
+              }
+            ]
+          }
+        ]
+      }
+    ]);
+    const { container } = render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    fireEvent.click(screen.getByText("About"));
+    const toggle = screen.getByRole("button", {
+      name: "Show Our Organization submenu"
+    });
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(container.querySelectorAll(".dropdown-menu .dropdown-menu")).toHaveLength(1);
+    expect(screen.getByText("Leadership")).toBeVisible();
+
+    fireEvent.keyDown(toggle, { key: "Escape" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.keyDown(toggle, { key: "ArrowRight" });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
   });
 
   it("closes an open dropdown after a navigation link is selected", () => {
