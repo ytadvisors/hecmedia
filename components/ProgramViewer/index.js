@@ -33,17 +33,6 @@ export default class extends Component {
             <div className="col-lg-3 no-padding">
               <SideNavigation>
                 <div className="row">
-                  <div className="col-lg-12 col-lg-pull-0  no-padding">
-                    <a href="/spotlight" className="educators-card">
-                      <span
-                        className="educators-card__notebook"
-                        aria-hidden="true"
-                      />
-                      <span>For Educators</span>
-                    </a>
-                  </div>
-                </div>
-                <div className="row">
                   <div className="col-lg-12 no-padding">
                     <TrendingNow
                       posts={trendingPosts}

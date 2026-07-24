@@ -80,6 +80,7 @@ services:
       - dev_wp_data:/var/www/html
       # Local-only stub for the custom hectv/v1 namespace (see header note above).
       - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      - ./fixtures-for-educators-rail-promo.png:/fixtures/for-educators-rail-promo.png:ro
     ports:
       - "127.0.0.1:8091:80"
     healthcheck:
@@ -107,6 +108,7 @@ services:
       # sanitizer supplied by this must-use plugin.
       - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
       - ./seed.sh:/seed.sh:ro
+      - ./fixtures-for-educators-rail-promo.png:/fixtures/for-educators-rail-promo.png:ro
     entrypoint: ["wp"]
     command: ["--info"]
 

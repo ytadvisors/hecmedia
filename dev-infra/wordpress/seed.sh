@@ -38,13 +38,14 @@ wpcli rewrite structure '/%postname%/' --hard
 wpcli rewrite flush --hard
 
 echo "== menus =="
-for slug in header footer social podcasts; do
+for slug in header footer social podcasts bottomnav; do
   wpcli menu create "$slug" || true
 done
 wpcli menu item add-custom header "Home" "http://localhost:8091/" || true
 wpcli menu item add-custom header "Programs" "http://localhost:8091/programs" || true
 wpcli menu item add-custom footer "About" "http://localhost:8091/about" || true
 wpcli menu item add-custom social "Facebook" "https://facebook.com/hectv" || true
+wpcli menu item add-custom bottomnav "Programs" "http://localhost:8091/programs" || true
 
 echo "== categories + sample posts =="
 wpcli term create category "Programs" --slug=programs || true
@@ -98,7 +99,7 @@ echo "== hectv-site-options fixtures =="
 # ID 1 to the Hello World post, so post existence alone is not valid here.
 RAIL_IMAGE_ID=$(wpcli post list --post_type=attachment --name=hec-rail-promo-fixture --field=ID 2>/dev/null || true)
 if [ -z "$RAIL_IMAGE_ID" ]; then
-  RAIL_IMAGE_ID=$(wpcli media import /var/www/html/wp-includes/images/w-logo-blue.png --title="HEC Rail Promo Fixture" --porcelain)
+  RAIL_IMAGE_ID=$(wpcli media import /fixtures/for-educators-rail-promo.png --title="For Educators Rail Promo" --porcelain)
   wpcli post update "$RAIL_IMAGE_ID" --post_name=hec-rail-promo-fixture >/dev/null
 fi
 wpcli option set hectv_rail_promo \

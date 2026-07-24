@@ -2,6 +2,10 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import ProgramViewer from "./index";
 
+jest.mock("@apollo/react-hooks", () => ({
+  useQuery: () => ({ data: {} })
+}));
+
 describe("ProgramViewer", () => {
   it("stacks the home rail in mock order without Playing Now", () => {
     render(
@@ -10,22 +14,16 @@ describe("ProgramViewer", () => {
       </ProgramViewer>
     );
 
-    expect(screen.getByRole("link", { name: "For Educators" })).toHaveAttribute(
-      "href",
-      "/spotlight"
-    );
+    expect(screen.queryByText("For Educators")).not.toBeInTheDocument();
     expect(document.getElementById("subscribe")).not.toBeInTheDocument();
     expect(screen.queryByText("HEC-TV NewsLetter")).not.toBeInTheDocument();
     expect(screen.getByText("Trending Now")).toBeInTheDocument();
     expect(screen.getByText("HEC-TV SPOTLIGHT")).toBeInTheDocument();
     expect(screen.queryByText("Playing Now")).toBeNull();
 
-    const railText = screen.getByText("For Educators").closest(
-      ".side-navigation"
-    ).textContent;
-    expect(railText.indexOf("For Educators")).toBeLessThan(
-      railText.indexOf("Trending Now")
-    );
+    const railText = screen
+      .getByText("Trending Now")
+      .closest(".side-navigation").textContent;
     expect(railText.indexOf("Trending Now")).toBeLessThan(
       railText.indexOf("HEC-TV SPOTLIGHT")
     );
