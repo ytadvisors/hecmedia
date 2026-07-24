@@ -103,6 +103,9 @@ services:
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
     volumes:
       - dev_wp_data:/var/www/html
+      # WP-CLI executes seed.sh, whose regression guard calls the site-options
+      # sanitizer supplied by this must-use plugin.
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
       - ./seed.sh:/seed.sh:ro
     entrypoint: ["wp"]
     command: ["--info"]

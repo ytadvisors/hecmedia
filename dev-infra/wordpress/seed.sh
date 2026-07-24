@@ -90,6 +90,50 @@ wpcli post create \
   --post_status=publish \
   --post_content="Fixture home page." || true
 
+echo "== hectv-site-options fixtures =="
+# Seed fixture values for Gate 0 fields so curl/graphql/e2e tests pass
+# without manual wp-admin interaction.
+
+# Rail promo — use a real image attachment. Fresh WordPress commonly assigns
+# ID 1 to the Hello World post, so post existence alone is not valid here.
+RAIL_IMAGE_ID=$(wpcli post list --post_type=attachment --name=hec-rail-promo-fixture --field=ID 2>/dev/null || true)
+if [ -z "$RAIL_IMAGE_ID" ]; then
+  RAIL_IMAGE_ID=$(wpcli media import /var/www/html/wp-includes/images/w-logo-blue.png --title="HEC Rail Promo Fixture" --porcelain)
+  wpcli post update "$RAIL_IMAGE_ID" --post_name=hec-rail-promo-fixture >/dev/null
+fi
+wpcli option set hectv_rail_promo \
+  "{\"image_id\":${RAIL_IMAGE_ID},\"url\":\"https://hecmedia.org/for-educators\",\"alt\":\"For Educators\"}" \
+  --format=json || true
+
+# Featured video IDs — seed one currently published post plus a post that was
+# published when selected and then withdrawn. The read path must hide the latter.
+FEATURED_PUBLISHED_ID=$(wpcli post list --post_type=post --name=featured-video-published --field=ID 2>/dev/null || true)
+if [ -z "$FEATURED_PUBLISHED_ID" ]; then
+  FEATURED_PUBLISHED_ID=$(wpcli post create --post_type=post --post_name=featured-video-published --post_title="Featured Video Published" --post_status=publish --post_content="Published featured-video fixture." --porcelain)
+fi
+wpcli post update "$FEATURED_PUBLISHED_ID" --post_status=publish >/dev/null
+FEATURED_WITHDRAWN_ID=$(wpcli post list --post_type=post --name=featured-video-withdrawn --field=ID 2>/dev/null || true)
+if [ -z "$FEATURED_WITHDRAWN_ID" ]; then
+  FEATURED_WITHDRAWN_ID=$(wpcli post create --post_type=post --post_name=featured-video-withdrawn --post_title="Featured Video Withdrawn" --post_status=publish --post_content="Withdrawn featured-video fixture." --porcelain)
+fi
+wpcli post update "$FEATURED_WITHDRAWN_ID" --post_status=draft >/dev/null
+FEATURED_PRIVATE_ID=$(wpcli post list --post_type=post --name=featured-video-private --field=ID 2>/dev/null || true)
+if [ -z "$FEATURED_PRIVATE_ID" ]; then
+  FEATURED_PRIVATE_ID=$(wpcli post create --post_type=post --post_name=featured-video-private --post_title="Featured Video Private" --post_status=publish --post_content="Private featured-video fixture." --porcelain)
+fi
+wpcli post update "$FEATURED_PRIVATE_ID" --post_status=private >/dev/null
+wpcli option set hectv_featured_videos "[${FEATURED_PUBLISHED_ID},${FEATURED_WITHDRAWN_ID},${FEATURED_PRIVATE_ID}]" --format=json || true
+
+# Regression guard: a normal post must never pass the rail-promo image validator.
+wpcli eval "\$result = hectv_sanitize_rail_promo( ['image_id' => ${FEATURED_PUBLISHED_ID}, 'url' => 'https://hecmedia.org/'] ); if ( ! is_wp_error( \$result ) ) { fwrite( STDERR, 'Non-attachment rail promo was accepted.' ); exit( 1 ); }"
+
+# Top-bar CTAs (feature g fixture: SUBSCRIBE / SUPPORT / GET INVOLVED)
+wpcli option set hectv_topbar_ctas \
+  '[{"label":"Subscribe","url":"https://hecmedia.org/subscribe","style":"primary"},{"label":"Support","url":"https://hecmedia.org/support","style":"secondary"},{"label":"Get Involved","url":"https://hecmedia.org/get-involved","style":"tertiary"}]' \
+  --format=json || true
+
 echo "== done. Verify with:"
 echo "   curl -fsS http://localhost:8091/wp-json/ | head -c 200"
 echo "   curl -fsS http://localhost:8091/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{ generalSettings { url } }\"}'"
+echo "   curl -fsS http://localhost:8091/wp-json/hectv/v1/site-options"
+echo "   curl -fsS http://localhost:8091/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{ hectvSiteOptions { railPromo { image { id sourceUrl altText } url alt } } topbarCtas { label url style } featuredVideos { id title } }\"}'"
