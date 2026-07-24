@@ -154,7 +154,6 @@ describe("Header (primary navigation)", () => {
   it("drops CTA rows with a missing or empty label or URL", () => {
     const topbarCtas = [
       { label: "Watch Live", url: " /live " },
-      { label: "Watch Live", url: "/live" },
       { label: "No URL" },
       { label: "Empty URL", url: "   " },
       { label: "", url: "/missing-label" },
@@ -175,6 +174,7 @@ describe("Header (primary navigation)", () => {
   it("preserves the CMS CTA order and count without synthesizing fallback links", () => {
     const topbarCtas = [
       { label: "GET INVOLVED", url: "/get-involved" },
+      { label: "SUBSCRIBE", url: "/subscribe" },
       { label: "SUBSCRIBE", url: "/subscribe" }
     ];
     const { container } = render(

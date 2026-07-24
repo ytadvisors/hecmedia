@@ -280,7 +280,6 @@ export default class Header extends Component {
         )
       }
     ];
-    const seenCtas = new Set();
     const ctas = Array.isArray(topbarCtas)
       ? topbarCtas
           .filter(
@@ -296,12 +295,6 @@ export default class Header extends Component {
             label: cta.label.trim(),
             url: cta.url.trim()
           }))
-          .filter(cta => {
-            const key = `${cta.url}-${cta.label}`;
-            if (seenCtas.has(key)) return false;
-            seenCtas.add(key);
-            return true;
-          })
       : [];
 
     return (
@@ -340,9 +333,9 @@ export default class Header extends Component {
               <SocialLinks links={socialLinks} />
               {ctas.length > 0 && (
                 <nav className="top-bar-actions" aria-label="Featured actions">
-                  {ctas.map(cta => (
+                  {ctas.map((cta, index) => (
                     <a
-                      key={`${cta.url}-${cta.label}`}
+                      key={`${cta.url}-${cta.label}-${index}`}
                       className="top-bar-cta"
                       href={cta.url}
                     >
