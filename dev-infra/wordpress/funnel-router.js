@@ -25,12 +25,36 @@ function isMutation(body) {
   return /\bmutation\b/.test(query);
 }
 
-function chooseOrigin({ pathname, body, localOrigin, upstreamOrigin }) {
-  if (pathname === "/graphql" && LOCAL_OPERATIONS.has(getOperationName(body))) {
+function isLocalGraphqlRead(body) {
+  const operationName = getOperationName(body);
+  if (operationName) return LOCAL_OPERATIONS.has(operationName);
+
+  const query = body && typeof body.query === "string" ? body.query : "";
+  return /\b(hectvSiteOptions|topbarCtas|featuredVideos|headerImageSize)\b/.test(
+    query
+  );
+}
+
+function isLocalFixtureRestRead(pathname, searchParams) {
+  if (LOCAL_REST_PATHS.has(pathname)) return true;
+  if (pathname !== "/wp-json/wp/v2/posts") return false;
+
+  const fields = searchParams ? searchParams.get("_fields") || "" : "";
+  return fields.split(",").includes("meta");
+}
+
+function chooseOrigin({
+  pathname,
+  searchParams,
+  body,
+  localOrigin,
+  upstreamOrigin
+}) {
+  if (pathname === "/graphql" && isLocalGraphqlRead(body)) {
     return localOrigin;
   }
 
-  if (LOCAL_REST_PATHS.has(pathname)) {
+  if (isLocalFixtureRestRead(pathname, searchParams)) {
     return localOrigin;
   }
 
@@ -117,6 +141,7 @@ function createRouter({
 
       const origin = chooseOrigin({
         pathname: incoming.pathname,
+        searchParams: incoming.searchParams,
         body: parsedBody,
         localOrigin,
         upstreamOrigin
@@ -173,4 +198,11 @@ if (require.main === module) {
   });
 }
 
-module.exports = { chooseOrigin, createRouter, getOperationName, isMutation };
+module.exports = {
+  chooseOrigin,
+  createRouter,
+  getOperationName,
+  isLocalGraphqlRead,
+  isLocalFixtureRestRead,
+  isMutation
+};

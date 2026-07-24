@@ -51,6 +51,28 @@ describe("HEC staging Funnel router", () => {
     ).toBe("RailPromo");
   });
 
+  test("routes anonymous feature reads locally but preserves named legacy queries", () => {
+    expect(
+      chooseOrigin({
+        pathname: "/graphql",
+        body: { query: "{ topbarCtas { label } }" },
+        localOrigin,
+        upstreamOrigin
+      })
+    ).toBe(localOrigin);
+    expect(
+      chooseOrigin({
+        pathname: "/graphql",
+        body: {
+          query:
+            "query PageLayout { featuredVideos { id } topbarCtas { label } }"
+        },
+        localOrigin,
+        upstreamOrigin
+      })
+    ).toBe(upstreamOrigin);
+  });
+
   test("detects GraphQL mutations conservatively", () => {
     expect(
       isMutation({ query: "mutation UpdatePost { updatePost { id } }" })
@@ -73,6 +95,27 @@ describe("HEC staging Funnel router", () => {
       chooseOrigin({
         pathname: "/wp-json/wp/v2/posts",
         body: null,
+        localOrigin,
+        upstreamOrigin
+      })
+    ).toBe(upstreamOrigin);
+  });
+
+  test("routes REST post-meta fixture reads locally", () => {
+    expect(
+      chooseOrigin({
+        pathname: "/wp-json/wp/v2/posts",
+        searchParams: new URLSearchParams(
+          "slug=header-image-size-large&_fields=id,slug,meta"
+        ),
+        localOrigin,
+        upstreamOrigin
+      })
+    ).toBe(localOrigin);
+    expect(
+      chooseOrigin({
+        pathname: "/wp-json/wp/v2/posts",
+        searchParams: new URLSearchParams("per_page=1&_fields=id,slug"),
         localOrigin,
         upstreamOrigin
       })
