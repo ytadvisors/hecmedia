@@ -14,7 +14,8 @@ describe("HEC staging Funnel router", () => {
     "RailPromo",
     "TopbarCtas",
     "FeaturedVideos",
-    "PostHeaderImageSize"
+    "PostHeaderImageSize",
+    "PageLayout"
   ])("routes %s to local WordPress", operationName => {
     expect(
       chooseOrigin({
@@ -26,7 +27,7 @@ describe("HEC staging Funnel router", () => {
     ).toBe(localOrigin);
   });
 
-  test.each(["PageLayout", "NewestVideos", "HomePageInfo"])(
+  test.each(["NewestVideos", "HomePageInfo"])(
     "routes established operation %s to upstream WordPress",
     operationName => {
       expect(
@@ -51,7 +52,7 @@ describe("HEC staging Funnel router", () => {
     ).toBe("RailPromo");
   });
 
-  test("routes anonymous feature reads locally but preserves named legacy queries", () => {
+  test("routes anonymous and named feature reads locally", () => {
     expect(
       chooseOrigin({
         pathname: "/graphql",
@@ -70,7 +71,7 @@ describe("HEC staging Funnel router", () => {
         localOrigin,
         upstreamOrigin
       })
-    ).toBe(upstreamOrigin);
+    ).toBe(localOrigin);
   });
 
   test("detects GraphQL mutations conservatively", () => {

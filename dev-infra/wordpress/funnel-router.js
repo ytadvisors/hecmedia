@@ -5,7 +5,10 @@ const LOCAL_OPERATIONS = new Set([
   "RailPromo",
   "TopbarCtas",
   "FeaturedVideos",
-  "PostHeaderImageSize"
+  "PostHeaderImageSize",
+  // The nested-menu layout query requires MenuItem.parentDatabaseId, which
+  // is registered by the staging WordPress stack but absent upstream.
+  "PageLayout"
 ]);
 const LOCAL_REST_PATHS = new Set(["/wp-json/hectv/v1/site-options"]);
 const MAX_BODY_BYTES = 1024 * 1024;
