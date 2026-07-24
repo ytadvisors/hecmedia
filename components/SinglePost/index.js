@@ -39,8 +39,14 @@ const SinglePost = props => {
   const { updatedPost } = data || {};
   const currentPost = { ...post, updatedPost };
 
-  const { title, content, link = "", postDetails, eventDetails } =
-    currentPost || {};
+  const {
+    title,
+    content,
+    link = "",
+    postDetails,
+    eventDetails,
+    headerImageSize
+  } = currentPost || {};
 
   const {
     youtubeId,
@@ -197,8 +203,10 @@ const SinglePost = props => {
         </div>
       ) : (
         <div
-          className={`blog-image ${(classes && classes.thumbnail) ||
+          className={`blog-image article-header-image ${(classes &&
+            classes.thumbnail) ||
             "default-img"}`}
+          data-header-image-size={headerImageSize || "full"}
         >
           {imgThumbnail && (
             <LazyLoad height={500}>
