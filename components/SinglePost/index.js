@@ -9,9 +9,12 @@ import ShareSocialLinks from "../ShareSocialLinks";
 import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
 import { isServer } from "../../lib/serverFunctions";
-import { GET_PAGE_INFO } from "../../lib/graphql";
+import { GET_PAGE_INFO, GET_POST_HEADER_IMAGE_SIZE } from "../../lib/graphql";
 import PodcastLinks from "../PodcastLinks";
 import "./styles.scss";
+
+export const normalizeHeaderImageSize = value =>
+  ["small", "medium", "large", "full"].includes(value) ? value : "full";
 
 const SinglePost = props => {
   const {
@@ -36,17 +39,25 @@ const SinglePost = props => {
         })
       : {};
 
+  const { data: headerImageSizeData } = useQuery(GET_POST_HEADER_IMAGE_SIZE, {
+    variables,
+    skip: !slug,
+    // The field is optional during the CMS rollout. Apollo returns partial
+    // data plus an error for an unknown field, which must still render the
+    // existing full-width article image.
+    errorPolicy: "all"
+  });
+
   const { updatedPost } = data || {};
   const currentPost = { ...post, updatedPost };
 
-  const {
-    title,
-    content,
-    link = "",
-    postDetails,
-    eventDetails,
-    headerImageSize
-  } = currentPost || {};
+  const { title, content, link = "", postDetails, eventDetails } =
+    currentPost || {};
+  const headerImageSize = normalizeHeaderImageSize(
+    headerImageSizeData &&
+      headerImageSizeData.post &&
+      headerImageSizeData.post.headerImageSize
+  );
 
   const {
     youtubeId,

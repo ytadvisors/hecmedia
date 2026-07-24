@@ -112,5 +112,16 @@
         width: 100%;
       }
     }
+    .article-header-image {
+      &[data-header-image-size="small"] {
+        width: 60%;
+      }
+      &[data-header-image-size="medium"] {
+        width: 80%;
+      }
+      &[data-header-image-size="large"] {
+        width: 100%;
+      }
+    }
   }
 }
