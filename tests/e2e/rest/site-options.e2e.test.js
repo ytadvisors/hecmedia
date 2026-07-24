@@ -72,6 +72,10 @@ describe("REST: GET /wp-json/hectv/v1/site-options", () => {
     it("is seeded with a fixture value", () => {
       expect(siteOptions.railPromo).not.toBeNull();
     });
+
+    it("uses a real image attachment with a usable source URL", () => {
+      expect(siteOptions.railPromo.image.sourceUrl).not.toBe("");
+    });
   });
 
   describe("featuredVideoIds (feature c)", () => {
@@ -200,8 +204,8 @@ describe("GraphQL: topbarCtas root field (feature g)", () => {
 });
 
 describe("GraphQL: featuredVideos root field (feature c)", () => {
-  it("returns Post objects with id and title", async () => {
-    const result = await gql(`{ featuredVideos { id title } }`);
+  it("returns only posts that remain published after selection", async () => {
+    const result = await gql(`{ featuredVideos { id title slug } }`);
     expect(result.errors).toBeUndefined();
     const { featuredVideos } = result.data;
     expect(Array.isArray(featuredVideos)).toBe(true);
@@ -210,6 +214,15 @@ describe("GraphQL: featuredVideos root field (feature c)", () => {
       expect(typeof post.id).toBe("string"); // WPGraphQL global ID is base64
       expect(typeof post.title).toBe("string");
     });
+    expect(featuredVideos.map(post => post.slug)).toContain(
+      "featured-video-published"
+    );
+    expect(featuredVideos.map(post => post.slug)).not.toContain(
+      "featured-video-withdrawn"
+    );
+    expect(featuredVideos.map(post => post.slug)).not.toContain(
+      "featured-video-private"
+    );
   });
 });
 

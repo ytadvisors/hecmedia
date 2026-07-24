@@ -36,10 +36,10 @@ function hectv_sanitize_rail_promo( $value ) {
 	$image_id = isset( $value['image_id'] ) ? absint( $value['image_id'] ) : 0;
 	$url      = isset( $value['url'] ) ? esc_url_raw( $value['url'] ) : '';
 
-	if ( $image_id <= 0 || ! get_post( $image_id ) || $url === '' ) {
+	if ( $image_id <= 0 || ! wp_attachment_is_image( $image_id ) || $url === '' ) {
 		return new WP_Error(
 			'hectv_invalid_rail_promo',
-			'hectv_rail_promo requires a valid image_id and a valid url.'
+			'hectv_rail_promo requires an image attachment and a valid url.'
 		);
 	}
 
@@ -143,7 +143,7 @@ add_action( 'init', function () {
 
 function hectv_get_rail_promo() {
 	$value = get_option( HECTV_RAIL_PROMO_OPTION, null );
-	if ( ! is_array( $value ) || empty( $value['image_id'] ) ) {
+	if ( ! is_array( $value ) || empty( $value['image_id'] ) || ! wp_attachment_is_image( $value['image_id'] ) ) {
 		return null;
 	}
 
@@ -160,7 +160,13 @@ function hectv_get_rail_promo() {
 
 function hectv_get_featured_video_ids() {
 	$ids = get_option( HECTV_FEATURED_VIDEOS_OPTION, [] );
-	return is_array( $ids ) ? array_values( array_map( 'absint', $ids ) ) : [];
+	if ( ! is_array( $ids ) ) {
+		return [];
+	}
+
+	return array_values( array_filter( array_map( 'absint', $ids ), function ( $id ) {
+		return $id > 0 && get_post_type( $id ) === 'post' && get_post_status( $id ) === 'publish';
+	} ) );
 }
 
 function hectv_get_topbar_ctas() {
@@ -318,7 +324,7 @@ add_action( 'graphql_register_types', function () {
 			}
 			return array_values( array_filter( array_map( function ( $id ) {
 				$post = get_post( $id );
-				return ( $post && class_exists( '\WPGraphQL\Model\Post' ) )
+				return ( $post && $post->post_type === 'post' && $post->post_status === 'publish' && class_exists( '\WPGraphQL\Model\Post' ) )
 					? new \WPGraphQL\Model\Post( $post )
 					: null;
 			}, $ids ) ) );
