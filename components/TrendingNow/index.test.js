@@ -6,7 +6,7 @@ describe("TrendingNow", () => {
   it("renders thumbnail links without a staging-only label", () => {
     const { container } = render(
       <TrendingNow
-        posts={[
+        newestVideos={[
           {
             postId: 1,
             title: "A current story",
@@ -37,7 +37,7 @@ describe("TrendingNow", () => {
   });
 
   it("renders an empty state", () => {
-    render(<TrendingNow posts={[]} />);
+    render(<TrendingNow featuredVideos={[]} newestVideos={[]} />);
 
     expect(
       screen.getByText("No trending stories are available yet.")

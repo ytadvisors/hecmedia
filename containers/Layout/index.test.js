@@ -11,9 +11,15 @@ jest.mock("../../routes", () => ({
   Router: { pushRoute: jest.fn() }
 }));
 
-jest.mock("../../components/ProgramViewer", () => ({ trendingPosts }) => (
+jest.mock("../../components/ProgramViewer", () => ({
+  featuredVideos = [],
+  newestVideos = [],
+  trendingNowError
+}) => (
   <div data-testid="program-viewer">
-    {trendingPosts.map(post => post.title).join(", ")}
+    {trendingNowError
+      ? "Trending stories are unavailable right now."
+      : featuredVideos.concat(newestVideos).map(post => post.title).join(", ")}
   </div>
 ));
 
@@ -32,23 +38,28 @@ describe("Layout", () => {
     useQuery.mockReset();
   });
 
-  it("supplies spotlight posts to Trending Now until a dedicated feed exists", () => {
-    const spotLightPosts = [
-      { postId: 1, title: "A current story", link: "/posts/current" }
+  it("supplies featured and newest videos to Trending Now without using Spotlight", () => {
+    const featuredVideos = [
+      { postId: 1, title: "Editor's choice", link: "/posts/featured" }
+    ];
+    const newestVideos = [
+      { postId: 2, title: "Newest video", link: "/posts/newest" }
     ];
 
     useQuery
       .mockReturnValueOnce({
-        data: { spotLight: { nodes: spotLightPosts } },
+        data: { spotLight: { nodes: [{ title: "Spotlight only" }] } },
         loading: false
       })
       .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: { newestVideos: { nodes: newestVideos } } })
+      .mockReturnValueOnce({ data: { featuredVideos } })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
 
     expect(screen.getByTestId("program-viewer")).toHaveTextContent(
-      "A current story"
+      "Editor's choice, Newest video"
     );
   });
 
@@ -61,6 +72,8 @@ describe("Layout", () => {
     useQuery
       .mockReturnValueOnce({ data: {}, loading: false })
       .mockReturnValueOnce({ data: { topbarCtas } })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -77,10 +90,42 @@ describe("Layout", () => {
         data: undefined,
         error: new Error('Cannot query field "topbarCtas" on type "RootQuery".')
       })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
 
     expect(screen.getByTestId("header")).toBeEmptyDOMElement();
+  });
+
+  it("keeps newest videos visible when optional curation is unavailable", () => {
+    const newestVideos = [
+      { postId: 2, title: "Newest video", link: "/posts/newest" }
+    ];
+
+    useQuery
+      .mockReturnValueOnce({ data: {}, loading: false })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({
+        data: { newestVideos: { nodes: newestVideos } },
+        loading: false
+      })
+      .mockReturnValueOnce({
+        data: undefined,
+        error: new Error(
+          'Cannot query field "featuredVideos" on type "RootQuery".'
+        )
+      })
+      .mockReturnValueOnce({ data: undefined });
+
+    render(<Layout dispatch={jest.fn()} />);
+
+    expect(screen.getByTestId("program-viewer")).toHaveTextContent(
+      "Newest video"
+    );
+    expect(screen.getByTestId("program-viewer")).not.toHaveTextContent(
+      "unavailable"
+    );
   });
 });
