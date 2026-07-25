@@ -5,6 +5,7 @@ import moment from "moment";
 import { Router } from "../../routes";
 import {
   GET_LAYOUT,
+  GET_HEADER_MENU,
   GET_LIVE_VIDEOS,
   GET_TOPBAR_CTAS,
   GET_NEWEST_VIDEOS,
@@ -46,6 +47,10 @@ export const Layout = props => {
     notifyOnNetworkStatusChange: true
   });
 
+  const { data: headerData } = useQuery(GET_HEADER_MENU, {
+    notifyOnNetworkStatusChange: true
+  });
+
   // This custom WordPress field deploys independently. Keeping it in a
   // separate operation means an unavailable field cannot blank the shell.
   const { data: topbarData } = useQuery(GET_TOPBAR_CTAS, {
@@ -63,9 +68,7 @@ export const Layout = props => {
     notifyOnNetworkStatusChange: true
   });
 
-  const {
-    data: featuredVideosData
-  } = useQuery(GET_FEATURED_VIDEOS, {
+  const { data: featuredVideosData } = useQuery(GET_FEATURED_VIDEOS, {
     notifyOnNetworkStatusChange: true
   });
 
@@ -75,12 +78,12 @@ export const Layout = props => {
   });
 
   const {
-    header,
     social,
     footer,
     featuredMagazines,
     spotLight: { nodes: spotLightPosts = [] } = {}
   } = data || {};
+  const { header } = headerData || {};
   const { topbarCtas } = topbarData || {};
   const newestVideos =
     (newestVideosData &&

@@ -2,6 +2,7 @@ import moment from "moment";
 import {
   GET_HOME_PAGE,
   GET_LAYOUT,
+  GET_HEADER_MENU,
   GET_SCHEDULE,
   GET_PAGE_TEMPLATE
 } from "../../../lib/graphql";
@@ -46,18 +47,12 @@ describe("PageLayout (containers/Layout/index.js)", () => {
     const result = await executeQuery(GET_LAYOUT, undefined);
 
     expect(result.errors).toBeUndefined();
-    const {
-      featuredMagazines,
-      spotLight,
-      header,
-      footer,
-      social
-    } = result.data;
+    const { featuredMagazines, spotLight, footer, social } = result.data;
 
     expect(Array.isArray(featuredMagazines.edges)).toBe(true);
     expect(Array.isArray(spotLight.nodes)).toBe(true);
 
-    [header, footer, social].forEach(menu => {
+    [footer, social].forEach(menu => {
       expect(Array.isArray(menu.edges)).toBe(true);
       menu.edges.forEach(({ node }) => {
         expect(Array.isArray(node.menuItems.edges)).toBe(true);
@@ -66,6 +61,24 @@ describe("PageLayout (containers/Layout/index.js)", () => {
           expect(typeof item.url === "string" || item.url === null).toBe(true);
           expect(Array.isArray(item.childItems.edges)).toBe(true);
         });
+      });
+    });
+  });
+});
+
+describe("HeaderMenu (containers/Layout/index.js)", () => {
+  it("returns the nested header menu from the staging WordPress contract", async () => {
+    const result = await executeQuery(GET_HEADER_MENU, undefined);
+
+    expect(result.errors).toBeUndefined();
+    const { header } = result.data;
+    expect(Array.isArray(header.edges)).toBe(true);
+    header.edges.forEach(({ node }) => {
+      expect(Array.isArray(node.menuItems.edges)).toBe(true);
+      node.menuItems.edges.forEach(({ node: item }) => {
+        expect(typeof item.label).toBe("string");
+        expect(typeof item.parentDatabaseId).toBe("number");
+        expect(Array.isArray(item.childItems.edges)).toBe(true);
       });
     });
   });
