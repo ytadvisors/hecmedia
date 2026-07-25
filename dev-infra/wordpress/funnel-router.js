@@ -6,9 +6,7 @@ const LOCAL_OPERATIONS = new Set([
   "TopbarCtas",
   "FeaturedVideos",
   "PostHeaderImageSize",
-  // The nested-menu layout query requires MenuItem.parentDatabaseId, which
-  // is registered by the staging WordPress stack but absent upstream.
-  "PageLayout"
+  "HeaderMenu"
 ]);
 const LOCAL_REST_PATHS = new Set(["/wp-json/hectv/v1/site-options"]);
 const MAX_BODY_BYTES = 1024 * 1024;

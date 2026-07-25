@@ -11,20 +11,28 @@ jest.mock("../../routes", () => ({
   Router: { pushRoute: jest.fn() }
 }));
 
-jest.mock("../../components/ProgramViewer", () => ({
-  featuredVideos = [],
-  newestVideos = [],
-  trendingNowError
-}) => (
-  <div data-testid="program-viewer">
-    {trendingNowError
-      ? "Trending stories are unavailable right now."
-      : featuredVideos.concat(newestVideos).map(post => post.title).join(", ")}
-  </div>
-));
+jest.mock(
+  "../../components/ProgramViewer",
+  () => ({ featuredVideos = [], newestVideos = [], trendingNowError }) => (
+    <div data-testid="program-viewer">
+      {trendingNowError
+        ? "Trending stories are unavailable right now."
+        : featuredVideos
+            .concat(newestVideos)
+            .map(post => post.title)
+            .join(", ")}
+    </div>
+  )
+);
 
-jest.mock("../../components/Header", () => ({ topbarCtas = [] }) => (
+jest.mock("../../components/Header", () => ({ header, topbarCtas = [] }) => (
   <div data-testid="header">
+    {header &&
+      header.edges &&
+      header.edges
+        .flatMap(({ node }) => node.menuItems.edges)
+        .map(({ node }) => node.label)
+        .join(", ")}
     {topbarCtas.map(cta => `${cta.label}:${cta.url}`).join(", ")}
   </div>
 ));
@@ -52,6 +60,7 @@ describe("Layout", () => {
         loading: false
       })
       .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: { newestVideos: { nodes: newestVideos } } })
       .mockReturnValueOnce({ data: { featuredVideos } })
       .mockReturnValueOnce({ data: undefined });
@@ -71,6 +80,7 @@ describe("Layout", () => {
 
     useQuery
       .mockReturnValueOnce({ data: {}, loading: false })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: { topbarCtas } })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
@@ -86,6 +96,7 @@ describe("Layout", () => {
   it("keeps the shell usable when the optional CTA query fails", () => {
     useQuery
       .mockReturnValueOnce({ data: {}, loading: false })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({
         data: undefined,
         error: new Error('Cannot query field "topbarCtas" on type "RootQuery".')
@@ -96,7 +107,7 @@ describe("Layout", () => {
 
     render(<Layout dispatch={jest.fn()} />);
 
-    expect(screen.getByTestId("header")).toBeEmptyDOMElement();
+    expect(screen.getByTestId("header").textContent).toBe("");
   });
 
   it("keeps newest videos visible when optional curation is unavailable", () => {
@@ -106,6 +117,7 @@ describe("Layout", () => {
 
     useQuery
       .mockReturnValueOnce({ data: {}, loading: false })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({
         data: { newestVideos: { nodes: newestVideos } },
@@ -127,5 +139,50 @@ describe("Layout", () => {
     expect(screen.getByTestId("program-viewer")).not.toHaveTextContent(
       "unavailable"
     );
+  });
+
+  it("uses the isolated header menu without coupling it to layout data", () => {
+    const header = {
+      edges: [
+        {
+          node: {
+            menuItems: {
+              edges: [{ node: { label: "PROGRAMS" } }]
+            }
+          }
+        }
+      ]
+    };
+
+    useQuery
+      .mockReturnValueOnce({ data: { footer: {}, social: {} } })
+      .mockReturnValueOnce({ data: { header } })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined });
+
+    render(<Layout dispatch={jest.fn()} />);
+
+    expect(screen.getByTestId("header")).toHaveTextContent("PROGRAMS");
+  });
+
+  it("keeps the shell usable when the isolated header menu is unavailable", () => {
+    useQuery
+      .mockReturnValueOnce({ data: { footer: {}, social: {} } })
+      .mockReturnValueOnce({
+        data: undefined,
+        error: new Error(
+          'Cannot query field "parentDatabaseId" on type "MenuItem".'
+        )
+      })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined });
+
+    render(<Layout dispatch={jest.fn()} />);
+
+    expect(screen.getByTestId("header").textContent).toBe("");
   });
 });

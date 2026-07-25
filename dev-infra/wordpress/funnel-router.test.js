@@ -15,7 +15,7 @@ describe("HEC staging Funnel router", () => {
     "TopbarCtas",
     "FeaturedVideos",
     "PostHeaderImageSize",
-    "PageLayout"
+    "HeaderMenu"
   ])("routes %s to local WordPress", operationName => {
     expect(
       chooseOrigin({
@@ -27,7 +27,7 @@ describe("HEC staging Funnel router", () => {
     ).toBe(localOrigin);
   });
 
-  test.each(["NewestVideos", "HomePageInfo"])(
+  test.each(["NewestVideos", "HomePageInfo", "PageLayout"])(
     "routes established operation %s to upstream WordPress",
     operationName => {
       expect(
@@ -66,7 +66,7 @@ describe("HEC staging Funnel router", () => {
         pathname: "/graphql",
         body: {
           query:
-            "query PageLayout { featuredVideos { id } topbarCtas { label } }"
+            "query HeaderMenu { menus { edges { node { menuItems { edges { node { parentDatabaseId } } } } } } }"
         },
         localOrigin,
         upstreamOrigin
