@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { SideNavigation } from "./index";
+import { getPublicRailPromoUrl, SideNavigation } from "./index";
 
 describe("SideNavigation", () => {
   it("renders its children inside a section", () => {
@@ -34,5 +34,33 @@ describe("SideNavigation", () => {
       "src",
       "https://img.test/for-educators.png"
     );
+  });
+
+  it("routes private WordPress media through the public staging host", () => {
+    const originalHost = process.env.WP_HOST;
+    process.env.WP_HOST = "https://wordpress-staging.example.com";
+
+    expect(
+      getPublicRailPromoUrl(
+        "https://mba.tail1234.ts.net/wp-content/uploads/educators.png"
+      )
+    ).toBe(
+      "https://wordpress-staging.example.com/wp-content/uploads/educators.png"
+    );
+
+    if (originalHost === undefined) delete process.env.WP_HOST;
+    else process.env.WP_HOST = originalHost;
+  });
+
+  it("preserves already-public media URLs", () => {
+    const originalHost = process.env.WP_HOST;
+    process.env.WP_HOST = "https://wordpress-staging.example.com";
+
+    expect(getPublicRailPromoUrl("https://cdn.example.com/educators.png")).toBe(
+      "https://cdn.example.com/educators.png"
+    );
+
+    if (originalHost === undefined) delete process.env.WP_HOST;
+    else process.env.WP_HOST = originalHost;
   });
 });
