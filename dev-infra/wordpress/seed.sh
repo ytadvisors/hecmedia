@@ -41,6 +41,9 @@ echo "== menus =="
 for slug in header footer social podcasts bottomnav; do
   wpcli menu create "$slug" || true
 done
+for slug in header footer social podcasts bottomnav; do
+  wpcli menu location assign "$slug" "$slug"
+done
 # The header fixture mirrors the approved mock exactly.  Parent/child IDs are
 # intentional: this is the CMS tree the app consumes, including a true second
 # dropdown level under About -> Our Organization -> Leadership.

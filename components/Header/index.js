@@ -175,9 +175,7 @@ export default class Header extends Component {
             <span aria-hidden="true">▸</span>
           </button>
         </div>
-        <ul className="dropdown-menu">
-          {children.map(this.getDropdownItem)}
-        </ul>
+        <ul className="dropdown-menu">{children.map(this.getDropdownItem)}</ul>
       </li>
     );
   };
@@ -314,9 +312,8 @@ export default class Header extends Component {
     const style = isMobile
       ? { width: `${window.innerWidth - 50}px`, right: "12px" }
       : {};
-    const { node: { menuItems: { edges: headerList = [] } = {} } = {} } = header
-      ? header.edges[0]
-      : {};
+    const { node: { menuItems: { edges: headerList = [] } = {} } = {} } =
+      (header && header.edges && header.edges[0]) || {};
     const { node: { menuItems: { edges: socialList = [] } = {} } = {} } = social
       ? social.edges[0]
       : {};
