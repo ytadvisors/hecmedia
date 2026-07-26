@@ -1,15 +1,20 @@
 .trending-now {
-  background: #111;
-  color: #ccc;
+  background: #fff;
+  color: #111;
   font-size: 14px;
 
   .title {
     align-items: center;
-    color: #fff;
+    color: #111;
     display: flex;
-    justify-content: space-between;
-    padding: 10px;
+    justify-content: center;
+    padding: 8px 10px 5px;
     text-transform: uppercase;
+
+    b {
+      font-size: 22px;
+      line-height: 1;
+    }
   }
 
   .staging-indicator {
@@ -30,13 +35,13 @@
     padding: 0;
 
     li {
-      border-top: 2px solid #02223d;
+      border-top: 1px solid #0065bc;
       padding: 10px;
     }
 
     a {
       align-items: center;
-      color: #ccc;
+      color: #111;
       display: flex;
       font-size: 90%;
       font-weight: bold;
@@ -56,7 +61,7 @@
     }
 
     a:hover {
-      color: #aaa;
+      color: #0065bc;
     }
   }
 }

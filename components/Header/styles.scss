@@ -57,32 +57,38 @@
   // Row 1: compact logo lockup on the left, search alone at the far right.
   .header-top-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     flex-wrap: nowrap;
-    padding: 8px 12px 4px 0;
+    padding: 8px 12px 5px 12px;
   }
-  // Row 2: social icons + CTA pills, one left-aligned group, away from search.
+  // Social icons + CTA buttons sit under the company copy, beside the logo.
   .header-secondary-row {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 14px;
-    padding: 0 12px 8px 0;
+    gap: 8px;
+    padding: 5px 0 0;
   }
   .top-logo {
     display: flex;
-    align-items: baseline;
-    gap: 10px;
+    align-items: flex-start;
+    gap: 12px;
     min-width: 0;
     a {
       display: block;
     }
     img {
-      height: 40px;
+      height: 66px;
       width: auto;
       display: block;
     }
+  }
+  .brand-information {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding-top: 2px;
   }
   .navbar-brand-class {
     width: auto;
@@ -91,18 +97,12 @@
     margin: 0 !important;
   }
   .brand-tagline {
-    color: #ddd;
-    font-variant: small-caps;
+    color: #fff;
+    max-width: 265px;
     letter-spacing: 0.02em;
-    white-space: normal;
-    // Keep the existing desktop scale, while preventing the tagline from
-    // overpowering the logo as the available header width tightens.
-    font-size: clamp(12px, calc(10px + 0.3vw), 15px);
-  }
-  @media (min-width: 1280px) {
-    .brand-tagline {
-      white-space: nowrap;
-    }
+    font-size: 12px;
+    line-height: 1.15;
+    text-transform: uppercase;
   }
   .header-top-actions {
     display: flex;
@@ -116,15 +116,15 @@
     gap: 8px;
 
     .top-bar-cta {
-      min-height: 32px;
-      padding: 6px 14px;
-      border: 1px solid #fff;
-      border-radius: 999px;
+      min-height: 24px;
+      padding: 3px 8px;
+      border: 2px solid rgba(255, 255, 255, 0.72);
+      border-radius: 0;
       background: transparent;
       color: #fff;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
-      line-height: 18px;
+      line-height: 14px;
       text-decoration: none;
 
       &:hover,
@@ -414,13 +414,13 @@
   // Row 3: rounded, left-aligned nav bar — not full-bleed at desktop.
   .bottom-nav {
     clear: both;
-    padding: 4px 12px 16px 0;
+    padding: 0 12px 0 0;
     .nav-tabs {
       display: inline-flex;
       padding: 0;
-      margin-left: 1em;
-      background: #0065bc;
-      border-radius: 999px;
+      margin-left: 0;
+      background: #0058cf;
+      border-radius: 28px 28px 0 0;
       border-bottom: 0;
       overflow: hidden;
       .nav-item:first-child {
@@ -466,6 +466,22 @@
 
 @media (max-width: 1170px) {
   .header {
+    .header-top-row {
+      align-items: center;
+      padding-left: 10px;
+    }
+    .top-logo img {
+      height: 50px;
+    }
+    .brand-tagline {
+      display: none;
+    }
+    .brand-information {
+      padding-top: 0;
+    }
+    .header-secondary-row {
+      padding-top: 0;
+    }
     .donate-btn {
       padding-top: 8px !important;
     }

@@ -30,6 +30,27 @@ describe("TrendingNow", () => {
     );
   });
 
+  it("renders a branded thumbnail fallback when WordPress has no image", () => {
+    const { container } = render(
+      <TrendingNow
+        featuredVideos={[
+          {
+            postId: 12,
+            title: "Featured story",
+            link: "/featured-story"
+          }
+        ]}
+        newestVideos={[]}
+        loading={false}
+      />
+    );
+
+    expect(container.querySelector(".trending-list img")).toHaveAttribute(
+      "src",
+      "/static/assets/spotlight-img.jpg"
+    );
+  });
+
   it("renders a loading state", () => {
     render(<TrendingNow loading />);
 

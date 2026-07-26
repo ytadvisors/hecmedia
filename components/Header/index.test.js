@@ -225,7 +225,7 @@ describe("Header (primary navigation)", () => {
     ).toEqual(topbarCtas);
   });
 
-  it("groups social links and CTA pills together on the second row, away from search", () => {
+  it("groups social links and CTA buttons beside the logo, away from search", () => {
     const social = buildMenu([
       { url: "https://facebook.com/hectv", label: "Facebook" }
     ]);
@@ -241,7 +241,31 @@ describe("Header (primary navigation)", () => {
 
     const topRow = container.querySelector(".header-top-row");
     expect(topRow.querySelector(".search-btn-icon")).toBeInTheDocument();
-    expect(topRow.querySelector(".top-bar-actions")).not.toBeInTheDocument();
+    expect(
+      topRow.querySelector(".brand-information .top-bar-actions")
+    ).toBeInTheDocument();
+    expect(
+      topRow.querySelector(".header-top-actions .top-bar-actions")
+    ).not.toBeInTheDocument();
+  });
+
+  it("removes Twitter from the rendered social links", () => {
+    const social = buildMenu([
+      { url: "https://facebook.com/hectv", label: "Facebook" },
+      { url: "https://twitter.com/hectv", label: "Twitter" },
+      { url: "https://instagram.com/hectv", label: "Instagram" }
+    ]);
+    const { container } = render(
+      <Header searchFunc={() => {}} social={social} />
+    );
+
+    const socialHrefs = Array.from(
+      container.querySelectorAll(".social-links a")
+    ).map(link => link.getAttribute("href"));
+    expect(socialHrefs).toEqual([
+      "https://facebook.com/hectv",
+      "https://instagram.com/hectv"
+    ]);
   });
 
   it("keeps its layout space while applying the sticky, scrolled treatment", () => {
