@@ -322,7 +322,9 @@ export default class Header extends Component {
       headerList.length > 0 ? getHeaderMenuObject(headerList) : [];
     const socialLinks =
       socialList.length > 0
-        ? getSocialMenuObject(socialList, isMobile ? 15 : 25, "white")
+        ? getSocialMenuObject(socialList, isMobile ? 15 : 20, "white").filter(
+            socialLink => socialLink.label.toLowerCase() !== "twitter"
+          )
         : [];
 
     const userAdmin = [
@@ -402,7 +404,28 @@ export default class Header extends Component {
                     </Link>
                   </div>
                 </Navbar.Brand>
-                <span className="brand-tagline">{TAGLINE}</span>
+                <div className="brand-information">
+                  <span className="brand-tagline">{TAGLINE}</span>
+                  <div className="header-secondary-row">
+                    <SocialLinks links={socialLinks} />
+                    {ctas.length > 0 && (
+                      <nav
+                        className="top-bar-actions"
+                        aria-label="Featured actions"
+                      >
+                        {ctas.map(cta => (
+                          <a
+                            key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
+                            className="top-bar-cta"
+                            href={cta.url}
+                          >
+                            {cta.label}
+                          </a>
+                        ))}
+                      </nav>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="header-top-actions">
                 <Navbar.Toggle className="nav-toggle " />
@@ -410,22 +433,6 @@ export default class Header extends Component {
                   {this.getLinks(userAdmin)}
                 </Nav>
               </div>
-            </div>
-            <div className="header-secondary-row">
-              <SocialLinks links={socialLinks} />
-              {ctas.length > 0 && (
-                <nav className="top-bar-actions" aria-label="Featured actions">
-                  {ctas.map(cta => (
-                    <a
-                      key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
-                      className="top-bar-cta"
-                      href={cta.url}
-                    >
-                      {cta.label}
-                    </a>
-                  ))}
-                </nav>
-              )}
             </div>
           </Navbar.Header>
           <div className="bottom-nav row">

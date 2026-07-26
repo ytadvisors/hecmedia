@@ -11,22 +11,21 @@ describe("Header responsive typography", () => {
     headerStyles.indexOf("@media (max-width: 1170px)")
   );
 
-  it("uses bounded desktop sizes for the tagline and primary navigation", () => {
-    expect(headerStyles).toContain(
-      "font-size: clamp(12px, calc(10px + 0.3vw), 15px);"
-    );
+  it("uses the compact mock typography for the tagline and bounded navigation", () => {
+    expect(headerStyles).toContain("font-size: 12px;");
+    expect(headerStyles).toContain("text-transform: uppercase;");
     expect(headerStyles).toContain(
       "font-size: clamp(13px, calc(12px + 0.2vw), 14px);"
     );
   });
 
-  it("keeps header text readable at the collapsed-navigation viewport", () => {
+  it("hides company copy at the collapsed-navigation viewport", () => {
     expect(headerStyles).toContain(".brand-tagline {");
-    expect(responsiveStyles).toContain("font-size: 14px;");
+    expect(responsiveStyles).toContain("display: none;");
   });
 
-  it("uses a compact logo with auto width", () => {
-    expect(headerStyles).toContain("height: 40px;");
+  it("uses the larger desktop mock logo with auto width", () => {
+    expect(headerStyles).toContain("height: 66px;");
     expect(headerStyles).toContain("width: auto;");
   });
 

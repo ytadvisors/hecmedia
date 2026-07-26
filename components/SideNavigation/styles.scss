@@ -8,11 +8,14 @@
     color: #fff;
   }
   .rail-promo {
+    background: #32ae9f;
     display: block;
 
     img {
       display: block;
       height: auto;
+      min-height: 180px;
+      object-fit: cover;
       width: 100%;
     }
   }

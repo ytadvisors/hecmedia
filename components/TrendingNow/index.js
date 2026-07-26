@@ -2,6 +2,8 @@ import React from "react";
 import toTrendingNowItems from "../../lib/trendingNow";
 import "./styles.scss";
 
+const fallbackThumbnail = "/static/assets/spotlight-img.jpg";
+
 const TrendingNow = ({ featuredVideos, newestVideos, loading, error }) => {
   const items = toTrendingNowItems(featuredVideos, newestVideos);
 
@@ -24,14 +26,12 @@ const TrendingNow = ({ featuredVideos, newestVideos, loading, error }) => {
           {items.map(item => (
             <li key={item.id}>
               <a href={item.href}>
-                {item.image && (
-                  <img
-                    src={item.image}
-                    alt=""
-                    loading="lazy"
-                    aria-hidden="true"
-                  />
-                )}
+                <img
+                  src={item.image || fallbackThumbnail}
+                  alt=""
+                  loading="lazy"
+                  aria-hidden="true"
+                />
                 <span>{item.title}</span>
               </a>
             </li>
