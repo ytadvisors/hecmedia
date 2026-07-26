@@ -31,4 +31,23 @@ describe("Footer", () => {
     expect(screen.getByText("About")).toHaveAttribute("href", "/about");
     expect(screen.getByText("Contact")).toHaveAttribute("href", "/contact");
   });
+
+  it("removes Twitter from both footer social groups", () => {
+    const social = buildMenu([
+      { url: "https://facebook.com/hectv", label: "Facebook" },
+      { url: "https://twitter.com/hectv", label: "Twitter" },
+      { url: "https://instagram.com/hectv", label: "Instagram" }
+    ]);
+    const { container } = render(<Footer social={social} />);
+
+    const socialHrefs = Array.from(
+      container.querySelectorAll(".social-links a")
+    ).map(link => link.getAttribute("href"));
+    expect(socialHrefs).toEqual([
+      "https://facebook.com/hectv",
+      "https://instagram.com/hectv",
+      "https://facebook.com/hectv",
+      "https://instagram.com/hectv"
+    ]);
+  });
 });

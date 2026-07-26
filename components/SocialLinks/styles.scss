@@ -1,13 +1,18 @@
 .social-links {
-  display: block;
-  padding: 2px 0;
+  align-items: center;
+  display: flex;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
   list-style: none;
   text-align: inherit;
   li {
-    display: inline-block;
+    align-items: center;
+    display: flex;
     a {
+      align-items: center;
+      display: flex;
       text-decoration: none;
-      display: inline-block;
       margin-right: 10px;
     }
   }
