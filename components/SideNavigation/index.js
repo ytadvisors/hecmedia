@@ -1,6 +1,10 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
 import { GET_RAIL_PROMO } from "../../lib/graphql";
+import {
+  DEFAULT_RAIL_PROMO,
+  modernWpGraphqlEnabled
+} from "../../lib/stagingCompatibility";
 import "./styles.scss";
 
 export const getPublicRailPromoUrl = sourceUrl => {
@@ -42,9 +46,13 @@ export const SideNavigation = ({ children, railPromo }) => {
 
 export default ({ children }) => {
   const { data } = useQuery(GET_RAIL_PROMO, {
-    notifyOnNetworkStatusChange: true
+    notifyOnNetworkStatusChange: true,
+    skip: !modernWpGraphqlEnabled(),
+    errorPolicy: "all"
   });
-  const { railPromo } = (data && data.hectvSiteOptions) || {};
+  const railPromo =
+    (data && data.hectvSiteOptions && data.hectvSiteOptions.railPromo) ||
+    DEFAULT_RAIL_PROMO;
 
   return <SideNavigation railPromo={railPromo}>{children}</SideNavigation>;
 };

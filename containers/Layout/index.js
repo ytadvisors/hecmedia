@@ -18,6 +18,10 @@ import Banner from "../../components/Banner";
 import Footer from "../../components/Footer";
 import BottomNav from "../../components/BottomNav/index";
 import { setPlayingLiveAction } from "../../store/actions/postActions";
+import {
+  getFallbackTopbarCtas,
+  modernWpGraphqlEnabled
+} from "../../lib/stagingCompatibility";
 
 import { BasicModal } from "../Modals";
 
@@ -42,19 +46,24 @@ export const Layout = props => {
   const compareEnd = currentDate;
   const keyStart = "display_date";
   const keyEnd = "end_date";
+  const modernCms = modernWpGraphqlEnabled();
 
   const { data } = useQuery(GET_LAYOUT, {
     notifyOnNetworkStatusChange: true
   });
 
   const { data: headerData } = useQuery(GET_HEADER_MENU, {
-    notifyOnNetworkStatusChange: true
+    notifyOnNetworkStatusChange: true,
+    skip: !modernCms,
+    errorPolicy: "all"
   });
 
   // This custom WordPress field deploys independently. Keeping it in a
   // separate operation means an unavailable field cannot blank the shell.
   const { data: topbarData } = useQuery(GET_TOPBAR_CTAS, {
-    notifyOnNetworkStatusChange: true
+    notifyOnNetworkStatusChange: true,
+    skip: !modernCms,
+    errorPolicy: "all"
   });
 
   // Editorial curation is optional. The newest-video feed remains the
@@ -69,7 +78,9 @@ export const Layout = props => {
   });
 
   const { data: featuredVideosData } = useQuery(GET_FEATURED_VIDEOS, {
-    notifyOnNetworkStatusChange: true
+    notifyOnNetworkStatusChange: true,
+    skip: !modernCms,
+    errorPolicy: "all"
   });
 
   const { data: videos } = useQuery(GET_LIVE_VIDEOS, {
@@ -83,8 +94,9 @@ export const Layout = props => {
     featuredMagazines,
     spotLight: { nodes: spotLightPosts = [] } = {}
   } = data || {};
-  const { header } = headerData || {};
-  const { topbarCtas } = topbarData || {};
+  const header = (headerData && headerData.header) || (data && data.header);
+  const topbarCtas =
+    (topbarData && topbarData.topbarCtas) || getFallbackTopbarCtas();
   const newestVideos =
     (newestVideosData &&
       newestVideosData.newestVideos &&

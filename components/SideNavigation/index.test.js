@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { getPublicRailPromoUrl, SideNavigation } from "./index";
+import { DEFAULT_RAIL_PROMO } from "../../lib/stagingCompatibility";
 
 describe("SideNavigation", () => {
   it("renders its children inside a section", () => {
@@ -62,5 +63,15 @@ describe("SideNavigation", () => {
 
     if (originalHost === undefined) delete process.env.WP_HOST;
     else process.env.WP_HOST = originalHost;
+  });
+
+  it("ships the educator artwork from the frontend CDN path", () => {
+    expect(DEFAULT_RAIL_PROMO).toMatchObject({
+      image: {
+        sourceUrl: "/static/assets/for-educators-rail-promo.png",
+        altText: "For Educators"
+      },
+      url: "/for-educators"
+    });
   });
 });
