@@ -29,6 +29,11 @@ describe("Header (primary navigation)", () => {
     expect(screen.getByAltText("HECTV logo")).toBeInTheDocument();
   });
 
+  it("renders without crashing when WordPress returns an empty menu connection", () => {
+    render(<Header searchFunc={() => {}} header={{ edges: [] }} />);
+    expect(screen.getByAltText("HECTV logo")).toBeInTheDocument();
+  });
+
   it("renders top-level nav links from the WPGraphQL header menu", () => {
     const header = buildMenu([
       { url: "https://hectv.org/programs", label: "Programs" },
@@ -92,7 +97,9 @@ describe("Header (primary navigation)", () => {
     });
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(container.querySelectorAll(".dropdown-menu .dropdown-menu")).toHaveLength(1);
+    expect(
+      container.querySelectorAll(".dropdown-menu .dropdown-menu")
+    ).toHaveLength(1);
     expect(screen.getByText("Leadership")).toBeVisible();
 
     fireEvent.keyDown(toggle, { key: "Escape" });

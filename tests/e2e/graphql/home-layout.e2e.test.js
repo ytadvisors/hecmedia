@@ -3,6 +3,8 @@ import {
   GET_HOME_PAGE,
   GET_LAYOUT,
   GET_HEADER_MENU,
+  GET_NEWEST_VIDEOS,
+  GET_FEATURED_VIDEOS,
   GET_SCHEDULE,
   GET_PAGE_TEMPLATE
 } from "../../../lib/graphql";
@@ -73,6 +75,7 @@ describe("HeaderMenu (containers/Layout/index.js)", () => {
     expect(result.errors).toBeUndefined();
     const { header } = result.data;
     expect(Array.isArray(header.edges)).toBe(true);
+    expect(header.edges.length).toBeGreaterThan(0);
     header.edges.forEach(({ node }) => {
       expect(Array.isArray(node.menuItems.edges)).toBe(true);
       node.menuItems.edges.forEach(({ node: item }) => {
@@ -81,6 +84,22 @@ describe("HeaderMenu (containers/Layout/index.js)", () => {
         expect(Array.isArray(item.childItems.edges)).toBe(true);
       });
     });
+  });
+});
+
+describe("Layout video feeds (containers/Layout/index.js)", () => {
+  it("returns the newest-video fallback from the staging WordPress schema", async () => {
+    const result = await executeQuery(GET_NEWEST_VIDEOS, undefined);
+
+    expect(result.errors).toBeUndefined();
+    expect(Array.isArray(result.data.newestVideos.nodes)).toBe(true);
+  });
+
+  it("returns the optional editor-curated video feed", async () => {
+    const result = await executeQuery(GET_FEATURED_VIDEOS, undefined);
+
+    expect(result.errors).toBeUndefined();
+    expect(Array.isArray(result.data.featuredVideos)).toBe(true);
   });
 });
 
