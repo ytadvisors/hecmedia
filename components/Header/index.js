@@ -16,6 +16,11 @@ import "./styles.scss";
 
 const logo = "/static/assets/white_hec.png";
 const TAGLINE = "St. Louis' Home of Education Arts, and Culture";
+const toRelativeCtaUrl = url =>
+  url.replace(
+    /^https?:\/\/(?:www\.)?(?:hecmedia\.org|hectv\.org)(?=\/|$)/i,
+    ""
+  ) || "/";
 
 export default class Header extends Component {
   constructor(props) {
@@ -417,7 +422,7 @@ export default class Header extends Component {
                           <a
                             key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
                             className="top-bar-cta"
-                            href={cta.url}
+                            href={toRelativeCtaUrl(cta.url)}
                           >
                             {cta.label}
                           </a>

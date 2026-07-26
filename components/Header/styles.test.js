@@ -37,4 +37,9 @@ describe("Header responsive typography", () => {
     expect(responsiveStyles).not.toContain("min-height: 112px;");
     expect(responsiveStyles).not.toContain("min-height: 142px;");
   });
+
+  it("allows desktop dropdown menus to escape the rounded navigation", () => {
+    expect(headerStyles).toContain("overflow: visible;");
+    expect(headerStyles).not.toContain("overflow: hidden;");
+  });
 });

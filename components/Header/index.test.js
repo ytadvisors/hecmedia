@@ -187,6 +187,27 @@ describe("Header (primary navigation)", () => {
     );
   });
 
+  it("renders configured same-site CTA destinations as relative links", () => {
+    render(
+      <Header
+        searchFunc={() => {}}
+        topbarCtas={[
+          { label: "SUBSCRIBE", url: "https://hecmedia.org/subscribe" },
+          { label: "SUPPORT", url: "https://hectv.org/support" }
+        ]}
+      />
+    );
+
+    expect(screen.getByRole("link", { name: "SUBSCRIBE" })).toHaveAttribute(
+      "href",
+      "/subscribe"
+    );
+    expect(screen.getByRole("link", { name: "SUPPORT" })).toHaveAttribute(
+      "href",
+      "/support"
+    );
+  });
+
   it("drops CTA rows with a missing or empty label or URL", () => {
     const topbarCtas = [
       { label: "Watch Live", url: " /live " },

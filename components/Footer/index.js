@@ -19,8 +19,16 @@ export default props => {
     id: x,
     obj
   }));
-  const largeSocialLinks = getSocialMenuObject(socialList, 30, "white");
-  const socialLinks = getSocialMenuObject(socialList, 25, "white");
+  const withoutTwitter = socialLinks =>
+    socialLinks.filter(
+      socialLink => socialLink.label.toLowerCase() !== "twitter"
+    );
+  const largeSocialLinks = withoutTwitter(
+    getSocialMenuObject(socialList, 30, "white")
+  );
+  const footerSocialLinks = withoutTwitter(
+    getSocialMenuObject(socialList, 25, "white")
+  );
   const logo = "/static/assets/white_hec.png";
 
   return (
@@ -40,7 +48,7 @@ export default props => {
             </div>
             <div className="">
               <div className="social-container">
-                <SocialLinks links={socialLinks} />
+                <SocialLinks links={footerSocialLinks} />
               </div>
             </div>
           </div>
