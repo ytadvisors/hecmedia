@@ -239,8 +239,8 @@ test("waits for CloudFront propagation before invalidating updated associations"
 
 test("uses build-time SSR config and never checks a Lambda runtime environment", () => {
   const repoRoot = path.join(__dirname, "..");
-  const workflow = realFs.readFileSync(
-    path.join(repoRoot, ".github/workflows/staging-deploy.yml"),
+  const buildspec = realFs.readFileSync(
+    path.join(repoRoot, "ci/buildspec.staging.yml"),
     "utf8"
   );
   const deployScript = realFs.readFileSync(
@@ -248,33 +248,29 @@ test("uses build-time SSR config and never checks a Lambda runtime environment",
     "utf8"
   );
 
-  expect(workflow).toMatch(
-    /Package Next\.js app for Lambda@Edge[\s\S]*?APOLLO_CLIENT_URI: \$\{\{ secrets\.HECMEDIA_STAGING_APOLLO_CLIENT_URI \}\}[\s\S]*?WP_HOST: \$\{\{ secrets\.HECMEDIA_STAGING_WP_HOST \}\}/
-  );
+  expect(buildspec).toMatch(/APOLLO_CLIENT_URI/);
+  expect(buildspec).toMatch(/WP_HOST/);
+  expect(buildspec).toMatch(/node scripts\/staging-deploy\.js build/);
   expect(deployScript).not.toContain("checkLambdaEnvironment");
   expect(deployScript).not.toContain("get-function-configuration");
 });
 
 test("packages staging on Node 24 with the webpack 4 OpenSSL compatibility flag", () => {
-  const workflow = realFs.readFileSync(
-    path.join(__dirname, "../.github/workflows/staging-deploy.yml"),
+  const buildspec = realFs.readFileSync(
+    path.join(__dirname, "../ci/buildspec.staging.yml"),
     "utf8"
   );
 
-  expect(workflow).toMatch(/actions\/setup-node@v4[\s\S]*?node-version: "24"/);
-  expect(workflow).toMatch(
-    /Package Next\.js app for Lambda@Edge[\s\S]*?NODE_OPTIONS: --openssl-legacy-provider/
-  );
+  expect(buildspec).toMatch(/n 24\.4\.1/);
+  expect(buildspec).toMatch(/export NODE_OPTIONS=--openssl-legacy-provider/);
 });
 
-test("requires Yomi to authorize every staging workflow dispatch", () => {
-  const workflow = realFs.readFileSync(
-    path.join(__dirname, "../.github/workflows/staging-deploy.yml"),
+test("requires Yomi to authorize every staging CodeBuild release", () => {
+  const releaseScript = realFs.readFileSync(
+    path.join(__dirname, "staging-release-codebuild.js"),
     "utf8"
   );
 
-  expect(workflow).toMatch(
-    /authorize:[\s\S]*?DISPATCH_ACTOR: \$\{\{ github\.actor \}\}[\s\S]*?"ytwguru"[\s\S]*?exit 1/
-  );
-  expect(workflow).toMatch(/deploy-and-verify:[\s\S]*?needs: authorize/);
+  expect(releaseScript).toMatch(/HECMEDIA_RELEASE_AUTHORIZED_BY !== 'ytwguru'/);
+  expect(releaseScript).toMatch(/process\.exit\(1\)/);
 });

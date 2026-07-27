@@ -1,0 +1,58 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    commands:
+      - npm install -g n
+      - n 24.4.1
+      - hash -r
+      - corepack enable
+      - yarn install --frozen-lockfile
+  pre_build:
+    commands:
+      - test -n "$HECMEDIA_STAGING_APOLLO_CLIENT_URI"
+      - test -n "$HECMEDIA_STAGING_WP_HOST"
+      - test -n "$HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID"
+      - test -n "$HECMEDIA_STAGING_RECAPTCHA_SITE_KEY"
+      - test -n "$HECMEDIA_STAGING_TOPBAR_CTAS_JSON"
+      - test -n "$CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - yarn lint
+      - yarn test
+      - APOLLO_CLIENT_URI="$HECMEDIA_STAGING_APOLLO_CLIENT_URI" GATSBY_WP_HOST="$HECMEDIA_STAGING_WP_HOST" E2E_ALLOW_WRITES=0 yarn test:e2e
+  build:
+    commands:
+      - export DEPLOY_SHA="$CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - export APOLLO_CLIENT_URI="$HECMEDIA_STAGING_APOLLO_CLIENT_URI"
+      - export WP_HOST="$HECMEDIA_STAGING_WP_HOST"
+      - export HECMEDIA_NO_SEND_FORMS=true
+      - export HECMEDIA_NAVIGATION_PREVIEW=true
+      - export HECMEDIA_TOPBAR_CTA_PREVIEW=true
+      - export HECMEDIA_DISABLE_IMAGE_OPTIMIZER=true
+      - export RE_CAPTCHA_SITE_KEY="$HECMEDIA_STAGING_RECAPTCHA_SITE_KEY"
+      - export HECMEDIA_TOPBAR_CTAS_JSON="$HECMEDIA_STAGING_TOPBAR_CTAS_JSON"
+      - export NODE_OPTIONS=--openssl-legacy-provider
+      - node scripts/staging-deploy.js build
+      - export CLOUDFRONT_DISTRIBUTION_ID="$HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID"
+      - node scripts/staging-deploy.js deploy
+  post_build:
+    commands:
+      - export DEPLOY_SHA="$CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - export CLOUDFRONT_DISTRIBUTION_ID="$HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID"
+      - export STAGING_SITE_URL=https://development.hecmedia.org
+      - aws cloudfront get-distribution --id "$CLOUDFRONT_DISTRIBUTION_ID" --query 'Distribution.DistributionConfig.Aliases.Items' --output text > cloudfront-aliases.txt
+      - CLOUDFRONT_ALIASES="$(tr '\t' ',' < cloudfront-aliases.txt)" node scripts/verify-staging.js | tee staging-verification.json
+      - printf '{"target":"https://development.hecmedia.org","sha":"%s","outcome":"%s"}\n' "$DEPLOY_SHA" "$CODEBUILD_BUILD_SUCCEEDING" > staging-deploy-evidence.json
+
+artifacts:
+  files:
+    - staging-deploy-evidence.json
+    - staging-verification.json
+    - cloudfront-aliases.txt
+  name: hecmedia-staging-$CODEBUILD_RESOLVED_SOURCE_VERSION
+
+cache:
+  paths:
+    - /root/.cache/yarn/**/*
