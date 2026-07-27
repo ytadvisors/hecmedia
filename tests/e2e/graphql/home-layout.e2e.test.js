@@ -10,6 +10,11 @@ import {
 } from "../../../lib/graphql";
 import { executeQuery } from "../support/graphqlClient";
 
+const describeModernCms =
+  process.env.HECMEDIA_E2E_MODERN_WPGRAPHQL === "true"
+    ? describe
+    : describe.skip;
+
 /**
  * Contract tests for the queries wired into containers/Layout/index.js and
  * pages/[page].js — every field asserted here is a field one of those
@@ -68,7 +73,7 @@ describe("PageLayout (containers/Layout/index.js)", () => {
   });
 });
 
-describe("HeaderMenu (containers/Layout/index.js)", () => {
+describeModernCms("HeaderMenu (containers/Layout/index.js)", () => {
   it("returns the nested header menu from the staging WordPress contract", async () => {
     const result = await executeQuery(GET_HEADER_MENU, undefined);
 
@@ -95,7 +100,10 @@ describe("Layout video feeds (containers/Layout/index.js)", () => {
     expect(Array.isArray(result.data.newestVideos.nodes)).toBe(true);
   });
 
-  it("returns the optional editor-curated video feed", async () => {
+  const itModernCms =
+    process.env.HECMEDIA_E2E_MODERN_WPGRAPHQL === "true" ? it : it.skip;
+
+  itModernCms("returns the optional editor-curated video feed", async () => {
     const result = await executeQuery(GET_FEATURED_VIDEOS, undefined);
 
     expect(result.errors).toBeUndefined();

@@ -7,6 +7,8 @@ jest.mock("dotenv", () => ({
 const configuredEnvironment = [
   "APOLLO_CLIENT_URI",
   "WP_HOST",
+  "HECMEDIA_MODERN_WPGRAPHQL",
+  "HECMEDIA_TOPBAR_CTAS_JSON",
   "HECMEDIA_DISABLE_IMAGE_OPTIMIZER",
   "RE_CAPTCHA_SITE_KEY"
 ];
@@ -44,6 +46,17 @@ test("inlines the staging reCAPTCHA site key for the newsletter preview", () => 
   const config = require("./next.config");
 
   expect(config.env.RE_CAPTCHA_SITE_KEY).toBe("staging-site-key");
+});
+
+test("inlines the CMS compatibility flags and configurable relative CTAs", () => {
+  process.env.HECMEDIA_MODERN_WPGRAPHQL = "false";
+  process.env.HECMEDIA_TOPBAR_CTAS_JSON =
+    '[{"label":"Subscribe","url":"/subscribe"}]';
+
+  const config = require("./next.config");
+
+  expect(config.env.HECMEDIA_MODERN_WPGRAPHQL).toBe("false");
+  expect(config.env.HECMEDIA_TOPBAR_CTAS_JSON).toContain("/subscribe");
 });
 
 test("disables the unused image optimizer only for the staging build", () => {

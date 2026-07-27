@@ -107,7 +107,9 @@ describe("Layout", () => {
 
     render(<Layout dispatch={jest.fn()} />);
 
-    expect(screen.getByTestId("header").textContent).toBe("");
+    expect(screen.getByTestId("header")).toHaveTextContent(
+      "Subscribe:/subscribe, Support:/support, Get Involved:/get-involved"
+    );
   });
 
   it("keeps newest videos visible when optional curation is unavailable", () => {
@@ -183,6 +185,34 @@ describe("Layout", () => {
 
     render(<Layout dispatch={jest.fn()} />);
 
-    expect(screen.getByTestId("header").textContent).toBe("");
+    expect(screen.getByTestId("header")).toHaveTextContent(
+      "Subscribe:/subscribe, Support:/support, Get Involved:/get-involved"
+    );
+  });
+
+  it("falls back to the legacy layout header when the modern menu query is unavailable", () => {
+    const header = {
+      edges: [
+        {
+          node: {
+            menuItems: {
+              edges: [{ node: { label: "ABOUT" } }]
+            }
+          }
+        }
+      ]
+    };
+
+    useQuery
+      .mockReturnValueOnce({ data: { header } })
+      .mockReturnValueOnce({ data: undefined, error: new Error("legacy CMS") })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined });
+
+    render(<Layout dispatch={jest.fn()} />);
+
+    expect(screen.getByTestId("header")).toHaveTextContent("ABOUT");
   });
 });

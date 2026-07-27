@@ -9,11 +9,9 @@ import ShareSocialLinks from "../ShareSocialLinks";
 import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
 import { isServer } from "../../lib/serverFunctions";
-import {
-  GET_PAGE_INFO,
-  GET_POST_HEADER_IMAGE_SIZE
-} from "../../lib/graphql";
+import { GET_PAGE_INFO, GET_POST_HEADER_IMAGE_SIZE } from "../../lib/graphql";
 import PodcastLinks from "../PodcastLinks";
+import { modernWpGraphqlEnabled } from "../../lib/stagingCompatibility";
 import "./styles.scss";
 
 const HEADER_IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
@@ -39,7 +37,7 @@ const SinglePost = props => {
 
   const { data: headerImageData } = useQuery(GET_POST_HEADER_IMAGE_SIZE, {
     variables,
-    skip: !slug,
+    skip: !slug || !modernWpGraphqlEnabled(),
     errorPolicy: "all"
   });
 
@@ -55,13 +53,8 @@ const SinglePost = props => {
   const { updatedPost } = data || {};
   const currentPost = { ...post, updatedPost };
 
-  const {
-    title,
-    content,
-    link = "",
-    postDetails,
-    eventDetails
-  } = currentPost || {};
+  const { title, content, link = "", postDetails, eventDetails } =
+    currentPost || {};
   const headerImageSize = resolveHeaderImageSize(headerImageData);
 
   const {
