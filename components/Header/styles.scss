@@ -639,22 +639,73 @@
 
 @media (max-width: 620px) {
   .header {
-    // Row 2 stays in normal flow (see .header-secondary-row); only the pill
-    // sizing shrinks to fit three CTAs without overflowing at 375px.
+    .header-top-row {
+      gap: 8px;
+      padding: 6px 8px;
+    }
+    .top-logo {
+      flex: 1 1 auto;
+      align-items: center;
+      gap: 7px;
+
+      img {
+        width: 58px;
+        max-width: none;
+        height: auto;
+      }
+    }
+    .navbar-brand-class {
+      flex: 0 0 auto;
+    }
+    .brand-information {
+      flex: 1 1 auto;
+    }
+    .header-secondary-row {
+      flex-wrap: nowrap;
+      gap: 4px;
+      padding: 0;
+    }
+    ul.brand-social {
+      flex: 0 0 auto;
+      padding: 0;
+      white-space: nowrap;
+
+      li a {
+        margin-right: 6px;
+      }
+    }
     .top-bar-actions {
-      flex-wrap: wrap;
+      flex: 1 1 auto;
+      flex-wrap: nowrap;
+      gap: 4px;
 
       .top-bar-cta {
-        flex: 1 1 auto;
+        flex: 0 0 auto;
         min-width: 0;
-        padding: 7px 10px;
-        font-size: 12px;
+        min-height: 22px;
+        padding: 3px 5px;
+        border-width: 1px;
+        font-size: 10px;
+        line-height: 14px;
       }
+    }
+    .header-top-actions {
+      gap: 4px;
+    }
+    .navbar-toggle {
+      padding: 8px 7px;
     }
     ul.user-admin {
       li .search-btn-icon {
         margin: 0;
+        padding: 0.65em;
       }
     }
+  }
+}
+
+@media (max-width: 400px) {
+  .header ul.brand-social {
+    display: none;
   }
 }
