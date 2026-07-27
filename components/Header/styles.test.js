@@ -52,6 +52,22 @@ describe("Header responsive typography", () => {
     expect(mobileStyles).toContain("padding: 3px 5px;");
   });
 
+  it("uses full-width mobile navigation and a viewport-aligned search panel", () => {
+    const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
+    expect(mobileBreakpoint).toBeGreaterThanOrEqual(0);
+
+    const mobileStyles = headerStyles.slice(mobileBreakpoint);
+    expect(mobileStyles).toContain("position: fixed !important;");
+    expect(mobileStyles).toContain("right: 12px !important;");
+    expect(mobileStyles).toContain("left: 12px;");
+    expect(mobileStyles).toContain("width: auto !important;");
+    expect(mobileStyles).toContain("padding-right: 0;");
+    expect(mobileStyles).toContain("display: block;");
+    expect(mobileStyles).toContain("width: 100%;");
+    expect(mobileStyles).toContain("left: 0;");
+    expect(mobileStyles).toContain("float: none;");
+  });
+
   it("allows desktop dropdown menus to escape the rounded navigation", () => {
     expect(headerStyles).toContain("overflow: visible;");
     expect(headerStyles).not.toContain("overflow: hidden;");
