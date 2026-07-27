@@ -696,9 +696,35 @@
       padding: 8px 7px;
     }
     ul.user-admin {
+      .search-container {
+        position: fixed !important;
+        top: 58px !important;
+        right: 12px !important;
+        left: 12px;
+        width: auto !important;
+      }
+
       li .search-btn-icon {
         margin: 0;
         padding: 0.65em;
+      }
+    }
+    .bottom-nav {
+      padding-right: 0;
+
+      .nav-tabs {
+        display: block;
+        width: 100%;
+        padding-left: 0;
+        border-radius: 0;
+
+        .dropdown-submenu > .dropdown-menu {
+          position: relative;
+          top: auto;
+          left: 0;
+          float: none;
+          width: 100%;
+        }
       }
     }
   }
