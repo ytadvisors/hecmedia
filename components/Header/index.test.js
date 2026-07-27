@@ -159,6 +159,14 @@ describe("Header (primary navigation)", () => {
     expect(container.querySelector(".search-btn-icon")).toBeInTheDocument();
   });
 
+  it("places the mobile navigation toggle after search at the right edge", () => {
+    const { container } = render(<Header searchFunc={() => {}} />);
+    const actions = container.querySelector(".header-top-actions");
+
+    expect(actions.firstElementChild).toHaveClass("user-admin");
+    expect(actions.lastElementChild).toHaveClass("navbar-toggle");
+  });
+
   it("does not render top-bar CTAs when no CTA data is provided", () => {
     const { container } = render(<Header searchFunc={() => {}} />);
 

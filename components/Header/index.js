@@ -433,10 +433,10 @@ export default class Header extends Component {
                 </div>
               </div>
               <div className="header-top-actions">
-                <Navbar.Toggle className="nav-toggle " />
                 <Nav onSelect={this.closeNav} className="user-admin">
                   {this.getLinks(userAdmin)}
                 </Nav>
+                <Navbar.Toggle className="nav-toggle " />
               </div>
             </div>
           </Navbar.Header>
