@@ -334,11 +334,26 @@ form .error {
 
 img {
   max-width: 100%;
+  outline-width: 0 !important;
 }
 
-a,
-img {
-  outline-width: 0 !important;
+// Pointer activation should not leave a browser focus ring behind. Preserve a
+// deliberate, high-contrast indicator for people navigating with the keyboard.
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #005fcc !important;
+  outline-offset: 3px;
+}
+
+.header a:focus-visible,
+.header button:focus-visible {
+  outline-color: #fff !important;
 }
 
 a:link,
