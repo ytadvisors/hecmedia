@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 const layoutStyles = fs.readFileSync(
   path.join(__dirname, "styles.scss"),
