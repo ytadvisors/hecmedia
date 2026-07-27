@@ -38,6 +38,19 @@ describe("Header responsive typography", () => {
     expect(responsiveStyles).not.toContain("min-height: 142px;");
   });
 
+  it("keeps the mobile logo proportional and CTA links compact", () => {
+    const mobileStyles = headerStyles.slice(
+      headerStyles.indexOf("@media (max-width: 620px)")
+    );
+
+    expect(mobileStyles).toContain("width: 58px;");
+    expect(mobileStyles).toContain("max-width: none;");
+    expect(mobileStyles).toContain("height: auto;");
+    expect(mobileStyles).toContain("flex: 0 0 auto;");
+    expect(mobileStyles).toContain("min-height: 22px;");
+    expect(mobileStyles).toContain("padding: 3px 5px;");
+  });
+
   it("allows desktop dropdown menus to escape the rounded navigation", () => {
     expect(headerStyles).toContain("overflow: visible;");
     expect(headerStyles).not.toContain("overflow: hidden;");
