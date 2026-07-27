@@ -39,15 +39,16 @@ describe("Header responsive typography", () => {
   });
 
   it("keeps the mobile logo proportional and CTA links compact", () => {
-    const mobileStyles = headerStyles.slice(
-      headerStyles.indexOf("@media (max-width: 620px)")
-    );
+    const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
+    expect(mobileBreakpoint).toBeGreaterThanOrEqual(0);
+
+    const mobileStyles = headerStyles.slice(mobileBreakpoint);
 
     expect(mobileStyles).toContain("width: 58px;");
     expect(mobileStyles).toContain("max-width: none;");
     expect(mobileStyles).toContain("height: auto;");
     expect(mobileStyles).toContain("flex: 0 0 auto;");
-    expect(mobileStyles).toContain("min-height: 22px;");
+    expect(mobileStyles).toContain("min-height: 24px;");
     expect(mobileStyles).toContain("padding: 3px 5px;");
   });
 
