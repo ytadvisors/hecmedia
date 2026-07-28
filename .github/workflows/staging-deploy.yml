@@ -12,6 +12,10 @@ on:
         description: Commit SHA to deploy. Required for deploy; ignored for rollback.
         required: false
         type: string
+      request_task_id:
+        description: HEC Media queue task authorizing this staging publish.
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -32,12 +36,21 @@ jobs:
   authorize:
     runs-on: ubuntu-latest
     steps:
-      - name: Require Yomi approval
+      - name: Require Yomi or the governed Jerome publishing lane
         env:
           DISPATCH_ACTOR: ${{ github.actor }}
+          REQUEST_TASK_ID: ${{ inputs.request_task_id }}
         run: |
-          if [ "$DISPATCH_ACTOR" != "ytwguru" ]; then
-            echo "::error title=Staging approval required::Only ytwguru may authorize an HEC Media staging deployment."
+          set -euo pipefail
+          case "$DISPATCH_ACTOR" in
+            ytwguru|yt-agent-tom|yt-agent-tom-gpt|yt-agent-tom-grok) ;;
+            *)
+              echo "::error title=Staging authorization refused::Actor is not an approved HEC Media staging publisher."
+              exit 1
+              ;;
+          esac
+          if ! [[ "$REQUEST_TASK_ID" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error title=Missing authorization receipt::A positive HEC Media queue task ID is required."
             exit 1
           fi
 
@@ -166,8 +179,10 @@ jobs:
         if: always()
         env:
           SHA: ${{ steps.revision.outputs.sha }}
+          REQUEST_TASK_ID: ${{ inputs.request_task_id }}
+          DISPATCH_ACTOR: ${{ github.actor }}
         run: |
-          printf '{"target":"https://development.hecmedia.org","sha":"%s","action":"%s","outcome":"%s"}\n' "$SHA" '${{ inputs.action }}' '${{ job.status }}' > staging-deploy-evidence.json
+          printf '{"target":"https://development.hecmedia.org","sha":"%s","action":"%s","outcome":"%s","request_task_id":"%s","dispatch_actor":"%s"}\n' "$SHA" '${{ inputs.action }}' '${{ job.status }}' "$REQUEST_TASK_ID" "$DISPATCH_ACTOR" > staging-deploy-evidence.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

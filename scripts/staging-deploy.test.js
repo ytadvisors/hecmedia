@@ -267,14 +267,17 @@ test("packages staging on Node 24 with the webpack 4 OpenSSL compatibility flag"
   );
 });
 
-test("requires Yomi to authorize every staging workflow dispatch", () => {
+test("allows only Yomi or governed Jerome lanes and requires a task receipt", () => {
   const workflow = realFs.readFileSync(
     path.join(__dirname, "../.github/workflows/staging-deploy.yml"),
     "utf8"
   );
 
   expect(workflow).toMatch(
-    /authorize:[\s\S]*?DISPATCH_ACTOR: \$\{\{ github\.actor \}\}[\s\S]*?"ytwguru"[\s\S]*?exit 1/
+    /authorize:[\s\S]*?DISPATCH_ACTOR: \$\{\{ github\.actor \}\}[\s\S]*?ytwguru\|yt-agent-tom\|yt-agent-tom-gpt\|yt-agent-tom-grok/
   );
+  expect(workflow).toMatch(/REQUEST_TASK_ID: \$\{\{ inputs\.request_task_id \}\}/);
+  expect(workflow).toMatch(/\^\[1-9\]\[0-9\]\*\$/);
   expect(workflow).toMatch(/deploy-and-verify:[\s\S]*?needs: authorize/);
+  expect(workflow).toMatch(/"request_task_id":"%s","dispatch_actor":"%s"/);
 });
