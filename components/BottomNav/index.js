@@ -3,24 +3,31 @@ import { graphql } from "react-apollo";
 import gql from "graphql-tag";
 import "./styles.scss";
 
-const BottomNav = ({ title, data: { bottomNav } }) => {
+export const BottomNav = ({ title, links, data: { bottomNav } = {} }) => {
   const {
     node: { menuItems: { edges: bottomList = [] } = {} } = {}
   } = bottomNav ? bottomNav.edges[0] : {};
+  const renderedLinks =
+    Array.isArray(links) && links.length > 0
+      ? links.map(link => ({
+          label: link.label,
+          url: link.url
+        }))
+      : bottomList.map(menu => ({
+          label: menu.node.label,
+          url: menu.node.url.replace(/https?:\/\/[^/]+/, "")
+        }));
   return (
     <section className="post-bottom-nav">
       <div className="row">
         <div className="col-md-12">
           <ul>
             <li className="title">{title}</li>
-            {bottomList.map(menu => {
-              const url = menu.node.url.replace(/https?:\/\/[^/]+/, "");
-              return (
-                <li key={menu.node.url}>
-                  <a href={url}>{menu.node.label}</a>
-                </li>
-              );
-            })}
+            {renderedLinks.map(link => (
+              <li key={`${link.label}:${link.url}`}>
+                <a href={link.url}>{link.label}</a>
+              </li>
+            ))}
           </ul>
         </div>
       </div>

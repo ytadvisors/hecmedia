@@ -44,13 +44,14 @@ export const SideNavigation = ({ children, railPromo }) => {
   );
 };
 
-export default ({ children }) => {
+export default ({ children, railPromo: configuredRailPromo }) => {
   const { data } = useQuery(GET_RAIL_PROMO, {
     notifyOnNetworkStatusChange: true,
-    skip: !modernWpGraphqlEnabled(),
+    skip: Boolean(configuredRailPromo) || !modernWpGraphqlEnabled(),
     errorPolicy: "all"
   });
   const railPromo =
+    configuredRailPromo ||
     (data && data.hectvSiteOptions && data.hectvSiteOptions.railPromo) ||
     DEFAULT_RAIL_PROMO;
 

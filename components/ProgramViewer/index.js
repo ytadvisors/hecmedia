@@ -19,10 +19,17 @@ export default class extends Component {
       newestVideos,
       trendingNowLoading,
       trendingNowError,
+      railPromo,
+      spotlightTitle = "Spotlight STL",
+      mobileRailFirst = true,
       children
     } = this.props;
     return (
-      <section className="program-viewer">
+      <section
+        className={`program-viewer${
+          mobileRailFirst ? " mobile-rail-first" : ""
+        }`}
+      >
         <div
           className="container no-padding program-viewer-container"
           style={style}
@@ -32,7 +39,7 @@ export default class extends Component {
               <div className="clearfix">{children}</div>
             </div>
             <div className="col-lg-3 no-padding program-viewer-rail">
-              <SideNavigation>
+              <SideNavigation railPromo={railPromo}>
                 <div className="row">
                   <div className="col-lg-12 no-padding">
                     <TrendingNow
@@ -44,7 +51,7 @@ export default class extends Component {
                   </div>
                   <div className="col-lg-12 no-padding">
                     <ListOfFeaturedPosts
-                      title="Spotlight STL"
+                      title={spotlightTitle}
                       titleHref={null}
                       spotLightPosts={spotLightPosts}
                       maxItems={5}

@@ -61,8 +61,10 @@ describe("Layout", () => {
       })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: { newestVideos: { nodes: newestVideos } } })
       .mockReturnValueOnce({ data: { featuredVideos } })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -84,6 +86,8 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: { topbarCtas } })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -101,6 +105,8 @@ describe("Layout", () => {
         data: undefined,
         error: new Error('Cannot query field "topbarCtas" on type "RootQuery".')
       })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
@@ -121,6 +127,7 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: {}, loading: false })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({
         data: { newestVideos: { nodes: newestVideos } },
         loading: false
@@ -131,6 +138,7 @@ describe("Layout", () => {
           'Cannot query field "featuredVideos" on type "RootQuery".'
         )
       })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -162,6 +170,8 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -178,6 +188,8 @@ describe("Layout", () => {
           'Cannot query field "parentDatabaseId" on type "MenuItem".'
         )
       })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
@@ -206,6 +218,8 @@ describe("Layout", () => {
     useQuery
       .mockReturnValueOnce({ data: { header } })
       .mockReturnValueOnce({ data: undefined, error: new Error("legacy CMS") })
+      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })

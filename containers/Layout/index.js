@@ -8,6 +8,8 @@ import {
   GET_HEADER_MENU,
   GET_LIVE_VIDEOS,
   GET_TOPBAR_CTAS,
+  GET_HECTV_SITE_CONTENT,
+  GET_CURATED_TRENDING_POSTS,
   GET_NEWEST_VIDEOS,
   GET_FEATURED_VIDEOS
 } from "../../lib/graphql";
@@ -20,7 +22,10 @@ import BottomNav from "../../components/BottomNav/index";
 import { setPlayingLiveAction } from "../../store/actions/postActions";
 import {
   getFallbackTopbarCtas,
-  modernWpGraphqlEnabled
+  modernWpGraphqlEnabled,
+  normalizeSiteContent,
+  railPromoFromSiteContent,
+  orderPostsByIds
 } from "../../lib/stagingCompatibility";
 
 import { BasicModal } from "../Modals";
@@ -62,9 +67,16 @@ export const Layout = props => {
   // separate operation means an unavailable field cannot blank the shell.
   const { data: topbarData } = useQuery(GET_TOPBAR_CTAS, {
     notifyOnNetworkStatusChange: true,
-    skip: !modernCms,
     errorPolicy: "all"
   });
+
+  const { data: siteContentData } = useQuery(GET_HECTV_SITE_CONTENT, {
+    notifyOnNetworkStatusChange: true,
+    errorPolicy: "all"
+  });
+  const siteContent = normalizeSiteContent(
+    siteContentData && siteContentData.hectvSiteContent
+  );
 
   // Editorial curation is optional. The newest-video feed remains the
   // fallback, and both stay independent from the shell query so an older CMS
@@ -80,6 +92,13 @@ export const Layout = props => {
   const { data: featuredVideosData } = useQuery(GET_FEATURED_VIDEOS, {
     notifyOnNetworkStatusChange: true,
     skip: !modernCms,
+    errorPolicy: "all"
+  });
+
+  const { data: curatedTrendingData } = useQuery(GET_CURATED_TRENDING_POSTS, {
+    variables: { ids: siteContent.trendingPostIds },
+    skip: siteContent.trendingPostIds.length === 0,
+    notifyOnNetworkStatusChange: true,
     errorPolicy: "all"
   });
 
@@ -102,7 +121,18 @@ export const Layout = props => {
       newestVideosData.newestVideos &&
       newestVideosData.newestVideos.nodes) ||
     [];
-  const { featuredVideos = [] } = featuredVideosData || {};
+  const { featuredVideos: modernFeaturedVideos = [] } =
+    featuredVideosData || {};
+  const curatedTrendingPosts = orderPostsByIds(
+    curatedTrendingData &&
+      curatedTrendingData.curatedTrendingPosts &&
+      curatedTrendingData.curatedTrendingPosts.nodes,
+    siteContent.trendingPostIds
+  );
+  const featuredVideos =
+    curatedTrendingPosts.length > 0
+      ? curatedTrendingPosts
+      : modernFeaturedVideos;
   const { children, showBottomNav, absContent, style } = props;
   const { liveVideos } = videos || [];
   let liveVideo = {};
@@ -133,9 +163,14 @@ export const Layout = props => {
           newestVideos={newestVideos}
           trendingNowLoading={newestVideosLoading}
           trendingNowError={newestVideosError}
+          railPromo={railPromoFromSiteContent(siteContent)}
+          spotlightTitle={siteContent.spotlightTitle}
+          mobileRailFirst={siteContent.mobileRailFirst}
         >
           {children}
-          {showBottomNav && <BottomNav title="more from" />}
+          {showBottomNav && (
+            <BottomNav title="more from" links={siteContent.footerLinks} />
+          )}
         </ProgramViewer>
         <Footer footer={footer} social={social} />
         <BasicModal {...props} />
