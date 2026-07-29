@@ -21,6 +21,7 @@ const {
   build,
   discardEmptyApiLambdaBundle,
   discardUnusedImageLambdaBundle,
+  configurePublicHtmlCache,
   sourceUsesNextImage,
   syncAssets,
   updateCloudFront
@@ -30,6 +31,12 @@ const lambdaArn =
   "arn:aws:lambda:us-east-1:123456789012:function:mf64oua-5ao6wt";
 const distributionConfig = {
   DefaultCacheBehavior: {
+    AllowedMethods: {
+      CachedMethods: { Items: ["HEAD", "GET"] }
+    },
+    MinTTL: 0,
+    DefaultTTL: 0,
+    MaxTTL: 31536000,
     LambdaFunctionAssociations: {
       Items: [
         { EventType: "origin-request", LambdaFunctionARN: `${lambdaArn}:3` }
@@ -37,6 +44,35 @@ const distributionConfig = {
     }
   }
 };
+
+test("configures a one-minute public HTML edge cache", () => {
+  const config = {
+    DefaultCacheBehavior: {
+      AllowedMethods: {
+        CachedMethods: { Items: ["HEAD", "GET"] }
+      },
+      MinTTL: 9,
+      DefaultTTL: 0,
+      MaxTTL: 0
+    }
+  };
+
+  expect(configurePublicHtmlCache(config)).toMatchObject({
+    MinTTL: 0,
+    DefaultTTL: 60,
+    MaxTTL: 60
+  });
+});
+
+test("refuses to change a distribution that cannot cache GET and HEAD", () => {
+  expect(() =>
+    configurePublicHtmlCache({
+      DefaultCacheBehavior: {
+        AllowedMethods: { CachedMethods: { Items: ["GET"] } }
+      }
+    })
+  ).toThrow("does not cache both GET and HEAD");
+});
 
 beforeEach(() => {
   execFileSync.mockReset();
@@ -235,6 +271,10 @@ test("waits for CloudFront propagation before invalidating updated associations"
   ]);
   expect(updateIndex).toBeLessThan(waitIndex);
   expect(waitIndex).toBeLessThan(invalidateIndex);
+  expect(fs.writeFileSync).toHaveBeenCalledWith(
+    expect.stringMatching(/cloudfront-config\.json$/),
+    expect.stringContaining('"DefaultTTL":60')
+  );
 });
 
 test("uses build-time SSR config and never checks a Lambda runtime environment", () => {
@@ -276,7 +316,9 @@ test("allows only Yomi or governed Jerome lanes and requires a task receipt", ()
   expect(workflow).toMatch(
     /authorize:[\s\S]*?DISPATCH_ACTOR: \$\{\{ github\.actor \}\}[\s\S]*?ytwguru\|yt-agent-tom\|yt-agent-tom-gpt\|yt-agent-tom-grok/
   );
-  expect(workflow).toMatch(/REQUEST_TASK_ID: \$\{\{ inputs\.request_task_id \}\}/);
+  expect(workflow).toMatch(
+    /REQUEST_TASK_ID: \$\{\{ inputs\.request_task_id \}\}/
+  );
   expect(workflow).toMatch(/\^\[1-9\]\[0-9\]\*\$/);
   expect(workflow).toMatch(/deploy-and-verify:[\s\S]*?needs: authorize/);
   expect(workflow).toMatch(/"request_task_id":"%s","dispatch_actor":"%s"/);
