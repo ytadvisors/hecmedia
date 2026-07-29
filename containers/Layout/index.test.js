@@ -108,7 +108,7 @@ describe("Layout", () => {
     render(<Layout dispatch={jest.fn()} />);
 
     expect(screen.getByTestId("header")).toHaveTextContent(
-      "Subscribe:/subscribe, Support:/support, Get Involved:/get-involved"
+      "Subscribe:/newsletter, Support:/support"
     );
   });
 
@@ -186,7 +186,7 @@ describe("Layout", () => {
     render(<Layout dispatch={jest.fn()} />);
 
     expect(screen.getByTestId("header")).toHaveTextContent(
-      "Subscribe:/subscribe, Support:/support, Get Involved:/get-involved"
+      "Subscribe:/newsletter, Support:/support"
     );
   });
 
