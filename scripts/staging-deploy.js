@@ -49,6 +49,7 @@ const STAGED_API_PAGES_DIR = path.join(
 );
 const LAMBDA_ZIP_PATH = path.join(BUILD_DIR, "default-lambda.zip");
 const CLOUDFRONT_CONFIG_PATH = path.join(BUILD_DIR, "cloudfront-config.json");
+const PUBLIC_HTML_TTL_SECONDS = 60;
 
 function run(cmd, args, opts = {}) {
   console.log(`+ ${cmd} ${args.join(" ")}`);
@@ -316,6 +317,38 @@ function updateLambda() {
   return publishOut.Version;
 }
 
+// The default behavior serves public, server-rendered HTML. Leaving its
+// DefaultTTL at zero forces every anonymous page view through Lambda@Edge and
+// three WordPress GraphQL queries; the measured home-page TTFB was 5-6s even
+// for consecutive requests. Cache only GET/HEAD (CloudFront's CachedMethods
+// already enforces that) for one minute. Deploys still invalidate /*, and
+// query strings/cookies retain their existing cache-key behavior.
+function configurePublicHtmlCache(config) {
+  if (!config || !config.DefaultCacheBehavior) {
+    throw new Error(
+      "CloudFront distribution has no DefaultCacheBehavior; refusing to configure HTML caching."
+    );
+  }
+
+  const behavior = config.DefaultCacheBehavior;
+  const cachedMethods =
+    behavior.AllowedMethods && behavior.AllowedMethods.CachedMethods;
+  const methods = (cachedMethods && cachedMethods.Items) || [];
+  if (!methods.includes("GET") || !methods.includes("HEAD")) {
+    throw new Error(
+      "CloudFront default behavior does not cache both GET and HEAD; refusing to change its TTL."
+    );
+  }
+
+  behavior.MinTTL = 0;
+  behavior.DefaultTTL = PUBLIC_HTML_TTL_SECONDS;
+  behavior.MaxTTL = Math.max(
+    Number(behavior.MaxTTL) || 0,
+    PUBLIC_HTML_TTL_SECONDS
+  );
+  return behavior;
+}
+
 // Repoints every LambdaFunctionAssociation on the distribution that
 // currently references mf64oua-5ao6wt at the freshly published version.
 // Per task #81876's verified facts, that's the default cache behavior
@@ -333,6 +366,7 @@ function updateCloudFront(distributionId, lambdaArn, version) {
   );
   const etag = current.ETag;
   const config = current.DistributionConfig;
+  configurePublicHtmlCache(config);
 
   const behaviors = [
     config.DefaultCacheBehavior,
@@ -436,6 +470,7 @@ module.exports = {
   build,
   discardEmptyApiLambdaBundle,
   discardUnusedImageLambdaBundle,
+  configurePublicHtmlCache,
   sourceUsesNextImage,
   syncAssets,
   updateCloudFront
