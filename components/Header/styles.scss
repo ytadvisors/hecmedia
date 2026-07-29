@@ -135,6 +135,13 @@
         outline-offset: 2px;
       }
     }
+
+    &.top-bar-actions--2 .top-bar-cta {
+      min-width: 112px;
+      min-height: 30px;
+      padding: 6px 16px;
+      text-align: center;
+    }
   }
   ul.brand-social {
     display: block;
@@ -580,6 +587,10 @@
                 button {
                   background: transparent;
                   width: 100%;
+                }
+                .dropdown-submenu__item,
+                .dropdown-submenu__toggle {
+                  background: transparent;
                 }
               }
               li:after {
