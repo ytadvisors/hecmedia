@@ -43,7 +43,16 @@ async function main() {
     aliases.some(alias => alias !== expectedHost)
   )
     fail(`CloudFront aliases must contain only ${expectedHost}`);
-  const pages = await Promise.all(routes.map(request));
+  // Verify routes sequentially. Parallel requests manufacture simultaneous
+  // Lambda cold starts and can time out a healthy, low-traffic staging route.
+  const pages = await routes.reduce(
+    (pendingPages, route) =>
+      pendingPages.then(async resolvedPages => [
+        ...resolvedPages,
+        await request(route)
+      ]),
+    Promise.resolve([])
+  );
   pages.forEach(({ route, response, body }) => {
     if (response.statusCode !== 200)
       fail(`${route} returned HTTP ${response.statusCode}`);
