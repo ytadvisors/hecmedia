@@ -72,7 +72,7 @@ describe("SideNavigation", () => {
           "https://asset.ytadvisors.com/client-documents/hecmedia/media-library/3ca97ec68430409a-For-Educators.jpg",
         altText: "For Educators"
       },
-      url: "/for-educators"
+      url: "/category/education"
     });
   });
 });
