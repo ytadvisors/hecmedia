@@ -415,7 +415,7 @@ export default class Header extends Component {
                     <SocialLinks links={socialLinks} />
                     {ctas.length > 0 && (
                       <nav
-                        className="top-bar-actions"
+                        className={`top-bar-actions top-bar-actions--${ctas.length}`}
                         aria-label="Featured actions"
                       >
                         {ctas.map(cta => (

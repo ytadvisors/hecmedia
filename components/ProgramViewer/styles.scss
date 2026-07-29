@@ -13,3 +13,24 @@
     }
   }
 }
+
+@media (max-width: 991px) {
+  .program-viewer {
+    .program-viewer-container > .row {
+      display: flex;
+      flex-direction: column;
+    }
+
+    // On phones and tablets the useful discovery rail should be visible
+    // before the long content feed instead of appearing at the very bottom.
+    .program-viewer-rail {
+      order: 1;
+      width: 100%;
+    }
+
+    .program-viewer-main {
+      order: 2;
+      width: 100%;
+    }
+  }
+}

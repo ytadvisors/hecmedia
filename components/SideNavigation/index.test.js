@@ -68,7 +68,8 @@ describe("SideNavigation", () => {
   it("ships the educator artwork from the frontend CDN path", () => {
     expect(DEFAULT_RAIL_PROMO).toMatchObject({
       image: {
-        sourceUrl: "/static/assets/for-educators-rail-promo.png",
+        sourceUrl:
+          "https://asset.ytadvisors.com/client-documents/hecmedia/media-library/3ca97ec68430409a-For-Educators.jpg",
         altText: "For Educators"
       },
       url: "/for-educators"

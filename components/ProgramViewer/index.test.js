@@ -18,14 +18,21 @@ describe("ProgramViewer", () => {
     expect(document.getElementById("subscribe")).not.toBeInTheDocument();
     expect(screen.queryByText("HEC-TV NewsLetter")).not.toBeInTheDocument();
     expect(screen.getByText("Trending Now")).toBeInTheDocument();
-    expect(screen.getByText("HEC-TV SPOTLIGHT")).toBeInTheDocument();
+    expect(screen.getByText("Spotlight STL")).toBeInTheDocument();
     expect(screen.queryByText("Playing Now")).toBeNull();
 
     const railText = screen
       .getByText("Trending Now")
       .closest(".side-navigation").textContent;
     expect(railText.indexOf("Trending Now")).toBeLessThan(
-      railText.indexOf("HEC-TV SPOTLIGHT")
+      railText.indexOf("Spotlight STL")
     );
+
+    const main = screen.getByText("content").closest(".program-viewer-main");
+    const rail = screen
+      .getByText("Trending Now")
+      .closest(".program-viewer-rail");
+    expect(main).toBeInTheDocument();
+    expect(rail).toBeInTheDocument();
   });
 });
