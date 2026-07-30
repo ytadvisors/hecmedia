@@ -1,14 +1,14 @@
 # Deploy & Rollback
 
-> **NEXT 13 / REACT 18 CHECKPOINT — DO NOT DEPLOY**
+> **NEXT 15 / REACT 18 CHECKPOINT — DO NOT DEPLOY**
 >
-> The `upgrade/next13-react18` compatibility checkpoint upgrades the application
-> runtime to Next.js 13 and React 18, but this repository still packages Lambda@Edge
+> The `upgrade/next15` compatibility checkpoint upgrades the application runtime to
+> Next.js 15 on React 18, but this repository still packages Lambda@Edge
 > with the Next-9-era
 > `@sls-next/serverless-component@1.19.1-patch.1` /
 > `@sls-next/lambda-at-edge@1.4.1-alpha.2` stack. Do not run `yarn deploy`,
 > `staging-deploy`, `serverless`, or any production deployment from that checkpoint.
-> Deployment remains blocked until the `@sls-next/*` stack is upgraded for Next 13
+> Deployment remains blocked until the `@sls-next/*` stack is upgraded for Next 15
 > (or replaced), its output contract is verified, and this warning is removed in the
 > reviewed deployment-path PR. A green `yarn build` or `yarn test` does not make this
 > checkpoint deployable.
