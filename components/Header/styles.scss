@@ -656,8 +656,12 @@
     }
     .top-logo {
       flex: 1 1 auto;
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 7px;
+      row-gap: 3px;
       align-items: center;
-      gap: 7px;
 
       img {
         width: 58px;
@@ -666,15 +670,18 @@
       }
     }
     .navbar-brand-class {
-      flex: 0 0 auto;
+      grid-column: 1;
+      grid-row: 1;
     }
     .brand-information {
-      flex: 1 1 auto;
+      display: contents;
+    }
+    .brand-tagline {
+      grid-column: 2;
+      grid-row: 1;
     }
     .header-secondary-row {
-      flex-wrap: nowrap;
-      gap: 4px;
-      padding: 0;
+      display: contents;
     }
     ul.brand-social {
       flex: 0 0 auto;
@@ -685,10 +692,25 @@
         margin-right: 6px;
       }
     }
+    .header-secondary-row .social-links {
+      grid-column: 1;
+      grid-row: 2;
+      justify-content: flex-start;
+      align-self: start;
+      padding-top: 2px;
+
+      li a {
+        margin-right: 4px;
+      }
+    }
     .top-bar-actions {
+      grid-column: 2;
+      grid-row: 2;
       flex: 1 1 auto;
       flex-wrap: nowrap;
       gap: 4px;
+      justify-content: flex-start;
+      align-self: start;
 
       .top-bar-cta {
         flex: 0 0 auto;
@@ -742,7 +764,15 @@
 }
 
 @media (max-width: 400px) {
-  .header ul.brand-social {
-    display: none;
+  .header {
+    .header-secondary-row .social-links {
+      display: flex;
+    }
+
+    .top-bar-actions .top-bar-cta {
+      padding-right: 4px;
+      padding-left: 4px;
+      font-size: 9px;
+    }
   }
 }

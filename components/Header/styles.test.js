@@ -52,6 +52,26 @@ describe("Header responsive typography", () => {
     expect(mobileStyles).toContain("padding: 3px 5px;");
   });
 
+  it("stacks mobile social icons below the logo and left-aligns CTA buttons", () => {
+    const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
+    const narrowBreakpoint = headerStyles.indexOf("@media (max-width: 400px)");
+    expect(mobileBreakpoint).toBeGreaterThanOrEqual(0);
+    expect(narrowBreakpoint).toBeGreaterThan(mobileBreakpoint);
+
+    const mobileStyles = headerStyles.slice(mobileBreakpoint, narrowBreakpoint);
+    expect(mobileStyles).toContain("grid-template-columns: 58px minmax(0, 1fr);");
+    expect(mobileStyles).toContain(".header-secondary-row .social-links");
+    expect(mobileStyles).toContain("grid-column: 1;");
+    expect(mobileStyles).toContain("grid-row: 2;");
+    expect(mobileStyles).toContain("justify-content: flex-start;");
+    expect(mobileStyles).toContain(".top-bar-actions {");
+    expect(mobileStyles).toContain("grid-column: 2;");
+
+    const narrowStyles = headerStyles.slice(narrowBreakpoint);
+    expect(narrowStyles).not.toContain("display: none;");
+    expect(narrowStyles).toContain("display: flex;");
+  });
+
   it("uses full-width mobile navigation and a viewport-aligned search panel", () => {
     const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
     expect(mobileBreakpoint).toBeGreaterThanOrEqual(0);
