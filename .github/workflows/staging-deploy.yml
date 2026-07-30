@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: Deploy a commit or roll back to the last known-good staging SHA.
+        description: Inspect the Lambda runtime, deploy a commit, or roll back.
         required: true
         type: choice
-        options: [deploy, rollback]
+        options: [inspect, deploy, rollback]
       ref:
         description: Commit SHA to deploy. Required for deploy; ignored for rollback.
         required: false
@@ -56,6 +56,7 @@ jobs:
 
   deploy-and-verify:
     needs: authorize
+    if: inputs.action != 'inspect'
     runs-on: ubuntu-latest
     environment:
       name: hecmedia-staging
@@ -195,3 +196,24 @@ jobs:
             staging-hydrated-home.html
             staging-hydrated-category.html
           if-no-files-found: warn
+
+  inspect-runtime:
+    needs: authorize
+    if: inputs.action == 'inspect'
+    runs-on: ubuntu-latest
+    environment:
+      name: hecmedia-staging
+      url: https://development.hecmedia.org
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.HECMEDIA_STAGING_AWS_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Inspect the existing Lambda@Edge function without modifying it
+        run: |
+          set -euo pipefail
+          aws lambda get-function-configuration \
+            --function-name mf64oua-5ao6wt \
+            --region us-east-1 \
+            --query '{FunctionArn:FunctionArn,Runtime:Runtime,Architectures:Architectures,MemorySize:MemorySize,Timeout:Timeout,State:State,LastUpdateStatus:LastUpdateStatus,PackageType:PackageType,Handler:Handler,LastModified:LastModified}' \
+            --output json
