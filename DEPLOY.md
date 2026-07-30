@@ -1,5 +1,25 @@
 # Deploy & Rollback
 
+> **NEXT 14 / REACT 18 CHECKPOINT — DO NOT DEPLOY**
+>
+> The `upgrade/next14` compatibility checkpoint upgrades the application runtime to
+> Next.js 14 on React 18, but this repository still packages Lambda@Edge
+> with the Next-9-era
+> `@sls-next/serverless-component@1.19.1-patch.1` /
+> `@sls-next/lambda-at-edge@1.4.1-alpha.2` stack. Do not run `yarn deploy`,
+> `staging-deploy`, `serverless`, or any production deployment from that checkpoint.
+> Deployment remains blocked until the `@sls-next/*` stack is upgraded for Next 14
+> (or replaced), its output contract is verified, and this warning is removed in the
+> reviewed deployment-path PR. A green `yarn build` or `yarn test` does not make this
+> checkpoint deployable.
+
+Known bridge follow-ups are intentionally separate from this runtime checkpoint:
+
+- Upgrade `@testing-library/react` from the pre-React-18 v9 line alongside the
+  corresponding Jest/`act` compatibility work.
+- Re-enable the Airbnb 19 ESLint rules disabled by this bridge incrementally; do not
+  expand the disable list without a tracked compatibility reason.
+
 ## Stack
 
 This site deploys via the **Serverless Components** framework (`serverless.yml` uses the
