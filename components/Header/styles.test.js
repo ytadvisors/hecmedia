@@ -53,31 +53,37 @@ describe("Header responsive typography", () => {
   });
 
   it("stacks mobile social icons below the logo and left-aligns CTA buttons", () => {
-    const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
-    const narrowBreakpoint = headerStyles.indexOf("@media (max-width: 400px)");
-    expect(mobileBreakpoint).toBeGreaterThanOrEqual(0);
-    expect(narrowBreakpoint).toBeGreaterThan(mobileBreakpoint);
-
-    const mobileStyles = headerStyles.slice(mobileBreakpoint, narrowBreakpoint);
-    expect(mobileStyles).toContain(
-      "grid-template-columns: 58px minmax(0, 1fr);"
+    const collapsedBreakpoint = headerStyles.indexOf(
+      "@media (max-width: 1170px)"
     );
-    expect(mobileStyles).toContain(".header-secondary-row .social-links");
-    expect(mobileStyles).toContain("grid-column: 1;");
-    expect(mobileStyles).toContain("grid-row: 2;");
-    expect(mobileStyles).toContain("justify-content: flex-start;");
-    expect(mobileStyles).toContain(".top-bar-actions {");
-    expect(mobileStyles).toContain("grid-column: 2;");
+    const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
+    expect(collapsedBreakpoint).toBeGreaterThanOrEqual(0);
+    expect(mobileBreakpoint).toBeGreaterThan(collapsedBreakpoint);
 
-    const narrowStyles = headerStyles.slice(narrowBreakpoint);
-    expect(narrowStyles).not.toContain("display: none;");
-    expect(narrowStyles).toContain("display: flex;");
+    const collapsedStyles = headerStyles.slice(
+      collapsedBreakpoint,
+      mobileBreakpoint
+    );
+    expect(collapsedStyles).toContain(
+      "grid-template-columns: auto minmax(0, 1fr);"
+    );
+    expect(collapsedStyles).toContain(".header-secondary-row .social-links");
+    expect(collapsedStyles).toContain("grid-column: 1;");
+    expect(collapsedStyles).toContain("grid-row: 2;");
+    expect(collapsedStyles).toContain("justify-content: flex-start;");
+    expect(collapsedStyles).toContain(".top-bar-actions {");
+    expect(collapsedStyles).toContain("grid-column: 2;");
+    expect(collapsedStyles).toContain("margin-left: 0;");
   });
 
   it("paints collapsed-nav dropdown and nested submenu panels brand blue, not Bootstrap white", () => {
     const tabletBreakpoint = headerStyles.indexOf("@media (max-width: 1170px)");
     expect(tabletBreakpoint).toBeGreaterThanOrEqual(0);
-    const tabletStyles = headerStyles.slice(tabletBreakpoint);
+    const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
+    const tabletStyles = headerStyles.slice(tabletBreakpoint, mobileBreakpoint);
+    expect(tabletStyles).toContain(".bottom-nav {");
+    expect(tabletStyles).toContain("ul.top-navigation {");
+    expect(tabletStyles).not.toContain(".bottom-nav {\n      .nav-tabs {");
 
     // First-level mobile dropdown panel
     expect(tabletStyles).toContain("background: #0065bc;");
@@ -86,12 +92,30 @@ describe("Header responsive typography", () => {
     expect(tabletStyles).toMatch(
       /\.dropdown-menu\s*\{[^}]*background(?:-color)?:\s*#0065bc/s
     );
+    expect(tabletStyles).toMatch(
+      /\.dropdown-submenu\s*\{[^}]*display:\s*block !important;[^}]*width:\s*100%;/s
+    );
+    expect(tabletStyles).toMatch(
+      /> \.dropdown-menu\s*\{[^}]*display:\s*none;[^}]*position:\s*static;[^}]*width:\s*100%;/s
+    );
+    expect(tabletStyles).toMatch(
+      /&\.open > \.dropdown-menu\s*\{[^}]*display:\s*block;/s
+    );
+    expect(tabletStyles).toContain("background: #0065bc !important;");
   });
 
   it("uses full-width mobile navigation and a viewport-aligned search panel", () => {
+    const collapsedBreakpoint = headerStyles.indexOf(
+      "@media (max-width: 1170px)"
+    );
     const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
+    expect(collapsedBreakpoint).toBeGreaterThanOrEqual(0);
     expect(mobileBreakpoint).toBeGreaterThanOrEqual(0);
 
+    const collapsedStyles = headerStyles.slice(
+      collapsedBreakpoint,
+      mobileBreakpoint
+    );
     const mobileStyles = headerStyles.slice(mobileBreakpoint);
     expect(mobileStyles).toContain("position: fixed !important;");
     expect(mobileStyles).toContain("right: 12px !important;");
@@ -100,8 +124,8 @@ describe("Header responsive typography", () => {
     expect(mobileStyles).toContain("padding-right: 0;");
     expect(mobileStyles).toContain("display: block;");
     expect(mobileStyles).toContain("width: 100%;");
-    expect(mobileStyles).toContain("left: 0;");
-    expect(mobileStyles).toContain("float: none;");
+    expect(collapsedStyles).toContain("left: 0;");
+    expect(collapsedStyles).toContain("float: none;");
   });
 
   it("allows desktop dropdown menus to escape the rounded navigation", () => {
