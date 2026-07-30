@@ -1,6 +1,6 @@
 module.exports = {
   extends: ["airbnb", "prettier", "prettier/react"],
-  parser: "babel-eslint",
+  parser: "@babel/eslint-parser",
   parserOptions: {
     ecmaVersion: 2017,
     ecmaFeatures: {
@@ -24,6 +24,13 @@ module.exports = {
     "import/newline-after-import": "error",
     "jsx-a11y/anchor-is-valid": ["off"],
     "react/jsx-props-no-spreading": ["off"],
+    "react/function-component-definition": ["off"],
+    "react/no-unknown-property": ["off"],
+    "react/no-unused-class-component-methods": ["off"],
+    "react/jsx-curly-brace-presence": ["off"],
+    "class-methods-use-this": ["off"],
+    "default-param-last": ["off"],
+    "jsx-a11y/control-has-associated-label": ["off"],
     "import/no-named-as-default": ["off"],
     "react/static-property-placement": ["off"],
     "react/forbid-prop-types": ["off"],

@@ -30,7 +30,7 @@ export default props => {
     <section className="sub-navigation event-nav">
       <div className="pull-left">
         <h2>
-          <Link href={link.replace(/https?:\/\/[^/]+/, "")}>
+          <Link href={link.replace(/https?:\/\/[^/]+/, "")} legacyBehavior>
             <a dangerouslySetInnerHTML={{ __html: title }} />
           </Link>
         </h2>
@@ -47,6 +47,7 @@ export default props => {
               <Link
                 href="/events/[category]/[day]/"
                 as={getChangedCategory("All")}
+                legacyBehavior
               >
                 <a>
                   <span>All Events</span>
@@ -61,6 +62,7 @@ export default props => {
                 <Link
                   href="/events/[category]/[day]/"
                   as={getChangedCategory(menu.node.slug)}
+                  legacyBehavior
                 >
                   <a>
                     <span
