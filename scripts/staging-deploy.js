@@ -83,6 +83,23 @@ function directoryHasFiles(directory) {
   });
 }
 
+function copyDirectory(source, destination) {
+  fs.mkdirSync(destination, { recursive: true });
+  fs.readdirSync(source, { withFileTypes: true }).forEach(entry => {
+    const sourcePath = path.join(source, entry.name);
+    const destinationPath = path.join(destination, entry.name);
+    if (entry.isDirectory()) {
+      copyDirectory(sourcePath, destinationPath);
+    } else if (entry.isFile()) {
+      fs.copyFileSync(sourcePath, destinationPath);
+    } else {
+      throw new Error(
+        `Refusing to package unsupported runtime entry ${sourcePath}.`
+      );
+    }
+  });
+}
+
 function stageNextServerRuntime() {
   if (!fs.existsSync(LAMBDA_WEBPACK_RUNTIME_PATH)) {
     if (!fs.existsSync(NEXT_WEBPACK_RUNTIME_PATH)) {
@@ -98,9 +115,7 @@ function stageNextServerRuntime() {
         "Next 12 generated no serverless chunks; refusing to publish an unloadable Lambda bundle."
       );
     }
-    fs.cpSync(NEXT_SERVER_CHUNKS_PATH, LAMBDA_CHUNKS_PATH, {
-      recursive: true
-    });
+    copyDirectory(NEXT_SERVER_CHUNKS_PATH, LAMBDA_CHUNKS_PATH);
   }
 }
 
