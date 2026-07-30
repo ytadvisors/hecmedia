@@ -693,6 +693,44 @@
         margin: 0;
         padding: 0;
         padding-left: 14px;
+
+        // Collapsed navigation must use an in-flow, full-width submenu. The
+        // desktop rule positions nested menus at left: 100%, which exposes
+        // Bootstrap's white dropdown panel beside the parent item.
+        .dropdown-submenu {
+          display: block !important;
+          width: 100%;
+          background: #0065bc;
+
+          .dropdown-submenu__item {
+            display: flex;
+            width: 100%;
+            background: #0065bc;
+          }
+
+          .dropdown-submenu__toggle {
+            background: #0065bc !important;
+          }
+
+          > .dropdown-menu {
+            display: none;
+            position: static;
+            top: auto;
+            left: 0;
+            float: none;
+            width: 100%;
+            min-width: 0;
+            background: #0065bc;
+            background-color: #0065bc;
+            border: 0;
+            box-shadow: none;
+          }
+
+          &.open > .dropdown-menu {
+            display: block;
+          }
+        }
+
         li.nav-item {
           display: block;
           clear: both;
@@ -774,20 +812,6 @@
         width: 100%;
         padding-left: 0;
         border-radius: 0;
-
-        .dropdown-submenu > .dropdown-menu,
-        .dropdown.open > .dropdown-menu,
-        .dropdown-menu {
-          position: relative;
-          top: auto;
-          left: 0;
-          float: none;
-          width: 100%;
-          background: #0065bc;
-          background-color: #0065bc;
-          border: 0;
-          box-shadow: none;
-        }
       }
     }
   }
