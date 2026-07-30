@@ -7,7 +7,6 @@ import { GET_EVENTS_CATEGORIES } from "../../lib/graphql";
 import NavWrap from "../NavWrap";
 import CalendarSelector from "../CalendarSelector";
 import { getFormattedDate } from "../../lib/getFunctions";
-import "./styles.scss";
 
 export default props => {
   const { link, title, currentDate, currentCategory } = props;

@@ -1,6 +1,5 @@
 import React from "react";
 import toTrendingNowItems from "../../lib/trendingNow";
-import "./styles.scss";
 
 const fallbackThumbnail = "/static/assets/spotlight-img.jpg";
 

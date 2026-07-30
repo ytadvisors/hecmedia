@@ -12,7 +12,6 @@ import { isServer } from "../../lib/serverFunctions";
 import { GET_PAGE_INFO, GET_POST_HEADER_IMAGE_SIZE } from "../../lib/graphql";
 import PodcastLinks from "../PodcastLinks";
 import { modernWpGraphqlEnabled } from "../../lib/stagingCompatibility";
-import "./styles.scss";
 
 const HEADER_IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
 

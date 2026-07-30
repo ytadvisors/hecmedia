@@ -8,7 +8,6 @@ import {
   TwitterShareButton,
   EmailShareButton
 } from "react-share";
-import "./styles.scss";
 
 const ShareSocialLinks = ({ url, title }) => (
   <section className="share-social-links">

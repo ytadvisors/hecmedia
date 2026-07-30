@@ -1,7 +1,6 @@
 import React from "react";
 import LazyLoad from "react-lazyload";
 import { getPostImgSrc } from "../../lib/getFunctions";
-import "./styles.scss";
 
 export default props => {
   const {
@@ -15,9 +14,7 @@ export default props => {
     <section className="list-of-featured-posts">
       <div className="title">
         <div>
-          <b>
-            {titleHref ? <a href={titleHref}>{title}</a> : title}
-          </b>
+          <b>{titleHref ? <a href={titleHref}>{title}</a> : title}</b>
         </div>
       </div>
       <ul className="magazine-list">

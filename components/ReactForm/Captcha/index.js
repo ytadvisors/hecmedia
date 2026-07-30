@@ -1,6 +1,5 @@
 import React from "react";
 import Recaptcha from "react-recaptcha";
-import "./styles.scss";
 
 export default props => {
   const {

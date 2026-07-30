@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import _ from "lodash";
-import "./styles.scss";
 
 export default class CheckBoxInput extends Component {
   onChange = (event, itemValue) => {

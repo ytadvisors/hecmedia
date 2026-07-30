@@ -3,10 +3,11 @@ import React from "react";
 import { Provider } from "react-redux";
 import { ApolloProvider } from "@apollo/react-hooks";
 import Head from "next/head";
+import "react-datepicker/dist/react-datepicker.css";
 import withApollo from "../lib/withApollo";
 import createStore from "../store";
 
-import "../lib/cssDependencies";
+import "../lib/cssDependencies.scss";
 
 class MyApp extends App {
   static async getInitialProps({ Component, ctx }) {

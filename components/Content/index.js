@@ -1,6 +1,5 @@
 import React from "react";
 import VideoPlayer from "../VideoPlayer/index";
-import "./styles.scss";
 
 export default ({ post: { content, videoUrl }, containerStyle }) => (
   <section className="content">

@@ -4,7 +4,6 @@ import { useQuery } from "@apollo/react-hooks";
 import { GET_ALL_PAGE_CATEGORY } from "../../lib/graphql";
 import { getHref } from "../../lib/getFunctions";
 import { cleanUrl, getQueryUpdate } from "../../lib/updateFunctions";
-import "./styles.scss";
 
 export const findCategoryForLink = (menus, cleanLink) =>
   (menus || []).reduce((result, menu) => {

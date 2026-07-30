@@ -3,8 +3,6 @@ import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
 import { GET_CURRENT_EVENTS } from "../../lib/graphql";
 
-import "./styles.scss";
-
 export default () => {
   const mDay = moment(new Date());
   const currentDay = moment(mDay).format("YYYY-MM-DD");

@@ -7,8 +7,6 @@ import LazyLoad from "react-lazyload";
 import NewsLetterContainer from "../../containers/NewsLetterContainer";
 import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
 
-import "./styles.scss";
-
 const defaultImage = "/static/assets/nothumbnail.png";
 const playButton = "/static/assets/play-button.png";
 
