@@ -480,7 +480,9 @@
     .top-logo {
       flex: 1 1 auto;
       display: grid;
-      grid-template-columns: 58px minmax(0, 1fr);
+      // Let the icon row determine the first track width. The logo remains
+      // 58px, while extra CMS-configured social icons cannot overlap the CTAs.
+      grid-template-columns: auto minmax(0, 1fr);
       grid-template-rows: auto auto;
       column-gap: 7px;
       row-gap: 3px;
@@ -689,7 +691,7 @@
       }
     }
     .bottom-nav {
-      .nav-tabs {
+      ul.top-navigation {
         margin: 0;
         padding: 0;
         padding-left: 14px;
@@ -807,7 +809,7 @@
     .bottom-nav {
       padding-right: 0;
 
-      .nav-tabs {
+      ul.top-navigation {
         display: block;
         width: 100%;
         padding-left: 0;

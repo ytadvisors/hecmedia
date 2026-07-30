@@ -65,7 +65,7 @@ describe("Header responsive typography", () => {
       mobileBreakpoint
     );
     expect(collapsedStyles).toContain(
-      "grid-template-columns: 58px minmax(0, 1fr);"
+      "grid-template-columns: auto minmax(0, 1fr);"
     );
     expect(collapsedStyles).toContain(".header-secondary-row .social-links");
     expect(collapsedStyles).toContain("grid-column: 1;");
@@ -81,6 +81,9 @@ describe("Header responsive typography", () => {
     expect(tabletBreakpoint).toBeGreaterThanOrEqual(0);
     const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
     const tabletStyles = headerStyles.slice(tabletBreakpoint, mobileBreakpoint);
+    expect(tabletStyles).toContain(".bottom-nav {");
+    expect(tabletStyles).toContain("ul.top-navigation {");
+    expect(tabletStyles).not.toContain(".bottom-nav {\n      .nav-tabs {");
 
     // First-level mobile dropdown panel
     expect(tabletStyles).toContain("background: #0065bc;");
