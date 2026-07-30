@@ -327,6 +327,21 @@ test("packages staging on Node 24 with the webpack 4 OpenSSL compatibility flag"
   );
 });
 
+test("supports read-only runtime inspection without entering deployment", () => {
+  const workflow = realFs.readFileSync(
+    path.join(__dirname, "../.github/workflows/staging-deploy.yml"),
+    "utf8"
+  );
+
+  expect(workflow).toMatch(/options: \[inspect, deploy, rollback\]/);
+  expect(workflow).toMatch(
+    /deploy-and-verify:[\s\S]*?if: inputs\.action != 'inspect'/
+  );
+  expect(workflow).toMatch(
+    /inspect-runtime:[\s\S]*?if: inputs\.action == 'inspect'[\s\S]*?get-function-configuration/
+  );
+});
+
 test("allows only Yomi or governed Jerome lanes and requires a task receipt", () => {
   const workflow = realFs.readFileSync(
     path.join(__dirname, "../.github/workflows/staging-deploy.yml"),
