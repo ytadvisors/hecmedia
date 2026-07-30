@@ -247,9 +247,14 @@ test("syncAssets preserves prior immutable assets during a release", () => {
 });
 
 test("waits for CloudFront propagation before invalidating updated associations", () => {
-  execFileSync.mockReturnValueOnce(
-    JSON.stringify({ ETag: "etag", DistributionConfig: distributionConfig })
-  );
+  execFileSync
+    .mockReturnValueOnce(
+      JSON.stringify({ ETag: "etag", DistributionConfig: distributionConfig })
+    )
+    .mockReturnValueOnce("")
+    .mockReturnValueOnce("")
+    .mockReturnValueOnce("I123456789\n")
+    .mockReturnValueOnce("");
 
   expect(updateCloudFront("E1ARETO6518UT4", lambdaArn, "4")).toBe(1);
 
@@ -257,20 +262,35 @@ test("waits for CloudFront propagation before invalidating updated associations"
   const updateIndex = awsCalls.findIndex(
     args => args[1] === "update-distribution"
   );
-  const waitIndex = awsCalls.findIndex(args => args[1] === "wait");
+  const distributionWaitIndex = awsCalls.findIndex(
+    args => args[1] === "wait" && args[2] === "distribution-deployed"
+  );
   const invalidateIndex = awsCalls.findIndex(
     args => args[1] === "create-invalidation"
   );
+  const invalidationWaitIndex = awsCalls.findIndex(
+    args => args[1] === "wait" && args[2] === "invalidation-completed"
+  );
 
-  expect(awsCalls[waitIndex]).toEqual([
+  expect(awsCalls[distributionWaitIndex]).toEqual([
     "cloudfront",
     "wait",
     "distribution-deployed",
     "--id",
     "E1ARETO6518UT4"
   ]);
-  expect(updateIndex).toBeLessThan(waitIndex);
-  expect(waitIndex).toBeLessThan(invalidateIndex);
+  expect(awsCalls[invalidationWaitIndex]).toEqual([
+    "cloudfront",
+    "wait",
+    "invalidation-completed",
+    "--distribution-id",
+    "E1ARETO6518UT4",
+    "--id",
+    "I123456789"
+  ]);
+  expect(updateIndex).toBeLessThan(distributionWaitIndex);
+  expect(distributionWaitIndex).toBeLessThan(invalidateIndex);
+  expect(invalidateIndex).toBeLessThan(invalidationWaitIndex);
   expect(fs.writeFileSync).toHaveBeenCalledWith(
     expect.stringMatching(/cloudfront-config\.json$/),
     expect.stringContaining('"DefaultTTL":60')
