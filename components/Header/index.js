@@ -252,7 +252,7 @@ export default class Header extends Component {
       );
     }
     return (
-      <Link href={actualLink} as={cleanUrl}>
+      <Link href={actualLink} as={cleanUrl} legacyBehavior>
         <a>
           <div
             onKeyPress={() => {}}

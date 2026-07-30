@@ -9,17 +9,25 @@ const { parsed: localEnv } = require("dotenv").config({
 const disableImageOptimizer =
   process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER === "true";
 
+const exposedEnv = Object.fromEntries(
+  [
+    "DEPLOY_SHA",
+    "APOLLO_CLIENT_URI",
+    "WP_HOST",
+    "HECMEDIA_NO_SEND_FORMS",
+    "HECMEDIA_MODERN_WPGRAPHQL",
+    "HECMEDIA_TOPBAR_CTAS_JSON",
+    "RE_CAPTCHA_SITE_KEY"
+  ]
+    .map(name => [name, process.env[name]])
+    .filter(([, value]) => typeof value === "string")
+);
+
 const config = {
   ...(disableImageOptimizer ? { images: { loader: "akamai", path: "" } } : {}),
   env: {
     ...localEnv,
-    DEPLOY_SHA: process.env.DEPLOY_SHA,
-    APOLLO_CLIENT_URI: process.env.APOLLO_CLIENT_URI,
-    WP_HOST: process.env.WP_HOST,
-    HECMEDIA_NO_SEND_FORMS: process.env.HECMEDIA_NO_SEND_FORMS,
-    HECMEDIA_MODERN_WPGRAPHQL: process.env.HECMEDIA_MODERN_WPGRAPHQL,
-    HECMEDIA_TOPBAR_CTAS_JSON: process.env.HECMEDIA_TOPBAR_CTAS_JSON,
-    RE_CAPTCHA_SITE_KEY: process.env.RE_CAPTCHA_SITE_KEY
+    ...exposedEnv
   }
 };
 

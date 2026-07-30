@@ -11,7 +11,7 @@ export default ({ title, link }) => {
       <div className="row heading">
         <div className="pull-left">
           <h2>
-            <Link as={url} href={getHref(url)}>
+            <Link as={url} href={getHref(url)} legacyBehavior>
               <a>
                 <div dangerouslySetInnerHTML={{ __html: title }} />
               </a>

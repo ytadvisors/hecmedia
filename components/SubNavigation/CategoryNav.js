@@ -97,7 +97,7 @@ const CategoryNav = ({ link }) => {
               return (
                 <li key={subcategoryLink}>
                   {!isActive && (
-                    <Link as={subUrl} href={actualSubLink}>
+                    <Link as={subUrl} href={actualSubLink} legacyBehavior>
                       <a
                         dangerouslySetInnerHTML={{
                           __html: subcategoryName

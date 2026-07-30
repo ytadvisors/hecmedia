@@ -82,7 +82,7 @@ export default class Banner extends Component {
                       <i>{bannerTitle}</i>
                     </a>
                   ) : (
-                    <Link href={formattedUrl}>
+                    <Link href={formattedUrl} legacyBehavior>
                       <a>
                         <i>{bannerTitle}</i>
                       </a>
@@ -100,7 +100,7 @@ export default class Banner extends Component {
                         Live
                       </a>
                     ) : (
-                      <Link href={formattedUrl}>
+                      <Link href={formattedUrl} legacyBehavior>
                         <a>Live</a>
                       </Link>
                     )}
@@ -132,7 +132,7 @@ export default class Banner extends Component {
                       {excerpt}{" "}
                     </a>
                   ) : (
-                    <Link href={formattedUrl}>
+                    <Link href={formattedUrl} legacyBehavior>
                       <a>{excerpt}</a>
                     </Link>
                   )}
