@@ -59,7 +59,9 @@ describe("Header responsive typography", () => {
     expect(narrowBreakpoint).toBeGreaterThan(mobileBreakpoint);
 
     const mobileStyles = headerStyles.slice(mobileBreakpoint, narrowBreakpoint);
-    expect(mobileStyles).toContain("grid-template-columns: 58px minmax(0, 1fr);");
+    expect(mobileStyles).toContain(
+      "grid-template-columns: 58px minmax(0, 1fr);"
+    );
     expect(mobileStyles).toContain(".header-secondary-row .social-links");
     expect(mobileStyles).toContain("grid-column: 1;");
     expect(mobileStyles).toContain("grid-row: 2;");
@@ -70,6 +72,20 @@ describe("Header responsive typography", () => {
     const narrowStyles = headerStyles.slice(narrowBreakpoint);
     expect(narrowStyles).not.toContain("display: none;");
     expect(narrowStyles).toContain("display: flex;");
+  });
+
+  it("paints collapsed-nav dropdown and nested submenu panels brand blue, not Bootstrap white", () => {
+    const tabletBreakpoint = headerStyles.indexOf("@media (max-width: 1170px)");
+    expect(tabletBreakpoint).toBeGreaterThanOrEqual(0);
+    const tabletStyles = headerStyles.slice(tabletBreakpoint);
+
+    // First-level mobile dropdown panel
+    expect(tabletStyles).toContain("background: #0065bc;");
+    expect(tabletStyles).toContain("background-color: #0065bc;");
+    // Nested second dropdown must not fall through to Bootstrap's white default
+    expect(tabletStyles).toMatch(
+      /\.dropdown-menu\s*\{[^}]*background(?:-color)?:\s*#0065bc/s
+    );
   });
 
   it("uses full-width mobile navigation and a viewport-aligned search panel", () => {
