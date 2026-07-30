@@ -572,10 +572,35 @@
           padding: 0;
 
           &.dropdown {
+            // Collapsed (hamburger) nav: keep first- and second-level menus on
+            // the brand blue panel. Bootstrap's .dropdown-menu defaults to a
+            // white background, which shows up as the nested "GENRES" panel.
             .dropdown-menu {
               position: relative;
               margin: 0;
               border: 0;
+              box-shadow: none;
+              background: #0065bc;
+              background-color: #0065bc;
+              float: none;
+              width: 100%;
+              min-width: 0;
+
+              // Nested submenus (second dropdown) also inherit Bootstrap white
+              // unless explicitly painted to match the mobile panel.
+              .dropdown-menu {
+                background: #0065bc;
+                background-color: #0065bc;
+                border: 0;
+                box-shadow: none;
+                float: none;
+                width: 100%;
+                min-width: 0;
+                position: relative;
+                left: 0;
+                top: auto;
+              }
+
               li {
                 button,
                 a {
@@ -583,6 +608,7 @@
                   padding-left: 15px;
                   color: #8ff5ff !important;
                   font-weight: normal !important;
+                  background: transparent;
                 }
                 button {
                   background: transparent;
@@ -591,6 +617,7 @@
                 .dropdown-submenu__item,
                 .dropdown-submenu__toggle {
                   background: transparent;
+                  color: #8ff5ff;
                 }
               }
               li:after {
@@ -751,12 +778,18 @@
         padding-left: 0;
         border-radius: 0;
 
-        .dropdown-submenu > .dropdown-menu {
+        .dropdown-submenu > .dropdown-menu,
+        .dropdown.open > .dropdown-menu,
+        .dropdown-menu {
           position: relative;
           top: auto;
           left: 0;
           float: none;
           width: 100%;
+          background: #0065bc;
+          background-color: #0065bc;
+          border: 0;
+          box-shadow: none;
         }
       }
     }
