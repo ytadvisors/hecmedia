@@ -11,35 +11,52 @@ jest.mock("../../routes", () => ({
   Router: { pushRoute: jest.fn() }
 }));
 
-jest.mock(
-  "../../components/ProgramViewer",
-  () => ({ featuredVideos = [], newestVideos = [], trendingNowError }) => (
-    <div data-testid="program-viewer">
-      {trendingNowError
+jest.mock("../../components/ProgramViewer", () => {
+  const MockReact = require("react");
+  return ({ featuredVideos = [], newestVideos = [], trendingNowError }) =>
+    MockReact.createElement(
+      "div",
+      { "data-testid": "program-viewer" },
+      trendingNowError
         ? "Trending stories are unavailable right now."
         : featuredVideos
             .concat(newestVideos)
             .map(post => post.title)
-            .join(", ")}
-    </div>
-  )
-);
+            .join(", ")
+    );
+});
 
-jest.mock("../../components/Header", () => ({ header, topbarCtas = [] }) => (
-  <div data-testid="header">
-    {header &&
-      header.edges &&
-      header.edges
-        .flatMap(({ node }) => node.menuItems.edges)
-        .map(({ node }) => node.label)
-        .join(", ")}
-    {topbarCtas.map(cta => `${cta.label}:${cta.url}`).join(", ")}
-  </div>
-));
-jest.mock("../../components/Banner", () => () => <div />);
-jest.mock("../../components/Footer", () => () => <div />);
-jest.mock("../../components/BottomNav", () => () => <div />);
-jest.mock("../Modals", () => ({ BasicModal: () => <div /> }));
+jest.mock("../../components/Header", () => {
+  const MockReact = require("react");
+  return ({ header, topbarCtas = [] }) =>
+    MockReact.createElement(
+      "div",
+      { "data-testid": "header" },
+      header &&
+        header.edges &&
+        header.edges
+          .flatMap(({ node }) => node.menuItems.edges)
+          .map(({ node }) => node.label)
+          .join(", "),
+      topbarCtas.map(cta => `${cta.label}:${cta.url}`).join(", ")
+    );
+});
+jest.mock("../../components/Banner", () => {
+  const MockReact = require("react");
+  return () => MockReact.createElement("div");
+});
+jest.mock("../../components/Footer", () => {
+  const MockReact = require("react");
+  return () => MockReact.createElement("div");
+});
+jest.mock("../../components/BottomNav", () => {
+  const MockReact = require("react");
+  return () => MockReact.createElement("div");
+});
+jest.mock("../Modals", () => {
+  const MockReact = require("react");
+  return { BasicModal: () => MockReact.createElement("div") };
+});
 
 describe("Layout", () => {
   beforeEach(() => {

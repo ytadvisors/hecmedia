@@ -2,11 +2,18 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import NewsletterSignupForm from "./index";
 
-jest.mock("react-recaptcha", () => ({ verifyCallback }) => (
-  <button type="button" onClick={() => verifyCallback("captcha-token")}>
-    Complete spam verification
-  </button>
-));
+jest.mock("react-recaptcha", () => {
+  const MockReact = require("react");
+  return ({ verifyCallback }) =>
+    MockReact.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: () => verifyCallback("captcha-token")
+      },
+      "Complete spam verification"
+    );
+});
 
 function fillValidForm() {
   fireEvent.change(screen.getByLabelText("First name"), {

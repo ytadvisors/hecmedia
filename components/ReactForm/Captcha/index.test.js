@@ -2,9 +2,15 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import Captcha from "./index";
 
-jest.mock("react-recaptcha", () => ({ sitekey }) => (
-  <div data-testid="recaptcha-widget">{sitekey}</div>
-));
+jest.mock("react-recaptcha", () => {
+  const MockReact = require("react");
+  return ({ sitekey }) =>
+    MockReact.createElement(
+      "div",
+      { "data-testid": "recaptcha-widget" },
+      sitekey
+    );
+});
 
 const props = {
   input: { name: "test-captcha" },
