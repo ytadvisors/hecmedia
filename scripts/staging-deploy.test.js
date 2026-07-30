@@ -327,6 +327,22 @@ test("packages staging on Node 24 with the webpack 4 OpenSSL compatibility flag"
   );
 });
 
+test("uses the Next 12 edge packager without the removed Head rewind API", () => {
+  const packageJson = JSON.parse(
+    realFs.readFileSync(path.join(__dirname, "../package.json"), "utf8")
+  );
+  const withApollo = realFs.readFileSync(
+    path.join(__dirname, "../lib/withApollo.js"),
+    "utf8"
+  );
+
+  expect(packageJson.dependencies["@sls-next/lambda-at-edge"]).toBe("3.7.0");
+  expect(packageJson.dependencies["builtin-modules"]).toBe("3.2.0");
+  expect(packageJson.dependencies["next-apollo"]).toBeUndefined();
+  expect(withApollo).not.toContain("Head.rewind");
+  expect(withApollo).not.toMatch(/from "next\/head"/);
+});
+
 test("supports read-only runtime inspection without entering deployment", () => {
   const workflow = realFs.readFileSync(
     path.join(__dirname, "../.github/workflows/staging-deploy.yml"),
