@@ -10,13 +10,21 @@ jest.mock("@apollo/react-hooks", () => ({
 // Layout owns its own GraphQL/Redux wiring (covered separately); the
 // homepage's own critical-path responsibility is composing SEO + the post
 // feed from GET_HOME_PAGE, so Layout is stubbed to isolate that.
-jest.mock("../../containers/Layout", () => ({ children }) => (
-  <div data-testid="layout">{children}</div>
-));
+jest.mock("../../containers/Layout", () => {
+  const MockReact = require("react");
+  return ({ children }) =>
+    MockReact.createElement("div", { "data-testid": "layout" }, children);
+});
 
-jest.mock("../../components/ListOfPosts", () => ({ posts }) => (
-  <div data-testid="list-of-posts">{posts.length} posts</div>
-));
+jest.mock("../../components/ListOfPosts", () => {
+  const MockReact = require("react");
+  return ({ posts }) =>
+    MockReact.createElement(
+      "div",
+      { "data-testid": "list-of-posts" },
+      `${posts.length} posts`
+    );
+});
 
 describe("Homepage (pages/index.js)", () => {
   afterEach(() => {

@@ -2,24 +2,29 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import NewsletterPage from "../../../pages/newsletter/index";
 
-jest.mock("../../../containers/Layout", () => ({ children }) => (
-  <div data-testid="layout">{children}</div>
-));
+jest.mock("../../../containers/Layout", () => {
+  const MockReact = require("react");
+  return ({ children }) =>
+    MockReact.createElement("div", { "data-testid": "layout" }, children);
+});
 
-jest.mock(
-  "../../../components/NewsletterSignupForm",
-  () => ({ captchaSiteKey, onSubscribe }) => (
-    <div data-testid="newsletter-signup-form">
-      captchaSiteKey:{captchaSiteKey || "none"}
-      <button
-        type="button"
-        onClick={() => onSubscribe({ email: "test@example.invalid" })}
-      >
-        Submit test signup
-      </button>
-    </div>
-  )
-);
+jest.mock("../../../components/NewsletterSignupForm", () => {
+  const MockReact = require("react");
+  return ({ captchaSiteKey, onSubscribe }) =>
+    MockReact.createElement(
+      "div",
+      { "data-testid": "newsletter-signup-form" },
+      `captchaSiteKey:${captchaSiteKey || "none"}`,
+      MockReact.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: () => onSubscribe({ email: "test@example.invalid" })
+        },
+        "Submit test signup"
+      )
+    );
+});
 
 describe("Newsletter signup page (pages/newsletter/index.js)", () => {
   const originalNoSend = process.env.HECMEDIA_NO_SEND_FORMS;
