@@ -12,7 +12,6 @@ import {
   getHref
 } from "../../lib/getFunctions";
 import { isServer } from "../../lib/serverFunctions";
-import "./styles.scss";
 
 const logo = "/static/assets/white_hec.png";
 const TAGLINE = "St. Louis' Home of Education Arts, and Culture";

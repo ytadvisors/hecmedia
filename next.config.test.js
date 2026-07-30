@@ -1,5 +1,3 @@
-jest.mock("@zeit/next-sass", () => config => config);
-jest.mock("@zeit/next-css", () => config => config);
 jest.mock("dotenv", () => ({
   config: jest.fn(() => ({ parsed: {} }))
 }));

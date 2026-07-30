@@ -4,7 +4,6 @@ import $ from "jquery";
 import SideNavigation from "../SideNavigation";
 import TrendingNow from "../TrendingNow";
 import ListOfFeaturedPosts from "../ListOfFeaturedPosts";
-import "./styles.scss";
 
 export default class extends Component {
   componentDidMount() {

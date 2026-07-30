@@ -13,7 +13,6 @@ import {
   GET_NEWEST_VIDEOS,
   GET_FEATURED_VIDEOS
 } from "../../lib/graphql";
-import "./styles.scss";
 import ProgramViewer from "../../components/ProgramViewer";
 import Header from "../../components/Header";
 import Banner from "../../components/Banner";

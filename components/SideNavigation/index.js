@@ -5,7 +5,6 @@ import {
   DEFAULT_RAIL_PROMO,
   modernWpGraphqlEnabled
 } from "../../lib/stagingCompatibility";
-import "./styles.scss";
 
 export const getPublicRailPromoUrl = sourceUrl => {
   const publicWordPressHost = process.env.WP_HOST;

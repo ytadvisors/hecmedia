@@ -1,8 +1,6 @@
 import React from "react";
 import LazyLoad from "react-lazyload";
 
-import "./styles.scss";
-
 export default ({ featuredMagazines }) => (
   <section className="list-of-magazines">
     <div className="title">

@@ -13,8 +13,6 @@ import CheckBoxInput from "./CheckBoxInput";
 import DateTimeAdder from "./DateTimeAdder";
 import formsAreNoSend from "../../lib/noSend";
 
-import "./styles.scss";
-
 export default class ReactForm extends Component {
   constructor(props) {
     super(props);

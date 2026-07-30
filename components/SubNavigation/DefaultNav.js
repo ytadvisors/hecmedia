@@ -2,7 +2,6 @@ import React from "react";
 import Link from "next/link";
 import { getHref } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
-import "./styles.scss";
 
 export default ({ title, link }) => {
   const url = cleanUrl(link);

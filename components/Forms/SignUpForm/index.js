@@ -6,8 +6,6 @@ import { reduxForm, SubmissionError } from "redux-form";
 import Validator from "../../ReactForm/Validator";
 import ReactForm from "../../ReactForm";
 
-import "./styles.scss";
-
 const fields = [
   {
     name: "email",

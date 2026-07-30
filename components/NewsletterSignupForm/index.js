@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import validator from "validator";
 import Recaptcha from "react-recaptcha";
-import "./styles.scss";
 
 const STATUS = {
   IDLE: "idle",

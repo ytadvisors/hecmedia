@@ -3,8 +3,6 @@ import _ from "lodash";
 import { getSocialMenuObject } from "../../lib/getFunctions";
 import SocialLinks from "../SocialLinks";
 
-import "./styles.scss";
-
 export default props => {
   const { footer, social } = props;
   const { node: { menuItems: { edges: footerList = [] } = {} } = {} } = footer

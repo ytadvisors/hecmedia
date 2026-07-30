@@ -2,7 +2,6 @@ import React from "react";
 import { Modal } from "react-bootstrap";
 import VideoPlayer from "../../../components/VideoPlayer";
 import { closeOverlayAction } from "../../../store/actions/pageActions";
-import "./styles.scss";
 
 export default ({
   openOverlay,

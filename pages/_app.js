@@ -6,7 +6,7 @@ import Head from "next/head";
 import withApollo from "../lib/withApollo";
 import createStore from "../store";
 
-import "../lib/cssDependencies";
+import "../lib/cssDependencies.scss";
 
 class MyApp extends App {
   static async getInitialProps({ Component, ctx }) {
