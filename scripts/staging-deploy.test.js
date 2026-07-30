@@ -2,7 +2,7 @@ jest.mock("child_process", () => ({ execFileSync: jest.fn() }));
 jest.mock("fs", () => ({
   writeFileSync: jest.fn(),
   copyFileSync: jest.fn(),
-  cpSync: jest.fn(),
+  mkdirSync: jest.fn(),
   readFileSync: jest.fn(),
   readdirSync: jest.fn(),
   existsSync: jest.fn(),
@@ -82,10 +82,11 @@ beforeEach(() => {
   fs.existsSync.mockReset();
   fs.readFileSync.mockReset();
   fs.readdirSync.mockReset();
+  fs.readdirSync.mockReturnValue([]);
   fs.renameSync.mockReset();
   fs.rmSync.mockReset();
   fs.copyFileSync.mockReset();
-  fs.cpSync.mockReset();
+  fs.mkdirSync.mockReset();
 });
 
 function mockApiBundle(manifest, compiledEntries = []) {
@@ -217,6 +218,18 @@ test("stages the Next 12 webpack runtime omitted by the legacy edge packager", (
       file.endsWith(".next/serverless/webpack-runtime.js") ||
       file.endsWith(".next/serverless/chunks")
   );
+  fs.readdirSync.mockImplementation(file => {
+    if (file.endsWith(".next/serverless/chunks")) {
+      return [
+        {
+          name: "runtime-chunk.js",
+          isDirectory: () => false,
+          isFile: () => true
+        }
+      ];
+    }
+    return [];
+  });
 
   stageNextServerRuntime();
 
@@ -226,10 +239,15 @@ test("stages the Next 12 webpack runtime omitted by the legacy edge packager", (
       /\.serverless_nextjs\/default-lambda\/webpack-runtime\.js$/
     )
   );
-  expect(fs.cpSync).toHaveBeenCalledWith(
-    expect.stringMatching(/\.next\/serverless\/chunks$/),
+  expect(fs.mkdirSync).toHaveBeenCalledWith(
     expect.stringMatching(/\.serverless_nextjs\/default-lambda\/chunks$/),
     { recursive: true }
+  );
+  expect(fs.copyFileSync).toHaveBeenCalledWith(
+    expect.stringMatching(/\.next\/serverless\/chunks\/runtime-chunk\.js$/),
+    expect.stringMatching(
+      /\.serverless_nextjs\/default-lambda\/chunks\/runtime-chunk\.js$/
+    )
   );
 });
 
@@ -263,7 +281,7 @@ test("omits API routes only for a no-send staging build and restores them", asyn
     ]
   ]);
   expect(fs.copyFileSync).toHaveBeenCalled();
-  expect(fs.cpSync).toHaveBeenCalled();
+  expect(fs.mkdirSync).toHaveBeenCalled();
 });
 
 test("syncAssets preserves prior immutable assets during a release", () => {
