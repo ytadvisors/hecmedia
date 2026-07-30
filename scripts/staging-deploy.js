@@ -421,13 +421,31 @@ function updateCloudFront(distributionId, lambdaArn, version) {
     "--id",
     distributionId
   ]);
-  run("aws", [
+  const invalidationId = run("aws", [
     "cloudfront",
     "create-invalidation",
     "--distribution-id",
     distributionId,
     "--paths",
-    "/*"
+    "/*",
+    "--query",
+    "Invalidation.Id",
+    "--output",
+    "text"
+  ]).trim();
+  if (!invalidationId) {
+    throw new Error(
+      "CloudFront did not return an invalidation ID; refusing to verify a potentially stale release."
+    );
+  }
+  run("aws", [
+    "cloudfront",
+    "wait",
+    "invalidation-completed",
+    "--distribution-id",
+    distributionId,
+    "--id",
+    invalidationId
   ]);
 
   return replaced;
