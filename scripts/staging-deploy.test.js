@@ -1,6 +1,8 @@
 jest.mock("child_process", () => ({ execFileSync: jest.fn() }));
 jest.mock("fs", () => ({
   writeFileSync: jest.fn(),
+  copyFileSync: jest.fn(),
+  cpSync: jest.fn(),
   readFileSync: jest.fn(),
   readdirSync: jest.fn(),
   existsSync: jest.fn(),
@@ -22,6 +24,7 @@ const {
   discardEmptyApiLambdaBundle,
   discardUnusedImageLambdaBundle,
   configurePublicHtmlCache,
+  stageNextServerRuntime,
   sourceUsesNextImage,
   syncAssets,
   updateCloudFront
@@ -81,6 +84,8 @@ beforeEach(() => {
   fs.readdirSync.mockReset();
   fs.renameSync.mockReset();
   fs.rmSync.mockReset();
+  fs.copyFileSync.mockReset();
+  fs.cpSync.mockReset();
 });
 
 function mockApiBundle(manifest, compiledEntries = []) {
@@ -206,6 +211,28 @@ test("detects next/image imports before discarding an image bundle", () => {
   expect(sourceUsesNextImage("/repo")).toBe(true);
 });
 
+test("stages the Next 12 webpack runtime omitted by the legacy edge packager", () => {
+  fs.existsSync.mockImplementation(
+    file =>
+      file.endsWith(".next/serverless/webpack-runtime.js") ||
+      file.endsWith(".next/serverless/chunks")
+  );
+
+  stageNextServerRuntime();
+
+  expect(fs.copyFileSync).toHaveBeenCalledWith(
+    expect.stringMatching(/\.next\/serverless\/webpack-runtime\.js$/),
+    expect.stringMatching(
+      /\.serverless_nextjs\/default-lambda\/webpack-runtime\.js$/
+    )
+  );
+  expect(fs.cpSync).toHaveBeenCalledWith(
+    expect.stringMatching(/\.next\/serverless\/chunks$/),
+    expect.stringMatching(/\.serverless_nextjs\/default-lambda\/chunks$/),
+    { recursive: true }
+  );
+});
+
 test("omits API routes only for a no-send staging build and restores them", async () => {
   const originalNoSend = process.env.HECMEDIA_NO_SEND_FORMS;
   process.env.HECMEDIA_NO_SEND_FORMS = "true";
@@ -213,6 +240,8 @@ test("omits API routes only for a no-send staging build and restores them", asyn
     if (file.endsWith("pages/api")) return true;
     if (file.endsWith(".staging-disabled-pages-api")) return false;
     if (file.endsWith("default-lambda") || file.endsWith("assets")) return true;
+    if (file.endsWith(".next/serverless/webpack-runtime.js")) return true;
+    if (file.endsWith(".next/serverless/chunks")) return true;
     return false;
   });
 
@@ -233,6 +262,8 @@ test("omits API routes only for a no-send staging build and restores them", asyn
       expect.stringMatching(/pages\/api$/)
     ]
   ]);
+  expect(fs.copyFileSync).toHaveBeenCalled();
+  expect(fs.cpSync).toHaveBeenCalled();
 });
 
 test("syncAssets preserves prior immutable assets during a release", () => {
@@ -325,6 +356,16 @@ test("packages staging on Node 24 with the webpack 4 OpenSSL compatibility flag"
   expect(workflow).toMatch(
     /Package Next\.js app for Lambda@Edge[\s\S]*?NODE_OPTIONS: --openssl-legacy-provider/
   );
+});
+
+test("does not call the removed Next 12 Head rewind API during Apollo SSR", () => {
+  const withApollo = realFs.readFileSync(
+    path.join(__dirname, "../lib/withApollo.js"),
+    "utf8"
+  );
+
+  expect(withApollo).not.toContain("Head.rewind");
+  expect(withApollo).not.toMatch(/from "next\/head"/);
 });
 
 test("supports read-only runtime inspection without entering deployment", () => {

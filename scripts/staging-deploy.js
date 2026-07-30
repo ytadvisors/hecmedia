@@ -49,6 +49,23 @@ const STAGED_API_PAGES_DIR = path.join(
 );
 const LAMBDA_ZIP_PATH = path.join(BUILD_DIR, "default-lambda.zip");
 const CLOUDFRONT_CONFIG_PATH = path.join(BUILD_DIR, "cloudfront-config.json");
+const NEXT_WEBPACK_RUNTIME_PATH = path.join(
+  REPO_ROOT,
+  ".next",
+  "serverless",
+  "webpack-runtime.js"
+);
+const LAMBDA_WEBPACK_RUNTIME_PATH = path.join(
+  DEFAULT_LAMBDA_DIR,
+  "webpack-runtime.js"
+);
+const NEXT_SERVER_CHUNKS_PATH = path.join(
+  REPO_ROOT,
+  ".next",
+  "serverless",
+  "chunks"
+);
+const LAMBDA_CHUNKS_PATH = path.join(DEFAULT_LAMBDA_DIR, "chunks");
 const PUBLIC_HTML_TTL_SECONDS = 60;
 
 function run(cmd, args, opts = {}) {
@@ -64,6 +81,27 @@ function directoryHasFiles(directory) {
       entry.isFile() || (entry.isDirectory() && directoryHasFiles(entryPath))
     );
   });
+}
+
+function stageNextServerRuntime() {
+  if (!fs.existsSync(LAMBDA_WEBPACK_RUNTIME_PATH)) {
+    if (!fs.existsSync(NEXT_WEBPACK_RUNTIME_PATH)) {
+      throw new Error(
+        "Next 12 generated no serverless webpack-runtime.js; refusing to publish an unloadable Lambda bundle."
+      );
+    }
+    fs.copyFileSync(NEXT_WEBPACK_RUNTIME_PATH, LAMBDA_WEBPACK_RUNTIME_PATH);
+  }
+  if (!fs.existsSync(LAMBDA_CHUNKS_PATH)) {
+    if (!fs.existsSync(NEXT_SERVER_CHUNKS_PATH)) {
+      throw new Error(
+        "Next 12 generated no serverless chunks; refusing to publish an unloadable Lambda bundle."
+      );
+    }
+    fs.cpSync(NEXT_SERVER_CHUNKS_PATH, LAMBDA_CHUNKS_PATH, {
+      recursive: true
+    });
+  }
 }
 
 function discardEmptyApiLambdaBundle() {
@@ -230,6 +268,7 @@ async function build() {
     );
   }
 
+  stageNextServerRuntime();
   discardEmptyApiLambdaBundle();
   discardUnusedImageLambdaBundle();
 
@@ -489,6 +528,7 @@ module.exports = {
   discardEmptyApiLambdaBundle,
   discardUnusedImageLambdaBundle,
   configurePublicHtmlCache,
+  stageNextServerRuntime,
   sourceUsesNextImage,
   syncAssets,
   updateCloudFront
