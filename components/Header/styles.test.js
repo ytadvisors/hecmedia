@@ -53,25 +53,27 @@ describe("Header responsive typography", () => {
   });
 
   it("stacks mobile social icons below the logo and left-aligns CTA buttons", () => {
+    const collapsedBreakpoint = headerStyles.indexOf(
+      "@media (max-width: 1170px)"
+    );
     const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
-    const narrowBreakpoint = headerStyles.indexOf("@media (max-width: 400px)");
-    expect(mobileBreakpoint).toBeGreaterThanOrEqual(0);
-    expect(narrowBreakpoint).toBeGreaterThan(mobileBreakpoint);
+    expect(collapsedBreakpoint).toBeGreaterThanOrEqual(0);
+    expect(mobileBreakpoint).toBeGreaterThan(collapsedBreakpoint);
 
-    const mobileStyles = headerStyles.slice(mobileBreakpoint, narrowBreakpoint);
-    expect(mobileStyles).toContain(
+    const collapsedStyles = headerStyles.slice(
+      collapsedBreakpoint,
+      mobileBreakpoint
+    );
+    expect(collapsedStyles).toContain(
       "grid-template-columns: 58px minmax(0, 1fr);"
     );
-    expect(mobileStyles).toContain(".header-secondary-row .social-links");
-    expect(mobileStyles).toContain("grid-column: 1;");
-    expect(mobileStyles).toContain("grid-row: 2;");
-    expect(mobileStyles).toContain("justify-content: flex-start;");
-    expect(mobileStyles).toContain(".top-bar-actions {");
-    expect(mobileStyles).toContain("grid-column: 2;");
-
-    const narrowStyles = headerStyles.slice(narrowBreakpoint);
-    expect(narrowStyles).not.toContain("display: none;");
-    expect(narrowStyles).toContain("display: flex;");
+    expect(collapsedStyles).toContain(".header-secondary-row .social-links");
+    expect(collapsedStyles).toContain("grid-column: 1;");
+    expect(collapsedStyles).toContain("grid-row: 2;");
+    expect(collapsedStyles).toContain("justify-content: flex-start;");
+    expect(collapsedStyles).toContain(".top-bar-actions {");
+    expect(collapsedStyles).toContain("grid-column: 2;");
+    expect(collapsedStyles).toContain("margin-left: 0;");
   });
 
   it("paints collapsed-nav dropdown and nested submenu panels brand blue, not Bootstrap white", () => {

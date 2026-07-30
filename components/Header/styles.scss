@@ -477,17 +477,51 @@
       align-items: center;
       padding-left: 10px;
     }
-    .top-logo img {
-      height: 50px;
+    .top-logo {
+      flex: 1 1 auto;
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 7px;
+      row-gap: 3px;
+      align-items: center;
+
+      img {
+        width: 58px;
+        max-width: none;
+        height: auto;
+      }
     }
     .brand-tagline {
       display: none;
     }
     .brand-information {
-      padding-top: 0;
+      display: contents;
     }
     .header-secondary-row {
-      padding-top: 0;
+      display: contents;
+    }
+    .navbar-brand-class {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .header-secondary-row .social-links {
+      grid-column: 1;
+      grid-row: 2;
+      justify-content: flex-start;
+      align-self: start;
+      padding-top: 2px;
+
+      li a {
+        margin-right: 4px;
+      }
+    }
+    .top-bar-actions {
+      grid-column: 2;
+      grid-row: 2;
+      justify-content: flex-start;
+      align-self: start;
+      margin-left: 0;
     }
     .donate-btn {
       padding-top: 8px !important;
@@ -682,33 +716,11 @@
       padding: 6px 8px;
     }
     .top-logo {
-      flex: 1 1 auto;
-      display: grid;
-      grid-template-columns: 58px minmax(0, 1fr);
-      grid-template-rows: auto auto;
-      column-gap: 7px;
-      row-gap: 3px;
-      align-items: center;
-
       img {
         width: 58px;
         max-width: none;
         height: auto;
       }
-    }
-    .navbar-brand-class {
-      grid-column: 1;
-      grid-row: 1;
-    }
-    .brand-information {
-      display: contents;
-    }
-    .brand-tagline {
-      grid-column: 2;
-      grid-row: 1;
-    }
-    .header-secondary-row {
-      display: contents;
     }
     ul.brand-social {
       flex: 0 0 auto;
@@ -719,25 +731,10 @@
         margin-right: 6px;
       }
     }
-    .header-secondary-row .social-links {
-      grid-column: 1;
-      grid-row: 2;
-      justify-content: flex-start;
-      align-self: start;
-      padding-top: 2px;
-
-      li a {
-        margin-right: 4px;
-      }
-    }
     .top-bar-actions {
-      grid-column: 2;
-      grid-row: 2;
       flex: 1 1 auto;
       flex-wrap: nowrap;
       gap: 4px;
-      justify-content: flex-start;
-      align-self: start;
 
       .top-bar-cta {
         flex: 0 0 auto;
