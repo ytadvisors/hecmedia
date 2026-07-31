@@ -39,4 +39,16 @@ describe("ProgramViewer", () => {
       "mobile-rail-first"
     );
   });
+
+  it("allows home and category pages to put discovery before content", () => {
+    const { container } = render(
+      <ProgramViewer mobileRailFirst>
+        <div>page feed</div>
+      </ProgramViewer>
+    );
+
+    expect(container.querySelector(".program-viewer")).toHaveClass(
+      "mobile-rail-first"
+    );
+  });
 });

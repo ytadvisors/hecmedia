@@ -132,7 +132,13 @@ export const Layout = props => {
     curatedTrendingPosts.length > 0
       ? curatedTrendingPosts
       : modernFeaturedVideos;
-  const { children, showBottomNav, absContent, style } = props;
+  const {
+    children,
+    showBottomNav,
+    absContent,
+    style,
+    mobileRailFirst = false
+  } = props;
   const { liveVideos } = videos || [];
   let liveVideo = {};
   if (liveVideos && liveVideos.edges.length > 0) {
@@ -164,6 +170,7 @@ export const Layout = props => {
           trendingNowError={newestVideosError}
           railPromo={railPromoFromSiteContent(siteContent)}
           spotlightTitle={siteContent.spotlightTitle}
+          mobileRailFirst={mobileRailFirst}
         >
           {children}
           {showBottomNav && (

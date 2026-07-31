@@ -55,7 +55,7 @@ const Category = props => {
           image
         }}
       />
-      <Layout>
+      <Layout mobileRailFirst>
         <CategoryNav link={link} />
         <ListOfPosts
           posts={posts}
