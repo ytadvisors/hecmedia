@@ -87,6 +87,10 @@ describe("Header (primary navigation)", () => {
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(dropdown).toHaveClass("open");
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(dropdown).not.toHaveClass("open");
   });
 
   it("renders a second CMS menu level and supports touch and keyboard controls", () => {

@@ -100,6 +100,26 @@ export default class Header extends Component {
     }
   };
 
+  handleTopDropdownToggle = (url, isOpen, event, eventDetails = {}) => {
+    const clickedInsideNavigationDropdown =
+      event &&
+      event.target &&
+      typeof event.target.closest === "function" &&
+      event.target.closest(".top-navigation > li.dropdown");
+
+    // React-Bootstrap 0.32 treats the toggle's mousedown as a root-close
+    // before its click handler runs. Ignoring that inside event lets the
+    // subsequent click genuinely toggle an already-open menu closed.
+    if (
+      eventDetails.source === "rootClose" &&
+      clickedInsideNavigationDropdown
+    ) {
+      return;
+    }
+
+    this.setActiveDropdown(url, isOpen);
+  };
+
   setNestedDropdown = (url, isOpen) => {
     if (this.mounted) {
       this.setState(prevState => ({
@@ -203,7 +223,8 @@ export default class Header extends Component {
         id={url}
         rootCloseEvent="mousedown"
         open={activeDropdown === url}
-        onToggle={isOpen => this.setActiveDropdown(url, isOpen)}
+        onToggle={(isOpen, event, eventDetails) =>
+          this.handleTopDropdownToggle(url, isOpen, event, eventDetails)}
         onKeyDown={event => this.handleTopDropdownKeyDown(event, url)}
       >
         {link.children.map(this.getDropdownItem)}
