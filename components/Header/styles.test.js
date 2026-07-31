@@ -80,6 +80,22 @@ describe("Header responsive typography", () => {
     expect(collapsedStyles).toContain("margin-left: 0;");
   });
 
+  it("places collapsed-navigation CTAs below the tagline without overlap", () => {
+    const collapsedBreakpoint = headerStyles.indexOf(
+      "@media (max-width: 1170px)"
+    );
+    const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
+    const collapsedStyles = headerStyles.slice(
+      collapsedBreakpoint,
+      mobileBreakpoint
+    );
+    const ctaRule = collapsedStyles.match(
+      /\.top-bar-actions\s*\{[\s\S]*?grid-column:\s*2;[\s\S]*?grid-row:\s*2;[\s\S]*?\}/
+    );
+
+    expect(ctaRule).not.toBeNull();
+  });
+
   it("vertically centers compact mobile header controls", () => {
     const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
     const mobileStyles = headerStyles.slice(mobileBreakpoint);
