@@ -14,6 +14,7 @@ describe("SideNavigation responsive promo artwork", () => {
     );
 
     expect(baseStyles).toContain("padding-top: 12px;");
+    expect(baseStyles).toContain("object-fit: contain;");
   });
 
   it("preserves the full image on phones and tablets", () => {
