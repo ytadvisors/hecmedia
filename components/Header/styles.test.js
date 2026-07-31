@@ -82,7 +82,9 @@ describe("Header responsive typography", () => {
     const mobileStyles = headerStyles.slice(mobileBreakpoint);
 
     expect(mobileStyles).toContain("align-items: flex-start;");
-    expect(mobileStyles).toContain("padding-top: 2px;");
+    expect(mobileStyles).toContain("padding-top: 0;");
+    expect(mobileStyles).toContain("margin-top: 4px;");
+    expect(mobileStyles).toContain("padding: 0 !important;");
     expect(mobileStyles).toContain("width: 38px;");
     expect(mobileStyles).toContain("height: 38px;");
     expect(mobileStyles).toContain("width: 18px;");

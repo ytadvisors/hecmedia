@@ -776,6 +776,8 @@
       flex: 1 1 auto;
       flex-wrap: nowrap;
       gap: 4px;
+      align-self: start;
+      margin-top: 4px;
 
       .top-bar-cta {
         flex: 0 0 auto;
@@ -790,7 +792,7 @@
     .header-top-actions {
       gap: 4px;
       align-items: center;
-      padding-top: 2px;
+      padding-top: 0;
     }
     .navbar-toggle {
       display: flex;
@@ -806,6 +808,10 @@
       }
     }
     ul.user-admin {
+      li.search-btn {
+        padding: 0 !important;
+      }
+
       .search-container {
         position: fixed !important;
         top: 58px !important;
