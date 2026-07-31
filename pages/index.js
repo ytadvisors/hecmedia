@@ -47,7 +47,7 @@ export default () => {
           pathname: link && link.replace(/https?:\/\/[^/]+/, "")
         }}
       />
-      <Layout showBottomNav mobileRailFirst>
+      <Layout showBottomNav>
         <ListOfPosts
           posts={pagePosts}
           link={{ page: "posts" }}

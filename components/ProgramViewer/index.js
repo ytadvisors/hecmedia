@@ -20,15 +20,10 @@ export default class extends Component {
       trendingNowError,
       railPromo,
       spotlightTitle = "Spotlight STL",
-      mobileRailFirst = false,
       children
     } = this.props;
     return (
-      <section
-        className={`program-viewer${
-          mobileRailFirst ? " mobile-rail-first" : ""
-        }`}
-      >
+      <section className="program-viewer">
         <div
           className="container no-padding program-viewer-container"
           style={style}

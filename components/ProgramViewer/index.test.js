@@ -35,20 +35,6 @@ describe("ProgramViewer", () => {
     expect(main).toBeInTheDocument();
     expect(rail).toBeInTheDocument();
     expect(main.nextElementSibling).toBe(rail);
-    expect(main.closest(".program-viewer")).not.toHaveClass(
-      "mobile-rail-first"
-    );
-  });
-
-  it("allows home and category pages to put discovery before content", () => {
-    const { container } = render(
-      <ProgramViewer mobileRailFirst>
-        <div>page feed</div>
-      </ProgramViewer>
-    );
-
-    expect(container.querySelector(".program-viewer")).toHaveClass(
-      "mobile-rail-first"
-    );
+    expect(main.closest(".program-viewer")).toHaveClass("program-viewer");
   });
 });
