@@ -23,3 +23,15 @@
     background: #0065bc !important;
   }
 }
+
+@media (max-width: 991px) {
+  .side-navigation .rail-promo {
+    padding-top: 12px;
+    background: #fff;
+
+    img {
+      height: auto;
+      object-fit: contain;
+    }
+  }
+}
