@@ -84,6 +84,8 @@ describe("Header responsive typography", () => {
     expect(mobileStyles).toContain("align-items: flex-start;");
     expect(mobileStyles).toContain("padding-top: 0;");
     expect(mobileStyles).toContain("margin-top: 4px;");
+    expect(mobileStyles).toContain("margin-right: 4px;");
+    expect(mobileStyles).toContain("margin-left: 5px;");
     expect(mobileStyles).toContain("padding: 0 !important;");
     expect(mobileStyles).toContain("width: 38px;");
     expect(mobileStyles).toContain("height: 38px;");
