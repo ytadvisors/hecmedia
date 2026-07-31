@@ -112,12 +112,19 @@ describe("Header (primary navigation)", () => {
       <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
     );
 
+    fireEvent.click(container.querySelector(".navbar-toggle"));
+    expect(container.querySelector(".navbar-collapse")).not.toHaveClass(
+      "collapse"
+    );
     fireEvent.click(screen.getByText("About"));
     const toggle = screen.getByRole("button", {
       name: "Show Our Organization submenu"
     });
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(container.querySelector(".navbar-collapse")).not.toHaveClass(
+      "collapse"
+    );
     expect(
       container.querySelectorAll(".dropdown-menu .dropdown-menu")
     ).toHaveLength(1);

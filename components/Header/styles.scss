@@ -274,6 +274,15 @@
                 }
               }
 
+              .dropdown-submenu__trigger {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 8px;
+                width: 100%;
+                text-align: left;
+              }
+
               > .dropdown-menu {
                 top: 0;
                 left: 100%;
@@ -696,6 +705,11 @@
         padding: 0;
         padding-left: 14px;
 
+        > li.btn > a {
+          padding: 11px 14px !important;
+          line-height: 20px;
+        }
+
         // Collapsed navigation must use an in-flow, full-width submenu. The
         // desktop rule positions nested menus at left: 100%, which exposes
         // Bootstrap's white dropdown panel beside the parent item.
@@ -716,16 +730,38 @@
 
           > .dropdown-menu {
             display: none;
-            position: static;
+            position: static !important;
             top: auto;
-            left: 0;
-            float: none;
-            width: 100%;
+            left: auto !important;
+            float: none !important;
+            width: calc(100% - 24px) !important;
             min-width: 0;
+            margin-left: 24px !important;
+            padding-left: 18px !important;
             background: #0065bc;
             background-color: #0065bc;
             border: 0;
             box-shadow: none;
+
+            > li {
+              position: relative;
+
+              &::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: -18px;
+                width: 14px;
+                height: 20px;
+                border-left: 2px solid rgba(143, 245, 255, 0.75);
+                border-bottom: 2px solid rgba(143, 245, 255, 0.75);
+              }
+
+              > a {
+                padding: 10px 12px !important;
+                line-height: 20px;
+              }
+            }
           }
 
           &.open > .dropdown-menu {

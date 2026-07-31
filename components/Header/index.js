@@ -167,16 +167,22 @@ export default class Header extends Component {
         onMouseLeave={() => !isMobile && this.setNestedDropdown(url, false)}
       >
         <div className="dropdown-submenu__item">
-          {this.getLink(link)}
           <button
             type="button"
-            className="dropdown-submenu__toggle"
+            className="dropdown-submenu__trigger dropdown-submenu__toggle"
             aria-label={`Show ${label} submenu`}
             aria-expanded={isOpen}
-            onClick={() => this.setNestedDropdown(url, !isOpen)}
+            onClick={event => {
+              event.preventDefault();
+              event.stopPropagation();
+              this.setNestedDropdown(url, !isOpen);
+            }}
             onKeyDown={event => this.handleNestedDropdownKeyDown(event, url)}
           >
-            <span aria-hidden="true">▸</span>
+            <span dangerouslySetInnerHTML={{ __html: label }} />
+            <span className="dropdown-submenu__caret" aria-hidden="true">
+              ▸
+            </span>
           </button>
         </div>
         <ul className="dropdown-menu">{children.map(this.getDropdownItem)}</ul>
