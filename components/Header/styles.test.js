@@ -19,9 +19,11 @@ describe("Header responsive typography", () => {
     );
   });
 
-  it("hides company copy at the collapsed-navigation viewport", () => {
+  it("shows company copy beside the logo at the collapsed-navigation viewport", () => {
     expect(headerStyles).toContain(".brand-tagline {");
-    expect(responsiveStyles).toContain("display: none;");
+    expect(responsiveStyles).toContain("display: block;");
+    expect(responsiveStyles).toContain("font-size: 11px;");
+    expect(responsiveStyles).toContain("align-self: center;");
   });
 
   it("uses the larger desktop mock logo with auto width", () => {
@@ -73,19 +75,20 @@ describe("Header responsive typography", () => {
     expect(collapsedStyles).toContain("justify-content: flex-start;");
     expect(collapsedStyles).toContain(".top-bar-actions {");
     expect(collapsedStyles).toContain("grid-column: 2;");
-    expect(collapsedStyles).toContain("align-self: center;");
+    expect(collapsedStyles).toContain("grid-row: 2;");
+    expect(collapsedStyles).toContain("align-self: start;");
     expect(collapsedStyles).toContain("margin-left: 0;");
   });
 
-  it("aligns compact search and navigation controls at the top on mobile", () => {
+  it("vertically centers compact mobile header controls", () => {
     const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
     const mobileStyles = headerStyles.slice(mobileBreakpoint);
 
-    expect(mobileStyles).toContain("align-items: flex-start;");
+    expect(mobileStyles).toContain("align-items: center;");
     expect(mobileStyles).toContain("padding-top: 0;");
-    expect(mobileStyles).toContain("margin-top: 4px;");
-    expect(mobileStyles).toContain("margin-right: 4px;");
-    expect(mobileStyles).toContain("margin-left: 5px;");
+    expect(mobileStyles).toContain("margin-top: 0;");
+    expect(mobileStyles).toContain("margin-right: 0;");
+    expect(mobileStyles).toContain("margin-left: 0;");
     expect(mobileStyles).toContain("padding: 0 !important;");
     expect(mobileStyles).toContain("width: 38px;");
     expect(mobileStyles).toContain("height: 38px;");
@@ -100,6 +103,10 @@ describe("Header responsive typography", () => {
     const tabletStyles = headerStyles.slice(tabletBreakpoint, mobileBreakpoint);
     expect(tabletStyles).toContain(".bottom-nav {");
     expect(tabletStyles).toContain("ul.top-navigation {");
+    expect(tabletStyles).toContain("position: absolute;");
+    expect(tabletStyles).toContain("top: 100%;");
+    expect(tabletStyles).toContain("max-height: calc(100vh - 71px);");
+    expect(tabletStyles).toContain("overflow-y: auto;");
     expect(tabletStyles).not.toContain(".bottom-nav {\n      .nav-tabs {");
 
     // First-level mobile dropdown panel
@@ -113,12 +120,20 @@ describe("Header responsive typography", () => {
       /\.dropdown-submenu\s*\{[^}]*display:\s*block !important;[^}]*width:\s*100%;/s
     );
     expect(tabletStyles).toMatch(
-      /> \.dropdown-menu\s*\{[^}]*display:\s*none;[^}]*position:\s*static;[^}]*width:\s*100%;/s
+      /> \.dropdown-menu\s*\{[^}]*display:\s*none;[^}]*position:\s*relative !important;[^}]*width:\s*calc\(100% - 24px\) !important;/s
     );
     expect(tabletStyles).toMatch(
-      /&\.open > \.dropdown-menu\s*\{[^}]*display:\s*block;/s
+      /&\.open > \.dropdown-menu\s*\{[^}]*display:\s*block !important;/s
+    );
+    expect(tabletStyles).toMatch(
+      /&:hover > \.dropdown-menu,[^}]*&:focus-within > \.dropdown-menu\s*\{[^}]*display:\s*none !important;/s
     );
     expect(tabletStyles).toContain("background: #0065bc !important;");
+    expect(tabletStyles).toContain("margin-left: 24px !important;");
+    expect(tabletStyles).toContain("border-left: 2px solid");
+    expect(tabletStyles).toContain("border-bottom: 2px solid");
+    expect(tabletStyles).toContain("bottom: 20px;");
+    expect(tabletStyles).toContain("> li.dropdown > .dropdown-menu {");
   });
 
   it("uses full-width mobile navigation and a viewport-aligned search panel", () => {
@@ -134,7 +149,11 @@ describe("Header responsive typography", () => {
       mobileBreakpoint
     );
     const mobileStyles = headerStyles.slice(mobileBreakpoint);
+    expect(collapsedStyles).toContain("position: fixed !important;");
+    expect(collapsedStyles).toContain("top: 14px !important;");
+    expect(collapsedStyles).toContain("right: 12px !important;");
     expect(mobileStyles).toContain("position: fixed !important;");
+    expect(mobileStyles).toContain("top: 14px !important;");
     expect(mobileStyles).toContain("right: 12px !important;");
     expect(mobileStyles).toContain("left: 12px;");
     expect(mobileStyles).toContain("width: auto !important;");

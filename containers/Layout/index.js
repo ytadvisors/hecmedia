@@ -164,7 +164,6 @@ export const Layout = props => {
           trendingNowError={newestVideosError}
           railPromo={railPromoFromSiteContent(siteContent)}
           spotlightTitle={siteContent.spotlightTitle}
-          mobileRailFirst={siteContent.mobileRailFirst}
         >
           {children}
           {showBottomNav && (

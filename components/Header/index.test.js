@@ -68,6 +68,31 @@ describe("Header (primary navigation)", () => {
     expect(screen.getByText("Our Team")).toBeInTheDocument();
   });
 
+  it("opens a dropdown when its top-level toggle is clicked", () => {
+    const header = buildMenu([
+      {
+        url: "https://hectv.org/genres",
+        label: "Genres",
+        children: [{ url: "https://hectv.org/genres/books", label: "Books" }]
+      }
+    ]);
+    const { container } = render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    const dropdown = container.querySelector(".top-navigation > li.dropdown");
+    const toggle = screen.getByText("Genres").closest("a");
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(dropdown).toHaveClass("open");
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(dropdown).not.toHaveClass("open");
+  });
+
   it("renders a second CMS menu level and supports touch and keyboard controls", () => {
     const header = buildMenu([
       {
@@ -91,12 +116,30 @@ describe("Header (primary navigation)", () => {
       <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
     );
 
+    fireEvent.click(container.querySelector(".navbar-toggle"));
+    expect(container.querySelector(".navbar-collapse")).not.toHaveClass(
+      "collapse"
+    );
     fireEvent.click(screen.getByText("About"));
+    const parentLink = screen.getByText("Our Organization").closest("a");
     const toggle = screen.getByRole("button", {
       name: "Show Our Organization submenu"
     });
+
+    expect(parentLink).toHaveAttribute("href", "/about/organization");
+    fireEvent.click(screen.getByText("Our Organization"));
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(container.querySelector(".navbar-collapse")).not.toHaveClass(
+      "collapse"
+    );
+    fireEvent.click(screen.getByText("Our Organization"));
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(container.querySelector(".navbar-collapse")).not.toHaveClass(
+      "collapse"
+    );
     expect(
       container.querySelectorAll(".dropdown-menu .dropdown-menu")
     ).toHaveLength(1);

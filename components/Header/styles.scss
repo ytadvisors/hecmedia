@@ -495,7 +495,13 @@
       }
     }
     .brand-tagline {
-      display: none;
+      display: block;
+      grid-column: 2;
+      grid-row: 1;
+      align-self: center;
+      max-width: 265px;
+      font-size: 11px;
+      line-height: 1.15;
     }
     .brand-information {
       display: contents;
@@ -524,6 +530,13 @@
       justify-content: flex-start;
       align-self: center;
       margin-left: 0;
+    }
+    ul.user-admin .search-container {
+      position: fixed !important;
+      top: 14px !important;
+      right: 12px !important;
+      left: 12px;
+      width: auto !important;
     }
     .donate-btn {
       padding-top: 8px !important;
@@ -691,10 +704,62 @@
       }
     }
     .bottom-nav {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: 0;
+      z-index: 110;
+      max-height: calc(100vh - 71px);
+      margin: 0;
+      overflow-y: auto;
+      background: #0065bc;
+
       ul.top-navigation {
         margin: 0;
         padding: 0;
         padding-left: 14px;
+
+        > li.btn > a {
+          padding: 11px 14px !important;
+          line-height: 20px;
+        }
+
+        // Treat the top-level dropdown as the root of the branch. Every
+        // direct child receives the same indented elbow used by deeper menus.
+        > li.dropdown > .dropdown-menu {
+          position: relative !important;
+          top: auto;
+          left: auto !important;
+          float: none !important;
+          width: calc(100% - 24px) !important;
+          min-width: 0;
+          margin-left: 24px !important;
+          padding-left: 18px !important;
+
+          &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 20px;
+            left: 0;
+            border-left: 2px solid rgba(143, 245, 255, 0.75);
+          }
+
+          > li {
+            position: relative;
+
+            &::before {
+              content: "";
+              position: absolute;
+              top: 0;
+              left: -18px;
+              width: 14px;
+              height: 20px;
+              border-left: 2px solid rgba(143, 245, 255, 0.75);
+              border-bottom: 2px solid rgba(143, 245, 255, 0.75);
+            }
+          }
+        }
 
         // Collapsed navigation must use an in-flow, full-width submenu. The
         // desktop rule positions nested menus at left: 100%, which exposes
@@ -706,30 +771,75 @@
 
           .dropdown-submenu__item {
             display: flex;
+            justify-content: flex-start;
             width: 100%;
             background: #0065bc;
+
+            > a {
+              flex: 0 1 auto;
+            }
           }
 
           .dropdown-submenu__toggle {
             background: #0065bc !important;
+            width: auto !important;
+            padding: 10px 8px !important;
           }
 
           > .dropdown-menu {
             display: none;
-            position: static;
+            position: relative !important;
             top: auto;
-            left: 0;
-            float: none;
-            width: 100%;
+            left: auto !important;
+            float: none !important;
+            width: calc(100% - 24px) !important;
             min-width: 0;
+            margin-left: 24px !important;
+            padding-left: 18px !important;
             background: #0065bc;
             background-color: #0065bc;
             border: 0;
             box-shadow: none;
+
+            &::before {
+              content: "";
+              position: absolute;
+              top: 0;
+              bottom: 20px;
+              left: 0;
+              border-left: 2px solid rgba(143, 245, 255, 0.75);
+            }
+
+            > li {
+              position: relative;
+
+              &::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: -18px;
+                width: 14px;
+                height: 20px;
+                border-left: 2px solid rgba(143, 245, 255, 0.75);
+                border-bottom: 2px solid rgba(143, 245, 255, 0.75);
+              }
+
+              > a {
+                padding: 10px 12px !important;
+                line-height: 20px;
+              }
+            }
+          }
+
+          // Collapsed navigation is explicitly click/tap controlled. Override
+          // the desktop hover/focus rules so a focused trigger can also close.
+          &:hover > .dropdown-menu,
+          &:focus-within > .dropdown-menu {
+            display: none !important;
           }
 
           &.open > .dropdown-menu {
-            display: block;
+            display: block !important;
           }
         }
 
@@ -754,7 +864,7 @@
     .header-top-row {
       gap: 8px;
       padding: 6px 8px;
-      align-items: flex-start;
+      align-items: center;
     }
     .top-logo {
       img {
@@ -777,9 +887,9 @@
       flex-wrap: nowrap;
       gap: 4px;
       align-self: start;
-      margin-top: 4px;
-      margin-right: 4px;
-      margin-left: 5px;
+      margin-top: 0;
+      margin-right: 0;
+      margin-left: 0;
 
       .top-bar-cta {
         flex: 0 0 auto;
@@ -794,6 +904,7 @@
     .header-top-actions {
       gap: 4px;
       align-items: center;
+      align-self: center;
       padding-top: 0;
     }
     .navbar-toggle {
@@ -816,7 +927,7 @@
 
       .search-container {
         position: fixed !important;
-        top: 58px !important;
+        top: 14px !important;
         right: 12px !important;
         left: 12px;
         width: auto !important;
