@@ -7,7 +7,7 @@ jest.mock("@apollo/react-hooks", () => ({
 }));
 
 describe("ProgramViewer", () => {
-  it("stacks the home rail in mock order without Playing Now", () => {
+  it("places page content before Trending Now and Spotlight on mobile", () => {
     render(
       <ProgramViewer>
         <div>content</div>
@@ -34,5 +34,9 @@ describe("ProgramViewer", () => {
       .closest(".program-viewer-rail");
     expect(main).toBeInTheDocument();
     expect(rail).toBeInTheDocument();
+    expect(main.nextElementSibling).toBe(rail);
+    expect(main.closest(".program-viewer")).not.toHaveClass(
+      "mobile-rail-first"
+    );
   });
 });

@@ -20,7 +20,7 @@ export default class extends Component {
       trendingNowError,
       railPromo,
       spotlightTitle = "Spotlight STL",
-      mobileRailFirst = true,
+      mobileRailFirst = false,
       children
     } = this.props;
     return (
