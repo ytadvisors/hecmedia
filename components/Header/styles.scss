@@ -810,8 +810,15 @@
             }
           }
 
+          // Collapsed navigation is explicitly click/tap controlled. Override
+          // the desktop hover/focus rules so a focused trigger can also close.
+          &:hover > .dropdown-menu,
+          &:focus-within > .dropdown-menu {
+            display: none !important;
+          }
+
           &.open > .dropdown-menu {
-            display: block;
+            display: block !important;
           }
         }
 

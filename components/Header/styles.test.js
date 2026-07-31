@@ -116,7 +116,10 @@ describe("Header responsive typography", () => {
       /> \.dropdown-menu\s*\{[^}]*display:\s*none;[^}]*position:\s*relative !important;[^}]*width:\s*calc\(100% - 24px\) !important;/s
     );
     expect(tabletStyles).toMatch(
-      /&\.open > \.dropdown-menu\s*\{[^}]*display:\s*block;/s
+      /&\.open > \.dropdown-menu\s*\{[^}]*display:\s*block !important;/s
+    );
+    expect(tabletStyles).toMatch(
+      /&:hover > \.dropdown-menu,[^}]*&:focus-within > \.dropdown-menu\s*\{[^}]*display:\s*none !important;/s
     );
     expect(tabletStyles).toContain("background: #0065bc !important;");
     expect(tabletStyles).toContain("margin-left: 24px !important;");
