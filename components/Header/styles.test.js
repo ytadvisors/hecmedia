@@ -113,7 +113,7 @@ describe("Header responsive typography", () => {
       /\.dropdown-submenu\s*\{[^}]*display:\s*block !important;[^}]*width:\s*100%;/s
     );
     expect(tabletStyles).toMatch(
-      /> \.dropdown-menu\s*\{[^}]*display:\s*none;[^}]*position:\s*static !important;[^}]*width:\s*calc\(100% - 24px\) !important;/s
+      /> \.dropdown-menu\s*\{[^}]*display:\s*none;[^}]*position:\s*relative !important;[^}]*width:\s*calc\(100% - 24px\) !important;/s
     );
     expect(tabletStyles).toMatch(
       /&\.open > \.dropdown-menu\s*\{[^}]*display:\s*block;/s
@@ -122,6 +122,7 @@ describe("Header responsive typography", () => {
     expect(tabletStyles).toContain("margin-left: 24px !important;");
     expect(tabletStyles).toContain("border-left: 2px solid");
     expect(tabletStyles).toContain("border-bottom: 2px solid");
+    expect(tabletStyles).toContain("bottom: 20px;");
     expect(tabletStyles).toContain("> li.dropdown > .dropdown-menu {");
   });
 
