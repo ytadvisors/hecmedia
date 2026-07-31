@@ -101,6 +101,10 @@ describe("Header responsive typography", () => {
     const tabletStyles = headerStyles.slice(tabletBreakpoint, mobileBreakpoint);
     expect(tabletStyles).toContain(".bottom-nav {");
     expect(tabletStyles).toContain("ul.top-navigation {");
+    expect(tabletStyles).toContain("position: absolute;");
+    expect(tabletStyles).toContain("top: 100%;");
+    expect(tabletStyles).toContain("max-height: calc(100vh - 71px);");
+    expect(tabletStyles).toContain("overflow-y: auto;");
     expect(tabletStyles).not.toContain(".bottom-nav {\n      .nav-tabs {");
 
     // First-level mobile dropdown panel

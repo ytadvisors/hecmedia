@@ -707,6 +707,16 @@
       }
     }
     .bottom-nav {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: 0;
+      z-index: 110;
+      max-height: calc(100vh - 71px);
+      margin: 0;
+      overflow-y: auto;
+      background: #0065bc;
+
       ul.top-navigation {
         margin: 0;
         padding: 0;
