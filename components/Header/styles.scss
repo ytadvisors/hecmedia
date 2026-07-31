@@ -504,7 +504,13 @@
       }
     }
     .brand-tagline {
-      display: none;
+      display: block;
+      grid-column: 2;
+      grid-row: 1;
+      align-self: end;
+      max-width: 265px;
+      font-size: 11px;
+      line-height: 1.15;
     }
     .brand-information {
       display: contents;
@@ -529,9 +535,9 @@
     }
     .top-bar-actions {
       grid-column: 2;
-      grid-row: 1 / 3;
+      grid-row: 2;
       justify-content: flex-start;
-      align-self: center;
+      align-self: start;
       margin-left: 0;
     }
     ul.user-admin .search-container {
@@ -882,10 +888,10 @@
       flex: 1 1 auto;
       flex-wrap: nowrap;
       gap: 4px;
-      align-self: center;
+      align-self: start;
       margin-top: 0;
-      margin-right: 4px;
-      margin-left: 5px;
+      margin-right: 0;
+      margin-left: 0;
 
       .top-bar-cta {
         flex: 0 0 auto;

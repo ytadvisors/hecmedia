@@ -19,9 +19,10 @@ describe("Header responsive typography", () => {
     );
   });
 
-  it("hides company copy at the collapsed-navigation viewport", () => {
+  it("shows company copy beside the logo at the collapsed-navigation viewport", () => {
     expect(headerStyles).toContain(".brand-tagline {");
-    expect(responsiveStyles).toContain("display: none;");
+    expect(responsiveStyles).toContain("display: block;");
+    expect(responsiveStyles).toContain("font-size: 11px;");
   });
 
   it("uses the larger desktop mock logo with auto width", () => {
@@ -73,8 +74,8 @@ describe("Header responsive typography", () => {
     expect(collapsedStyles).toContain("justify-content: flex-start;");
     expect(collapsedStyles).toContain(".top-bar-actions {");
     expect(collapsedStyles).toContain("grid-column: 2;");
-    expect(collapsedStyles).toContain("grid-row: 1 / 3;");
-    expect(collapsedStyles).toContain("align-self: center;");
+    expect(collapsedStyles).toContain("grid-row: 2;");
+    expect(collapsedStyles).toContain("align-self: start;");
     expect(collapsedStyles).toContain("margin-left: 0;");
   });
 
@@ -85,8 +86,8 @@ describe("Header responsive typography", () => {
     expect(mobileStyles).toContain("align-items: center;");
     expect(mobileStyles).toContain("padding-top: 0;");
     expect(mobileStyles).toContain("margin-top: 0;");
-    expect(mobileStyles).toContain("margin-right: 4px;");
-    expect(mobileStyles).toContain("margin-left: 5px;");
+    expect(mobileStyles).toContain("margin-right: 0;");
+    expect(mobileStyles).toContain("margin-left: 0;");
     expect(mobileStyles).toContain("padding: 0 !important;");
     expect(mobileStyles).toContain("width: 38px;");
     expect(mobileStyles).toContain("height: 38px;");
