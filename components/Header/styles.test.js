@@ -122,6 +122,7 @@ describe("Header responsive typography", () => {
     expect(tabletStyles).toContain("margin-left: 24px !important;");
     expect(tabletStyles).toContain("border-left: 2px solid");
     expect(tabletStyles).toContain("border-bottom: 2px solid");
+    expect(tabletStyles).toContain("> li.dropdown > .dropdown-menu {");
   });
 
   it("uses full-width mobile navigation and a viewport-aligned search panel", () => {

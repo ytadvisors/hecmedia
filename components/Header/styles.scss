@@ -710,6 +710,34 @@
           line-height: 20px;
         }
 
+        // Treat the top-level dropdown as the root of the branch. Every
+        // direct child receives the same indented elbow used by deeper menus.
+        > li.dropdown > .dropdown-menu {
+          position: static !important;
+          top: auto;
+          left: auto !important;
+          float: none !important;
+          width: calc(100% - 24px) !important;
+          min-width: 0;
+          margin-left: 24px !important;
+          padding-left: 18px !important;
+
+          > li {
+            position: relative;
+
+            &::before {
+              content: "";
+              position: absolute;
+              top: 0;
+              left: -18px;
+              width: 14px;
+              height: 20px;
+              border-left: 2px solid rgba(143, 245, 255, 0.75);
+              border-bottom: 2px solid rgba(143, 245, 255, 0.75);
+            }
+          }
+        }
+
         // Collapsed navigation must use an in-flow, full-width submenu. The
         // desktop rule positions nested menus at left: 100%, which exposes
         // Bootstrap's white dropdown panel beside the parent item.
