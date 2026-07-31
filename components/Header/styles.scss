@@ -274,15 +274,6 @@
                 }
               }
 
-              .dropdown-submenu__trigger {
-                display: flex;
-                align-items: center;
-                justify-content: flex-start;
-                gap: 8px;
-                width: 100%;
-                text-align: left;
-              }
-
               > .dropdown-menu {
                 top: 0;
                 left: 100%;
@@ -780,12 +771,19 @@
 
           .dropdown-submenu__item {
             display: flex;
+            justify-content: flex-start;
             width: 100%;
             background: #0065bc;
+
+            > a {
+              flex: 0 1 auto;
+            }
           }
 
           .dropdown-submenu__toggle {
             background: #0065bc !important;
+            width: auto !important;
+            padding: 10px 8px !important;
           }
 
           > .dropdown-menu {

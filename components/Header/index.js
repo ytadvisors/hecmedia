@@ -186,10 +186,25 @@ export default class Header extends Component {
         onMouseEnter={() => !isMobile && this.setNestedDropdown(url, true)}
         onMouseLeave={() => !isMobile && this.setNestedDropdown(url, false)}
       >
-        <div className="dropdown-submenu__item">
+        <div
+          className="dropdown-submenu__item"
+          onClickCapture={event => {
+            const clickedParentLink =
+              event.target &&
+              typeof event.target.closest === "function" &&
+              event.target.closest("a");
+
+            if (isMobile && clickedParentLink) {
+              event.preventDefault();
+              event.stopPropagation();
+              this.setNestedDropdown(url, !isOpen);
+            }
+          }}
+        >
+          {this.getLink(link)}
           <button
             type="button"
-            className="dropdown-submenu__trigger dropdown-submenu__toggle"
+            className="dropdown-submenu__toggle"
             aria-label={`Show ${label} submenu`}
             aria-expanded={isOpen}
             onClick={event => {
@@ -199,7 +214,6 @@ export default class Header extends Component {
             }}
             onKeyDown={event => this.handleNestedDropdownKeyDown(event, url)}
           >
-            <span dangerouslySetInnerHTML={{ __html: label }} />
             <span className="dropdown-submenu__caret" aria-hidden="true">
               ▸
             </span>

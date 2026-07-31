@@ -121,9 +121,20 @@ describe("Header (primary navigation)", () => {
       "collapse"
     );
     fireEvent.click(screen.getByText("About"));
+    const parentLink = screen.getByText("Our Organization").closest("a");
     const toggle = screen.getByRole("button", {
       name: "Show Our Organization submenu"
     });
+
+    expect(parentLink).toHaveAttribute("href", "/about/organization");
+    fireEvent.click(screen.getByText("Our Organization"));
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(container.querySelector(".navbar-collapse")).not.toHaveClass(
+      "collapse"
+    );
+    fireEvent.click(screen.getByText("Our Organization"));
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(container.querySelector(".navbar-collapse")).not.toHaveClass(
