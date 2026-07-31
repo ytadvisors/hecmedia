@@ -534,6 +534,13 @@
       align-self: center;
       margin-left: 0;
     }
+    ul.user-admin .search-container {
+      position: fixed !important;
+      top: 14px !important;
+      right: 12px !important;
+      left: 12px;
+      width: auto !important;
+    }
     .donate-btn {
       padding-top: 8px !important;
     }
@@ -906,7 +913,7 @@
 
       .search-container {
         position: fixed !important;
-        top: 58px !important;
+        top: 14px !important;
         right: 12px !important;
         left: 12px;
         width: auto !important;

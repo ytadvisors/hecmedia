@@ -143,7 +143,11 @@ describe("Header responsive typography", () => {
       mobileBreakpoint
     );
     const mobileStyles = headerStyles.slice(mobileBreakpoint);
+    expect(collapsedStyles).toContain("position: fixed !important;");
+    expect(collapsedStyles).toContain("top: 14px !important;");
+    expect(collapsedStyles).toContain("right: 12px !important;");
     expect(mobileStyles).toContain("position: fixed !important;");
+    expect(mobileStyles).toContain("top: 14px !important;");
     expect(mobileStyles).toContain("right: 12px !important;");
     expect(mobileStyles).toContain("left: 12px;");
     expect(mobileStyles).toContain("width: auto !important;");
