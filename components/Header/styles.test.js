@@ -23,6 +23,7 @@ describe("Header responsive typography", () => {
     expect(headerStyles).toContain(".brand-tagline {");
     expect(responsiveStyles).toContain("display: block;");
     expect(responsiveStyles).toContain("font-size: 11px;");
+    expect(responsiveStyles).toContain("align-self: center;");
   });
 
   it("uses the larger desktop mock logo with auto width", () => {
