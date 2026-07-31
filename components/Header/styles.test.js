@@ -73,17 +73,18 @@ describe("Header responsive typography", () => {
     expect(collapsedStyles).toContain("justify-content: flex-start;");
     expect(collapsedStyles).toContain(".top-bar-actions {");
     expect(collapsedStyles).toContain("grid-column: 2;");
+    expect(collapsedStyles).toContain("grid-row: 1 / 3;");
     expect(collapsedStyles).toContain("align-self: center;");
     expect(collapsedStyles).toContain("margin-left: 0;");
   });
 
-  it("aligns compact search and navigation controls at the top on mobile", () => {
+  it("vertically centers compact mobile header controls", () => {
     const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
     const mobileStyles = headerStyles.slice(mobileBreakpoint);
 
-    expect(mobileStyles).toContain("align-items: flex-start;");
+    expect(mobileStyles).toContain("align-items: center;");
     expect(mobileStyles).toContain("padding-top: 0;");
-    expect(mobileStyles).toContain("margin-top: 4px;");
+    expect(mobileStyles).toContain("margin-top: 0;");
     expect(mobileStyles).toContain("margin-right: 4px;");
     expect(mobileStyles).toContain("margin-left: 5px;");
     expect(mobileStyles).toContain("padding: 0 !important;");
