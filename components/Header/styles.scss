@@ -526,7 +526,10 @@
     }
     .top-bar-actions {
       grid-column: 2;
-      grid-row: 1;
+      // Keep the CTAs in their own row below the tagline. Sharing row 1 made
+      // the CMS tagline and Subscribe/Support links render on top of each
+      // other throughout the collapsed-navigation range.
+      grid-row: 2;
       justify-content: flex-start;
       align-self: center;
       margin-left: 0;
