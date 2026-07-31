@@ -108,6 +108,43 @@ describe("Header (primary navigation)", () => {
     expect(toggle).toHaveAttribute("aria-expanded", "true");
   });
 
+  it("opens and closes the Genre submenu when its label is clicked", () => {
+    const header = buildMenu([
+      {
+        url: "https://hectv.org/watch",
+        label: "Watch",
+        children: [
+          {
+            url: "https://hectv.org/genre",
+            label: "Genre",
+            children: [
+              {
+                url: "https://hectv.org/genre/arts",
+                label: "Arts"
+              }
+            ]
+          }
+        ]
+      }
+    ]);
+    render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    fireEvent.click(screen.getByText("Watch"));
+    const genreLink = screen.getByText("Genre").closest("a");
+    const genreSubmenu = genreLink.closest(".dropdown-submenu");
+
+    fireEvent.click(genreLink);
+    expect(genreLink).toHaveAttribute("aria-expanded", "true");
+    expect(genreSubmenu).toHaveClass("open");
+    expect(screen.getByText("Arts")).toBeVisible();
+
+    fireEvent.click(genreLink);
+    expect(genreLink).toHaveAttribute("aria-expanded", "false");
+    expect(genreSubmenu).not.toHaveClass("open");
+  });
+
   it("closes an open dropdown after a navigation link is selected", () => {
     const header = buildMenu([
       {

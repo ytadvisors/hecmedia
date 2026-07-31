@@ -167,13 +167,40 @@ export default class Header extends Component {
         onMouseLeave={() => this.setNestedDropdown(url, false)}
       >
         <div className="dropdown-submenu__item">
-          {this.getLink(link)}
+          <a
+            href={url || "#"}
+            role="button"
+            aria-haspopup="menu"
+            aria-expanded={isOpen}
+            onClick={event => {
+              event.preventDefault();
+              event.stopPropagation();
+              this.setNestedDropdown(url, !isOpen);
+            }}
+            onKeyDown={event => {
+              if (event.key === " ") {
+                event.preventDefault();
+                event.stopPropagation();
+                this.setNestedDropdown(url, !isOpen);
+              }
+            }}
+          >
+            <span
+              dangerouslySetInnerHTML={{
+                __html: label
+              }}
+            />
+          </a>
           <button
             type="button"
             className="dropdown-submenu__toggle"
-            aria-label={`Show ${label} submenu`}
+            aria-label={`${isOpen ? "Hide" : "Show"} ${label} submenu`}
             aria-expanded={isOpen}
-            onClick={() => this.setNestedDropdown(url, !isOpen)}
+            onClick={event => {
+              event.preventDefault();
+              event.stopPropagation();
+              this.setNestedDropdown(url, !isOpen);
+            }}
             onKeyDown={event => this.handleNestedDropdownKeyDown(event, url)}
           >
             <span aria-hidden="true">▸</span>
@@ -197,6 +224,7 @@ export default class Header extends Component {
         id={url}
         open={activeDropdown === url}
         onToggle={isOpen => this.setActiveDropdown(url, isOpen)}
+        onClick={event => event.stopPropagation()}
         onKeyDown={event => this.handleTopDropdownKeyDown(event, url)}
       >
         {link.children.map(this.getDropdownItem)}

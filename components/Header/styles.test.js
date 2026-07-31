@@ -52,7 +52,7 @@ describe("Header responsive typography", () => {
     expect(mobileStyles).toContain("padding: 3px 5px;");
   });
 
-  it("stacks mobile social icons below the logo and left-aligns CTA buttons", () => {
+  it("stacks mobile social icons below the logo and vertically centers CTA buttons", () => {
     const collapsedBreakpoint = headerStyles.indexOf(
       "@media (max-width: 1170px)"
     );
@@ -73,6 +73,8 @@ describe("Header responsive typography", () => {
     expect(collapsedStyles).toContain("justify-content: flex-start;");
     expect(collapsedStyles).toContain(".top-bar-actions {");
     expect(collapsedStyles).toContain("grid-column: 2;");
+    expect(collapsedStyles).toContain("grid-row: 1 / 3;");
+    expect(collapsedStyles).toContain("align-self: center;");
     expect(collapsedStyles).toContain("margin-left: 0;");
   });
 
