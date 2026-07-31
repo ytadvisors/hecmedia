@@ -520,9 +520,9 @@
     }
     .top-bar-actions {
       grid-column: 2;
-      grid-row: 2;
+      grid-row: 1;
       justify-content: flex-start;
-      align-self: start;
+      align-self: center;
       margin-left: 0;
     }
     .donate-btn {
@@ -754,6 +754,7 @@
     .header-top-row {
       gap: 8px;
       padding: 6px 8px;
+      align-items: flex-start;
     }
     .top-logo {
       img {
@@ -788,9 +789,21 @@
     }
     .header-top-actions {
       gap: 4px;
+      align-items: center;
+      padding-top: 2px;
     }
     .navbar-toggle {
-      padding: 8px 7px;
+      display: flex;
+      width: 38px;
+      height: 38px;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 7px;
+
+      .icon-bar {
+        width: 22px;
+      }
     }
     ul.user-admin {
       .search-container {
@@ -803,7 +816,17 @@
 
       li .search-btn-icon {
         margin: 0;
-        padding: 0.65em;
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .search-icon {
+          width: 18px;
+          height: 18px;
+        }
       }
     }
     .bottom-nav {

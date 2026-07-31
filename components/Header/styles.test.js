@@ -69,11 +69,24 @@ describe("Header responsive typography", () => {
     );
     expect(collapsedStyles).toContain(".header-secondary-row .social-links");
     expect(collapsedStyles).toContain("grid-column: 1;");
-    expect(collapsedStyles).toContain("grid-row: 2;");
+    expect(collapsedStyles).toContain("grid-row: 1;");
     expect(collapsedStyles).toContain("justify-content: flex-start;");
     expect(collapsedStyles).toContain(".top-bar-actions {");
     expect(collapsedStyles).toContain("grid-column: 2;");
+    expect(collapsedStyles).toContain("align-self: center;");
     expect(collapsedStyles).toContain("margin-left: 0;");
+  });
+
+  it("aligns compact search and navigation controls at the top on mobile", () => {
+    const mobileBreakpoint = headerStyles.indexOf("@media (max-width: 620px)");
+    const mobileStyles = headerStyles.slice(mobileBreakpoint);
+
+    expect(mobileStyles).toContain("align-items: flex-start;");
+    expect(mobileStyles).toContain("padding-top: 2px;");
+    expect(mobileStyles).toContain("width: 38px;");
+    expect(mobileStyles).toContain("height: 38px;");
+    expect(mobileStyles).toContain("width: 18px;");
+    expect(mobileStyles).toContain("height: 18px;");
   });
 
   it("paints collapsed-nav dropdown and nested submenu panels brand blue, not Bootstrap white", () => {
