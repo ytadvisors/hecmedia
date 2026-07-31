@@ -68,6 +68,27 @@ describe("Header (primary navigation)", () => {
     expect(screen.getByText("Our Team")).toBeInTheDocument();
   });
 
+  it("opens a dropdown when its top-level toggle is clicked", () => {
+    const header = buildMenu([
+      {
+        url: "https://hectv.org/genres",
+        label: "Genres",
+        children: [{ url: "https://hectv.org/genres/books", label: "Books" }]
+      }
+    ]);
+    const { container } = render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    const dropdown = container.querySelector(".top-navigation > li.dropdown");
+    const toggle = screen.getByText("Genres").closest("a");
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(dropdown).toHaveClass("open");
+  });
+
   it("renders a second CMS menu level and supports touch and keyboard controls", () => {
     const header = buildMenu([
       {

@@ -151,7 +151,7 @@ export default class Header extends Component {
 
   getDropdownItem = link => {
     const { url, label, children = [] } = link;
-    const { open } = this.state;
+    const { open, isMobile } = this.state;
     const isOpen = open[url] === true;
     const hasChildren = children.length > 0;
 
@@ -163,8 +163,8 @@ export default class Header extends Component {
       <li
         key={`${label} ${url}`}
         className={`dropdown-submenu${isOpen ? " open" : ""}`}
-        onMouseEnter={() => this.setNestedDropdown(url, true)}
-        onMouseLeave={() => this.setNestedDropdown(url, false)}
+        onMouseEnter={() => !isMobile && this.setNestedDropdown(url, true)}
+        onMouseLeave={() => !isMobile && this.setNestedDropdown(url, false)}
       >
         <div className="dropdown-submenu__item">
           {this.getLink(link)}
@@ -195,6 +195,7 @@ export default class Header extends Component {
         className={`btn ${btnDisplay}`}
         title={label}
         id={url}
+        rootCloseEvent="mousedown"
         open={activeDropdown === url}
         onToggle={isOpen => this.setActiveDropdown(url, isOpen)}
         onKeyDown={event => this.handleTopDropdownKeyDown(event, url)}
