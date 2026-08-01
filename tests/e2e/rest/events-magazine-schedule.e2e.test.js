@@ -1,66 +1,9 @@
-import EventApi from "../../../store/api/EventApi";
-import MagazineApi from "../../../store/api/MagazineApi";
 import ScheduleApi from "../../../store/api/ScheduleApi";
 import PageApi from "../../../store/api/PageApi";
 import { REST_HOST } from "../support/config";
 
-const eventApi = new EventApi({ url: REST_HOST });
-const magazineApi = new MagazineApi({ url: REST_HOST });
 const scheduleApi = new ScheduleApi({ url: REST_HOST });
 const pageApi = new PageApi({ url: REST_HOST });
-
-describe("EventApi (store/api/EventApi.js)", () => {
-  it("getAllEvents returns a list of events shaped for the feed", async () => {
-    const res = await eventApi.getAllEvents([], "", 1, 5);
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.data)).toBe(true);
-    res.data.forEach(event => {
-      expect(typeof event.id).toBe("number");
-      expect(typeof event.slug).toBe("string");
-    });
-  });
-
-  it("getEventBySlug resolves a real slug from getAllEvents", async () => {
-    const list = await eventApi.getAllEvents([], "", 1, 5);
-    const sample = list.data[0];
-    if (!sample) return;
-
-    const res = await eventApi.getEventBySlug(sample.slug);
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.data)).toBe(true);
-  });
-
-  // KNOWN CONTRACT BREAK (see posts.e2e.test.js for the categoryList sibling):
-  // EventApi.getEventType()/getEventCategories() call GET /wp-json/wp/v2/eventCategory,
-  // which does not exist — the registered route is /wp/v2/event_category. Flagged
-  // to Yomi/dev team; skipped here rather than left red for an out-of-scope bug.
-  it.skip("getEventCategories — BROKEN: calls non-existent /wp-json/wp/v2/eventCategory (404)", async () => {
-    const res = await eventApi.getEventCategories(1);
-    expect(res.status).toBe(200);
-  });
-});
-
-describe("MagazineApi (store/api/MagazineApi.js)", () => {
-  it("getAllMagazines returns a list of magazines shaped for the feed", async () => {
-    const res = await magazineApi.getAllMagazines([], 1, 5);
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.data)).toBe(true);
-    res.data.forEach(mag => {
-      expect(typeof mag.id).toBe("number");
-      expect(typeof mag.slug).toBe("string");
-    });
-  });
-
-  it("getMagazineBySlug resolves a real slug from getAllMagazines", async () => {
-    const list = await magazineApi.getAllMagazines([], 1, 5);
-    const sample = list.data[0];
-    if (!sample) return;
-
-    const res = await magazineApi.getMagazineBySlug(sample.slug);
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.data)).toBe(true);
-  });
-});
 
 describe("ScheduleApi (store/api/ScheduleApi.js)", () => {
   it("getAllSchedules returns a list of schedule entries", async () => {

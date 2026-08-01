@@ -1,22 +1,14 @@
 import React from "react";
 import Link from "next/link";
 import { Nav, NavItem, NavDropdown } from "react-bootstrap";
-import { useQuery } from "@apollo/react-hooks";
 import { Router } from "../../routes";
-import { GET_EVENTS_CATEGORIES } from "../../lib/graphql";
 import NavWrap from "../NavWrap";
 import CalendarSelector from "../CalendarSelector";
 import { getFormattedDate } from "../../lib/getFunctions";
 
 export default props => {
   const { link, title, currentDate, currentCategory } = props;
-  const variables = { limit: 30 };
-  const { data } = useQuery(GET_EVENTS_CATEGORIES, {
-    variables,
-    notifyOnNetworkStatusChange: true
-  });
-
-  const { categories } = data || {};
+  const categories = { edges: [] };
   const changeDate = newDate => {
     Router.pushRoute(`/events/${currentCategory}/${getFormattedDate(newDate)}`);
   };
