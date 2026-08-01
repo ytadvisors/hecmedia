@@ -122,22 +122,6 @@ const Posts = props => {
               resizeRows
             />
           )}
-          {result.post && details.postEvents && (
-            <ListOfPosts
-              title="Related Events"
-              posts={
-                (details.postEvents &&
-                  details.postEvents.map(obj => obj && obj.relatedEvent)) ||
-                []
-              }
-              link={{ page: "events" }}
-              numResults={0}
-              design={{
-                defaultRowLayout: "Single Column",
-                defaultDisplayType: "Wallpaper"
-              }}
-            />
-          )}
         </div>
       </Layout>
     </>

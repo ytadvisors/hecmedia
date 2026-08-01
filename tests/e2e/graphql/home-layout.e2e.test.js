@@ -54,9 +54,8 @@ describe("PageLayout (containers/Layout/index.js)", () => {
     const result = await executeQuery(GET_LAYOUT, undefined);
 
     expect(result.errors).toBeUndefined();
-    const { featuredMagazines, spotLight, footer, social } = result.data;
+    const { spotLight, footer, social } = result.data;
 
-    expect(Array.isArray(featuredMagazines.edges)).toBe(true);
     expect(Array.isArray(spotLight.nodes)).toBe(true);
 
     [footer, social].forEach(menu => {

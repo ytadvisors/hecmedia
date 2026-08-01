@@ -107,12 +107,8 @@ export const Layout = props => {
     notifyOnNetworkStatusChange: true
   });
 
-  const {
-    social,
-    footer,
-    featuredMagazines,
-    spotLight: { nodes: spotLightPosts = [] } = {}
-  } = data || {};
+  const { social, footer, spotLight: { nodes: spotLightPosts = [] } = {} } =
+    data || {};
   const header = (headerData && headerData.header) || (data && data.header);
   const topbarCtas =
     (topbarData && topbarData.topbarCtas) || getFallbackTopbarCtas();
@@ -157,7 +153,6 @@ export const Layout = props => {
         <Banner liveVideo={liveVideo} />
         <ProgramViewer
           style={style}
-          featuredMagazines={featuredMagazines}
           spotLightPosts={spotLightPosts}
           featuredVideos={featuredVideos}
           newestVideos={newestVideos}
