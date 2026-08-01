@@ -20,6 +20,11 @@ describe("Footer", () => {
     expect(screen.getByAltText("logo")).toBeInTheDocument();
   });
 
+  it("renders without crashing when menu connections are empty", () => {
+    render(<Footer footer={{ edges: [] }} social={{ edges: [] }} />);
+    expect(screen.getByAltText("logo")).toBeInTheDocument();
+  });
+
   it("renders footer links from the WPGraphQL menu shape", () => {
     const footer = buildMenu([
       { url: "https://hectv.org/about", label: "About" },
