@@ -51,6 +51,22 @@ describe("Header (primary navigation)", () => {
     expect(programsLink).toHaveFocus();
   });
 
+  it("renders the modern root menuItems connection", () => {
+    const header = {
+      edges: buildMenuItems([
+        { url: "https://hectv.org/programs", label: "Programs" },
+        { url: "https://hectv.org/events", label: "Events" }
+      ])
+    };
+
+    render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    expect(screen.getByText("Programs")).toBeInTheDocument();
+    expect(screen.getByText("Events")).toBeInTheDocument();
+  });
+
   it("renders a dropdown parent for nav items that carry child items", () => {
     const header = buildMenu([
       {

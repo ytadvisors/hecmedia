@@ -81,13 +81,10 @@ describeModernCms("HeaderMenu (containers/Layout/index.js)", () => {
     const { header } = result.data;
     expect(Array.isArray(header.edges)).toBe(true);
     expect(header.edges.length).toBeGreaterThan(0);
-    header.edges.forEach(({ node }) => {
-      expect(Array.isArray(node.menuItems.edges)).toBe(true);
-      node.menuItems.edges.forEach(({ node: item }) => {
-        expect(typeof item.label).toBe("string");
-        expect(typeof item.parentDatabaseId).toBe("number");
-        expect(Array.isArray(item.childItems.edges)).toBe(true);
-      });
+    header.edges.forEach(({ node: item }) => {
+      expect(typeof item.label).toBe("string");
+      expect(typeof item.parentDatabaseId).toBe("number");
+      expect(Array.isArray(item.childItems.edges)).toBe(true);
     });
   });
 });

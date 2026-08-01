@@ -21,6 +21,17 @@ const toRelativeCtaUrl = url =>
     ""
   ) || "/";
 
+export const getMenuItemEdges = connection => {
+  const edges = (connection && connection.edges) || [];
+  const nestedEdges =
+    edges[0] &&
+    edges[0].node &&
+    edges[0].node.menuItems &&
+    edges[0].node.menuItems.edges;
+
+  return nestedEdges || edges;
+};
+
 export default class Header extends Component {
   constructor(props) {
     super(props);
@@ -358,11 +369,8 @@ export default class Header extends Component {
     const style = isMobile
       ? { width: `${window.innerWidth - 50}px`, right: "12px" }
       : {};
-    const { node: { menuItems: { edges: headerList = [] } = {} } = {} } =
-      (header && header.edges && header.edges[0]) || {};
-    const { node: { menuItems: { edges: socialList = [] } = {} } = {} } = social
-      ? social.edges[0]
-      : {};
+    const headerList = getMenuItemEdges(header);
+    const socialList = getMenuItemEdges(social);
 
     const topLinks =
       headerList.length > 0 ? getHeaderMenuObject(headerList) : [];
