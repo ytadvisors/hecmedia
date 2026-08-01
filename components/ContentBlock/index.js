@@ -1,4 +1,5 @@
 import React from "react";
+import { rewritePublicMediaHtml } from "../../lib/mediaUrl";
 
 export default ({
   header,
@@ -24,7 +25,7 @@ export default ({
       <div>{data}</div>
       <div
         className="content-body"
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: rewritePublicMediaHtml(content) }}
       />
       <div
         className="content-footer"

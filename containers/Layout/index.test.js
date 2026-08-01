@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { useQuery } from "@apollo/react-hooks";
 import { Layout } from "./index";
+import { GET_HEADER_MENU, GET_LEGACY_HEADER_MENU } from "../../lib/graphql";
 
 jest.mock("@apollo/react-hooks", () => ({
   useQuery: jest.fn()
@@ -219,7 +220,7 @@ describe("Layout", () => {
     );
   });
 
-  it("falls back to the legacy layout header when the modern menu query is unavailable", () => {
+  it("selects the isolated legacy header operation when modern CMS mode is disabled", () => {
     const header = {
       edges: [
         {
@@ -232,9 +233,12 @@ describe("Layout", () => {
       ]
     };
 
+    const previousModern = process.env.HECMEDIA_MODERN_WPGRAPHQL;
+    process.env.HECMEDIA_MODERN_WPGRAPHQL = "false";
+
     useQuery
+      .mockReturnValueOnce({ data: { footer: {}, social: {} } })
       .mockReturnValueOnce({ data: { header } })
-      .mockReturnValueOnce({ data: undefined, error: new Error("legacy CMS") })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
@@ -242,8 +246,18 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
-    render(<Layout dispatch={jest.fn()} />);
+    try {
+      render(<Layout dispatch={jest.fn()} />);
 
-    expect(screen.getByTestId("header")).toHaveTextContent("ABOUT");
+      expect(useQuery.mock.calls[1][0]).toBe(GET_LEGACY_HEADER_MENU);
+      expect(useQuery.mock.calls[1][0]).not.toBe(GET_HEADER_MENU);
+      expect(screen.getByTestId("header")).toHaveTextContent("ABOUT");
+    } finally {
+      if (previousModern === undefined) {
+        delete process.env.HECMEDIA_MODERN_WPGRAPHQL;
+      } else {
+        process.env.HECMEDIA_MODERN_WPGRAPHQL = previousModern;
+      }
+    }
   });
 });

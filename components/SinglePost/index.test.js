@@ -27,12 +27,12 @@ const post = {
   }
 };
 
-function renderPost(queryResult) {
+function renderPost(queryResult, postOverrides = {}) {
   useQuery.mockImplementation(query => {
     if (query === GET_POST_HEADER_IMAGE_SIZE) return queryResult;
     return {};
   });
-  return render(<SinglePost post={post} />);
+  return render(<SinglePost post={{ ...post, ...postOverrides }} />);
 }
 
 describe("resolveHeaderImageSize", () => {
@@ -80,6 +80,21 @@ describe("article header image sizing (component)", () => {
     expect(container.querySelector(".article-header-image")).toHaveAttribute(
       "data-header-image-size",
       "full"
+    );
+  });
+
+  it("rewrites staging upload URLs in GraphQL-rendered article HTML", () => {
+    const { container } = renderPost(
+      { data: undefined },
+      {
+        content:
+          '<p><img src="https://staging-wp.hectv.org/wp-content/uploads/2026/07/article.jpg"></p>'
+      }
+    );
+
+    expect(container.querySelector(".blog-content img")).toHaveAttribute(
+      "src",
+      "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2026/07/article.jpg"
     );
   });
 });
