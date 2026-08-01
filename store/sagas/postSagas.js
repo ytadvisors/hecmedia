@@ -7,6 +7,7 @@ import * as eventTypes from "../types/eventTypes";
 import * as pageTypes from "../types/pageTypes";
 import { getUserToken } from "../../lib/session";
 import { getNumAPIResults } from "../../lib/getFunctions";
+import getPublicMediaUrl from "../../lib/mediaUrl";
 
 function validateUser() {
   if (getUserToken() === undefined || getUserToken() === "") {
@@ -53,13 +54,21 @@ function mapPost(result) {
 
     if (result.acf) {
       if (result.acf.videoImage) {
-        response.thumbnail = result.acf.videoImage.sizes.mediumLarge;
-        response.smallThumbnail = result.acf.videoImage.sizes.medium;
+        response.thumbnail = getPublicMediaUrl(
+          result.acf.videoImage.sizes.mediumLarge
+        );
+        response.smallThumbnail = getPublicMediaUrl(
+          result.acf.videoImage.sizes.medium
+        );
         response.format = "video";
       }
       if (result.acf.postHeader) {
-        response.thumbnail = result.acf.postHeader.sizes.mediumLarge;
-        response.smallThumbnail = result.acf.postHeader.sizes.medium;
+        response.thumbnail = getPublicMediaUrl(
+          result.acf.postHeader.sizes.mediumLarge
+        );
+        response.smallThumbnail = getPublicMediaUrl(
+          result.acf.postHeader.sizes.medium
+        );
         response.smallThumbnail = response.smallThumbnail.replace(
           /http:\/\/s3(.+amazon)/g,
           "https://s3$1"

@@ -5,6 +5,7 @@ import {
   DEFAULT_RAIL_PROMO,
   modernWpGraphqlEnabled
 } from "../../lib/stagingCompatibility";
+import getPublicMediaUrl from "../../lib/mediaUrl";
 
 export const getPublicRailPromoUrl = sourceUrl => {
   const publicWordPressHost = process.env.WP_HOST;
@@ -16,10 +17,12 @@ export const getPublicRailPromoUrl = sourceUrl => {
       source.hostname === "localhost" ||
       source.hostname === "127.0.0.1" ||
       source.hostname.endsWith(".ts.net");
-    if (!isPrivateWordPressHost) return sourceUrl;
+    if (!isPrivateWordPressHost) return getPublicMediaUrl(sourceUrl);
 
     const publicHost = new URL(publicWordPressHost);
-    return `${publicHost.origin}${source.pathname}${source.search}`;
+    return getPublicMediaUrl(
+      `${publicHost.origin}${source.pathname}${source.search}`
+    );
   } catch (error) {
     return sourceUrl;
   }

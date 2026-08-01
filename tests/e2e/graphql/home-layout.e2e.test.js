@@ -50,7 +50,7 @@ describe("HomePageInfo (pages/index.js)", () => {
 });
 
 describe("PageLayout (containers/Layout/index.js)", () => {
-  it("returns header/footer/social menus and featured content shaped for the shell", async () => {
+  it("returns footer/social menus and featured content shaped for the shell", async () => {
     const result = await executeQuery(GET_LAYOUT, undefined);
 
     expect(result.errors).toBeUndefined();
