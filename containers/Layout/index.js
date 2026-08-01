@@ -11,8 +11,7 @@ import {
   GET_TOPBAR_CTAS,
   GET_HECTV_SITE_CONTENT,
   GET_CURATED_TRENDING_POSTS,
-  GET_NEWEST_VIDEOS,
-  GET_FEATURED_VIDEOS
+  GET_NEWEST_VIDEOS
 } from "../../lib/graphql";
 import ProgramViewer from "../../components/ProgramViewer";
 import Header from "../../components/Header";
@@ -78,21 +77,15 @@ export const Layout = props => {
     siteContentData && siteContentData.hectvSiteContent
   );
 
-  // Editorial curation is optional. The newest-video feed remains the
-  // fallback, and both stay independent from the shell query so an older CMS
-  // schema cannot blank the page.
+  // Editorial curation comes from hectvSiteContent.trendingPostIds. The
+  // newest-video feed remains the fallback, and both stay independent from
+  // the shell query so an older CMS schema cannot blank the page.
   const {
     data: newestVideosData,
     loading: newestVideosLoading,
     error: newestVideosError
   } = useQuery(GET_NEWEST_VIDEOS, {
     notifyOnNetworkStatusChange: true
-  });
-
-  const { data: featuredVideosData } = useQuery(GET_FEATURED_VIDEOS, {
-    notifyOnNetworkStatusChange: true,
-    skip: !modernCms,
-    errorPolicy: "all"
   });
 
   const { data: curatedTrendingData } = useQuery(GET_CURATED_TRENDING_POSTS, {
@@ -117,18 +110,13 @@ export const Layout = props => {
       newestVideosData.newestVideos &&
       newestVideosData.newestVideos.nodes) ||
     [];
-  const { featuredVideos: modernFeaturedVideos = [] } =
-    featuredVideosData || {};
   const curatedTrendingPosts = orderPostsByIds(
     curatedTrendingData &&
       curatedTrendingData.curatedTrendingPosts &&
       curatedTrendingData.curatedTrendingPosts.nodes,
     siteContent.trendingPostIds
   );
-  const featuredVideos =
-    curatedTrendingPosts.length > 0
-      ? curatedTrendingPosts
-      : modernFeaturedVideos;
+  const featuredVideos = curatedTrendingPosts;
   const { children, showBottomNav, absContent, style } = props;
   const { liveVideos } = videos || [];
   let liveVideo = {};

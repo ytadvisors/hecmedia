@@ -64,7 +64,7 @@ describe("Layout", () => {
     useQuery.mockReset();
   });
 
-  it("supplies featured and newest videos to Trending Now without using Spotlight", () => {
+  it("supplies curated and newest videos to Trending Now without using Spotlight", () => {
     const featuredVideos = [
       { postId: 1, title: "Editor's choice", link: "/posts/featured" }
     ];
@@ -79,10 +79,13 @@ describe("Layout", () => {
       })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({
+        data: { hectvSiteContent: { trendingPostIds: [1] } }
+      })
       .mockReturnValueOnce({ data: { newestVideos: { nodes: newestVideos } } })
-      .mockReturnValueOnce({ data: { featuredVideos } })
-      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce({
+        data: { curatedTrendingPosts: { nodes: featuredVideos } }
+      })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -102,7 +105,6 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: {}, loading: false })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: { topbarCtas } })
-      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
@@ -126,7 +128,6 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -136,7 +137,7 @@ describe("Layout", () => {
     );
   });
 
-  it("keeps newest videos visible when optional curation is unavailable", () => {
+  it("keeps newest videos visible when no curated posts are configured", () => {
     const newestVideos = [
       { postId: 2, title: "Newest video", link: "/posts/newest" }
     ];
@@ -149,12 +150,6 @@ describe("Layout", () => {
       .mockReturnValueOnce({
         data: { newestVideos: { nodes: newestVideos } },
         loading: false
-      })
-      .mockReturnValueOnce({
-        data: undefined,
-        error: new Error(
-          'Cannot query field "featuredVideos" on type "RootQuery".'
-        )
       })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
@@ -189,7 +184,6 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined });
 
     render(<Layout dispatch={jest.fn()} />);
@@ -206,7 +200,6 @@ describe("Layout", () => {
           'Cannot query field "parentDatabaseId" on type "MenuItem".'
         )
       })
-      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
@@ -239,7 +232,6 @@ describe("Layout", () => {
     useQuery
       .mockReturnValueOnce({ data: { footer: {}, social: {} } })
       .mockReturnValueOnce({ data: { header } })
-      .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
       .mockReturnValueOnce({ data: undefined })
