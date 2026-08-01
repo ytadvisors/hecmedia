@@ -376,6 +376,18 @@ test("packages staging on Node 24 with the webpack 4 OpenSSL compatibility flag"
   );
 });
 
+test("hydrates the nested category route that previously looped during pagination", () => {
+  const workflow = realFs.readFileSync(
+    path.join(__dirname, "../.github/workflows/staging-deploy.yml"),
+    "utf8"
+  );
+
+  expect(workflow).toContain(
+    '"$STAGING_SITE_URL/category/arts/two_on_the_aisle"'
+  );
+  expect(workflow).toContain("staging-hydrated-nested-category.html");
+});
+
 test("does not call the removed Next 12 Head rewind API during Apollo SSR", () => {
   const withApollo = realFs.readFileSync(
     path.join(__dirname, "../lib/withApollo.js"),
