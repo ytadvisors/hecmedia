@@ -43,4 +43,46 @@ describe("findCategoryForLink", () => {
       "/category/"
     );
   });
+
+  it("fetches each missing category cursor once and stops at the last page", () => {
+    const fetchMore = jest.fn();
+    useQuery.mockReturnValue({
+      data: {
+        categories: {
+          nodes: [],
+          pageInfo: { endCursor: "cursor-1", hasNextPage: true }
+        }
+      },
+      fetchMore
+    });
+
+    const { rerender } = render(
+      <CategoryNav link="https://hectv.org/category/arts/two_on_the_aisle" />
+    );
+
+    expect(fetchMore).toHaveBeenCalledTimes(1);
+    expect(fetchMore).toHaveBeenCalledWith(
+      expect.objectContaining({ variables: { cursor: "cursor-1" } })
+    );
+
+    rerender(
+      <CategoryNav link="https://hectv.org/category/arts/two_on_the_aisle" />
+    );
+    expect(fetchMore).toHaveBeenCalledTimes(1);
+
+    useQuery.mockReturnValue({
+      data: {
+        categories: {
+          nodes: [],
+          pageInfo: { endCursor: "cursor-2", hasNextPage: false }
+        }
+      },
+      fetchMore
+    });
+    rerender(
+      <CategoryNav link="https://hectv.org/category/arts/two_on_the_aisle" />
+    );
+
+    expect(fetchMore).toHaveBeenCalledTimes(1);
+  });
 });

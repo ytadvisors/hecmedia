@@ -161,6 +161,12 @@ jobs:
             echo "::error title=Hydration failed::The hydrated category DOM collapsed to 404 not found."
             exit 1
           fi
+          timeout 60 "$BROWSER_BIN" --headless --no-sandbox --disable-gpu --enable-logging=stderr --v=1 --virtual-time-budget=5000 --dump-dom "$STAGING_SITE_URL/category/arts/two_on_the_aisle" > staging-hydrated-nested-category.html 2>> staging-browser-console.log
+          grep -q 'Two on the Aisle' staging-hydrated-nested-category.html
+          if grep -q '>404 not found\.<' staging-hydrated-nested-category.html; then
+            echo "::error title=Hydration failed::The hydrated nested category DOM collapsed to 404 not found."
+            exit 1
+          fi
           if grep -Eqi 'incompatible-href-as|provided .as. value.*incompatible' staging-browser-console.log; then
             echo "::error title=Dynamic route failed::A hydrated route emitted an incompatible href/as error."
             exit 1
@@ -195,6 +201,7 @@ jobs:
             staging-browser-console.log
             staging-hydrated-home.html
             staging-hydrated-category.html
+            staging-hydrated-nested-category.html
           if-no-files-found: warn
 
   inspect-runtime:

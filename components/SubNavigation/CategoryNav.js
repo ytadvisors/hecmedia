@@ -28,41 +28,40 @@ const CategoryNav = ({ link }) => {
     variables: { cursor: "" }
   });
 
-  const loadMore = () =>
-    fetchMore &&
-    fetchMore({
-      variables: { cursor: currentCursor },
-      updateQuery: (prev, fetchData) =>
-        getQueryUpdate(prev, fetchData, "categories")
-    });
-
   const { categories } = data || {};
-  const { nodes: menus, pageInfo: { endCursor } = {} } = categories || {};
-
-  if (!currentName && currentCursor !== "") {
-    loadMore();
-  }
+  const { nodes: menus, pageInfo: { endCursor, hasNextPage = false } = {} } =
+    categories || {};
 
   useEffect(() => {
-    if (currentCursor !== endCursor && endCursor) {
-      setCursor(endCursor);
-    }
+    if (!menus) return;
 
-    /* Set current menu */
-    if (menus) {
-      const categoryList = findCategoryForLink(menus, cleanLink);
+    const categoryList = findCategoryForLink(menus, cleanLink);
+    const {
+      name,
+      link: categoryLink,
+      children: { nodes: subcategoryList = [] } = {}
+    } = categoryList;
 
-      const {
-        name,
-        link: categoryLink,
-        children: { nodes: subcategoryList = [] } = {}
-      } = categoryList;
-
+    if (name) {
       setCategories(subcategoryList);
       setCategoryLink(categoryLink);
       setName(name);
+      return;
     }
-  }, [menus, link]);
+
+    // Some nested category URLs are not present in the first ten roots. Fetch
+    // each cursor once from an effect, and stop when WPGraphQL says there is no
+    // next page. Calling fetchMore during render previously created an endless
+    // request/render loop on routes such as /category/arts/two_on_the_aisle.
+    if (hasNextPage && endCursor && currentCursor !== endCursor && fetchMore) {
+      setCursor(endCursor);
+      fetchMore({
+        variables: { cursor: endCursor },
+        updateQuery: (prev, fetchData) =>
+          getQueryUpdate(prev, fetchData, "categories")
+      });
+    }
+  }, [cleanLink, currentCursor, endCursor, fetchMore, hasNextPage, menus]);
 
   if (currentName) {
     const url = cleanUrl(currentLink);
