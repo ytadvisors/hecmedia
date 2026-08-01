@@ -3,9 +3,11 @@ import { graphql } from "react-apollo";
 import gql from "graphql-tag";
 
 export const BottomNav = ({ title, links, data: { bottomNav } = {} }) => {
+  const firstBottomNav =
+    bottomNav && Array.isArray(bottomNav.edges) ? bottomNav.edges[0] || {} : {};
   const {
     node: { menuItems: { edges: bottomList = [] } = {} } = {}
-  } = bottomNav ? bottomNav.edges[0] : {};
+  } = firstBottomNav;
   const renderedLinks =
     Array.isArray(links) && links.length > 0
       ? links.map(link => ({

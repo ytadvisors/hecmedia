@@ -5,11 +5,15 @@ import SocialLinks from "../SocialLinks";
 
 export default props => {
   const { footer, social } = props;
+  const firstFooter =
+    footer && Array.isArray(footer.edges) ? footer.edges[0] || {} : {};
+  const firstSocial =
+    social && Array.isArray(social.edges) ? social.edges[0] || {} : {};
   const { node: { menuItems: { edges: footerList = [] } = {} } = {} } = footer
-    ? footer.edges[0]
+    ? firstFooter
     : {};
   const { node: { menuItems: { edges: socialList = [] } = {} } = {} } = social
-    ? social.edges[0]
+    ? firstSocial
     : {};
 
   const links = _.chunk(footerList, footerList.length / 2);
