@@ -1,10 +1,5 @@
 import React from "react";
-import { useQuery } from "@apollo/react-hooks";
-import { GET_RAIL_PROMO } from "../../lib/graphql";
-import {
-  DEFAULT_RAIL_PROMO,
-  modernWpGraphqlEnabled
-} from "../../lib/stagingCompatibility";
+import { DEFAULT_RAIL_PROMO } from "../../lib/stagingCompatibility";
 import getPublicMediaUrl from "../../lib/mediaUrl";
 
 export const getPublicRailPromoUrl = sourceUrl => {
@@ -47,15 +42,7 @@ export const SideNavigation = ({ children, railPromo }) => {
 };
 
 export default ({ children, railPromo: configuredRailPromo }) => {
-  const { data } = useQuery(GET_RAIL_PROMO, {
-    notifyOnNetworkStatusChange: true,
-    skip: Boolean(configuredRailPromo) || !modernWpGraphqlEnabled(),
-    errorPolicy: "all"
-  });
-  const railPromo =
-    configuredRailPromo ||
-    (data && data.hectvSiteOptions && data.hectvSiteOptions.railPromo) ||
-    DEFAULT_RAIL_PROMO;
+  const railPromo = configuredRailPromo || DEFAULT_RAIL_PROMO;
 
   return <SideNavigation railPromo={railPromo}>{children}</SideNavigation>;
 };

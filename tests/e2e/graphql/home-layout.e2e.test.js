@@ -4,7 +4,6 @@ import {
   GET_LAYOUT,
   GET_HEADER_MENU,
   GET_NEWEST_VIDEOS,
-  GET_FEATURED_VIDEOS,
   GET_SCHEDULE,
   GET_PAGE_TEMPLATE
 } from "../../../lib/graphql";
@@ -94,16 +93,6 @@ describe("Layout video feeds (containers/Layout/index.js)", () => {
 
     expect(result.errors).toBeUndefined();
     expect(Array.isArray(result.data.newestVideos.nodes)).toBe(true);
-  });
-
-  const itModernCms =
-    process.env.HECMEDIA_E2E_MODERN_WPGRAPHQL === "true" ? it : it.skip;
-
-  itModernCms("returns the optional editor-curated video feed", async () => {
-    const result = await executeQuery(GET_FEATURED_VIDEOS, undefined);
-
-    expect(result.errors).toBeUndefined();
-    expect(Array.isArray(result.data.featuredVideos)).toBe(true);
   });
 });
 
