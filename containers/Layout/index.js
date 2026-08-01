@@ -6,6 +6,7 @@ import { Router } from "../../routes";
 import {
   GET_LAYOUT,
   GET_HEADER_MENU,
+  GET_LEGACY_HEADER_MENU,
   GET_LIVE_VIDEOS,
   GET_TOPBAR_CTAS,
   GET_HECTV_SITE_CONTENT,
@@ -56,9 +57,9 @@ export const Layout = props => {
     notifyOnNetworkStatusChange: true
   });
 
-  const { data: headerData } = useQuery(GET_HEADER_MENU, {
+  const headerQuery = modernCms ? GET_HEADER_MENU : GET_LEGACY_HEADER_MENU;
+  const { data: headerData } = useQuery(headerQuery, {
     notifyOnNetworkStatusChange: true,
-    skip: !modernCms,
     errorPolicy: "all"
   });
 

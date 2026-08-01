@@ -7,7 +7,7 @@ import * as eventTypes from "../types/eventTypes";
 import * as pageTypes from "../types/pageTypes";
 import { getUserToken } from "../../lib/session";
 import { getNumAPIResults } from "../../lib/getFunctions";
-import getPublicMediaUrl from "../../lib/mediaUrl";
+import getPublicMediaUrl, { rewritePublicMediaHtml } from "../../lib/mediaUrl";
 
 function validateUser() {
   if (getUserToken() === undefined || getUserToken() === "") {
@@ -23,7 +23,7 @@ function mapSubcategories(result) {
   return response;
 }
 
-function mapPost(result) {
+export function mapPost(result) {
   const response = {};
   if (result) {
     response.excerpt = "";
@@ -46,7 +46,7 @@ function mapPost(result) {
     }
 
     if (result.content) {
-      response.content = result.content.rendered;
+      response.content = rewritePublicMediaHtml(result.content.rendered);
       response.content = response.content
         .replace(/http:\/\/s3(.+amazon)/g, "https://s3$1")
         .replace(/srcset="[^"]+/g, "");

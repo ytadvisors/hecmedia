@@ -12,6 +12,7 @@ import { isServer } from "../../lib/serverFunctions";
 import { GET_PAGE_INFO, GET_POST_HEADER_IMAGE_SIZE } from "../../lib/graphql";
 import PodcastLinks from "../PodcastLinks";
 import { modernWpGraphqlEnabled } from "../../lib/stagingCompatibility";
+import { rewritePublicMediaHtml } from "../../lib/mediaUrl";
 
 const HEADER_IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
 
@@ -229,7 +230,9 @@ const SinglePost = props => {
       )}
       {showPodcasts && <PodcastLinks podcasts={podcasts} />}
       <div className={`blog-content ${(classes && classes.content) || ""}`}>
-        <div dangerouslySetInnerHTML={{ __html: content }} />
+        <div
+          dangerouslySetInnerHTML={{ __html: rewritePublicMediaHtml(content) }}
+        />
       </div>
     </section>
   );
