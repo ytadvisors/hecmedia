@@ -6,7 +6,7 @@ import Layout from "../../containers/Layout";
 import SEO from "../../components/SEO";
 import SinglePost from "../../components/SinglePost";
 import ListOfPosts from "../../components/ListOfPosts";
-import { getPostImgSrc, getExcerpt } from "../../lib/getFunctions";
+import { getPostPageImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { GET_PAGE_INFO, GET_PAGE_CATEGORY } from "../../lib/graphql";
 
 const Posts = props => {
@@ -77,7 +77,7 @@ const Posts = props => {
       <SEO
         {...{
           title,
-          image: getPostImgSrc(result.post),
+          image: getPostPageImgSrc(result.post),
           description: getExcerpt(description, 320),
           url: process.env.SITE_HOST,
           fbAppId: process.env.FACEBOOK_APP_ID,

@@ -6,7 +6,7 @@ import * as Material from "react-icons/md";
 import LazyLoad from "react-lazyload";
 import VideoPlayer from "../VideoPlayer/index";
 import ShareSocialLinks from "../ShareSocialLinks";
-import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
+import { getEventDate, getPostPageImgSrc } from "../../lib/getFunctions";
 import { cleanUrl } from "../../lib/updateFunctions";
 import { isServer } from "../../lib/serverFunctions";
 import { GET_PAGE_INFO, GET_POST_HEADER_IMAGE_SIZE } from "../../lib/graphql";
@@ -140,7 +140,7 @@ const SinglePost = props => {
     );
 
   const imgThumbnail =
-    !hidePageThumbnail && currentPost && getPostImgSrc(currentPost);
+    !hidePageThumbnail && currentPost && getPostPageImgSrc(currentPost);
   const isLiveVideo =
     isPlaying &&
     url &&
