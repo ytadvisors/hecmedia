@@ -2,6 +2,8 @@ import moment from "moment";
 import {
   GET_HOME_PAGE,
   GET_LAYOUT,
+  GET_FOOTER_MENU,
+  GET_SOCIAL_MENU,
   GET_HEADER_MENU,
   GET_NEWEST_VIDEOS,
   GET_SCHEDULE,
@@ -50,22 +52,37 @@ describe("HomePageInfo (pages/index.js)", () => {
 
 describe("PageLayout (containers/Layout/index.js)", () => {
   it("returns footer/social menus and featured content shaped for the shell", async () => {
-    const result = await executeQuery(GET_LAYOUT, undefined);
+    const [layoutResult, footerResult, socialResult] = await Promise.all([
+      executeQuery(GET_LAYOUT, undefined),
+      executeQuery(GET_FOOTER_MENU, undefined),
+      executeQuery(GET_SOCIAL_MENU, undefined)
+    ]);
 
-    expect(result.errors).toBeUndefined();
-    const { spotLight, footer, social } = result.data;
+    expect(layoutResult.errors).toBeUndefined();
+    expect(footerResult.errors).toBeUndefined();
+    expect(socialResult.errors).toBeUndefined();
+    const { spotLight } = layoutResult.data;
+    const { footer } = footerResult.data;
+    const { social } = socialResult.data;
 
     expect(Array.isArray(spotLight.nodes)).toBe(true);
 
-    [footer, social].forEach(menu => {
-      expect(Array.isArray(menu.edges)).toBe(true);
-      menu.edges.forEach(({ node }) => {
-        expect(Array.isArray(node.menuItems.edges)).toBe(true);
-        node.menuItems.edges.forEach(({ node: item }) => {
-          expect(typeof item.label).toBe("string");
-          expect(typeof item.url === "string" || item.url === null).toBe(true);
-          expect(Array.isArray(item.childItems.edges)).toBe(true);
-        });
+    expect(Array.isArray(footer.edges)).toBe(true);
+    footer.edges.forEach(({ node }) => {
+      expect(Array.isArray(node.menuItems.edges)).toBe(true);
+      node.menuItems.edges.forEach(({ node: item }) => {
+        expect(typeof item.label).toBe("string");
+        expect(typeof item.url === "string" || item.url === null).toBe(true);
+        expect(Array.isArray(item.childItems.edges)).toBe(true);
+      });
+    });
+
+    expect(Array.isArray(social.edges)).toBe(true);
+    social.edges.forEach(({ node }) => {
+      expect(Array.isArray(node.menuItems.edges)).toBe(true);
+      node.menuItems.edges.forEach(({ node: item }) => {
+        expect(typeof item.label).toBe("string");
+        expect(typeof item.url === "string" || item.url === null).toBe(true);
       });
     });
   });
