@@ -13,13 +13,11 @@ import {
 } from "../../lib/getFunctions";
 import { isServer } from "../../lib/serverFunctions";
 
+import { toSiteRelativeUrl } from "../../lib/navUrl";
+
 const logo = "/static/assets/white_hec.png";
 const TAGLINE = "St. Louis' Home of Education Arts, and Culture";
-const toRelativeCtaUrl = url =>
-  url.replace(
-    /^https?:\/\/(?:www\.)?(?:hecmedia\.org|hectv\.org)(?=\/|$)/i,
-    ""
-  ) || "/";
+const toRelativeCtaUrl = url => toSiteRelativeUrl(url);
 
 export const getMenuItemEdges = connection => {
   const edges = (connection && connection.edges) || [];
@@ -259,8 +257,9 @@ export default class Header extends Component {
 
   getLink = link => {
     const { url, label, buttonClick } = link;
-    const cleanUrl = url && url.replace(/https?:\/\/[^/]+/, "");
-    const isRedirect = url && url.match(/^\/\//);
+    // Modern GraphQL returns absolute staging-wp/prod-wp hosts; keep routing local.
+    const cleanUrl = url ? toSiteRelativeUrl(url) : "/";
+    const isRedirect = url && String(url).match(/^\/\//);
     const actualLink = getHref(cleanUrl);
 
     if (buttonClick) {
@@ -326,7 +325,7 @@ export default class Header extends Component {
   getNavItem = link => {
     const { currentPage } = this.props;
     const { url, icon, label, iconPlacement, btnClass, toggle, onClick } = link;
-    const cleanUrl = url.replace(/https?:\/\/[^/]+/, "");
+    const cleanUrl = url ? toSiteRelativeUrl(url) : "/";
     const btnDisplay = btnClass || "btn-secondary";
     const clickFunction = toggle ? () => {} : onClick;
     const { open } = this.state;

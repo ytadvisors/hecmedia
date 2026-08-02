@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@apollo/react-hooks";
 import { GET_HOME_PAGE } from "../lib/graphql";
 import Layout from "../containers/Layout";
@@ -6,6 +6,11 @@ import ListOfPosts from "../components/ListOfPosts";
 import SEO from "../components/SEO";
 import { removeDuplicates } from "../lib/updateFunctions";
 import { getPostImgSrc, getExcerpt } from "../lib/getFunctions";
+import {
+  fetchPageAcfLayout,
+  hasFeedRowLayout,
+  resolveFeedDesign
+} from "../lib/homeFeedDesign";
 
 export default () => {
   const { data } = useQuery(GET_HOME_PAGE, {
@@ -18,8 +23,29 @@ export default () => {
     content,
     link,
     requiredPosts: { postList = [] } = {},
-    feedDesign
+    feedDesign: graphqlFeedDesign
   } = pageData || {};
+
+  // When GraphQL Page.feedDesign.newRowLayout is empty (staging resolver bug
+  // reading the wrong meta key), hydrate layout rows from public REST ACF so
+  // ListOfPosts can render Featured / 3 Columns / Wallpaper blocks.
+  const [restLayout, setRestLayout] = useState(null);
+  useEffect(() => {
+    if (hasFeedRowLayout(graphqlFeedDesign)) return undefined;
+    let cancelled = false;
+    fetchPageAcfLayout("home").then(result => {
+      if (!cancelled && result) setRestLayout(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [graphqlFeedDesign]);
+
+  const feedDesign = resolveFeedDesign(
+    graphqlFeedDesign,
+    restLayout && restLayout.feedDesign
+  );
+
   const description =
     content || "On Demand Arts, Culture & Education Programming";
 

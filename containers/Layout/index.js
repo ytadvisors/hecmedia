@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
@@ -7,6 +7,8 @@ import {
   GET_LAYOUT,
   GET_HEADER_MENU,
   GET_LEGACY_HEADER_MENU,
+  GET_FOOTER_MENU,
+  GET_SOCIAL_MENU,
   GET_LIVE_VIDEOS,
   GET_TOPBAR_CTAS,
   GET_HECTV_SITE_CONTENT,
@@ -16,16 +18,18 @@ import {
 import ProgramViewer from "../../components/ProgramViewer";
 import Header from "../../components/Header";
 import Banner from "../../components/Banner";
-import Footer from "../../components/Footer";
+import Footer, { getFooterMenuItemEdges } from "../../components/Footer";
 import BottomNav from "../../components/BottomNav/index";
 import { setPlayingLiveAction } from "../../store/actions/postActions";
 import {
+  DEFAULT_FOOTER_MENU_LINKS,
   getFallbackTopbarCtas,
   modernWpGraphqlEnabled,
   normalizeSiteContent,
   railPromoFromSiteContent,
   orderPostsByIds
 } from "../../lib/stagingCompatibility";
+import { fetchMenuBySlug } from "../../lib/wpMenuRest";
 
 import { BasicModal } from "../Modals";
 
@@ -33,6 +37,9 @@ export const Layout = props => {
   const { pageForm: { search: { values } = {} } = {}, dispatch } = props;
 
   const [currentlyPlaying, setPlaying] = useState(false);
+  // REST fallbacks when WPGraphQL hides unassigned menus (footer/social).
+  const [restFooter, setRestFooter] = useState(null);
+  const [restSocial, setRestSocial] = useState(null);
 
   const searchFunc = () => {
     if (values && values.search) {
@@ -58,6 +65,18 @@ export const Layout = props => {
 
   const headerQuery = modernCms ? GET_HEADER_MENU : GET_LEGACY_HEADER_MENU;
   const { data: headerData } = useQuery(headerQuery, {
+    notifyOnNetworkStatusChange: true,
+    errorPolicy: "all"
+  });
+
+  // Footer + social menus are dedicated queries (slug: footer / social) so the
+  // footer always loads from the WordPress Footer menu under the new GraphQL
+  // backend, independent of GET_LAYOUT spotlight data.
+  const { data: footerMenuData } = useQuery(GET_FOOTER_MENU, {
+    notifyOnNetworkStatusChange: true,
+    errorPolicy: "all"
+  });
+  const { data: socialMenuData } = useQuery(GET_SOCIAL_MENU, {
     notifyOnNetworkStatusChange: true,
     errorPolicy: "all"
   });
@@ -100,9 +119,62 @@ export const Layout = props => {
     notifyOnNetworkStatusChange: true
   });
 
-  const { social, footer, spotLight: { nodes: spotLightPosts = [] } = {} } =
-    data || {};
+  const { spotLight: { nodes: spotLightPosts = [] } = {} } = data || {};
   const header = (headerData && headerData.header) || (data && data.header);
+  // Prefer isolated footer/social menu queries; fall back to GET_LAYOUT fields
+  // only if an older shell still embeds them.
+  const graphqlFooter =
+    (footerMenuData && footerMenuData.footer) || (data && data.footer);
+  const graphqlSocial =
+    (socialMenuData && socialMenuData.social) || (data && data.social);
+
+  // When GraphQL returns no footer/social items (unassigned menus are private
+  // in WPGraphQL), load the classic menus via the public wp-api-menus REST API.
+  useEffect(() => {
+    let cancelled = false;
+    const graphqlHasFooter = getFooterMenuItemEdges(graphqlFooter).length > 0;
+    if (!graphqlHasFooter && !restFooter) {
+      fetchMenuBySlug("footer").then(shape => {
+        if (!cancelled && shape && getFooterMenuItemEdges(shape).length > 0) {
+          setRestFooter(shape);
+        }
+      });
+    }
+    const socialEdges =
+      graphqlSocial &&
+      Array.isArray(graphqlSocial.edges) &&
+      graphqlSocial.edges[0] &&
+      graphqlSocial.edges[0].node &&
+      graphqlSocial.edges[0].node.menuItems &&
+      Array.isArray(graphqlSocial.edges[0].node.menuItems.edges)
+        ? graphqlSocial.edges[0].node.menuItems.edges
+        : [];
+    if (socialEdges.length === 0 && !restSocial) {
+      fetchMenuBySlug("social").then(shape => {
+        if (!cancelled && shape && getFooterMenuItemEdges(shape).length > 0) {
+          setRestSocial(shape);
+        }
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [graphqlFooter, graphqlSocial]);
+
+  const footer =
+    getFooterMenuItemEdges(graphqlFooter).length > 0
+      ? graphqlFooter
+      : restFooter || graphqlFooter;
+  const social =
+    graphqlSocial &&
+    Array.isArray(graphqlSocial.edges) &&
+    graphqlSocial.edges[0] &&
+    graphqlSocial.edges[0].node &&
+    graphqlSocial.edges[0].node.menuItems &&
+    Array.isArray(graphqlSocial.edges[0].node.menuItems.edges) &&
+    graphqlSocial.edges[0].node.menuItems.edges.length > 0
+      ? graphqlSocial
+      : restSocial || graphqlSocial;
   const topbarCtas =
     (topbarData && topbarData.topbarCtas) || getFallbackTopbarCtas();
   const newestVideos =
@@ -151,10 +223,17 @@ export const Layout = props => {
         >
           {children}
           {showBottomNav && (
+            // "more from" rail: WP BottomNav menu (or CMS footerLinks fallback).
+            // Not the site Footer menu — that is only for <Footer /> below.
             <BottomNav title="more from" links={siteContent.footerLinks} />
           )}
         </ProgramViewer>
-        <Footer footer={footer} social={social} />
+        <Footer
+          footer={footer}
+          social={social}
+          // Site footer only: WordPress Appearance → Menus → Footer.
+          links={DEFAULT_FOOTER_MENU_LINKS}
+        />
         <BasicModal {...props} />
       </div>
     </>
