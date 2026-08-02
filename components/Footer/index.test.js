@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import Footer, { getFooterMenuItemEdges, normalizeFooterLinks } from "./index";
+import { restMenuToGraphqlShape } from "../../lib/wpMenuRest";
 
 const buildMenu = links => ({
   edges: [
@@ -90,6 +91,29 @@ describe("Footer", () => {
       "https://instagram.com/hectv",
       "https://facebook.com/hectv",
       "https://instagram.com/hectv"
+    ]);
+  });
+
+  it("preserves external social destinations from the REST fallback", () => {
+    const social = restMenuToGraphqlShape({
+      name: "Social",
+      slug: "social",
+      items: [
+        {
+          title: "Facebook",
+          url: "https://facebook.com/hectv",
+          object_slug: "hectv"
+        }
+      ]
+    });
+    const { container } = render(<Footer social={social} />);
+
+    const socialHrefs = Array.from(
+      container.querySelectorAll(".social-links a")
+    ).map(link => link.getAttribute("href"));
+    expect(socialHrefs).toEqual([
+      "https://facebook.com/hectv",
+      "https://facebook.com/hectv"
     ]);
   });
 });
