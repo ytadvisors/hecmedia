@@ -2,28 +2,82 @@ import React from "react";
 import _ from "lodash";
 import { getSocialMenuObject } from "../../lib/getFunctions";
 import SocialLinks from "../SocialLinks";
+import { menuNodeToRelativeUrl, toSiteRelativeUrl } from "../../lib/navUrl";
+
+/**
+ * Pull menu item edges from a menus(where: { slug }) connection.
+ * Shape: { edges: [ { node: { menuItems: { edges: [...] } } } ] }
+ */
+export const getFooterMenuItemEdges = footer => {
+  if (!footer || !Array.isArray(footer.edges) || footer.edges.length === 0) {
+    return [];
+  }
+  const first = footer.edges[0] || {};
+  const node = first.node || {};
+  const menuItems = node.menuItems || {};
+  const { edges } = menuItems;
+  return Array.isArray(edges) ? edges.filter(e => e && e.node) : [];
+};
+
+/**
+ * Normalize either GraphQL footer menu edges or simple {label,url} rows
+ * into [{ label, url }] for rendering.
+ */
+export const normalizeFooterLinks = (footerMenuEdges, fallbackLinks) => {
+  const fromMenu = (Array.isArray(footerMenuEdges) ? footerMenuEdges : [])
+    .map(edge => {
+      const node = edge && edge.node;
+      if (!node || !node.label) return null;
+      return {
+        label: String(node.label).trim(),
+        url: menuNodeToRelativeUrl(node)
+      };
+    })
+    .filter(Boolean);
+
+  if (fromMenu.length > 0) return fromMenu;
+
+  return (Array.isArray(fallbackLinks) ? fallbackLinks : [])
+    .filter(
+      link =>
+        link &&
+        typeof link.label === "string" &&
+        link.label.trim() &&
+        typeof link.url === "string" &&
+        link.url.trim()
+    )
+    .map(link => ({
+      label: link.label.trim(),
+      url: toSiteRelativeUrl(link.url)
+    }));
+};
 
 export default props => {
-  const { footer, social } = props;
-  const firstFooter =
-    footer && Array.isArray(footer.edges) ? footer.edges[0] || {} : {};
+  const { footer, social, links: fallbackLinks } = props;
+
+  // Primary source: WordPress menu slug "footer" via GraphQL.
+  const footerMenuEdges = getFooterMenuItemEdges(footer);
+  const footerLinks = normalizeFooterLinks(footerMenuEdges, fallbackLinks);
+
   const firstSocial =
     social && Array.isArray(social.edges) ? social.edges[0] || {} : {};
-  const { node: { menuItems: { edges: footerList = [] } = {} } = {} } = footer
-    ? firstFooter
-    : {};
   const { node: { menuItems: { edges: socialList = [] } = {} } = {} } = social
     ? firstSocial
     : {};
 
-  const links = _.chunk(footerList, footerList.length / 2);
-  const linkMap = links.map((obj, x) => ({
+  const columnSize = Math.max(1, Math.ceil(footerLinks.length / 2) || 1);
+  const columns = _.chunk(footerLinks, columnSize);
+  const linkMap = columns.map((obj, x) => ({
     id: x,
     obj
   }));
+
   const withoutTwitter = socialLinks =>
     socialLinks.filter(
-      socialLink => socialLink.label.toLowerCase() !== "twitter"
+      socialLink =>
+        socialLink &&
+        socialLink.label &&
+        socialLink.label.toLowerCase() !== "twitter"
     );
   const largeSocialLinks = withoutTwitter(
     getSocialMenuObject(socialList, 30, "white")
@@ -57,15 +111,11 @@ export default props => {
           {linkMap.map(pageLinks => (
             <div key={pageLinks.id} className="col-xs-6 col-sm-3 no-padding">
               <ul>
-                {pageLinks.obj.map(link => {
-                  const url = link.node.url.replace(/https?:\/\/[^/]+/, "");
-                  return (
-                    <li key={link.node.url}>
-                      {url === "/" && <a href={url}>{link.node.label}</a>}
-                      {url !== "/" && <a href={url}>{link.node.label}</a>}
-                    </li>
-                  );
-                })}
+                {pageLinks.obj.map(link => (
+                  <li key={`${link.label}:${link.url}`}>
+                    <a href={link.url}>{link.label}</a>
+                  </li>
+                ))}
               </ul>
             </div>
           ))}

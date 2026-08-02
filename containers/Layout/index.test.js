@@ -48,8 +48,27 @@ jest.mock("../../components/Banner", () => {
 });
 jest.mock("../../components/Footer", () => {
   const MockReact = require("react");
-  return () => MockReact.createElement("div");
+  // Layout imports getFooterMenuItemEdges (named) for GraphQL vs REST.
+  const getFooterMenuItemEdges = footer => {
+    if (!footer || !Array.isArray(footer.edges) || footer.edges.length === 0) {
+      return [];
+    }
+    const first = footer.edges[0] || {};
+    const node = first.node || {};
+    const menuItems = node.menuItems || {};
+    const { edges } = menuItems;
+    return Array.isArray(edges) ? edges.filter(e => e && e.node) : [];
+  };
+  return {
+    __esModule: true,
+    default: () => MockReact.createElement("div"),
+    getFooterMenuItemEdges
+  };
 });
+
+jest.mock("../../lib/wpMenuRest", () => ({
+  fetchMenuBySlug: jest.fn().mockResolvedValue(null)
+}));
 jest.mock("../../components/BottomNav", () => {
   const MockReact = require("react");
   return () => MockReact.createElement("div");
@@ -58,6 +77,13 @@ jest.mock("../Modals", () => {
   const MockReact = require("react");
   return { BasicModal: () => MockReact.createElement("div") };
 });
+
+/**
+ * Layout fires 9 useQuery hooks in this order:
+ * layout, header, footer, social, topbar, siteContent, newestVideos,
+ * curatedTrending, liveVideos.
+ */
+const emptyQuery = { data: undefined };
 
 describe("Layout", () => {
   beforeEach(() => {
@@ -76,17 +102,19 @@ describe("Layout", () => {
       .mockReturnValueOnce({
         data: { spotLight: { nodes: [{ title: "Spotlight only" }] } },
         loading: false
-      })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
+      }) // layout
+      .mockReturnValueOnce(emptyQuery) // header
+      .mockReturnValueOnce(emptyQuery) // footer
+      .mockReturnValueOnce(emptyQuery) // social
+      .mockReturnValueOnce(emptyQuery) // topbar
       .mockReturnValueOnce({
         data: { hectvSiteContent: { trendingPostIds: [1] } }
-      })
+      }) // siteContent
       .mockReturnValueOnce({ data: { newestVideos: { nodes: newestVideos } } })
       .mockReturnValueOnce({
         data: { curatedTrendingPosts: { nodes: featuredVideos } }
       })
-      .mockReturnValueOnce({ data: undefined });
+      .mockReturnValueOnce(emptyQuery); // liveVideos
 
     render(<Layout dispatch={jest.fn()} />);
 
@@ -102,13 +130,15 @@ describe("Layout", () => {
     ];
 
     useQuery
-      .mockReturnValueOnce({ data: {}, loading: false })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: { topbarCtas } })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined });
+      .mockReturnValueOnce({ data: {}, loading: false }) // layout
+      .mockReturnValueOnce(emptyQuery) // header
+      .mockReturnValueOnce(emptyQuery) // footer
+      .mockReturnValueOnce(emptyQuery) // social
+      .mockReturnValueOnce({ data: { topbarCtas } }) // topbar
+      .mockReturnValueOnce(emptyQuery) // siteContent
+      .mockReturnValueOnce(emptyQuery) // newest
+      .mockReturnValueOnce(emptyQuery) // curated
+      .mockReturnValueOnce(emptyQuery); // live
 
     render(<Layout dispatch={jest.fn()} />);
 
@@ -120,15 +150,17 @@ describe("Layout", () => {
   it("keeps the shell usable when the optional CTA query fails", () => {
     useQuery
       .mockReturnValueOnce({ data: {}, loading: false })
-      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce({
         data: undefined,
         error: new Error('Cannot query field "topbarCtas" on type "RootQuery".')
       })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined });
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery);
 
     render(<Layout dispatch={jest.fn()} />);
 
@@ -144,15 +176,17 @@ describe("Layout", () => {
 
     useQuery
       .mockReturnValueOnce({ data: {}, loading: false })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce({
         data: { newestVideos: { nodes: newestVideos } },
         loading: false
       })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined });
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery);
 
     render(<Layout dispatch={jest.fn()} />);
 
@@ -180,11 +214,13 @@ describe("Layout", () => {
     useQuery
       .mockReturnValueOnce({ data: { footer: {}, social: {} } })
       .mockReturnValueOnce({ data: { header } })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined });
+      .mockReturnValueOnce(emptyQuery) // footer menu
+      .mockReturnValueOnce(emptyQuery) // social menu
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery);
 
     render(<Layout dispatch={jest.fn()} />);
 
@@ -200,11 +236,13 @@ describe("Layout", () => {
           'Cannot query field "parentDatabaseId" on type "MenuItem".'
         )
       })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined });
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery);
 
     render(<Layout dispatch={jest.fn()} />);
 
@@ -232,11 +270,13 @@ describe("Layout", () => {
     useQuery
       .mockReturnValueOnce({ data: { footer: {}, social: {} } })
       .mockReturnValueOnce({ data: { header } })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined })
-      .mockReturnValueOnce({ data: undefined });
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery);
 
     try {
       render(<Layout dispatch={jest.fn()} />);

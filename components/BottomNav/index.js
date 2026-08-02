@@ -1,7 +1,16 @@
 import React from "react";
 import { graphql } from "react-apollo";
 import gql from "graphql-tag";
+import { menuNodeToRelativeUrl, toSiteRelativeUrl } from "../../lib/navUrl";
 
+/**
+ * "more from" rail above the site footer.
+ *
+ * Source: WordPress Appearance → Menus → **BottomNav** (slug: `bottomnav`).
+ * The site Footer columns use the separate **Footer** menu — do not mix them.
+ *
+ * Priority: explicit `links` prop → GraphQL bottomnav menu → empty (hide).
+ */
 export const BottomNav = ({ title, links, data: { bottomNav } = {} }) => {
   const firstBottomNav =
     bottomNav && Array.isArray(bottomNav.edges) ? bottomNav.edges[0] || {} : {};
@@ -12,12 +21,19 @@ export const BottomNav = ({ title, links, data: { bottomNav } = {} }) => {
     Array.isArray(links) && links.length > 0
       ? links.map(link => ({
           label: link.label,
-          url: link.url
+          url: toSiteRelativeUrl(link.url)
         }))
-      : bottomList.map(menu => ({
-          label: menu.node.label,
-          url: menu.node.url.replace(/https?:\/\/[^/]+/, "")
-        }));
+      : (Array.isArray(bottomList) ? bottomList : [])
+          .filter(menu => menu && menu.node)
+          .map(menu => ({
+            label: menu.node.label,
+            url: menuNodeToRelativeUrl(menu.node)
+          }));
+
+  if (!renderedLinks.length) {
+    return null;
+  }
+
   return (
     <section className="post-bottom-nav">
       <div className="row">
@@ -46,10 +62,12 @@ export const allNavs = gql`
               node {
                 label
                 url
+                path
                 childItems {
                   edges {
                     node {
                       url
+                      path
                       label
                     }
                   }

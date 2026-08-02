@@ -1,13 +1,16 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import Footer from "./index";
+import Footer, { getFooterMenuItemEdges, normalizeFooterLinks } from "./index";
+import { restMenuToGraphqlShape } from "../../lib/wpMenuRest";
 
 const buildMenu = links => ({
   edges: [
     {
       node: {
         menuItems: {
-          edges: links.map(({ url, label }) => ({ node: { url, label } }))
+          edges: links.map(({ url, label, path }) => ({
+            node: { url, label, path }
+          }))
         }
       }
     }
@@ -25,16 +28,51 @@ describe("Footer", () => {
     expect(screen.getByAltText("logo")).toBeInTheDocument();
   });
 
-  it("renders footer links from the WPGraphQL menu shape", () => {
+  it("renders footer links from the WPGraphQL footer menu", () => {
     const footer = buildMenu([
-      { url: "https://hectv.org/about", label: "About" },
-      { url: "https://hectv.org/contact", label: "Contact" }
+      { url: "https://staging-wp.hectv.org/about", label: "About" },
+      {
+        url: "https://staging-wp.hectv.org/contact",
+        path: "/contact/",
+        label: "Contact"
+      }
     ]);
 
     render(<Footer footer={footer} social={buildMenu([])} />);
 
     expect(screen.getByText("About")).toHaveAttribute("href", "/about");
-    expect(screen.getByText("Contact")).toHaveAttribute("href", "/contact");
+    expect(screen.getByText("Contact")).toHaveAttribute("href", "/contact/");
+  });
+
+  it("falls back to CMS footerLinks when the footer menu is empty", () => {
+    render(
+      <Footer
+        footer={{ edges: [] }}
+        links={[
+          { label: "Arts", url: "/category/arts" },
+          { label: "Education", url: "/category/education" }
+        ]}
+      />
+    );
+    expect(screen.getByText("Arts")).toHaveAttribute("href", "/category/arts");
+    expect(screen.getByText("Education")).toHaveAttribute(
+      "href",
+      "/category/education"
+    );
+  });
+
+  it("prefers the WordPress footer menu over CMS fallback links", () => {
+    const footer = buildMenu([
+      { url: "https://staging-wp.hectv.org/about", label: "About" }
+    ]);
+    render(
+      <Footer
+        footer={footer}
+        links={[{ label: "Arts", url: "/category/arts" }]}
+      />
+    );
+    expect(screen.getByText("About")).toBeInTheDocument();
+    expect(screen.queryByText("Arts")).not.toBeInTheDocument();
   });
 
   it("removes Twitter from both footer social groups", () => {
@@ -53,6 +91,55 @@ describe("Footer", () => {
       "https://instagram.com/hectv",
       "https://facebook.com/hectv",
       "https://instagram.com/hectv"
+    ]);
+  });
+
+  it("preserves external social destinations from the REST fallback", () => {
+    const social = restMenuToGraphqlShape({
+      name: "Social",
+      slug: "social",
+      items: [
+        {
+          title: "Facebook",
+          url: "https://facebook.com/hectv",
+          object_slug: "hectv"
+        }
+      ]
+    });
+    const { container } = render(<Footer social={social} />);
+
+    const socialHrefs = Array.from(
+      container.querySelectorAll(".social-links a")
+    ).map(link => link.getAttribute("href"));
+    expect(socialHrefs).toEqual([
+      "https://facebook.com/hectv",
+      "https://facebook.com/hectv"
+    ]);
+  });
+});
+
+describe("footer menu helpers", () => {
+  it("extracts edges from the menus(slug:footer) connection", () => {
+    const footer = buildMenu([
+      { label: "A", url: "https://staging-wp.hectv.org/a", path: "/a/" }
+    ]);
+    const edges = getFooterMenuItemEdges(footer);
+    expect(edges).toHaveLength(1);
+    expect(edges[0].node.label).toBe("A");
+  });
+
+  it("normalizeFooterLinks rewrites staging-wp hosts", () => {
+    const edges = [
+      {
+        node: {
+          label: "Arts",
+          url: "https://staging-wp.hectv.org/category/arts/",
+          path: "/category/arts/"
+        }
+      }
+    ];
+    expect(normalizeFooterLinks(edges, [])).toEqual([
+      { label: "Arts", url: "/category/arts/" }
     ]);
   });
 });
