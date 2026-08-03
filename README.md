@@ -18,11 +18,11 @@ Built and maintained by **[YT Advisors](https://ytadvisors.com)** for the HEC cl
 
 ## What this system is
 
-| Layer                                     | Role                                                                                  |
-| ----------------------------------------- | ------------------------------------------------------------------------------------- |
-| **This repo (`hecmedia`)**                | Next.js + Apollo GraphQL client — SSR/SSG pages, layout, players, forms               |
-| **WordPress CMS** (`ytadvisors/hectv-wp`) | Content of record — posts, ACF fields, menus, site settings, WPGraphQL API            |
-| **Deploy path**                           | Serverless Components (`@sls-next`) → Lambda@Edge + CloudFront + S3 (see `DEPLOY.md`) |
+| Layer | Role |
+|-------|------|
+| **This repo (`hecmedia`)** | Next.js + Apollo GraphQL client — SSR/SSG pages, layout, players, forms |
+| **WordPress CMS** (`ytadvisors/hectv-wp`) | Content of record — posts, ACF fields, menus, site settings, WPGraphQL API |
+| **Deploy path** | Serverless Components (`@sls-next`) → Lambda@Edge + CloudFront + S3 (see `DEPLOY.md`) |
 
 Editors work in WordPress; readers hit this app. The frontend does **not** own the content database.
 
@@ -48,16 +48,16 @@ Editors ──► WordPress / ACF / menus (hectv-wp)
 
 Key application areas:
 
-| Path                          | Purpose                                                                     |
-| ----------------------------- | --------------------------------------------------------------------------- |
-| `pages/`                      | Routes (home, posts, categories, events, search, magazine, newsletter, API) |
-| `components/`                 | Presentational UI (Header, Footer, Schedule, players, lists, forms, …)      |
-| `containers/`                 | Layout and composed containers                                              |
-| `lib/graphql.js`              | GraphQL operations (contract with the CMS)                                  |
-| `lib/getFunctions.js`         | Data-fetch helpers used by pages                                            |
-| `lib/stagingCompatibility.js` | Compatibility with modern WPGraphQL / staging CMS shapes                    |
-| `scripts/`                    | Smoke tests, staging deploy helpers, jury diversity check                   |
-| `tests/e2e/`                  | GraphQL and write-guarded e2e suites                                        |
+| Path | Purpose |
+|------|---------|
+| `pages/` | Routes (home, posts, categories, events, search, magazine, newsletter, API) |
+| `components/` | Presentational UI (Header, Footer, Schedule, players, lists, forms, …) |
+| `containers/` | Layout and composed containers |
+| `lib/graphql.js` | GraphQL operations (contract with the CMS) |
+| `lib/getFunctions.js` | Data-fetch helpers used by pages |
+| `lib/stagingCompatibility.js` | Compatibility with modern WPGraphQL / staging CMS shapes |
+| `scripts/` | Smoke tests, staging deploy helpers, jury diversity check |
+| `tests/e2e/` | GraphQL and write-guarded e2e suites |
 
 ---
 
@@ -98,18 +98,17 @@ yarn dev
 
 Set these in a **local, gitignored** file (e.g. `.env.local`) or your deploy secret mechanism. **Do not paste real values into the README, issues, or commits.**
 
-| Variable                     | Purpose                                                                    |
-| ---------------------------- | -------------------------------------------------------------------------- |
-| `APOLLO_CLIENT_URI`          | GraphQL HTTP endpoint (e.g. local or staging `…/graphql`)                  |
-| `WP_HOST` / `GATSBY_WP_HOST` | WordPress origin for media/API helpers                                     |
-| `HECMEDIA_MODERN_WPGRAPHQL`  | Toggle modern CMS contract compatibility                                   |
-| `HECMEDIA_NO_SEND_FORMS`     | Disable real form delivery in non-prod                                     |
-| `HECMEDIA_TOPBAR_CTAS_JSON`  | Optional top-bar CTA configuration                                         |
-| `RE_CAPTCHA_SITE_KEY`        | Public reCAPTCHA site key (WordPress owns verification)                    |
-| `HECTV_NEWSLETTER_ENDPOINT`  | Optional WordPress newsletter bridge URL; otherwise derived from `WP_HOST` |
-| `DEPLOY_SHA`                 | Optional build identity for deploy tooling                                 |
-| `SUBDOMAIN` / `DOMAIN`       | Deploy target hostname pieces (`serverless.yml`)                           |
-| `ACTIVE_ENV`                 | Optional selector for `.env.<name>` loading in `next.config.js`            |
+| Variable | Purpose |
+|----------|---------|
+| `APOLLO_CLIENT_URI` | GraphQL HTTP endpoint (e.g. local or staging `…/graphql`) |
+| `WP_HOST` / `GATSBY_WP_HOST` | WordPress origin for media/API helpers |
+| `HECMEDIA_MODERN_WPGRAPHQL` | Toggle modern CMS contract compatibility |
+| `HECMEDIA_NO_SEND_FORMS` | Disable real form delivery in non-prod |
+| `HECMEDIA_TOPBAR_CTAS_JSON` | Optional top-bar CTA configuration |
+| `RE_CAPTCHA_SITE_KEY` | Public reCAPTCHA site key (secret stays server-side only) |
+| `DEPLOY_SHA` | Optional build identity for deploy tooling |
+| `SUBDOMAIN` / `DOMAIN` | Deploy target hostname pieces (`serverless.yml`) |
+| `ACTIVE_ENV` | Optional selector for `.env.<name>` loading in `next.config.js` |
 
 See `.env.local.example` for the local Docker CMS pattern. Production and staging values live in the org’s secret store — never in git.
 
@@ -117,15 +116,15 @@ See `.env.local.example` for the local Docker CMS pattern. Production and stagin
 
 ## Scripts
 
-| Command                       | Purpose                         |
-| ----------------------------- | ------------------------------- |
-| `yarn dev`                    | Local Next server (`server.js`) |
-| `yarn build` / `yarn start`   | Production build / start        |
-| `yarn test`                   | Jest unit tests                 |
-| `yarn test:e2e`               | Jest e2e config                 |
-| `yarn test:acceptance`        | Playwright                      |
-| `yarn smoke`                  | Smoke script                    |
-| `yarn lint` / `yarn lint:fix` | ESLint                          |
+| Command | Purpose |
+|---------|---------|
+| `yarn dev` | Local Next server (`server.js`) |
+| `yarn build` / `yarn start` | Production build / start |
+| `yarn test` | Jest unit tests |
+| `yarn test:e2e` | Jest e2e config |
+| `yarn test:acceptance` | Playwright |
+| `yarn smoke` | Smoke script |
+| `yarn lint` / `yarn lint:fix` | ESLint |
 
 Deploy-related commands are described in **`DEPLOY.md`**. Treat production deploy as **explicit, human-approved** work only.
 
@@ -141,21 +140,21 @@ Deploy-related commands are described in **`DEPLOY.md`**. Treat production deplo
 
 ## Related repositories
 
-| Repo                                                            | Relationship                                                |
-| --------------------------------------------------------------- | ----------------------------------------------------------- |
-| [`ytadvisors/hectv-wp`](https://github.com/ytadvisors/hectv-wp) | Headless WordPress CMS + GraphQL API this app consumes      |
-| This app in production                                          | Served via CloudFront / Lambda@Edge (Serverless Components) |
+| Repo | Relationship |
+|------|----------------|
+| [`ytadvisors/hectv-wp`](https://github.com/ytadvisors/hectv-wp) | Headless WordPress CMS + GraphQL API this app consumes |
+| This app in production | Served via CloudFront / Lambda@Edge (Serverless Components) |
 
 ---
 
 ## Documentation in this repo
 
-| Doc                                              | Purpose                                                                |
-| ------------------------------------------------ | ---------------------------------------------------------------------- |
-| [`DEPLOY.md`](DEPLOY.md)                         | Deploy, rollback-by-redeploy, Next/serverless compatibility checkpoint |
-| [`.env.local.example`](.env.local.example)       | Local CMS pointer template (no secrets)                                |
-| [`NEWSLETTER-ADAPTER.md`](NEWSLETTER-ADAPTER.md) | Newsletter integration notes                                           |
-| [`MIXED_JURY.md`](MIXED_JURY.md) / jury scripts  | Review diversity process helpers                                       |
+| Doc | Purpose |
+|-----|---------|
+| [`DEPLOY.md`](DEPLOY.md) | Deploy, rollback-by-redeploy, Next/serverless compatibility checkpoint |
+| [`.env.local.example`](.env.local.example) | Local CMS pointer template (no secrets) |
+| [`NEWSLETTER-ADAPTER.md`](NEWSLETTER-ADAPTER.md) | Newsletter integration notes |
+| [`MIXED_JURY.md`](MIXED_JURY.md) / jury scripts | Review diversity process helpers |
 
 ---
 

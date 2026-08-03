@@ -14,11 +14,7 @@ export default () => (
     <Layout>
       <section className="newsletter-page newsletter-thank-you">
         <h1>Thank You</h1>
-        <p>
-          Check your inbox and confirm your email address to complete your HEC
-          Media subscription. If you&rsquo;re already subscribed, there&rsquo;s
-          nothing else to do.
-        </p>
+        <p>You&rsquo;re subscribed to HEC Media updates.</p>
         <a href="/">Return to the HEC Media home page</a>
       </section>
     </Layout>

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import validator from "validator";
 import Recaptcha from "react-recaptcha";
@@ -38,16 +38,8 @@ export default function NewsletterSignupForm({
   const [status, setStatus] = useState(STATUS.IDLE);
   const [serverError, setServerError] = useState(null);
   const [captchaToken, setCaptchaToken] = useState(null);
-  const captchaRef = useRef(null);
 
   const captchaAvailable = Boolean(captchaSiteKey);
-
-  const resetCaptcha = () => {
-    setCaptchaToken(null);
-    if (captchaRef.current && captchaRef.current.reset) {
-      captchaRef.current.reset();
-    }
-  };
 
   const handleChange = field => event => {
     const { value, type, checked } = event.target;
@@ -80,12 +72,10 @@ export default function NewsletterSignupForm({
       } else {
         setStatus(STATUS.ERROR);
         setServerError((result && result.error) || "Something went wrong.");
-        resetCaptcha();
       }
     } catch (err) {
       setStatus(STATUS.ERROR);
       setServerError("Something went wrong. Please try again.");
-      resetCaptcha();
     }
   };
 
@@ -93,7 +83,7 @@ export default function NewsletterSignupForm({
     return (
       <div className="newsletter-signup-form" data-testid="newsletter-success">
         <p className="success-message">
-          Thanks! Check your inbox to confirm your HEC Media subscription.
+          You&rsquo;re subscribed! Thanks for signing up for HEC Media updates.
         </p>
       </div>
     );
@@ -160,7 +150,6 @@ export default function NewsletterSignupForm({
       {captchaAvailable ? (
         <div className="field captcha-slot" data-testid="captcha-slot">
           <Recaptcha
-            ref={captchaRef}
             sitekey={captchaSiteKey}
             verifyCallback={setCaptchaToken}
             expiredCallback={() => setCaptchaToken(null)}

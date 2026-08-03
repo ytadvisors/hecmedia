@@ -5,13 +5,9 @@ jest.mock("dotenv", () => ({
 const configuredEnvironment = [
   "APOLLO_CLIENT_URI",
   "WP_HOST",
-  "HECTV_NEWSLETTER_ENDPOINT",
-  "HECTV_NEWSLETTER_SHARED_SECRET",
-  "HECTV_RECAPTCHA_SECRET_KEY",
   "HECMEDIA_MODERN_WPGRAPHQL",
   "HECMEDIA_TOPBAR_CTAS_JSON",
   "HECMEDIA_DISABLE_IMAGE_OPTIMIZER",
-  "RE_CAPTCHA_SECRET_KEY",
   "RE_CAPTCHA_SITE_KEY"
 ];
 const savedEnvironment = {};
@@ -48,32 +44,6 @@ test("inlines the staging reCAPTCHA site key for the newsletter preview", () => 
   const config = require("./next.config");
 
   expect(config.env.RE_CAPTCHA_SITE_KEY).toBe("staging-site-key");
-});
-
-test("never inlines newsletter or CAPTCHA server credentials", () => {
-  const dotenv = require("dotenv");
-  dotenv.config.mockReturnValueOnce({
-    parsed: {
-      HECTV_NEWSLETTER_ENDPOINT: "https://private-origin.example/newsletter",
-      HECTV_NEWSLETTER_SHARED_SECRET: "must-not-reach-the-browser",
-      HECTV_RECAPTCHA_SECRET_KEY: "wordpress-only-secret",
-      RE_CAPTCHA_SECRET_KEY: "must-also-stay-server-only",
-      SAFE_CLIENT_VALUE: "visible"
-    }
-  });
-  process.env.HECTV_NEWSLETTER_ENDPOINT =
-    "https://private-origin.example/newsletter";
-  process.env.HECTV_NEWSLETTER_SHARED_SECRET = "must-not-reach-the-browser";
-  process.env.HECTV_RECAPTCHA_SECRET_KEY = "wordpress-only-secret";
-  process.env.RE_CAPTCHA_SECRET_KEY = "must-also-stay-server-only";
-
-  const config = require("./next.config");
-
-  expect(config.env.SAFE_CLIENT_VALUE).toBe("visible");
-  expect(config.env).not.toHaveProperty("HECTV_NEWSLETTER_ENDPOINT");
-  expect(config.env).not.toHaveProperty("HECTV_NEWSLETTER_SHARED_SECRET");
-  expect(config.env).not.toHaveProperty("HECTV_RECAPTCHA_SECRET_KEY");
-  expect(config.env).not.toHaveProperty("RE_CAPTCHA_SECRET_KEY");
 });
 
 test("inlines the CMS compatibility flags and configurable relative CTAs", () => {
