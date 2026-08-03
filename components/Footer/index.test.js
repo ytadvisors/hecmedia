@@ -41,7 +41,26 @@ describe("Footer", () => {
     render(<Footer footer={footer} social={buildMenu([])} />);
 
     expect(screen.getByText("About")).toHaveAttribute("href", "/about");
-    expect(screen.getByText("Contact")).toHaveAttribute("href", "/contact/");
+    // Absolute url wins over path when both are present.
+    expect(screen.getByText("Contact")).toHaveAttribute("href", "/contact");
+  });
+
+  it("opens external footer destinations in a new tab and keeps site hosts in-app", () => {
+    const footer = buildMenu([
+      { url: "https://hecmedia.org/about-us", label: "About Us" },
+      { url: "https://partner.example/help", label: "Partner Help" }
+    ]);
+
+    render(<Footer footer={footer} social={buildMenu([])} />);
+
+    const about = screen.getByText("About Us");
+    expect(about).toHaveAttribute("href", "/about-us");
+    expect(about).not.toHaveAttribute("target", "_blank");
+
+    const partner = screen.getByText("Partner Help");
+    expect(partner).toHaveAttribute("href", "https://partner.example/help");
+    expect(partner).toHaveAttribute("target", "_blank");
+    expect(partner).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("falls back to CMS footerLinks when the footer menu is empty", () => {
@@ -139,7 +158,7 @@ describe("footer menu helpers", () => {
       }
     ];
     expect(normalizeFooterLinks(edges, [])).toEqual([
-      { label: "Arts", url: "/category/arts/" }
+      { label: "Arts", url: "/category/arts/", external: false }
     ]);
   });
 });

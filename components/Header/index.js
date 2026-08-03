@@ -13,11 +13,10 @@ import {
 } from "../../lib/getFunctions";
 import { isServer } from "../../lib/serverFunctions";
 
-import { toSiteRelativeUrl } from "../../lib/navUrl";
+import { resolveNavUrl } from "../../lib/navUrl";
 
 const logo = "/static/assets/white_hec.png";
 const TAGLINE = "St. Louis' Home of Education Arts, and Culture";
-const toRelativeCtaUrl = url => toSiteRelativeUrl(url);
 
 export const getMenuItemEdges = connection => {
   const edges = (connection && connection.edges) || [];
@@ -256,11 +255,12 @@ export default class Header extends Component {
   };
 
   getLink = link => {
-    const { url, label, buttonClick } = link;
-    // Modern GraphQL returns absolute staging-wp/prod-wp hosts; keep routing local.
-    const cleanUrl = url ? toSiteRelativeUrl(url) : "/";
-    const isRedirect = url && String(url).match(/^\/\//);
-    const actualLink = getHref(cleanUrl);
+    const { url, label, buttonClick, external } = link;
+    // hectv.org / hecmedia.org / WP hosts → path-only in-app; others external.
+    const resolved = resolveNavUrl(url);
+    const cleanUrl = resolved.href;
+    const isExternal = external === true || resolved.external;
+    const actualLink = isExternal ? "" : getHref(cleanUrl);
 
     if (buttonClick) {
       return (
@@ -275,7 +275,7 @@ export default class Header extends Component {
         />
       );
     }
-    if (isRedirect) {
+    if (isExternal) {
       return (
         <a
           aria-labelledby="redirect"
@@ -325,16 +325,18 @@ export default class Header extends Component {
   getNavItem = link => {
     const { currentPage } = this.props;
     const { url, icon, label, iconPlacement, btnClass, toggle, onClick } = link;
-    const cleanUrl = url ? toSiteRelativeUrl(url) : "/";
+    const resolved = resolveNavUrl(url);
+    const cleanUrl = resolved.href;
     const btnDisplay = btnClass || "btn-secondary";
     const clickFunction = toggle ? () => {} : onClick;
     const { open } = this.state;
+    const activeKey = resolved.external ? "" : cleanUrl.replace(/\//g, "");
 
     return open[url] ? (
       <NavWrap
         key={`${label} ${url}`}
         className={`${
-          currentPage === cleanUrl.replace(/\//g, "")
+          currentPage === activeKey
             ? `btn show ${btnDisplay}`
             : `btn  ${btnDisplay}`
         }`}
@@ -346,7 +348,7 @@ export default class Header extends Component {
       <NavWrap
         key={`${label} ${url}`}
         className={`${
-          currentPage === cleanUrl.replace(/\//g, "")
+          currentPage === activeKey
             ? `btn show ${btnDisplay}`
             : `btn  ${btnDisplay}`
         }`}
@@ -466,15 +468,24 @@ export default class Header extends Component {
                         className={`top-bar-actions top-bar-actions--${ctas.length}`}
                         aria-label="Featured actions"
                       >
-                        {ctas.map(cta => (
-                          <a
-                            key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
-                            className="top-bar-cta"
-                            href={toRelativeCtaUrl(cta.url)}
-                          >
-                            {cta.label}
-                          </a>
-                        ))}
+                        {ctas.map(cta => {
+                          const resolved = resolveNavUrl(cta.url);
+                          return (
+                            <a
+                              key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
+                              className="top-bar-cta"
+                              href={resolved.href}
+                              {...(resolved.external
+                                ? {
+                                    target: "_blank",
+                                    rel: "noopener noreferrer"
+                                  }
+                                : {})}
+                            >
+                              {cta.label}
+                            </a>
+                          );
+                        })}
                       </nav>
                     )}
                   </div>

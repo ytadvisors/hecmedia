@@ -51,6 +51,53 @@ describe("Header (primary navigation)", () => {
     expect(programsLink).toHaveFocus();
   });
 
+  it("routes hectv.org / hecmedia.org menu items in-app by path only", () => {
+    const header = buildMenu([
+      { url: "https://hectv.org/programs", label: "Programs" },
+      {
+        url: "https://hecmedia.org/posts/hec-on-youtube",
+        label: "HEC on YouTube"
+      }
+    ]);
+
+    render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    expect(screen.getByText("Programs").closest("a")).toHaveAttribute(
+      "href",
+      "/programs"
+    );
+    expect(screen.getByText("HEC on YouTube").closest("a")).toHaveAttribute(
+      "href",
+      "/posts/hec-on-youtube"
+    );
+    expect(screen.getByText("HEC on YouTube").closest("a")).not.toHaveAttribute(
+      "target",
+      "_blank"
+    );
+  });
+
+  it("opens non-site menu destinations externally", () => {
+    const header = buildMenu([
+      { url: "https://example.org/partner-page", label: "Partner" },
+      { url: "https://facebook.com/hectv", label: "FB Page" }
+    ]);
+
+    render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    const partner = screen.getByText("Partner").closest("a");
+    expect(partner).toHaveAttribute("href", "https://example.org/partner-page");
+    expect(partner).toHaveAttribute("target", "_blank");
+    expect(partner).toHaveAttribute("rel", "noopener noreferrer");
+
+    const fb = screen.getByText("FB Page").closest("a");
+    expect(fb).toHaveAttribute("href", "https://facebook.com/hectv");
+    expect(fb).toHaveAttribute("target", "_blank");
+  });
+
   it("renders the modern root menuItems connection", () => {
     const header = {
       edges: buildMenuItems([
