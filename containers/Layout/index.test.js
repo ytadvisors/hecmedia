@@ -118,7 +118,12 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // topbar option fallback
       .mockReturnValueOnce(emptyQuery) // hec site settings
       .mockReturnValueOnce({
-        data: { hectvSiteContent: { trendingPostIds: [1] } }
+        data: {
+          hectvSiteContent: {
+            trendingPostIds: [1],
+            mobileRailFirst: true
+          }
+        }
       }) // siteContent
       .mockReturnValueOnce({ data: { newestVideos: { nodes: newestVideos } } })
       .mockReturnValueOnce({
@@ -126,7 +131,7 @@ describe("Layout", () => {
       })
       .mockReturnValueOnce(emptyQuery); // liveVideos
 
-    render(<Layout dispatch={jest.fn()} railFirstOnMobile />);
+    render(<Layout dispatch={jest.fn()} />);
 
     expect(screen.getByTestId("program-viewer")).toHaveTextContent(
       "Editor's choice, Newest video"
