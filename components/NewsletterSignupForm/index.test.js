@@ -2,10 +2,13 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import NewsletterSignupForm from "./index";
 
+const mockResetCaptcha = jest.fn();
+
 jest.mock("react-recaptcha", () => {
   const MockReact = require("react");
-  return ({ verifyCallback }) =>
-    MockReact.createElement(
+  return MockReact.forwardRef(({ verifyCallback }, ref) => {
+    MockReact.useImperativeHandle(ref, () => ({ reset: mockResetCaptcha }));
+    return MockReact.createElement(
       "button",
       {
         type: "button",
@@ -13,6 +16,7 @@ jest.mock("react-recaptcha", () => {
       },
       "Complete spam verification"
     );
+  });
 });
 
 function fillValidForm() {
@@ -35,6 +39,10 @@ function completeCaptcha() {
 }
 
 describe("NewsletterSignupForm", () => {
+  beforeEach(() => {
+    mockResetCaptcha.mockClear();
+  });
+
   it("shows the captcha-unavailable notice when no site key is configured", () => {
     render(<NewsletterSignupForm onSubscribe={jest.fn()} />);
     expect(screen.getByTestId("captcha-unavailable")).toBeInTheDocument();
@@ -135,6 +143,7 @@ describe("NewsletterSignupForm", () => {
     expect(await screen.findByTestId("form-error")).toHaveTextContent(
       "Subscribe failed"
     );
+    expect(mockResetCaptcha).toHaveBeenCalledTimes(1);
   });
 
   it("shows an error state when onSubscribe rejects", async () => {
@@ -151,6 +160,7 @@ describe("NewsletterSignupForm", () => {
     fireEvent.click(screen.getByRole("button", { name: /subscribe/i }));
 
     expect(await screen.findByTestId("form-error")).toBeInTheDocument();
+    expect(mockResetCaptcha).toHaveBeenCalledTimes(1);
   });
 
   it("does not submit until spam verification is complete", () => {
