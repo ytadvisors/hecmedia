@@ -322,6 +322,42 @@ describe("Header (primary navigation)", () => {
     );
   });
 
+  it("opens HEADER_ACTIONS Support (PayPal) externally and keeps Subscribe in-app", () => {
+    // Mirrors Appearance → Menus → Header Actions custom links:
+    // Subscribe → staging-wp.hectv.org/newsletter (internal)
+    // Support   → www.paypal.com/donate/... (external)
+    render(
+      <Header
+        searchFunc={() => {}}
+        topbarCtas={[
+          {
+            label: "Subscribe",
+            url: "https://staging-wp.hectv.org/newsletter",
+            style: "primary"
+          },
+          {
+            label: "Support",
+            url:
+              "https://www.paypal.com/donate/?hosted_button_id=2ZRCZT5RZERRC",
+            style: "secondary"
+          }
+        ]}
+      />
+    );
+
+    const subscribe = screen.getByRole("link", { name: "Subscribe" });
+    expect(subscribe).toHaveAttribute("href", "/newsletter");
+    expect(subscribe).not.toHaveAttribute("target", "_blank");
+
+    const support = screen.getByRole("link", { name: "Support" });
+    expect(support).toHaveAttribute(
+      "href",
+      "https://www.paypal.com/donate/?hosted_button_id=2ZRCZT5RZERRC"
+    );
+    expect(support).toHaveAttribute("target", "_blank");
+    expect(support).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
   it("drops CTA rows with a missing or empty label or URL", () => {
     const topbarCtas = [
       { label: "Watch Live", url: " /live " },

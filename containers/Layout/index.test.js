@@ -140,8 +140,11 @@ describe("Layout", () => {
         {
           node: {
             label: "Support",
-            path: "/donate",
-            url: "https://staging-wp.hectv.org/donate",
+            // Live menu: external PayPal (must not collapse to /support).
+            path:
+              "https://www.paypal.com/donate/?hosted_button_id=2ZRCZT5RZERRC",
+            url:
+              "https://www.paypal.com/donate/?hosted_button_id=2ZRCZT5RZERRC",
             cssClasses: ["secondary"],
             parentDatabaseId: 0
           }
@@ -157,9 +160,13 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: { headerActions } }) // header actions menu
       .mockReturnValueOnce({
         data: {
-          topbarCtas: [{ label: "Stale", url: "/stale", style: "primary" }]
+          // Stale option used to force Support → /support; menu must win.
+          topbarCtas: [
+            { label: "Subscribe", url: "/newsletter", style: "primary" },
+            { label: "Support", url: "/support", style: "secondary" }
+          ]
         }
-      }) // option must not win over menu
+      })
       .mockReturnValueOnce(emptyQuery) // hec site settings
       .mockReturnValueOnce(emptyQuery) // siteContent
       .mockReturnValueOnce(emptyQuery) // newest
@@ -169,7 +176,7 @@ describe("Layout", () => {
     render(<Layout dispatch={jest.fn()} />);
 
     expect(screen.getByTestId("header")).toHaveTextContent(
-      "Subscribe:/newsletter, Support:/donate"
+      "Subscribe:/newsletter, Support:https://www.paypal.com/donate/?hosted_button_id=2ZRCZT5RZERRC"
     );
   });
 
