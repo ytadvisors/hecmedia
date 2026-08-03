@@ -21,6 +21,7 @@ export default class extends Component {
       trendingMaxVideos,
       railPromo,
       spotlightTitle = "Spotlight STL",
+      railFirstOnMobile = false,
       children
     } = this.props;
     return (
@@ -29,14 +30,18 @@ export default class extends Component {
           className="container no-padding program-viewer-container"
           style={style}
         >
-          <div className="row">
+          <div
+            className={`row program-viewer-row${
+              railFirstOnMobile ? " program-viewer-row--rail-first-mobile" : ""
+            }`}
+          >
             <div className="col-lg-9 no-padding list-container program-viewer-main">
               <div className="clearfix">{children}</div>
             </div>
             <div className="col-lg-3 no-padding program-viewer-rail">
               <SideNavigation railPromo={railPromo}>
                 <div className="row">
-                  <div className="col-lg-12 no-padding">
+                  <div className="col-lg-12 no-padding program-viewer-trending">
                     <TrendingNow
                       featuredVideos={featuredVideos}
                       newestVideos={newestVideos}
@@ -45,7 +50,7 @@ export default class extends Component {
                       error={trendingNowError}
                     />
                   </div>
-                  <div className="col-lg-12 no-padding">
+                  <div className="col-lg-12 no-padding program-viewer-spotlight">
                     <ListOfFeaturedPosts
                       title={spotlightTitle}
                       titleHref={null}

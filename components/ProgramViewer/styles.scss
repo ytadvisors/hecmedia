@@ -13,3 +13,33 @@
     }
   }
 }
+
+@media (max-width: 991px) {
+  .program-viewer-row--rail-first-mobile {
+    display: flex;
+    flex-direction: column;
+
+    .program-viewer-rail,
+    .side-navigation,
+    .side-navigation > .row {
+      display: contents;
+    }
+
+    .rail-promo {
+      order: 1;
+    }
+
+    .program-viewer-trending {
+      order: 2;
+    }
+
+    .program-viewer-main {
+      order: 3;
+      width: 100%;
+    }
+
+    .program-viewer-spotlight {
+      order: 4;
+    }
+  }
+}

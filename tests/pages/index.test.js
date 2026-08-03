@@ -20,8 +20,15 @@ jest.mock("../../lib/homeFeedDesign", () => {
 // feed from GET_HOME_PAGE, so Layout is stubbed to isolate that.
 jest.mock("../../containers/Layout", () => {
   const MockReact = require("react");
-  return ({ children }) =>
-    MockReact.createElement("div", { "data-testid": "layout" }, children);
+  return ({ children, railFirstOnMobile }) =>
+    MockReact.createElement(
+      "div",
+      {
+        "data-testid": "layout",
+        "data-rail-first-mobile": railFirstOnMobile ? "true" : "false"
+      },
+      children
+    );
 });
 
 jest.mock("../../components/ListOfPosts", () => {
@@ -72,6 +79,10 @@ describe("Homepage (pages/index.js)", () => {
     render(<HomePage />);
 
     expect(screen.getByTestId("layout")).toBeInTheDocument();
+    expect(screen.getByTestId("layout")).toHaveAttribute(
+      "data-rail-first-mobile",
+      "true"
+    );
     expect(screen.getByTestId("list-of-posts")).toHaveTextContent("2 posts");
     expect(screen.getByTestId("list-of-posts")).toHaveAttribute(
       "data-row-count",

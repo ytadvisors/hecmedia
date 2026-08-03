@@ -292,9 +292,16 @@
       display: block;
 
       .main-col {
+        background: transparent;
+        border-radius: 0;
         display: block;
         margin-bottom: 12px;
         width: 100%;
+      }
+
+      .main-col .blog-excerpt .category-info {
+        overflow-wrap: anywhere;
+        word-break: normal;
       }
 
       .thumbnail-2-columns,

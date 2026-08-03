@@ -243,7 +243,13 @@ export const Layout = props => {
     ? hecSiteSettingsLoading
     : newestVideosLoading;
   const trendingNowError = useCmsTrending ? undefined : newestVideosError;
-  const { children, showBottomNav, absContent, style } = props;
+  const {
+    children,
+    showBottomNav,
+    absContent,
+    style,
+    railFirstOnMobile
+  } = props;
   const { liveVideos } = videos || [];
   let liveVideo = {};
   if (liveVideos && liveVideos.edges.length > 0) {
@@ -275,6 +281,7 @@ export const Layout = props => {
           trendingMaxVideos={maxVideos}
           railPromo={railPromoFromSiteContent(siteContent)}
           spotlightTitle={siteContent.spotlightTitle}
+          railFirstOnMobile={railFirstOnMobile}
         >
           {children}
           {showBottomNav && (

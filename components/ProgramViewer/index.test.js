@@ -7,7 +7,7 @@ jest.mock("@apollo/react-hooks", () => ({
 }));
 
 describe("ProgramViewer", () => {
-  it("places page content before Trending Now and Spotlight on mobile", () => {
+  it("keeps page content before the rail by default", () => {
     render(
       <ProgramViewer>
         <div>content</div>
@@ -36,5 +36,29 @@ describe("ProgramViewer", () => {
     expect(rail).toBeInTheDocument();
     expect(main.nextElementSibling).toBe(rail);
     expect(main.closest(".program-viewer")).toHaveClass("program-viewer");
+  });
+
+  it("marks feed pages to prioritize rail content around the feed on mobile", () => {
+    render(
+      <ProgramViewer
+        railFirstOnMobile
+        railPromo={{
+          url: "/educators",
+          alt: "For Educators",
+          image: { sourceUrl: "/for-educators.jpg" }
+        }}
+      >
+        <div>feed</div>
+      </ProgramViewer>
+    );
+
+    expect(
+      screen.getByRole("img", { name: "For Educators" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Trending Now")).toBeInTheDocument();
+    expect(screen.getByText("Spotlight STL")).toBeInTheDocument();
+    expect(screen.getByText("feed").closest(".program-viewer-row")).toHaveClass(
+      "program-viewer-row--rail-first-mobile"
+    );
   });
 });
