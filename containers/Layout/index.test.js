@@ -14,10 +14,18 @@ jest.mock("../../routes", () => ({
 
 jest.mock("../../components/ProgramViewer", () => {
   const MockReact = require("react");
-  return ({ featuredVideos = [], newestVideos = [], trendingNowError }) =>
+  return ({
+    featuredVideos = [],
+    newestVideos = [],
+    trendingNowError,
+    railFirstOnMobile
+  }) =>
     MockReact.createElement(
       "div",
-      { "data-testid": "program-viewer" },
+      {
+        "data-testid": "program-viewer",
+        "data-rail-first-mobile": railFirstOnMobile ? "true" : "false"
+      },
       trendingNowError
         ? "Trending stories are unavailable right now."
         : featuredVideos
@@ -110,7 +118,12 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // topbar option fallback
       .mockReturnValueOnce(emptyQuery) // hec site settings
       .mockReturnValueOnce({
-        data: { hectvSiteContent: { trendingPostIds: [1] } }
+        data: {
+          hectvSiteContent: {
+            trendingPostIds: [1],
+            mobileRailFirst: true
+          }
+        }
       }) // siteContent
       .mockReturnValueOnce({ data: { newestVideos: { nodes: newestVideos } } })
       .mockReturnValueOnce({
@@ -122,6 +135,10 @@ describe("Layout", () => {
 
     expect(screen.getByTestId("program-viewer")).toHaveTextContent(
       "Editor's choice, Newest video"
+    );
+    expect(screen.getByTestId("program-viewer")).toHaveAttribute(
+      "data-rail-first-mobile",
+      "true"
     );
   });
 

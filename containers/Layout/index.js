@@ -101,7 +101,8 @@ export const Layout = props => {
   });
 
   // Settings → HEC Site Settings: maxVideos, For Educators logo/url/label,
-  // and server-capped trendingPosts. Isolated so missing fields cannot blank shell.
+  // and server-capped trendingPosts. The legacy-compatible presentation query
+  // also carries the editor-controlled mobile rail ordering flag.
   const {
     data: hecSiteSettingsData,
     loading: hecSiteSettingsLoading
@@ -275,6 +276,7 @@ export const Layout = props => {
           trendingMaxVideos={maxVideos}
           railPromo={railPromoFromSiteContent(siteContent)}
           spotlightTitle={siteContent.spotlightTitle}
+          railFirstOnMobile={siteContent.mobileRailFirst}
         >
           {children}
           {showBottomNav && (
