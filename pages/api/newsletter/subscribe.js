@@ -1,25 +1,43 @@
 import validator from "validator";
 import { getNewsletterAdapter } from "../../../lib/newsletter/adapter";
 import formsAreNoSend from "../../../lib/noSend";
-import {
-  captchaIsConfigured,
-  verifyCaptcha
-} from "../../../lib/newsletter/captcha";
 
 function validate(body) {
   const errors = {};
-  const { firstName, lastName, email, consent } = body || {};
+  const { firstName, lastName, email, consent, captchaToken } = body || {};
 
-  if (!firstName || !`${firstName}`.trim()) errors.firstName = "Required";
-  if (!lastName || !`${lastName}`.trim()) errors.lastName = "Required";
-  if (!email || !validator.isEmail(`${email}`))
+  if (
+    typeof firstName !== "string" ||
+    !firstName.trim() ||
+    firstName.trim().length > 100
+  )
+    errors.firstName = "Required";
+  if (
+    typeof lastName !== "string" ||
+    !lastName.trim() ||
+    lastName.trim().length > 100
+  )
+    errors.lastName = "Required";
+  if (
+    typeof email !== "string" ||
+    email.length > 254 ||
+    !validator.isEmail(email)
+  )
     errors.email = "Invalid email address";
   if (consent !== true) errors.consent = "Consent is required to subscribe";
+  if (
+    typeof captchaToken !== "string" ||
+    captchaToken.length < 10 ||
+    captchaToken.length > 4096
+  )
+    errors.captchaToken = "Spam verification failed";
 
   return errors;
 }
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     res.status(405).json({ ok: false, error: "Method not allowed" });
@@ -51,45 +69,20 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!captchaIsConfigured()) {
-    res.status(503).json({
-      ok: false,
-      error: "Newsletter signup is not configured."
-    });
-    return;
-  }
-
-  if (!req.body.captchaToken || typeof req.body.captchaToken !== "string") {
-    res.status(400).json({
-      ok: false,
-      errors: { captchaToken: "Spam verification failed" }
-    });
-    return;
-  }
-
-  const captchaValid = await verifyCaptcha(
-    req.body.captchaToken,
-    req.headers && req.headers["x-forwarded-for"]
-  );
-  if (!captchaValid) {
-    res.status(400).json({
-      ok: false,
-      errors: { captchaToken: "Spam verification failed" }
-    });
-    return;
-  }
-
-  const { firstName, lastName, email, consent } = req.body;
+  const { firstName, lastName, email, consent, captchaToken } = req.body;
 
   try {
+    // WordPress owns CAPTCHA verification because its ECS runtime can keep the
+    // secret out of the legacy Lambda@Edge build artifact.
     const result = await adapter.subscribe({
-      firstName,
-      lastName,
-      email,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim().toLowerCase(),
       consent,
+      captchaToken,
       source: "newsletter-page"
     });
-    res.status(result.ok ? 200 : 502).json(result);
+    res.status(result.ok ? 202 : 502).json(result);
   } catch (err) {
     res.status(502).json({ ok: false, error: "Subscribe failed" });
   }

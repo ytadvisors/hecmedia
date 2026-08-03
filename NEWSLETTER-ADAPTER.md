@@ -1,73 +1,80 @@
-# Newsletter signup — adapter contract
+# Newsletter signup — WordPress/Mailchimp adapter
 
-**Task:** #68050 (Feature D) | **Parent:** #68047
-**Status:** safely gated. No ESP or durable review queue is connected, so the
-page and API do not accept signups or claim that a subscription was saved.
+The public `/newsletter` page submits to the same-origin Next.js endpoint at
+`/api/newsletter/subscribe`. The API validates the visitor payload, fails closed
+when forms are disabled, and forwards the browser reCAPTCHA token to the owned
+WordPress bridge.
 
-## What exists today
-
-- `pages/newsletter/index.js` — standalone signup page (`/newsletter`), not
-  the pre-existing `NewsLetter`/`NewsLetterForm` overlay widget.
-- `components/NewsletterSignupForm/index.js` — first name, last name, email,
-  a required consent checkbox, and a real reCAPTCHA widget when enabled.
-- `pages/api/newsletter/subscribe.js` — server-side validation, then calls
-  `getNewsletterAdapter()` from `lib/newsletter/adapter.js`.
-- `lib/newsletter/adapter.js` — the adapter contract currently resolves to an
-  unavailable adapter. It returns a non-success result until an ESP or durable
-  review-queue adapter is provisioned.
-
-## The contract a real adapter must satisfy
-
-```js
-subscribe({ email, firstName, lastName, consent, source }) =>
-  Promise<{ ok: true, id: string } | { ok: false, error: string }>
+```text
+browser -> /api/newsletter/subscribe
+        -> WordPress /wp-json/hectv/v1/newsletter/subscribe -> reCAPTCHA
+        -> Mailchimp for WordPress -> Newsletter Master
 ```
 
-- Resolve (don't throw) for expected ESP outcomes — invalid address rejected
-  by the ESP, duplicate subscriber, list-full, ESP outage — via
-  `{ ok: false, error }`. Only throw for programmer error (e.g. missing
-  config), which the API route already turns into a 502.
-- `getNewsletterAdapter()` is the single selection point. A real adapter must
-  set `isAvailable=true` and must never accept submissions when
-  `formsAreNoSend()` (`lib/noSend.js`) is true.
+WordPress owns both credentialed operations: reCAPTCHA verification and the
+Mailchimp write. This is intentional. The legacy HEC Media Lambda@Edge runtime
+cannot receive request-time secrets, so no CAPTCHA or Mailchimp credential may
+be placed in the frontend environment or JavaScript build artifact.
 
-## What's needed to wire a real adapter later
+Mailchimp sends a double-opt-in confirmation. The page therefore says to check
+the inbox instead of claiming that an accepted address is already subscribed.
 
-1. **ESP choice from Jayne/Dennis** — Mailchimp, ConvertKit, MailerLite, or
-   Constant Contact. `containers/NewsLetterContainer.js` has a commented-out
-   `addToMailchimp` call suggesting Mailchimp was the original assumption,
-   but nothing is confirmed or connected today.
-2. **Credentials, once an ESP is chosen** (illustrative — exact names depend
-   on the ESP picked):
-   - Mailchimp: API key, server prefix (e.g. `us21`), audience/list ID.
-   - ConvertKit: API key/secret, form ID.
-   - MailerLite / Constant Contact: API key, group/list ID.
-3. **Where secrets would live** — production Lambda env vars via
-   `serverless.yml` (same mechanism as `APOLLO_CLIENT_URI` today), never
-   committed to the repo. Staging must keep using the mock adapter even
-   after production credentials exist, per `STAGING_AUTOMATION.md`.
-4. **Double vs. single opt-in** — a client decision that changes whether
-   `subscribe()` returns immediately-subscribed or pending-confirmation.
+## Adapter contract
 
-## Exposure and CAPTCHA policy
+```js
+subscribe({ email, firstName, lastName, consent, captchaToken, source }) =>
+  Promise<
+    | { ok: true, status: "accepted" }
+    | { ok: false, error: string }
+  >
+```
 
-The public page is gated when `HECMEDIA_NO_SEND_FORMS=true` or no
-`RE_CAPTCHA_SITE_KEY` is available. The API separately rejects no-send and
-unavailable-adapter requests before it processes personal information. Once a
-durable adapter is added, production must provide `RE_CAPTCHA_SECRET_KEY`; the
-API verifies the submitted token with Google and fails closed on missing,
-invalid, or unverifiable CAPTCHA. The site key alone is not enough to expose
-the form safely.
+Expected provider failures resolve to a generic non-success result. Upstream
+errors and credentials are never returned to the browser. WordPress returns the
+same `accepted` response for new, pending, and subscribed addresses so the API
+cannot be used to enumerate the audience.
+
+The adapter is available only when both of these are true:
+
+- `HECMEDIA_NO_SEND_FORMS` is not `true`;
+- the WordPress endpoint is configured directly or derivable from `WP_HOST`.
+
+## Runtime configuration
+
+| Variable                    | Visibility           | Purpose                                |
+| --------------------------- | -------------------- | -------------------------------------- |
+| `RE_CAPTCHA_SITE_KEY`       | public               | Renders the browser CAPTCHA            |
+| `HECTV_NEWSLETTER_ENDPOINT` | server route         | Optional explicit WordPress REST URL   |
+| `WP_HOST`                   | existing app config  | Derives the default WordPress REST URL |
+| `HECMEDIA_NO_SEND_FORMS`    | build/runtime safety | Disables every durable form write      |
+
+The reCAPTCHA secret is `HECTV_RECAPTCHA_SECRET_KEY` in the WordPress production
+secret, not this application. `next.config.js` also blocks known server-only
+newsletter and CAPTCHA variable names from its legacy local-environment spread.
+
+## Deployment order
+
+1. Add the reCAPTCHA secret to the approved WordPress production secret.
+2. Deploy the coordinated `hectv-wp` endpoint first; it fails closed without
+   that secret.
+3. Verify WordPress sees exactly one `Newsletter Master` Mailchimp audience.
+4. Deploy this adapter with the public reCAPTCHA site key.
+5. Submit one approved test address and verify the pending double-opt-in state.
+
+Do not run the legacy `yarn deploy` path while `DEPLOY.md` carries the Next 12
+Lambda@Edge compatibility block. Publishing remains a separately authorized
+deployment step.
 
 ## Testing
 
-- `lib/newsletter/adapter.test.js` — unavailable adapter never reports a
-  durable subscription.
-- `pages/api/newsletter/subscribe.test.js` — method, no-send/unavailable
-  adapter, validation, and CAPTCHA abuse-control handling.
-- `components/NewsletterSignupForm/index.test.js` — field validation,
-  loading/success/error states, and both captcha-availability branches.
-- `pages/newsletter/index.test.js` — page composition (Layout + form).
+- `lib/newsletter/adapter.test.js` verifies configuration, no-send isolation,
+  exact request forwarding, non-enumerating response mapping, and provider-error
+  containment.
+- `tests/pages/api/newsletter/subscribe.test.js` verifies validation, no-send,
+  normalization, CAPTCHA-token forwarding, and adapter ordering.
+- `components/NewsletterSignupForm/index.test.js` verifies browser validation
+  and interaction states.
+- `tests/acceptance/mock-parity.spec.js` intercepts the subscription request so
+  acceptance testing never creates a subscriber.
 
-Run `yarn test` — no network access required; everything above is unit-level
-against the mock adapter.
+Run `yarn test`; no test contacts WordPress, Google, or Mailchimp.

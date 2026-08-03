@@ -6,13 +6,27 @@ const { parsed: localEnv } = require("dotenv").config({
   path: envFile
 });
 
+const serverOnlyEnvironment = [
+  "HECTV_NEWSLETTER_ENDPOINT",
+  "HECTV_NEWSLETTER_SHARED_SECRET",
+  "HECTV_RECAPTCHA_SECRET_KEY",
+  "RE_CAPTCHA_SECRET_KEY"
+];
+const clientLocalEnv = Object.keys(localEnv || {}).reduce(
+  (values, name) =>
+    serverOnlyEnvironment.includes(name)
+      ? values
+      : { ...values, [name]: localEnv[name] },
+  {}
+);
+
 const disableImageOptimizer =
   process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER === "true";
 
 const config = {
   ...(disableImageOptimizer ? { images: { loader: "akamai", path: "" } } : {}),
   env: {
-    ...localEnv,
+    ...clientLocalEnv,
     DEPLOY_SHA: process.env.DEPLOY_SHA,
     APOLLO_CLIENT_URI: process.env.APOLLO_CLIENT_URI,
     WP_HOST: process.env.WP_HOST,
