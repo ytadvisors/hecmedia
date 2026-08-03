@@ -10,7 +10,9 @@ import {
   GET_FOOTER_MENU,
   GET_SOCIAL_MENU,
   GET_LIVE_VIDEOS,
+  GET_HEADER_ACTIONS_MENU,
   GET_TOPBAR_CTAS,
+  GET_HEC_SITE_SETTINGS,
   GET_HECTV_SITE_CONTENT,
   GET_CURATED_TRENDING_POSTS,
   GET_NEWEST_VIDEOS
@@ -23,11 +25,13 @@ import BottomNav from "../../components/BottomNav/index";
 import { setPlayingLiveAction } from "../../store/actions/postActions";
 import {
   DEFAULT_FOOTER_MENU_LINKS,
+  DEFAULT_TRENDING_MAX_VIDEOS,
   getFallbackTopbarCtas,
   modernWpGraphqlEnabled,
-  normalizeSiteContent,
+  mergeHecSiteChrome,
   railPromoFromSiteContent,
-  orderPostsByIds
+  orderPostsByIds,
+  topbarCtasFromHeaderActionsMenu
 } from "../../lib/stagingCompatibility";
 import { fetchMenuBySlug } from "../../lib/wpMenuRest";
 
@@ -81,35 +85,65 @@ export const Layout = props => {
     errorPolicy: "all"
   });
 
-  // This custom WordPress field deploys independently. Keeping it in a
-  // separate operation means an unavailable field cannot blank the shell.
+  // Subscribe / Support: prefer Appearance → Menus → Header Actions
+  // (GraphQL location HEADER_ACTIONS). Isolated so missing location enums on
+  // older schemas cannot blank the shell.
+  const { data: headerActionsData } = useQuery(GET_HEADER_ACTIONS_MENU, {
+    notifyOnNetworkStatusChange: true,
+    errorPolicy: "all",
+    skip: !modernCms
+  });
+
+  // Optional option-backed CTA field — fallback when the menu is empty/unassigned.
   const { data: topbarData } = useQuery(GET_TOPBAR_CTAS, {
     notifyOnNetworkStatusChange: true,
     errorPolicy: "all"
   });
 
+  // Settings → HEC Site Settings: maxVideos, For Educators logo/url/label,
+  // and server-capped trendingPosts. Isolated so missing fields cannot blank shell.
+  const {
+    data: hecSiteSettingsData,
+    loading: hecSiteSettingsLoading
+  } = useQuery(GET_HEC_SITE_SETTINGS, {
+    notifyOnNetworkStatusChange: true,
+    errorPolicy: "all",
+    skip: !modernCms
+  });
+
+  // Legacy staging blob: spotlight title, footer rail links, optional IDs.
   const { data: siteContentData } = useQuery(GET_HECTV_SITE_CONTENT, {
     notifyOnNetworkStatusChange: true,
     errorPolicy: "all"
   });
-  const siteContent = normalizeSiteContent(
+  const siteContent = mergeHecSiteChrome(
+    hecSiteSettingsData,
     siteContentData && siteContentData.hectvSiteContent
   );
+  const maxVideos = siteContent.maxVideos || DEFAULT_TRENDING_MAX_VIDEOS;
 
-  // Editorial curation comes from hectvSiteContent.trendingPostIds. The
-  // newest-video feed remains the fallback, and both stay independent from
-  // the shell query so an older CMS schema cannot blank the page.
+  // CMS trendingPosts already respects maxVideos server-side. When present,
+  // use them for Trending Now; otherwise fill from newest video posts.
+  const cmsTrendingPosts =
+    (hecSiteSettingsData &&
+      Array.isArray(hecSiteSettingsData.trendingPosts) &&
+      hecSiteSettingsData.trendingPosts) ||
+    [];
+  const useCmsTrending = modernCms && cmsTrendingPosts.length > 0;
+
   const {
     data: newestVideosData,
     loading: newestVideosLoading,
     error: newestVideosError
   } = useQuery(GET_NEWEST_VIDEOS, {
+    variables: { first: maxVideos },
+    skip: useCmsTrending,
     notifyOnNetworkStatusChange: true
   });
 
   const { data: curatedTrendingData } = useQuery(GET_CURATED_TRENDING_POSTS, {
-    variables: { ids: siteContent.trendingPostIds },
-    skip: siteContent.trendingPostIds.length === 0,
+    variables: { ids: siteContent.trendingPostIds, first: maxVideos },
+    skip: useCmsTrending || siteContent.trendingPostIds.length === 0,
     notifyOnNetworkStatusChange: true,
     errorPolicy: "all"
   });
@@ -175,20 +209,40 @@ export const Layout = props => {
     graphqlSocial.edges[0].node.menuItems.edges.length > 0
       ? graphqlSocial
       : restSocial || graphqlSocial;
-  const topbarCtas =
-    (topbarData && topbarData.topbarCtas) || getFallbackTopbarCtas();
-  const newestVideos =
-    (newestVideosData &&
-      newestVideosData.newestVideos &&
-      newestVideosData.newestVideos.nodes) ||
-    [];
-  const curatedTrendingPosts = orderPostsByIds(
-    curatedTrendingData &&
-      curatedTrendingData.curatedTrendingPosts &&
-      curatedTrendingData.curatedTrendingPosts.nodes,
-    siteContent.trendingPostIds
+  const menuTopbarCtas = topbarCtasFromHeaderActionsMenu(
+    headerActionsData && headerActionsData.headerActions
   );
+  const optionTopbarCtas =
+    topbarData && Array.isArray(topbarData.topbarCtas)
+      ? topbarData.topbarCtas
+      : [];
+  // Source order: WP Header Actions menu → topbarCtas option → env/static fallback.
+  let topbarCtas = getFallbackTopbarCtas();
+  if (menuTopbarCtas.length > 0) {
+    topbarCtas = menuTopbarCtas;
+  } else if (optionTopbarCtas.length > 0) {
+    topbarCtas = optionTopbarCtas;
+  }
+  const newestVideos = useCmsTrending
+    ? cmsTrendingPosts
+    : (newestVideosData &&
+        newestVideosData.newestVideos &&
+        newestVideosData.newestVideos.nodes) ||
+      [];
+  const curatedTrendingPosts = useCmsTrending
+    ? []
+    : orderPostsByIds(
+        curatedTrendingData &&
+          curatedTrendingData.curatedTrendingPosts &&
+          curatedTrendingData.curatedTrendingPosts.nodes,
+        siteContent.trendingPostIds,
+        maxVideos
+      );
   const featuredVideos = curatedTrendingPosts;
+  const trendingNowLoading = useCmsTrending
+    ? hecSiteSettingsLoading
+    : newestVideosLoading;
+  const trendingNowError = useCmsTrending ? undefined : newestVideosError;
   const { children, showBottomNav, absContent, style } = props;
   const { liveVideos } = videos || [];
   let liveVideo = {};
@@ -216,8 +270,9 @@ export const Layout = props => {
           spotLightPosts={spotLightPosts}
           featuredVideos={featuredVideos}
           newestVideos={newestVideos}
-          trendingNowLoading={newestVideosLoading}
-          trendingNowError={newestVideosError}
+          trendingNowLoading={trendingNowLoading}
+          trendingNowError={trendingNowError}
+          trendingMaxVideos={maxVideos}
           railPromo={railPromoFromSiteContent(siteContent)}
           spotlightTitle={siteContent.spotlightTitle}
         >

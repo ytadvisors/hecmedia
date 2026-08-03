@@ -1,10 +1,9 @@
 /**
  * Read-only contracts for the modern HEC-owned content controls.
  *
- * The public staging origin intentionally blocks the retired
- * /wp-json/hectv/v1/site-options endpoint. Runtime presentation settings now
- * come from hectvSiteContent, while Trending Now uses its trendingPostIds and
- * the standard newest-post fallback.
+ * Settings → HEC Site Settings is exposed as RootQuery.forEducators +
+ * trendingSettings + trendingPosts. Legacy hectvSiteContent remains a fallback
+ * for spotlight title / footer rail links.
  */
 
 const fetch = require("isomorphic-unfetch");
@@ -25,8 +24,36 @@ async function gql(query) {
   return res.json();
 }
 
+describeModernCms("GraphQL: HEC Site Settings", () => {
+  it("returns maxVideos and For Educators logo/url/label from site settings", async () => {
+    const result = await gql(`{
+      trendingSettings { maxVideos }
+      forEducators {
+        label
+        url
+        image { sourceUrl mediaItemUrl altText }
+      }
+      trendingPosts { title link databaseId }
+    }`);
+
+    expect(result.errors).toBeUndefined();
+    expect(typeof result.data.trendingSettings.maxVideos).toBe("number");
+    expect(result.data.trendingSettings.maxVideos).toBeGreaterThan(0);
+    expect(result.data.forEducators.label).not.toBe("");
+    expect(result.data.forEducators.url).not.toBe("");
+    expect(
+      result.data.forEducators.image.sourceUrl ||
+        result.data.forEducators.image.mediaItemUrl
+    ).toBeTruthy();
+    expect(Array.isArray(result.data.trendingPosts)).toBe(true);
+    expect(result.data.trendingPosts.length).toBeLessThanOrEqual(
+      result.data.trendingSettings.maxVideos
+    );
+  });
+});
+
 describeModernCms("GraphQL: hectvSiteContent", () => {
-  it("returns the presentation settings used by the current layout", async () => {
+  it("returns legacy presentation settings used as layout fallback", async () => {
     const result = await gql(`{
       hectvSiteContent {
         forEducators { imageUrl destinationUrl }

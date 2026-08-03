@@ -1,10 +1,21 @@
 import React from "react";
 import { DEFAULT_RAIL_PROMO } from "../../lib/stagingCompatibility";
-import getPublicMediaUrl from "../../lib/mediaUrl";
 
+/**
+ * Resolve a display URL for the For Educators rail logo.
+ *
+ * GraphQL (RootQuery.forEducators.image.sourceUrl) already returns:
+ *  - S3/CDN URLs when Media Offload has synced the attachment
+ *  - staging-wp / WP host upload URLs when the file is local-only
+ *
+ * Never force a blind rewrite of public WP upload URLs onto the S3 bucket:
+ * freshly selected logos may not be offloaded yet, and that produced an empty
+ * broken image (browser alt text "For Educators") despite a valid GraphQL link.
+ * Only remap private LAN hosts (localhost / Tailscale) onto WP_HOST.
+ */
 export const getPublicRailPromoUrl = sourceUrl => {
   const publicWordPressHost = process.env.WP_HOST;
-  if (!sourceUrl || !publicWordPressHost) return sourceUrl;
+  if (!sourceUrl) return sourceUrl;
 
   try {
     const source = new URL(sourceUrl);
@@ -12,12 +23,18 @@ export const getPublicRailPromoUrl = sourceUrl => {
       source.hostname === "localhost" ||
       source.hostname === "127.0.0.1" ||
       source.hostname.endsWith(".ts.net");
-    if (!isPrivateWordPressHost) return getPublicMediaUrl(sourceUrl);
+
+    if (!isPrivateWordPressHost) {
+      // Public host (staging-wp, S3, CDN) — trust GraphQL as returned.
+      return sourceUrl;
+    }
+
+    if (!publicWordPressHost) return sourceUrl;
 
     const publicHost = new URL(publicWordPressHost);
-    return getPublicMediaUrl(
-      `${publicHost.origin}${source.pathname}${source.search}`
-    );
+    // Private origin only: surface the same path on the public WP host.
+    // Do not chain into S3 rewrite — local-only uploads 403 there.
+    return `${publicHost.origin}${source.pathname}${source.search}${source.hash}`;
   } catch (error) {
     return sourceUrl;
   }

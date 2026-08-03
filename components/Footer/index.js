@@ -2,7 +2,7 @@ import React from "react";
 import _ from "lodash";
 import { getSocialMenuObject } from "../../lib/getFunctions";
 import SocialLinks from "../SocialLinks";
-import { menuNodeToRelativeUrl, toSiteRelativeUrl } from "../../lib/navUrl";
+import { menuNodeToNavUrl, resolveNavUrl } from "../../lib/navUrl";
 
 /**
  * Pull menu item edges from a menus(where: { slug }) connection.
@@ -21,16 +21,18 @@ export const getFooterMenuItemEdges = footer => {
 
 /**
  * Normalize either GraphQL footer menu edges or simple {label,url} rows
- * into [{ label, url }] for rendering.
+ * into [{ label, url, external }] for rendering.
  */
 export const normalizeFooterLinks = (footerMenuEdges, fallbackLinks) => {
   const fromMenu = (Array.isArray(footerMenuEdges) ? footerMenuEdges : [])
     .map(edge => {
       const node = edge && edge.node;
       if (!node || !node.label) return null;
+      const { href, external } = menuNodeToNavUrl(node);
       return {
         label: String(node.label).trim(),
-        url: menuNodeToRelativeUrl(node)
+        url: href,
+        external
       };
     })
     .filter(Boolean);
@@ -46,10 +48,14 @@ export const normalizeFooterLinks = (footerMenuEdges, fallbackLinks) => {
         typeof link.url === "string" &&
         link.url.trim()
     )
-    .map(link => ({
-      label: link.label.trim(),
-      url: toSiteRelativeUrl(link.url)
-    }));
+    .map(link => {
+      const { href, external } = resolveNavUrl(link.url);
+      return {
+        label: link.label.trim(),
+        url: href,
+        external
+      };
+    });
 };
 
 export default props => {
@@ -113,7 +119,14 @@ export default props => {
               <ul>
                 {pageLinks.obj.map(link => (
                   <li key={`${link.label}:${link.url}`}>
-                    <a href={link.url}>{link.label}</a>
+                    <a
+                      href={link.url}
+                      {...(link.external
+                        ? { target: "_blank", rel: "noopener noreferrer" }
+                        : {})}
+                    >
+                      {link.label}
+                    </a>
                   </li>
                 ))}
               </ul>

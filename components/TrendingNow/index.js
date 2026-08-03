@@ -3,8 +3,14 @@ import toTrendingNowItems from "../../lib/trendingNow";
 
 const fallbackThumbnail = "/static/assets/spotlight-img.jpg";
 
-const TrendingNow = ({ featuredVideos, newestVideos, loading, error }) => {
-  const items = toTrendingNowItems(featuredVideos, newestVideos);
+const TrendingNow = ({
+  featuredVideos,
+  newestVideos,
+  maxItems,
+  loading,
+  error
+}) => {
+  const items = toTrendingNowItems(featuredVideos, newestVideos, maxItems);
 
   return (
     <section className="trending-now" aria-labelledby="trending-now-title">

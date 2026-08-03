@@ -1,7 +1,7 @@
 import React from "react";
 import { graphql } from "react-apollo";
 import gql from "graphql-tag";
-import { menuNodeToRelativeUrl, toSiteRelativeUrl } from "../../lib/navUrl";
+import { menuNodeToNavUrl, resolveNavUrl } from "../../lib/navUrl";
 
 /**
  * "more from" rail above the site footer.
@@ -19,16 +19,24 @@ export const BottomNav = ({ title, links, data: { bottomNav } = {} }) => {
   } = firstBottomNav;
   const renderedLinks =
     Array.isArray(links) && links.length > 0
-      ? links.map(link => ({
-          label: link.label,
-          url: toSiteRelativeUrl(link.url)
-        }))
+      ? links.map(link => {
+          const { href, external } = resolveNavUrl(link.url);
+          return {
+            label: link.label,
+            url: href,
+            external
+          };
+        })
       : (Array.isArray(bottomList) ? bottomList : [])
           .filter(menu => menu && menu.node)
-          .map(menu => ({
-            label: menu.node.label,
-            url: menuNodeToRelativeUrl(menu.node)
-          }));
+          .map(menu => {
+            const { href, external } = menuNodeToNavUrl(menu.node);
+            return {
+              label: menu.node.label,
+              url: href,
+              external
+            };
+          });
 
   if (!renderedLinks.length) {
     return null;
@@ -42,7 +50,14 @@ export const BottomNav = ({ title, links, data: { bottomNav } = {} }) => {
             <li className="title">{title}</li>
             {renderedLinks.map(link => (
               <li key={`${link.label}:${link.url}`}>
-                <a href={link.url}>{link.label}</a>
+                <a
+                  href={link.url}
+                  {...(link.external
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
+                >
+                  {link.label}
+                </a>
               </li>
             ))}
           </ul>

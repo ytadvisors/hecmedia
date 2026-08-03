@@ -51,6 +51,53 @@ describe("Header (primary navigation)", () => {
     expect(programsLink).toHaveFocus();
   });
 
+  it("routes hectv.org / hecmedia.org menu items in-app by path only", () => {
+    const header = buildMenu([
+      { url: "https://hectv.org/programs", label: "Programs" },
+      {
+        url: "https://hecmedia.org/posts/hec-on-youtube",
+        label: "HEC on YouTube"
+      }
+    ]);
+
+    render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    expect(screen.getByText("Programs").closest("a")).toHaveAttribute(
+      "href",
+      "/programs"
+    );
+    expect(screen.getByText("HEC on YouTube").closest("a")).toHaveAttribute(
+      "href",
+      "/posts/hec-on-youtube"
+    );
+    expect(screen.getByText("HEC on YouTube").closest("a")).not.toHaveAttribute(
+      "target",
+      "_blank"
+    );
+  });
+
+  it("opens non-site menu destinations externally", () => {
+    const header = buildMenu([
+      { url: "https://example.org/partner-page", label: "Partner" },
+      { url: "https://facebook.com/hectv", label: "FB Page" }
+    ]);
+
+    render(
+      <Header searchFunc={() => {}} header={header} social={buildMenu([])} />
+    );
+
+    const partner = screen.getByText("Partner").closest("a");
+    expect(partner).toHaveAttribute("href", "https://example.org/partner-page");
+    expect(partner).toHaveAttribute("target", "_blank");
+    expect(partner).toHaveAttribute("rel", "noopener noreferrer");
+
+    const fb = screen.getByText("FB Page").closest("a");
+    expect(fb).toHaveAttribute("href", "https://facebook.com/hectv");
+    expect(fb).toHaveAttribute("target", "_blank");
+  });
+
   it("renders the modern root menuItems connection", () => {
     const header = {
       edges: buildMenuItems([
@@ -273,6 +320,42 @@ describe("Header (primary navigation)", () => {
       "href",
       "/support"
     );
+  });
+
+  it("opens HEADER_ACTIONS Support (PayPal) externally and keeps Subscribe in-app", () => {
+    // Mirrors Appearance → Menus → Header Actions custom links:
+    // Subscribe → staging-wp.hectv.org/newsletter (internal)
+    // Support   → www.paypal.com/donate/... (external)
+    render(
+      <Header
+        searchFunc={() => {}}
+        topbarCtas={[
+          {
+            label: "Subscribe",
+            url: "https://staging-wp.hectv.org/newsletter",
+            style: "primary"
+          },
+          {
+            label: "Support",
+            url:
+              "https://www.paypal.com/donate/?hosted_button_id=2ZRCZT5RZERRC",
+            style: "secondary"
+          }
+        ]}
+      />
+    );
+
+    const subscribe = screen.getByRole("link", { name: "Subscribe" });
+    expect(subscribe).toHaveAttribute("href", "/newsletter");
+    expect(subscribe).not.toHaveAttribute("target", "_blank");
+
+    const support = screen.getByRole("link", { name: "Support" });
+    expect(support).toHaveAttribute(
+      "href",
+      "https://www.paypal.com/donate/?hosted_button_id=2ZRCZT5RZERRC"
+    );
+    expect(support).toHaveAttribute("target", "_blank");
+    expect(support).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("drops CTA rows with a missing or empty label or URL", () => {

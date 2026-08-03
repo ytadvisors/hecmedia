@@ -5,6 +5,8 @@ import {
   GET_FOOTER_MENU,
   GET_SOCIAL_MENU,
   GET_HEADER_MENU,
+  GET_HEADER_ACTIONS_MENU,
+  GET_HEC_SITE_SETTINGS,
   GET_NEWEST_VIDEOS,
   GET_SCHEDULE,
   GET_PAGE_TEMPLATE
@@ -101,6 +103,46 @@ describeModernCms("HeaderMenu (containers/Layout/index.js)", () => {
       expect(typeof item.parentDatabaseId).toBe("number");
       expect(Array.isArray(item.childItems.edges)).toBe(true);
     });
+  });
+
+  it("returns Header Actions (Subscribe/Support) for the top-bar CTAs", async () => {
+    const result = await executeQuery(GET_HEADER_ACTIONS_MENU, undefined);
+
+    expect(result.errors).toBeUndefined();
+    const { headerActions } = result.data;
+    expect(Array.isArray(headerActions.edges)).toBe(true);
+    expect(headerActions.edges.length).toBeGreaterThan(0);
+    headerActions.edges.forEach(({ node: item }) => {
+      expect(typeof item.label).toBe("string");
+      expect(
+        typeof item.path === "string" || typeof item.url === "string"
+      ).toBe(true);
+    });
+    const labels = headerActions.edges.map(({ node }) =>
+      String(node.label).toLowerCase()
+    );
+    expect(labels.some(l => l.includes("subscribe"))).toBe(true);
+    expect(labels.some(l => l.includes("support"))).toBe(true);
+  });
+
+  it("returns HEC Site Settings for maxVideos and For Educators chrome", async () => {
+    const result = await executeQuery(GET_HEC_SITE_SETTINGS, undefined);
+
+    expect(result.errors).toBeUndefined();
+    const { trendingSettings, forEducators, trendingPosts } = result.data;
+    expect(typeof trendingSettings.maxVideos).toBe("number");
+    expect(trendingSettings.maxVideos).toBeGreaterThan(0);
+    expect(typeof forEducators.label).toBe("string");
+    expect(typeof forEducators.url).toBe("string");
+    expect(forEducators.image).toBeTruthy();
+    expect(
+      typeof forEducators.image.sourceUrl === "string" ||
+        typeof forEducators.image.mediaItemUrl === "string"
+    ).toBe(true);
+    expect(Array.isArray(trendingPosts)).toBe(true);
+    expect(trendingPosts.length).toBeLessThanOrEqual(
+      trendingSettings.maxVideos
+    );
   });
 });
 
