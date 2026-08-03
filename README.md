@@ -8,7 +8,7 @@ Built and maintained by **[YT Advisors](https://ytadvisors.com)** for the HEC cl
 
 ## Temporary public visibility
 
-> **This repository is temporarily public** so HEC stakeholders can review engineering work and so it can appear in a professional portfolio during job search.
+> **This repository is temporarily public** so HEC stakeholders can review engineering work.
 >
 > It will return to **private** when that review window closes. Do not treat this clone as a long-term open-source product.
 >
