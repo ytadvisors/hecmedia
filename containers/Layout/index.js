@@ -10,6 +10,7 @@ import {
   GET_FOOTER_MENU,
   GET_SOCIAL_MENU,
   GET_LIVE_VIDEOS,
+  GET_HEADER_ACTIONS_MENU,
   GET_TOPBAR_CTAS,
   GET_HECTV_SITE_CONTENT,
   GET_CURATED_TRENDING_POSTS,
@@ -27,7 +28,8 @@ import {
   modernWpGraphqlEnabled,
   normalizeSiteContent,
   railPromoFromSiteContent,
-  orderPostsByIds
+  orderPostsByIds,
+  topbarCtasFromHeaderActionsMenu
 } from "../../lib/stagingCompatibility";
 import { fetchMenuBySlug } from "../../lib/wpMenuRest";
 
@@ -81,8 +83,16 @@ export const Layout = props => {
     errorPolicy: "all"
   });
 
-  // This custom WordPress field deploys independently. Keeping it in a
-  // separate operation means an unavailable field cannot blank the shell.
+  // Subscribe / Support: prefer Appearance → Menus → Header Actions
+  // (GraphQL location HEADER_ACTIONS). Isolated so missing location enums on
+  // older schemas cannot blank the shell.
+  const { data: headerActionsData } = useQuery(GET_HEADER_ACTIONS_MENU, {
+    notifyOnNetworkStatusChange: true,
+    errorPolicy: "all",
+    skip: !modernCms
+  });
+
+  // Optional option-backed CTA field — fallback when the menu is empty/unassigned.
   const { data: topbarData } = useQuery(GET_TOPBAR_CTAS, {
     notifyOnNetworkStatusChange: true,
     errorPolicy: "all"
@@ -175,8 +185,20 @@ export const Layout = props => {
     graphqlSocial.edges[0].node.menuItems.edges.length > 0
       ? graphqlSocial
       : restSocial || graphqlSocial;
-  const topbarCtas =
-    (topbarData && topbarData.topbarCtas) || getFallbackTopbarCtas();
+  const menuTopbarCtas = topbarCtasFromHeaderActionsMenu(
+    headerActionsData && headerActionsData.headerActions
+  );
+  const optionTopbarCtas =
+    topbarData && Array.isArray(topbarData.topbarCtas)
+      ? topbarData.topbarCtas
+      : [];
+  // Source order: WP Header Actions menu → topbarCtas option → env/static fallback.
+  let topbarCtas = getFallbackTopbarCtas();
+  if (menuTopbarCtas.length > 0) {
+    topbarCtas = menuTopbarCtas;
+  } else if (optionTopbarCtas.length > 0) {
+    topbarCtas = optionTopbarCtas;
+  }
   const newestVideos =
     (newestVideosData &&
       newestVideosData.newestVideos &&

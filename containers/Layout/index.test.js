@@ -106,7 +106,8 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // header
       .mockReturnValueOnce(emptyQuery) // footer
       .mockReturnValueOnce(emptyQuery) // social
-      .mockReturnValueOnce(emptyQuery) // topbar
+      .mockReturnValueOnce(emptyQuery) // header actions menu
+      .mockReturnValueOnce(emptyQuery) // topbar option fallback
       .mockReturnValueOnce({
         data: { hectvSiteContent: { trendingPostIds: [1] } }
       }) // siteContent
@@ -123,7 +124,54 @@ describe("Layout", () => {
     );
   });
 
-  it("passes top-bar CTA rows from the layout query to Header", () => {
+  it("passes Subscribe/Support CTAs from the HEADER_ACTIONS menu to Header", () => {
+    const headerActions = {
+      edges: [
+        {
+          node: {
+            label: "Subscribe",
+            path: "/newsletter",
+            url: "https://staging-wp.hectv.org/newsletter",
+            cssClasses: ["primary"],
+            parentDatabaseId: 0
+          }
+        },
+        {
+          node: {
+            label: "Support",
+            path: "/donate",
+            url: "https://staging-wp.hectv.org/donate",
+            cssClasses: ["secondary"],
+            parentDatabaseId: 0
+          }
+        }
+      ]
+    };
+
+    useQuery
+      .mockReturnValueOnce({ data: {}, loading: false }) // layout
+      .mockReturnValueOnce(emptyQuery) // header
+      .mockReturnValueOnce(emptyQuery) // footer
+      .mockReturnValueOnce(emptyQuery) // social
+      .mockReturnValueOnce({ data: { headerActions } }) // header actions menu
+      .mockReturnValueOnce({
+        data: {
+          topbarCtas: [{ label: "Stale", url: "/stale", style: "primary" }]
+        }
+      }) // option must not win over menu
+      .mockReturnValueOnce(emptyQuery) // siteContent
+      .mockReturnValueOnce(emptyQuery) // newest
+      .mockReturnValueOnce(emptyQuery) // curated
+      .mockReturnValueOnce(emptyQuery); // live
+
+    render(<Layout dispatch={jest.fn()} />);
+
+    expect(screen.getByTestId("header")).toHaveTextContent(
+      "Subscribe:/newsletter, Support:/donate"
+    );
+  });
+
+  it("falls back to topbarCtas option when the Header Actions menu is empty", () => {
     const topbarCtas = [
       { label: "Watch Live", url: "/live", style: "primary" },
       { label: "Donate", url: "/donate", style: "secondary" }
@@ -134,7 +182,8 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // header
       .mockReturnValueOnce(emptyQuery) // footer
       .mockReturnValueOnce(emptyQuery) // social
-      .mockReturnValueOnce({ data: { topbarCtas } }) // topbar
+      .mockReturnValueOnce({ data: { headerActions: { edges: [] } } }) // empty menu
+      .mockReturnValueOnce({ data: { topbarCtas } }) // topbar option
       .mockReturnValueOnce(emptyQuery) // siteContent
       .mockReturnValueOnce(emptyQuery) // newest
       .mockReturnValueOnce(emptyQuery) // curated
@@ -147,12 +196,18 @@ describe("Layout", () => {
     );
   });
 
-  it("keeps the shell usable when the optional CTA query fails", () => {
+  it("keeps the shell usable when menu and optional CTA queries fail", () => {
     useQuery
       .mockReturnValueOnce({ data: {}, loading: false })
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce({
+        data: undefined,
+        error: new Error(
+          'Value "HEADER_ACTIONS" does not exist in "MenuLocationEnum"'
+        )
+      })
       .mockReturnValueOnce({
         data: undefined,
         error: new Error('Cannot query field "topbarCtas" on type "RootQuery".')
@@ -179,7 +234,8 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
-      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery) // header actions
+      .mockReturnValueOnce(emptyQuery) // topbar option
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce({
         data: { newestVideos: { nodes: newestVideos } },
@@ -216,7 +272,8 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: { header } })
       .mockReturnValueOnce(emptyQuery) // footer menu
       .mockReturnValueOnce(emptyQuery) // social menu
-      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery) // header actions
+      .mockReturnValueOnce(emptyQuery) // topbar option
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
@@ -238,7 +295,8 @@ describe("Layout", () => {
       })
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
-      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery) // header actions
+      .mockReturnValueOnce(emptyQuery) // topbar option
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
@@ -272,7 +330,8 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: { header } })
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
-      .mockReturnValueOnce(emptyQuery)
+      .mockReturnValueOnce(emptyQuery) // header actions (skipped when legacy)
+      .mockReturnValueOnce(emptyQuery) // topbar option
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
