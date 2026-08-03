@@ -18,6 +18,7 @@ export default class extends Component {
       newestVideos,
       trendingNowLoading,
       trendingNowError,
+      trendingMaxVideos,
       railPromo,
       spotlightTitle = "Spotlight STL",
       children
@@ -39,6 +40,7 @@ export default class extends Component {
                     <TrendingNow
                       featuredVideos={featuredVideos}
                       newestVideos={newestVideos}
+                      maxItems={trendingMaxVideos}
                       loading={trendingNowLoading}
                       error={trendingNowError}
                     />
