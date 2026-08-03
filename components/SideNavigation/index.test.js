@@ -53,12 +53,32 @@ describe("SideNavigation", () => {
     else process.env.WP_HOST = originalHost;
   });
 
-  it("preserves already-public media URLs", () => {
+  it("preserves already-public media URLs (including non-offloaded staging uploads)", () => {
     const originalHost = process.env.WP_HOST;
     process.env.WP_HOST = "https://wordpress-staging.example.com";
 
+    // CDN / offloaded URL — leave alone
     expect(getPublicRailPromoUrl("https://cdn.example.com/educators.png")).toBe(
       "https://cdn.example.com/educators.png"
+    );
+
+    // GraphQL often returns staging-wp for freshly selected logos that have not
+    // been Media-Offloaded to S3 yet. Blind S3 rewrite 403s; keep GraphQL URL.
+    expect(
+      getPublicRailPromoUrl(
+        "https://staging-wp.hectv.org/wp-content/uploads/2026/08/For-Educators-scaled.jpg"
+      )
+    ).toBe(
+      "https://staging-wp.hectv.org/wp-content/uploads/2026/08/For-Educators-scaled.jpg"
+    );
+
+    // S3 URL returned when Offload Media has synced — leave alone
+    expect(
+      getPublicRailPromoUrl(
+        "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2026/08/For-Educators-scaled.jpg"
+      )
+    ).toBe(
+      "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2026/08/For-Educators-scaled.jpg"
     );
 
     if (originalHost === undefined) delete process.env.WP_HOST;
