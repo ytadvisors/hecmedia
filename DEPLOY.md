@@ -1,44 +1,63 @@
 # Deploy & Rollback
 
-> **NEXT 12 CHECKPOINT — DO NOT DEPLOY**
+> **NEXT 12 DEPLOYMENT BOUNDARY — GOVERNED STAGING ONLY**
 >
 > The `upgrade/next16` compatibility checkpoint upgrades the application runtime to
 > Next.js 12, but this repository still packages Lambda@Edge with the Next-9-era
 > `@sls-next/serverless-component@1.19.1-patch.1` /
 > `@sls-next/lambda-at-edge@1.4.1-alpha.2` stack. Do not run `yarn deploy`,
-> `staging-deploy`, `serverless`, or any production deployment from that checkpoint.
-> Deployment remains blocked until the `@sls-next/*` stack is upgraded for Next 12
-> (or replaced), its output contract is verified, and this warning is removed in the
-> reviewed deployment-path PR. A green `yarn build` or `yarn test` does not make this
-> checkpoint deployable. The sole exception is the isolated, reviewed newsletter
-> release in `scripts/newsletter-production-deploy.js`; it exports two static pages
-> and updates three owned CloudFront behaviors without modifying the legacy default
-> Lambda@Edge association.
+> `serverless`, or any full-stack production deployment from that checkpoint.
+>
+> The approved staging exception is a `workflow_dispatch` of
+> `.github/workflows/staging-deploy.yml` for an exact merged commit and a positive HEC
+> Media queue-task receipt. That workflow builds on Node 24, disables staging form
+> sends and the unused image optimizer, verifies the expected Lambda package contract,
+> refuses extra Lambda bundles, updates only the three existing staging resources,
+> waits for CloudFront propagation, and verifies rendered and hydrated routes. The
+> deploy script rejects mutation outside that governed workflow before its first AWS
+> write. Direct workstation use of `node scripts/staging-deploy.js deploy` is not an
+> approved workaround.
+>
+> Production remains blocked except for the isolated, reviewed newsletter release in
+> `scripts/newsletter-production-deploy.js`; it exports two static pages and updates
+> three owned CloudFront behaviors without modifying the legacy default Lambda@Edge
+> association. A green `yarn build` or `yarn test` alone is not permission to ship.
 
-## Stack
+## Legacy full-stack deployment (blocked)
 
 This site deploys via the **Serverless Components** framework (`serverless.yml` uses the
 `@sls-next/serverless-component@1.19.1-patch.1` component, not the classic Serverless Framework
-CloudFormation stack). Deploy is:
+CloudFormation stack). Its historical deploy command is:
 
 ```shell
-yarn deploy   # = yarn install && serverless
+yarn deploy   # BLOCKED at the Next 12 checkpoint
 ```
 
 This builds the Next.js app and pushes Lambda@Edge functions + a CloudFront distribution + S3
 static assets, driven by env vars `APOLLO_CLIENT_URI`, `SUBDOMAIN`, `DOMAIN` (see `serverless.yml`).
-Credentials are human-gated. The CI preview job skips deployment unless a human has configured
-the deploy secrets and Yomi has approved that deployment.
+It is not approved while the checkpoint above remains active. Staging publishes use only the
+governed workflow exception; production uses only the isolated newsletter release exception.
 
 **Important distinction:** Serverless Components does not use CloudFormation stacks. There is
 **no `serverless rollback -t <timestamp>` command** for `@sls-next` deployments — that command only
 exists for the classic (v1/v2) Serverless Framework, which this repo does not use. Any rollback
 here means **redeploying an older commit**, not reverting a stack.
 
-## Rollback: redeploy an older commit
+## Governed staging publish and rollback
 
-Because there's no native rollback command, "rolling back" is just running the normal deploy
-against the last known-good commit:
+Dispatch `.github/workflows/staging-deploy.yml` from an approved publisher. A deploy requires
+`action=deploy`, the exact merged commit SHA in `ref`, and the positive HEC Media queue task ID
+that records the staging authorization. The workflow records deploy evidence and moves
+`staging-last-known-good` only after verification succeeds.
+
+Rollback uses the same workflow with `action=rollback` and a positive authorization task ID.
+The workflow ignores `ref`, deploys `staging-last-known-good`, and runs the same verification
+before recording a new outcome. Do not move the tag or invoke the deploy script directly.
+
+## Legacy full-stack rollback (blocked)
+
+The historical full-stack rollback was a redeploy of an older commit. It remains blocked by the
+Next 12 boundary and is documented only for recovery planning:
 
 1. Identify the last known-good ref — prefer a tagged release (see convention below) over a raw
    SHA, so there's no ambiguity about what "good" means.

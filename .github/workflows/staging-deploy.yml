@@ -138,6 +138,7 @@ jobs:
       - name: Deploy to existing staging resources (scoped update, no create/IAM/Route53)
         env:
           CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID }}
+          HECMEDIA_STAGING_REQUEST_TASK_ID: ${{ inputs.request_task_id }}
         run: node scripts/staging-deploy.js deploy
       - name: Verify rendered site, routes, no-send forms, and CloudFront alias
         env:

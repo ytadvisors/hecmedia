@@ -15,7 +15,7 @@
  *
  * Usage:
  *   node scripts/staging-deploy.js build   # next build -> .serverless_nextjs/{assets,default-lambda}
- *   node scripts/staging-deploy.js deploy  # upload new assets, update Lambda, repoint CloudFront, invalidate
+ *   node scripts/staging-deploy.js deploy  # governed GitHub workflow only; guarded below
  *
  * "deploy" expects AWS credentials already configured in the environment
  * (this repo's workflow does that via aws-actions/configure-aws-credentials
@@ -67,6 +67,37 @@ const NEXT_SERVER_CHUNKS_PATH = path.join(
 );
 const LAMBDA_CHUNKS_PATH = path.join(DEFAULT_LAMBDA_DIR, "chunks");
 const PUBLIC_HTML_TTL_SECONDS = 60;
+const APPROVED_STAGING_PUBLISHERS = new Set([
+  "ytwguru",
+  "yt-agent-tom",
+  "yt-agent-tom-gpt",
+  "yt-agent-tom-grok"
+]);
+
+function assertGovernedDeployContext(env = process.env) {
+  const expectedWorkflow = "/.github/workflows/staging-deploy.yml@";
+  if (
+    env.GITHUB_ACTIONS !== "true" ||
+    env.GITHUB_EVENT_NAME !== "workflow_dispatch" ||
+    !String(env.GITHUB_WORKFLOW_REF || "").includes(expectedWorkflow)
+  ) {
+    throw new Error(
+      "Staging mutation is allowed only through the governed staging-deploy workflow_dispatch."
+    );
+  }
+
+  if (!APPROVED_STAGING_PUBLISHERS.has(env.GITHUB_ACTOR)) {
+    throw new Error(
+      "GitHub actor is not an approved HEC Media staging publisher."
+    );
+  }
+
+  if (!/^[1-9][0-9]*$/.test(env.HECMEDIA_STAGING_REQUEST_TASK_ID || "")) {
+    throw new Error(
+      "A positive HEC Media queue-task receipt is required for staging mutation."
+    );
+  }
+}
 
 function run(cmd, args, opts = {}) {
   console.log(`+ ${cmd} ${args.join(" ")}`);
@@ -506,6 +537,8 @@ function updateCloudFront(distributionId, lambdaArn, version) {
 }
 
 async function deploy() {
+  assertGovernedDeployContext();
+
   const distributionId = process.env.CLOUDFRONT_DISTRIBUTION_ID;
   if (!distributionId) {
     throw new Error(
@@ -539,6 +572,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  assertGovernedDeployContext,
   build,
   discardEmptyApiLambdaBundle,
   discardUnusedImageLambdaBundle,

@@ -20,6 +20,7 @@ const realFs = jest.requireActual("fs");
 
 const fs = require("fs");
 const {
+  assertGovernedDeployContext,
   build,
   discardEmptyApiLambdaBundle,
   discardUnusedImageLambdaBundle,
@@ -65,6 +66,34 @@ test("configures a one-minute public HTML edge cache", () => {
     DefaultTTL: 60,
     MaxTTL: 60
   });
+});
+
+test("rejects staging mutation outside the governed workflow", () => {
+  expect(() => assertGovernedDeployContext({})).toThrow(
+    "governed staging-deploy workflow_dispatch"
+  );
+});
+
+test("requires an approved publisher and positive queue-task receipt", () => {
+  const governed = {
+    GITHUB_ACTIONS: "true",
+    GITHUB_EVENT_NAME: "workflow_dispatch",
+    GITHUB_WORKFLOW_REF:
+      "ytadvisors/hecmedia/.github/workflows/staging-deploy.yml@refs/heads/master",
+    GITHUB_ACTOR: "yt-agent-tom-gpt",
+    HECMEDIA_STAGING_REQUEST_TASK_ID: "12345"
+  };
+
+  expect(() => assertGovernedDeployContext(governed)).not.toThrow();
+  expect(() =>
+    assertGovernedDeployContext({ ...governed, GITHUB_ACTOR: "unknown-agent" })
+  ).toThrow("not an approved HEC Media staging publisher");
+  expect(() =>
+    assertGovernedDeployContext({
+      ...governed,
+      HECMEDIA_STAGING_REQUEST_TASK_ID: "0"
+    })
+  ).toThrow("positive HEC Media queue-task receipt");
 });
 
 test("refuses to change a distribution that cannot cache GET and HEAD", () => {
@@ -428,4 +457,25 @@ test("allows only Yomi or governed Jerome lanes and requires a task receipt", ()
   expect(workflow).toMatch(/\^\[1-9\]\[0-9\]\*\$/);
   expect(workflow).toMatch(/deploy-and-verify:[\s\S]*?needs: authorize/);
   expect(workflow).toMatch(/"request_task_id":"%s","dispatch_actor":"%s"/);
+  expect(workflow).toMatch(
+    /HECMEDIA_STAGING_REQUEST_TASK_ID: \$\{\{ inputs\.request_task_id \}\}/
+  );
+});
+
+test("documents only the governed staging exception at the Next 12 boundary", () => {
+  const deployDocs = realFs.readFileSync(
+    path.join(__dirname, "../DEPLOY.md"),
+    "utf8"
+  );
+
+  expect(deployDocs).toContain(
+    "NEXT 12 DEPLOYMENT BOUNDARY — GOVERNED STAGING ONLY"
+  );
+  expect(deployDocs).toContain(".github/workflows/staging-deploy.yml");
+  expect(deployDocs).toMatch(
+    /Direct workstation use of `node scripts\/staging-deploy\.js deploy` is not an[\s>]+approved workaround\./
+  );
+  expect(deployDocs).toContain("yarn deploy   # BLOCKED");
+  expect(deployDocs).toContain("## Governed staging publish and rollback");
+  expect(deployDocs).toContain("staging-last-known-good");
 });
