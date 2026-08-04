@@ -460,6 +460,27 @@ test("allows only Yomi or governed Jerome lanes and requires a task receipt", ()
   expect(workflow).toMatch(
     /HECMEDIA_STAGING_REQUEST_TASK_ID: \$\{\{ inputs\.request_task_id \}\}/
   );
+  expect(workflow).toContain(
+    'git merge-base --is-ancestor "$ref" origin/master'
+  );
+  expect(workflow).toContain("Unmerged staging revision");
+});
+
+test("calls the governed context guard before the first AWS mutation", () => {
+  const deployScript = realFs.readFileSync(
+    path.join(__dirname, "staging-deploy.js"),
+    "utf8"
+  );
+  const deployStart = deployScript.indexOf("async function deploy()");
+  const guardCall = deployScript.indexOf(
+    "assertGovernedDeployContext();",
+    deployStart
+  );
+  const firstAwsMutation = deployScript.indexOf("syncAssets();", deployStart);
+
+  expect(deployStart).toBeGreaterThanOrEqual(0);
+  expect(guardCall).toBeGreaterThan(deployStart);
+  expect(firstAwsMutation).toBeGreaterThan(guardCall);
 });
 
 test("documents only the governed staging exception at the Next 12 boundary", () => {

@@ -74,6 +74,10 @@ jobs:
           if [ '${{ inputs.action }}' = rollback ]; then ref=staging-last-known-good; fi
           if [ -z "$ref" ]; then echo "A commit SHA is required for deploy." >&2; exit 1; fi
           git rev-parse --verify "$ref^{commit}"
+          if [ '${{ inputs.action }}' = deploy ] && ! git merge-base --is-ancestor "$ref" origin/master; then
+            echo "::error title=Unmerged staging revision::The deploy ref must already be merged into master."
+            exit 1
+          fi
           git checkout --detach "$ref"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-node@v4
