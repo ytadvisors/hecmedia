@@ -256,6 +256,22 @@ function zipEdgeHandler() {
   return zipPath;
 }
 
+function publishedFunctionArn(version) {
+  const arn = version && version.FunctionArn;
+  const publishedVersion = version && version.Version;
+  const expectedArn = new RegExp(
+    `^arn:aws:lambda:${REGION}:\\d{12}:function:${FUNCTION_NAME}:${publishedVersion}$`
+  );
+
+  if (!/^\d+$/.test(publishedVersion || "") || !expectedArn.test(arn || "")) {
+    throw new Error(
+      "AWS publish-version returned an invalid Lambda@Edge function ARN."
+    );
+  }
+
+  return arn;
+}
+
 function publishEdgeFunction() {
   const zipPath = zipEdgeHandler();
   let exists = true;
@@ -326,7 +342,7 @@ function publishEdgeFunction() {
       `HEC newsletter ${run("git", ["rev-parse", "--short", "HEAD"]).trim()}`
     ])
   );
-  return `${version.FunctionArn}:${version.Version}`;
+  return publishedFunctionArn(version);
 }
 
 function updateDistribution(lambdaVersionArn) {
@@ -474,5 +490,6 @@ module.exports = {
   apiBehavior,
   assertSafeExport,
   configureDistribution,
+  publishedFunctionArn,
   staticBehavior
 };

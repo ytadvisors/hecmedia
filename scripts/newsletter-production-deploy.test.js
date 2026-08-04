@@ -1,6 +1,7 @@
 const {
   apiBehavior,
   configureDistribution,
+  publishedFunctionArn,
   staticBehavior
 } = require("./newsletter-production-deploy");
 
@@ -38,6 +39,15 @@ const defaultBehavior = {
 
 const versionedArn =
   "arn:aws:lambda:us-east-1:850335719356:function:hecmedia-newsletter-api-edge:3";
+
+test("uses AWS's already-versioned Lambda ARN exactly once", () => {
+  expect(
+    publishedFunctionArn({ FunctionArn: versionedArn, Version: "3" })
+  ).toBe(versionedArn);
+  expect(() =>
+    publishedFunctionArn({ FunctionArn: `${versionedArn}:3`, Version: "3" })
+  ).toThrow("invalid Lambda@Edge function ARN");
+});
 
 test("static newsletter behaviors never inherit the legacy SSR Lambda", () => {
   const behavior = staticBehavior(defaultBehavior, "newsletter/*");
