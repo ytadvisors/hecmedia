@@ -103,7 +103,7 @@ export default function NewsletterSignupForm({
 
   return (
     <form className="newsletter-signup-form" onSubmit={handleSubmit} noValidate>
-      <div className="field">
+      <div className="field field--first-name">
         <label htmlFor="newsletter-first-name">First name</label>
         <input
           id="newsletter-first-name"
@@ -117,7 +117,7 @@ export default function NewsletterSignupForm({
         )}
       </div>
 
-      <div className="field">
+      <div className="field field--last-name">
         <label htmlFor="newsletter-last-name">Last name</label>
         <input
           id="newsletter-last-name"
@@ -131,7 +131,7 @@ export default function NewsletterSignupForm({
         )}
       </div>
 
-      <div className="field">
+      <div className="field field--email">
         <label htmlFor="newsletter-email">Email</label>
         <input
           id="newsletter-email"
@@ -143,7 +143,7 @@ export default function NewsletterSignupForm({
         {errors.email && <div className="field-error">{errors.email}</div>}
       </div>
 
-      <div className="field consent">
+      <div className="field field--wide consent">
         <label htmlFor="newsletter-consent">
           <input
             id="newsletter-consent"
@@ -158,7 +158,10 @@ export default function NewsletterSignupForm({
       </div>
 
       {captchaAvailable ? (
-        <div className="field captcha-slot" data-testid="captcha-slot">
+        <div
+          className="field field--wide captcha-slot"
+          data-testid="captcha-slot"
+        >
           <Recaptcha
             ref={captchaRef}
             sitekey={captchaSiteKey}
@@ -167,14 +170,21 @@ export default function NewsletterSignupForm({
           />
         </div>
       ) : (
-        <div className="captcha-unavailable" data-testid="captcha-unavailable">
+        <div
+          className="field--wide captcha-unavailable"
+          data-testid="captcha-unavailable"
+        >
           Spam verification is unavailable. Newsletter signup cannot be
           completed right now.
         </div>
       )}
 
       {status === STATUS.ERROR && (
-        <div className="form-error" role="alert" data-testid="form-error">
+        <div
+          className="field--wide form-error"
+          role="alert"
+          data-testid="form-error"
+        >
           {serverError}
         </div>
       )}

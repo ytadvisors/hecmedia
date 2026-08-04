@@ -1,49 +1,80 @@
 .newsletter-signup-form {
-  max-width: 480px;
+  display: grid;
+  gap: 20px 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 760px;
 
   .field {
-    margin-bottom: 1em;
+    margin: 0;
+
+    &--email,
+    &--wide {
+      grid-column: 1 / -1;
+    }
 
     label {
       display: block;
-      font-weight: bold;
-      margin-bottom: 0.3em;
+      color: #202020;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 7px;
     }
 
     input[type="text"],
     input[type="email"] {
+      background: #fff;
+      border: 1px solid #a9afb5;
+      border-radius: 0;
+      box-sizing: border-box;
+      color: #111;
+      font-size: 17px;
+      min-height: 50px;
+      padding: 11px 13px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
       width: 100%;
-      padding: 0.6em;
+
+      &:focus {
+        border-color: #0065bc;
+        box-shadow: 0 0 0 3px rgba(0, 101, 188, 0.16);
+        outline: none;
+      }
     }
 
     &.consent label {
-      display: flex;
       align-items: center;
+      display: flex;
+      font-size: 15px;
       font-weight: normal;
+      margin: 0;
 
       input {
-        margin-right: 0.6em;
+        accent-color: #0065bc;
+        height: 18px;
+        margin: 0 10px 0 0;
+        width: 18px;
       }
     }
   }
 
   .field-error {
-    color: #b00020;
-    font-size: 0.85em;
-    margin-top: 0.3em;
+    color: #a11222;
+    font-size: 13px;
+    margin-top: 6px;
   }
 
   .captcha-unavailable {
     background: #fff3cd;
     color: #664d03;
-    padding: 0.8em 1em;
-    margin-bottom: 1em;
-    font-size: 0.9em;
+    font-size: 14px;
+    padding: 12px 15px;
   }
 
   .form-error {
-    color: #b00020;
-    margin-bottom: 1em;
+    background: #fff0f2;
+    border-left: 4px solid #a11222;
+    color: #8c0d1c;
+    padding: 12px 15px;
   }
 
   .success-message {
@@ -52,6 +83,44 @@
   }
 
   button[type="submit"] {
-    padding: 0.7em 1.5em;
+    background: #0065bc;
+    border: 2px solid #0065bc;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    justify-self: start;
+    letter-spacing: 0.04em;
+    min-width: 150px;
+    padding: 12px 24px;
+    text-transform: uppercase;
+    transition: background 0.2s ease, color 0.2s ease;
+
+    &:hover,
+    &:focus {
+      background: #fff;
+      color: #0065bc;
+    }
+
+    &:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .newsletter-signup-form {
+    grid-template-columns: 1fr;
+
+    .field,
+    .field--email,
+    .field--wide {
+      grid-column: 1;
+    }
+
+    button[type="submit"] {
+      justify-self: stretch;
+      width: 100%;
+    }
   }
 }

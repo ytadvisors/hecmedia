@@ -52,6 +52,12 @@ describe("Newsletter signup page (pages/newsletter/index.js)", () => {
       screen.queryByTestId("newsletter-unavailable")
     ).not.toBeInTheDocument();
     expect(screen.getByText("Stay Connected")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Subscribe to HEC Media" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Arts & Culture")).toBeInTheDocument();
+    expect(screen.getByText("Education")).toBeInTheDocument();
+    expect(screen.getByText("St. Louis Stories")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Submit test signup" }));
     expect(global.fetch).toHaveBeenCalledWith("/api/newsletter/subscribe", {
       method: "POST",

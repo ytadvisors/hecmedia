@@ -1,0 +1,276 @@
+.newsletter-page {
+  color: #181818;
+  padding: 24px 24px 50px;
+
+  .newsletter-eyebrow {
+    color: #0065bc;
+    display: block;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+}
+
+.newsletter-hero {
+  background: #075fae;
+  color: #fff;
+  display: flex;
+  min-height: 330px;
+  overflow: hidden;
+  position: relative;
+
+  &::after {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    content: "";
+    height: 360px;
+    position: absolute;
+    right: -130px;
+    top: -190px;
+    width: 360px;
+  }
+
+  .newsletter-eyebrow {
+    color: #fff;
+    opacity: 0.88;
+  }
+
+  h1 {
+    color: #fff;
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 800;
+    line-height: 0.98;
+    margin: 0 0 22px;
+  }
+
+  p {
+    font-size: 20px;
+    line-height: 1.45;
+    margin: 0;
+    max-width: 510px;
+  }
+}
+
+.newsletter-hero__copy {
+  align-self: center;
+  padding: 48px 18px 48px 44px;
+  position: relative;
+  width: 58%;
+  z-index: 1;
+}
+
+.newsletter-hero__art {
+  align-items: center;
+  background: #004d8e;
+  display: flex;
+  justify-content: center;
+  min-height: 330px;
+  overflow: hidden;
+  position: relative;
+  width: 42%;
+
+  svg {
+    fill: none;
+    height: auto;
+    opacity: 0.96;
+    stroke: #fff;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 7;
+    width: 90%;
+  }
+
+  .newsletter-hero__play {
+    fill: #fff;
+    stroke: none;
+  }
+
+  > span {
+    bottom: 24px;
+    color: #fff;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    position: absolute;
+    right: 30px;
+  }
+}
+
+.newsletter-intro {
+  background: #f5f5f5;
+  border-bottom: 1px solid #d6d6d6;
+  padding: 32px 44px;
+
+  .newsletter-intro__lead {
+    font-size: 20px;
+    line-height: 1.5;
+    margin: 0 0 22px;
+    max-width: 840px;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    border: 1px solid #0065bc;
+    color: #004f94;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 8px 13px;
+    text-transform: uppercase;
+  }
+}
+
+.newsletter-signup-panel {
+  background: #fff;
+  border-top: 5px solid #0065bc;
+  box-sizing: border-box;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  margin: 34px 0 18px;
+  padding: 34px 44px 40px;
+
+  h2 {
+    color: #181818;
+    font-size: 34px;
+    font-weight: 800;
+    margin: 0 0 8px;
+  }
+
+  > p {
+    color: #444;
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0 0 28px;
+    max-width: 700px;
+  }
+
+  .newsletter-unavailable {
+    background: #fff3cd;
+    border-left: 4px solid #b48800;
+    color: #5f4a00;
+    padding: 13px 16px;
+  }
+}
+
+.newsletter-privacy-note {
+  color: #626262;
+  font-size: 13px;
+  margin: 0;
+}
+
+.newsletter-thank-you {
+  background: #fff;
+  border-top: 6px solid #0065bc;
+  margin: 36px 24px 70px;
+  padding: 54px 48px 60px;
+  text-align: center;
+
+  h1 {
+    color: #181818;
+    font-size: 48px;
+    font-weight: 800;
+    margin: 0 0 18px;
+  }
+
+  .newsletter-thank-you__lead {
+    font-size: 18px;
+    line-height: 1.6;
+    margin: 0 auto 30px;
+    max-width: 620px;
+  }
+}
+
+.newsletter-thank-you__icon {
+  align-items: center;
+  background: #0065bc;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  font-size: 36px;
+  height: 76px;
+  justify-content: center;
+  margin: 0 auto 25px;
+  width: 76px;
+}
+
+.newsletter-home-link {
+  border: 2px solid #0065bc;
+  color: #0065bc;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 12px 20px;
+  text-transform: uppercase;
+
+  &:hover,
+  &:focus {
+    background: #0065bc;
+    color: #fff;
+    text-decoration: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .newsletter-page {
+    padding: 15px 15px 36px;
+  }
+
+  .newsletter-hero {
+    display: block;
+
+    h1 {
+      font-size: 42px;
+    }
+
+    p {
+      font-size: 18px;
+    }
+  }
+
+  .newsletter-hero__copy,
+  .newsletter-hero__art {
+    width: 100%;
+  }
+
+  .newsletter-hero__copy {
+    padding: 38px 26px 32px;
+  }
+
+  .newsletter-hero__art {
+    min-height: 220px;
+
+    svg {
+      max-width: 330px;
+      width: 78%;
+    }
+  }
+
+  .newsletter-intro,
+  .newsletter-signup-panel {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .newsletter-signup-panel h2 {
+    font-size: 29px;
+  }
+
+  .newsletter-thank-you {
+    margin: 20px 15px 50px;
+    padding: 42px 24px 48px;
+
+    h1 {
+      font-size: 40px;
+    }
+  }
+}
