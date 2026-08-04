@@ -111,9 +111,15 @@ export default function NewsletterSignupForm({
           value={values.firstName}
           onChange={handleChange("firstName")}
           disabled={isLoading}
+          aria-invalid={Boolean(errors.firstName)}
+          aria-describedby={
+            errors.firstName ? "newsletter-first-name-error" : undefined
+          }
         />
         {errors.firstName && (
-          <div className="field-error">{errors.firstName}</div>
+          <div id="newsletter-first-name-error" className="field-error">
+            {errors.firstName}
+          </div>
         )}
       </div>
 
@@ -125,9 +131,15 @@ export default function NewsletterSignupForm({
           value={values.lastName}
           onChange={handleChange("lastName")}
           disabled={isLoading}
+          aria-invalid={Boolean(errors.lastName)}
+          aria-describedby={
+            errors.lastName ? "newsletter-last-name-error" : undefined
+          }
         />
         {errors.lastName && (
-          <div className="field-error">{errors.lastName}</div>
+          <div id="newsletter-last-name-error" className="field-error">
+            {errors.lastName}
+          </div>
         )}
       </div>
 
@@ -139,8 +151,14 @@ export default function NewsletterSignupForm({
           value={values.email}
           onChange={handleChange("email")}
           disabled={isLoading}
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? "newsletter-email-error" : undefined}
         />
-        {errors.email && <div className="field-error">{errors.email}</div>}
+        {errors.email && (
+          <div id="newsletter-email-error" className="field-error">
+            {errors.email}
+          </div>
+        )}
       </div>
 
       <div className="field field--wide consent">
@@ -151,10 +169,18 @@ export default function NewsletterSignupForm({
             checked={values.consent}
             onChange={handleChange("consent")}
             disabled={isLoading}
+            aria-invalid={Boolean(errors.consent)}
+            aria-describedby={
+              errors.consent ? "newsletter-consent-error" : undefined
+            }
           />
           I agree to receive email updates from HEC Media.
         </label>
-        {errors.consent && <div className="field-error">{errors.consent}</div>}
+        {errors.consent && (
+          <div id="newsletter-consent-error" className="field-error">
+            {errors.consent}
+          </div>
+        )}
       </div>
 
       {captchaAvailable ? (

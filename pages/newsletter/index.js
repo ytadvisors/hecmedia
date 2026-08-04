@@ -27,7 +27,7 @@ export default () => (
       pathname="/newsletter"
     />
     <Layout>
-      <section className="newsletter-page newsletter-page--editorial">
+      <section className="newsletter-page">
         <header className="newsletter-hero">
           <div className="newsletter-hero__copy">
             <span className="newsletter-eyebrow">HEC Media Newsletter</span>

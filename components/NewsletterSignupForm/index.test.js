@@ -68,6 +68,22 @@ describe("NewsletterSignupForm", () => {
     expect(
       screen.getByText("You must agree to receive email updates")
     ).toBeInTheDocument();
+    expect(screen.getByLabelText("First name")).toHaveAttribute(
+      "aria-describedby",
+      "newsletter-first-name-error"
+    );
+    expect(screen.getByLabelText("First name")).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
+    expect(screen.getByLabelText("Email")).toHaveAttribute(
+      "aria-describedby",
+      "newsletter-email-error"
+    );
+    expect(screen.getByLabelText("Email")).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
     expect(onSubscribe).not.toHaveBeenCalled();
   });
 

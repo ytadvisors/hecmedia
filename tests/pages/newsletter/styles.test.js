@@ -9,6 +9,10 @@ const formStyles = fs.readFileSync(
   path.join(__dirname, "../../../components/NewsletterSignupForm/styles.scss"),
   "utf8"
 );
+const cssDependencies = fs.readFileSync(
+  path.join(__dirname, "../../../lib/cssDependencies.scss"),
+  "utf8"
+);
 
 describe("Newsletter editorial layout", () => {
   it("uses the HEC blue editorial hero and signup divider", () => {
@@ -17,6 +21,9 @@ describe("Newsletter editorial layout", () => {
     );
     expect(pageStyles).toMatch(
       /\.newsletter-signup-panel\s*\{[\s\S]*border-top: 5px solid #0065bc;/
+    );
+    expect(cssDependencies).toContain(
+      '@import "../pages/newsletter/styles.scss";'
     );
   });
 
