@@ -10,6 +10,10 @@ const STATUS = {
   ERROR: "error"
 };
 
+// react-recaptcha requires an onload callback before it will render in the
+// explicit mode used by the site-wide Google API script.
+const handleCaptchaLoad = () => {};
+
 function validate({ firstName, lastName, email, consent }) {
   const errors = {};
   if (!firstName.trim()) errors.firstName = "Required";
@@ -191,6 +195,9 @@ export default function NewsletterSignupForm({
           <Recaptcha
             ref={captchaRef}
             sitekey={captchaSiteKey}
+            render="explicit"
+            onloadCallback={handleCaptchaLoad}
+            elementID="newsletter-recaptcha"
             verifyCallback={setCaptchaToken}
             expiredCallback={() => setCaptchaToken(null)}
           />

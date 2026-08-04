@@ -6,17 +6,28 @@ const mockResetCaptcha = jest.fn();
 
 jest.mock("react-recaptcha", () => {
   const MockReact = require("react");
-  return MockReact.forwardRef(({ verifyCallback }, ref) => {
-    MockReact.useImperativeHandle(ref, () => ({ reset: mockResetCaptcha }));
-    return MockReact.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: () => verifyCallback("captcha-token")
-      },
-      "Complete spam verification"
-    );
-  });
+  return MockReact.forwardRef(
+    (
+      { elementID, onloadCallback, render: captchaRenderMode, verifyCallback },
+      ref
+    ) => {
+      MockReact.useEffect(() => {
+        onloadCallback();
+      }, [onloadCallback]);
+
+      MockReact.useImperativeHandle(ref, () => ({ reset: mockResetCaptcha }));
+      return MockReact.createElement(
+        "button",
+        {
+          "data-element-id": elementID,
+          "data-render": captchaRenderMode,
+          type: "button",
+          onClick: () => verifyCallback("captcha-token")
+        },
+        "Complete spam verification"
+      );
+    }
+  );
 });
 
 function fillValidForm() {
@@ -55,6 +66,12 @@ describe("NewsletterSignupForm", () => {
     );
     expect(screen.getByTestId("captcha-slot")).toBeInTheDocument();
     expect(screen.queryByTestId("captcha-unavailable")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /complete spam verification/i })
+    ).toHaveAttribute("data-render", "explicit");
+    expect(
+      screen.getByRole("button", { name: /complete spam verification/i })
+    ).toHaveAttribute("data-element-id", "newsletter-recaptcha");
   });
 
   it("blocks submission and shows field errors when required fields are missing", async () => {
