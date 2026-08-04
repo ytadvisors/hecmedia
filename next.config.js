@@ -22,9 +22,18 @@ const clientLocalEnv = Object.keys(localEnv || {}).reduce(
 
 const disableImageOptimizer =
   process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER === "true";
+const newsletterOnlyExport = process.env.HECMEDIA_NEWSLETTER_EXPORT === "true";
 
 const config = {
   ...(disableImageOptimizer ? { images: { loader: "akamai", path: "" } } : {}),
+  ...(newsletterOnlyExport
+    ? {
+        exportPathMap: async () => ({
+          "/newsletter": { page: "/newsletter" },
+          "/newsletter/thank-you": { page: "/newsletter/thank-you" }
+        })
+      }
+    : {}),
   env: {
     ...clientLocalEnv,
     DEPLOY_SHA: process.env.DEPLOY_SHA,

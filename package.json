@@ -95,6 +95,9 @@
     "test:watch": "jest --watch",
     "test:e2e": "jest --config jest.e2e.config.js",
     "test:acceptance": "playwright test",
+    "newsletter:production:build": "node scripts/newsletter-production-deploy.js build",
+    "newsletter:production:deploy": "node scripts/newsletter-production-deploy.js deploy",
+    "newsletter:production:verify": "node scripts/newsletter-production-deploy.js verify",
     "smoke": "node scripts/smoke-test.js"
   },
   "dependencies": {

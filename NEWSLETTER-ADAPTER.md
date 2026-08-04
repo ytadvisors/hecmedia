@@ -65,6 +65,40 @@ Do not run the legacy `yarn deploy` path while `DEPLOY.md` carries the Next 12
 Lambda@Edge compatibility block. Publishing remains a separately authorized
 deployment step.
 
+## Scoped production frontend release
+
+The legacy default Lambda@Edge packaging cannot safely deploy the current
+Next.js runtime. Newsletter production therefore uses a deliberately isolated
+release path which leaves every existing page and the default edge function
+untouched:
+
+```shell
+RE_CAPTCHA_SITE_KEY='<public production site key>' \
+  yarn newsletter:production:build
+
+AWS_PROFILE=hecadmin RE_CAPTCHA_SITE_KEY='<public production site key>' \
+  yarn newsletter:production:deploy
+```
+
+The build exports only `/newsletter` and `/newsletter/thank-you`. Deployment
+uploads those HTML objects and their immutable `_next/static` assets, publishes
+the no-dependency newsletter API Lambda, and manages only these CloudFront path
+behaviors:
+
+- `newsletter`
+- `newsletter/*`
+- `api/newsletter/subscribe`
+
+The deploy command fails unless the checked-out commit is already contained in
+`origin/master`, records the prior CloudFront configuration under
+`.newsletter-production/`, waits for propagation and invalidation, then verifies
+both pages plus a no-send empty-payload API probe.
+
+The on-site thank-you page records a **newsletter signup submitted** conversion.
+Mailchimp still creates the member as `pending` and sends double opt-in. A
+confirmed-subscriber conversion would require a separate Mailchimp webhook and
+must not be inferred from the immediate browser redirect.
+
 ## Testing
 
 - `lib/newsletter/adapter.test.js` verifies configuration, no-send isolation,

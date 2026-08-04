@@ -11,6 +11,7 @@ const configuredEnvironment = [
   "HECMEDIA_MODERN_WPGRAPHQL",
   "HECMEDIA_TOPBAR_CTAS_JSON",
   "HECMEDIA_DISABLE_IMAGE_OPTIMIZER",
+  "HECMEDIA_NEWSLETTER_EXPORT",
   "RE_CAPTCHA_SECRET_KEY",
   "RE_CAPTCHA_SITE_KEY"
 ];
@@ -101,4 +102,23 @@ test("keeps the default image loader outside the staging build", () => {
   const config = require("./next.config");
 
   expect(config).not.toHaveProperty("images");
+});
+
+test("exports only the two newsletter pages for the scoped production release", async () => {
+  process.env.HECMEDIA_NEWSLETTER_EXPORT = "true";
+  process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER = "true";
+
+  const config = require("./next.config");
+
+  expect(await config.exportPathMap()).toEqual({
+    "/newsletter": { page: "/newsletter" },
+    "/newsletter/thank-you": { page: "/newsletter/thank-you" }
+  });
+  expect(config.images).toEqual({ loader: "akamai", path: "" });
+});
+
+test("does not alter the normal route map unless newsletter export is explicit", () => {
+  const config = require("./next.config");
+
+  expect(config).not.toHaveProperty("exportPathMap");
 });

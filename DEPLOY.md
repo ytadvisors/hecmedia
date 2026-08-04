@@ -10,7 +10,10 @@
 > Deployment remains blocked until the `@sls-next/*` stack is upgraded for Next 12
 > (or replaced), its output contract is verified, and this warning is removed in the
 > reviewed deployment-path PR. A green `yarn build` or `yarn test` does not make this
-> checkpoint deployable.
+> checkpoint deployable. The sole exception is the isolated, reviewed newsletter
+> release in `scripts/newsletter-production-deploy.js`; it exports two static pages
+> and updates three owned CloudFront behaviors without modifying the legacy default
+> Lambda@Edge association.
 
 ## Stack
 
