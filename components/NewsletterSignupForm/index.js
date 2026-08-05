@@ -191,15 +191,6 @@ export default function NewsletterSignupForm({
         )}
       </div>
 
-      {!captchaRequired && (
-        <div
-          className="field--wide captcha-unavailable"
-          data-testid="captcha-not-required"
-        >
-          Spam verification is not required for this signup.
-        </div>
-      )}
-
       {captchaRequired && captchaAvailable && (
         <div
           className="field field--wide captcha-slot"

@@ -91,9 +91,9 @@ jest.mock("../Modals", () => {
 });
 
 /**
- * Layout fires 9 useQuery hooks in this order:
- * layout, header, footer, social, topbar, siteContent, newestVideos,
- * curatedTrending, liveVideos.
+ * Layout fires useQuery hooks in this order (modern CMS):
+ * layout, header, footer, social, headerActions, topbar, hecSiteSettings,
+ * hecPresentation, siteContent, newestVideos, curatedTrending, liveVideos.
  */
 const emptyQuery = { data: undefined };
 
@@ -122,13 +122,18 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // topbar option fallback
       .mockReturnValueOnce({
         data: {
+          trendingSettings: { maxVideos: 5 }
+        }
+      }) // hec site settings
+      .mockReturnValueOnce({
+        data: {
           trendingSettings: {
             trendingTitle: "Popular Today",
             spotlightTitle: "Around St. Louis",
             mobileDisplay: "content-menu"
           }
         }
-      }) // hec site settings
+      }) // hec presentation
       .mockReturnValueOnce({
         data: {
           hectvSiteContent: {
@@ -205,6 +210,7 @@ describe("Layout", () => {
         }
       })
       .mockReturnValueOnce(emptyQuery) // hec site settings
+      .mockReturnValueOnce(emptyQuery) // hec presentation
       .mockReturnValueOnce(emptyQuery) // siteContent
       .mockReturnValueOnce(emptyQuery) // newest
       .mockReturnValueOnce(emptyQuery) // curated
@@ -231,6 +237,7 @@ describe("Layout", () => {
       .mockReturnValueOnce({ data: { headerActions: { edges: [] } } }) // empty menu
       .mockReturnValueOnce({ data: { topbarCtas } }) // topbar option
       .mockReturnValueOnce(emptyQuery) // hec site settings
+      .mockReturnValueOnce(emptyQuery) // hec presentation
       .mockReturnValueOnce(emptyQuery) // siteContent
       .mockReturnValueOnce(emptyQuery) // newest
       .mockReturnValueOnce(emptyQuery) // curated
@@ -260,6 +267,7 @@ describe("Layout", () => {
         error: new Error('Cannot query field "topbarCtas" on type "RootQuery".')
       })
       .mockReturnValueOnce(emptyQuery) // hec site settings
+      .mockReturnValueOnce(emptyQuery) // hec presentation
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
@@ -285,6 +293,7 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // header actions
       .mockReturnValueOnce(emptyQuery) // topbar option
       .mockReturnValueOnce(emptyQuery) // hec site settings
+      .mockReturnValueOnce(emptyQuery) // hec presentation
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce({
         data: { newestVideos: { nodes: newestVideos } },
@@ -324,6 +333,7 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // header actions
       .mockReturnValueOnce(emptyQuery) // topbar option
       .mockReturnValueOnce(emptyQuery) // hec site settings
+      .mockReturnValueOnce(emptyQuery) // hec presentation
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
@@ -348,6 +358,7 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // header actions
       .mockReturnValueOnce(emptyQuery) // topbar option
       .mockReturnValueOnce(emptyQuery) // hec site settings
+      .mockReturnValueOnce(emptyQuery) // hec presentation
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
@@ -384,6 +395,7 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // header actions (skipped when legacy)
       .mockReturnValueOnce(emptyQuery) // topbar option
       .mockReturnValueOnce(emptyQuery) // hec site settings
+      .mockReturnValueOnce(emptyQuery) // hec presentation
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)
       .mockReturnValueOnce(emptyQuery)

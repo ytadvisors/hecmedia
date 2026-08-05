@@ -7,6 +7,7 @@ import {
   GET_HEADER_MENU,
   GET_HEADER_ACTIONS_MENU,
   GET_HEC_SITE_SETTINGS,
+  GET_HEC_SITE_PRESENTATION,
   GET_NEWEST_VIDEOS,
   GET_NEWSLETTER_SETTINGS,
   GET_SCHEDULE,
@@ -133,11 +134,6 @@ describeModernCms("HeaderMenu (containers/Layout/index.js)", () => {
     const { trendingSettings, forEducators, trendingPosts } = result.data;
     expect(typeof trendingSettings.maxVideos).toBe("number");
     expect(trendingSettings.maxVideos).toBeGreaterThan(0);
-    expect(typeof trendingSettings.trendingTitle).toBe("string");
-    expect(typeof trendingSettings.spotlightTitle).toBe("string");
-    expect(["content-menu", "menu-content"]).toContain(
-      trendingSettings.mobileDisplay
-    );
     expect(typeof forEducators.label).toBe("string");
     expect(typeof forEducators.url).toBe("string");
     expect(forEducators.image).toBeTruthy();
@@ -148,6 +144,18 @@ describeModernCms("HeaderMenu (containers/Layout/index.js)", () => {
     expect(Array.isArray(trendingPosts)).toBe(true);
     expect(trendingPosts.length).toBeLessThanOrEqual(
       trendingSettings.maxVideos
+    );
+  });
+
+  it("returns isolated rail headings and mobile display presentation", async () => {
+    const result = await executeQuery(GET_HEC_SITE_PRESENTATION, undefined);
+
+    expect(result.errors).toBeUndefined();
+    const { trendingSettings } = result.data;
+    expect(typeof trendingSettings.trendingTitle).toBe("string");
+    expect(typeof trendingSettings.spotlightTitle).toBe("string");
+    expect(["content-menu", "menu-content"]).toContain(
+      trendingSettings.mobileDisplay
     );
   });
 
