@@ -100,9 +100,8 @@ export const Layout = props => {
     errorPolicy: "all"
   });
 
-  // Settings → HEC Site Settings: maxVideos, For Educators logo/url/label,
-  // and server-capped trendingPosts. The legacy-compatible presentation query
-  // also carries the editor-controlled mobile rail ordering flag.
+  // Settings → HEC Site Settings: maxVideos, rail headings/mobile order,
+  // For Educators logo/url/label, and server-capped trendingPosts.
   const {
     data: hecSiteSettingsData,
     loading: hecSiteSettingsLoading
@@ -275,6 +274,7 @@ export const Layout = props => {
           trendingNowError={trendingNowError}
           trendingMaxVideos={maxVideos}
           railPromo={railPromoFromSiteContent(siteContent)}
+          trendingTitle={siteContent.trendingTitle}
           spotlightTitle={siteContent.spotlightTitle}
           railFirstOnMobile={siteContent.mobileRailFirst}
         >

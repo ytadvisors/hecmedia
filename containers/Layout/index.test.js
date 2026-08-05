@@ -18,13 +18,17 @@ jest.mock("../../components/ProgramViewer", () => {
     featuredVideos = [],
     newestVideos = [],
     trendingNowError,
-    railFirstOnMobile
+    railFirstOnMobile,
+    trendingTitle,
+    spotlightTitle
   }) =>
     MockReact.createElement(
       "div",
       {
         "data-testid": "program-viewer",
-        "data-rail-first-mobile": railFirstOnMobile ? "true" : "false"
+        "data-rail-first-mobile": railFirstOnMobile ? "true" : "false",
+        "data-trending-title": trendingTitle,
+        "data-spotlight-title": spotlightTitle
       },
       trendingNowError
         ? "Trending stories are unavailable right now."
@@ -116,7 +120,15 @@ describe("Layout", () => {
       .mockReturnValueOnce(emptyQuery) // social
       .mockReturnValueOnce(emptyQuery) // header actions menu
       .mockReturnValueOnce(emptyQuery) // topbar option fallback
-      .mockReturnValueOnce(emptyQuery) // hec site settings
+      .mockReturnValueOnce({
+        data: {
+          trendingSettings: {
+            trendingTitle: "Popular Today",
+            spotlightTitle: "Around St. Louis",
+            mobileDisplay: "content-menu"
+          }
+        }
+      }) // hec site settings
       .mockReturnValueOnce({
         data: {
           hectvSiteContent: {
@@ -138,7 +150,15 @@ describe("Layout", () => {
     );
     expect(screen.getByTestId("program-viewer")).toHaveAttribute(
       "data-rail-first-mobile",
-      "true"
+      "false"
+    );
+    expect(screen.getByTestId("program-viewer")).toHaveAttribute(
+      "data-trending-title",
+      "Popular Today"
+    );
+    expect(screen.getByTestId("program-viewer")).toHaveAttribute(
+      "data-spotlight-title",
+      "Around St. Louis"
     );
   });
 

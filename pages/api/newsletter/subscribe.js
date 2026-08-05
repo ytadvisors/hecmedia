@@ -6,7 +6,7 @@ import {
 } from "../../../lib/newsletter/localTest";
 import formsAreNoSend from "../../../lib/noSend";
 
-function validate(body, { captchaRequired = true } = {}) {
+function validate(body) {
   const errors = {};
   const { firstName, lastName, email, consent, captchaToken } = body || {};
 
@@ -30,7 +30,7 @@ function validate(body, { captchaRequired = true } = {}) {
     errors.email = "Invalid email address";
   if (consent !== true) errors.consent = "Consent is required to subscribe";
   if (
-    captchaRequired &&
+    captchaToken !== undefined &&
     (typeof captchaToken !== "string" ||
       captchaToken.length < 10 ||
       captchaToken.length > 4096)
@@ -50,7 +50,10 @@ export default async function handler(req, res) {
   }
 
   const localTestRequest = isNewsletterLocalTestRequest(req);
-  const errors = validate(req.body, { captchaRequired: !localTestRequest });
+  // Missing CAPTCHA is forwarded to WordPress because its Site Settings value
+  // is authoritative. When CAPTCHA is enabled (the default), WordPress rejects
+  // a missing token; a browser cannot disable the server-side requirement.
+  const errors = validate(req.body);
   if (Object.keys(errors).length > 0) {
     res.status(400).json({ ok: false, errors });
     return;

@@ -74,7 +74,7 @@ describe("NewsletterSignupForm", () => {
     ).toHaveAttribute("data-element-id", "newsletter-recaptcha");
   });
 
-  it("submits without CAPTCHA only when the local-test prop disables it", async () => {
+  it("submits without CAPTCHA when the caller says it is not required", async () => {
     const onSubscribe = jest.fn().mockResolvedValue({ ok: true });
     render(
       <NewsletterSignupForm onSubscribe={onSubscribe} captchaRequired={false} />

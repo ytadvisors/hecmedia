@@ -1,10 +1,12 @@
 /* eslint-env browser */
 import React from "react";
 import Router from "next/router";
+import { useQuery } from "@apollo/react-hooks";
 import Layout from "../../containers/Layout";
 import SEO from "../../components/SEO";
 import NewsletterSignupForm from "../../components/NewsletterSignupForm";
 import { isNewsletterLocalTestMode } from "../../lib/newsletter/localTest";
+import { GET_NEWSLETTER_SETTINGS } from "../../lib/graphql";
 
 async function subscribe(values) {
   // No-send is enforced at the API/deployment boundary, not here. This keeps
@@ -20,7 +22,19 @@ async function subscribe(values) {
 
 export default () => {
   const localTestMode = isNewsletterLocalTestMode();
-  const captchaConfigured = Boolean(process.env.RE_CAPTCHA_SITE_KEY);
+  const { data: newsletterSettingsData } = useQuery(GET_NEWSLETTER_SETTINGS, {
+    errorPolicy: "all",
+    skip: localTestMode
+  });
+  // Fail closed on an old/unavailable WordPress schema: only an explicit false
+  // from Settings → HEC Site Settings disables CAPTCHA.
+  const captchaRequired =
+    !localTestMode &&
+    (!newsletterSettingsData ||
+      !newsletterSettingsData.newsletterSettings ||
+      newsletterSettingsData.newsletterSettings.captchaEnabled !== false);
+  const signupAvailable =
+    !captchaRequired || Boolean(process.env.RE_CAPTCHA_SITE_KEY);
 
   return (
     <>
@@ -79,7 +93,7 @@ export default () => {
               Tell us where to send your updates. After signing up, check your
               inbox to confirm your subscription.
             </p>
-            {!captchaConfigured && !localTestMode ? (
+            {!signupAvailable ? (
               <p
                 className="newsletter-unavailable"
                 data-testid="newsletter-unavailable"
@@ -90,7 +104,7 @@ export default () => {
               <NewsletterSignupForm
                 onSubscribe={subscribe}
                 captchaSiteKey={process.env.RE_CAPTCHA_SITE_KEY}
-                captchaRequired={!localTestMode}
+                captchaRequired={captchaRequired}
                 onSuccess={() => Router.push("/newsletter/thank-you")}
               />
             )}

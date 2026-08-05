@@ -8,6 +8,7 @@ import {
   GET_HEADER_ACTIONS_MENU,
   GET_HEC_SITE_SETTINGS,
   GET_NEWEST_VIDEOS,
+  GET_NEWSLETTER_SETTINGS,
   GET_SCHEDULE,
   GET_PAGE_TEMPLATE
 } from "../../../lib/graphql";
@@ -132,6 +133,11 @@ describeModernCms("HeaderMenu (containers/Layout/index.js)", () => {
     const { trendingSettings, forEducators, trendingPosts } = result.data;
     expect(typeof trendingSettings.maxVideos).toBe("number");
     expect(trendingSettings.maxVideos).toBeGreaterThan(0);
+    expect(typeof trendingSettings.trendingTitle).toBe("string");
+    expect(typeof trendingSettings.spotlightTitle).toBe("string");
+    expect(["content-menu", "menu-content"]).toContain(
+      trendingSettings.mobileDisplay
+    );
     expect(typeof forEducators.label).toBe("string");
     expect(typeof forEducators.url).toBe("string");
     expect(forEducators.image).toBeTruthy();
@@ -142,6 +148,15 @@ describeModernCms("HeaderMenu (containers/Layout/index.js)", () => {
     expect(Array.isArray(trendingPosts)).toBe(true);
     expect(trendingPosts.length).toBeLessThanOrEqual(
       trendingSettings.maxVideos
+    );
+  });
+
+  it("returns the newsletter CAPTCHA control from HEC Site Settings", async () => {
+    const result = await executeQuery(GET_NEWSLETTER_SETTINGS, undefined);
+
+    expect(result.errors).toBeUndefined();
+    expect(typeof result.data.newsletterSettings.captchaEnabled).toBe(
+      "boolean"
     );
   });
 });

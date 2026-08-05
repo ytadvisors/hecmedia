@@ -81,8 +81,7 @@ describe("POST /api/newsletter/subscribe", () => {
       firstName: expect.any(String),
       lastName: expect.any(String),
       email: expect.any(String),
-      consent: expect.any(String),
-      captchaToken: expect.any(String)
+      consent: expect.any(String)
     });
   });
 
@@ -149,9 +148,20 @@ describe("POST /api/newsletter/subscribe", () => {
     expect(res.body.ok).toBe(false);
   });
 
-  it("rejects a missing CAPTCHA token before subscription", async () => {
+  it("forwards a missing CAPTCHA token for authoritative WordPress enforcement", async () => {
     const { captchaToken, ...bodyWithoutCaptcha } = validBody;
     const { req, res } = mockReqRes({ body: bodyWithoutCaptcha });
+    await handler(req, res);
+    expect(res.statusCode).toBe(202);
+    expect(availableAdapter.subscribe).toHaveBeenCalledWith(
+      expect.objectContaining({ captchaToken: undefined })
+    );
+  });
+
+  it("rejects a malformed CAPTCHA token before subscription", async () => {
+    const { req, res } = mockReqRes({
+      body: { ...validBody, captchaToken: "short" }
+    });
     await handler(req, res);
     expect(res.statusCode).toBe(400);
     expect(res.body.errors.captchaToken).toBe("Spam verification failed");
@@ -176,7 +186,7 @@ describe("POST /api/newsletter/subscribe", () => {
     );
   });
 
-  it("never allows the local-test flag to bypass CAPTCHA on a public host", async () => {
+  it("never substitutes the local-test CAPTCHA token on a public host", async () => {
     process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST = "true";
     const { captchaToken, ...bodyWithoutCaptcha } = validBody;
     const { req, res } = mockReqRes({
@@ -186,9 +196,13 @@ describe("POST /api/newsletter/subscribe", () => {
 
     await handler(req, res);
 
-    expect(res.statusCode).toBe(400);
-    expect(res.body.errors.captchaToken).toBe("Spam verification failed");
-    expect(availableAdapter.subscribe).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(202);
+    expect(availableAdapter.subscribe).toHaveBeenCalledWith(
+      expect.objectContaining({ captchaToken: undefined })
+    );
+    expect(availableAdapter.subscribe).not.toHaveBeenCalledWith(
+      expect.objectContaining({ captchaToken: LOCAL_TEST_CAPTCHA_TOKEN })
+    );
   });
 
   it("forwards the CAPTCHA token to WordPress for server-side verification", async () => {

@@ -194,9 +194,9 @@ export default function NewsletterSignupForm({
       {!captchaRequired && (
         <div
           className="field--wide captcha-unavailable"
-          data-testid="captcha-local-bypass"
+          data-testid="captcha-not-required"
         >
-          Spam verification is disabled for this local test only.
+          Spam verification is not required for this signup.
         </div>
       )}
 

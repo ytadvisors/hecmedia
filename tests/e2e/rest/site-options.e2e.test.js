@@ -2,8 +2,8 @@
  * Read-only contracts for the modern HEC-owned content controls.
  *
  * Settings → HEC Site Settings is exposed as RootQuery.forEducators +
- * trendingSettings + trendingPosts. Legacy hectvSiteContent remains a fallback
- * for spotlight title / footer rail links.
+ * trendingSettings + trendingPosts + newsletterSettings. Legacy
+ * hectvSiteContent remains a fallback for older presentation fields.
  */
 
 const fetch = require("isomorphic-unfetch");
@@ -25,9 +25,15 @@ async function gql(query) {
 }
 
 describeModernCms("GraphQL: HEC Site Settings", () => {
-  it("returns maxVideos and For Educators logo/url/label from site settings", async () => {
+  it("returns rail and For Educators values from site settings", async () => {
     const result = await gql(`{
-      trendingSettings { maxVideos }
+      trendingSettings {
+        maxVideos
+        trendingTitle
+        spotlightTitle
+        mobileDisplay
+      }
+      newsletterSettings { captchaEnabled }
       forEducators {
         label
         url
@@ -39,6 +45,14 @@ describeModernCms("GraphQL: HEC Site Settings", () => {
     expect(result.errors).toBeUndefined();
     expect(typeof result.data.trendingSettings.maxVideos).toBe("number");
     expect(result.data.trendingSettings.maxVideos).toBeGreaterThan(0);
+    expect(result.data.trendingSettings.trendingTitle).not.toBe("");
+    expect(result.data.trendingSettings.spotlightTitle).not.toBe("");
+    expect(["content-menu", "menu-content"]).toContain(
+      result.data.trendingSettings.mobileDisplay
+    );
+    expect(typeof result.data.newsletterSettings.captchaEnabled).toBe(
+      "boolean"
+    );
     expect(result.data.forEducators.label).not.toBe("");
     expect(result.data.forEducators.url).not.toBe("");
     expect(
