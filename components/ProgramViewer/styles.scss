@@ -1,4 +1,9 @@
 .program-viewer {
+  .program-viewer-trending,
+  .program-viewer-spotlight {
+    border-top: 1px solid #0065bc;
+  }
+
   .program-viewer-container {
     .program-header {
       padding: 10px 15px;
