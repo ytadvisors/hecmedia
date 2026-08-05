@@ -1,6 +1,7 @@
 import handler from "../../../../pages/api/newsletter/subscribe";
 import formsAreNoSend from "../../../../lib/noSend";
 import { getNewsletterAdapter } from "../../../../lib/newsletter/adapter";
+import { LOCAL_TEST_CAPTCHA_TOKEN } from "../../../../lib/newsletter/localTest";
 
 jest.mock("../../../../lib/noSend", () => jest.fn());
 jest.mock("../../../../lib/newsletter/adapter", () => ({
@@ -20,8 +21,12 @@ const validBody = {
   captchaToken: "captcha-token"
 };
 
-function mockReqRes({ method = "POST", body = {} } = {}) {
-  const req = { method, body };
+function mockReqRes({
+  method = "POST",
+  body = {},
+  host = "hecmedia.org"
+} = {}) {
+  const req = { method, body, headers: { host } };
   const res = {
     statusCode: undefined,
     body: undefined,
@@ -42,13 +47,23 @@ function mockReqRes({ method = "POST", body = {} } = {}) {
 }
 
 describe("POST /api/newsletter/subscribe", () => {
+  const originalLocalTest = process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST;
+
   beforeEach(() => {
+    delete process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST;
     formsAreNoSend.mockReturnValue(false);
     getNewsletterAdapter.mockReturnValue(availableAdapter);
+    availableAdapter.subscribe.mockClear();
     availableAdapter.subscribe.mockResolvedValue({
       ok: true,
       status: "accepted"
     });
+  });
+
+  afterAll(() => {
+    if (originalLocalTest === undefined)
+      delete process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST;
+    else process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST = originalLocalTest;
   });
 
   it("rejects non-POST methods", async () => {
@@ -138,6 +153,39 @@ describe("POST /api/newsletter/subscribe", () => {
     const { captchaToken, ...bodyWithoutCaptcha } = validBody;
     const { req, res } = mockReqRes({ body: bodyWithoutCaptcha });
     await handler(req, res);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.errors.captchaToken).toBe("Spam verification failed");
+    expect(availableAdapter.subscribe).not.toHaveBeenCalled();
+  });
+
+  it("allows a CAPTCHA-free request only in explicit loopback local-test mode", async () => {
+    process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST = "true";
+    const { captchaToken, ...bodyWithoutCaptcha } = validBody;
+    const { req, res } = mockReqRes({
+      body: bodyWithoutCaptcha,
+      host: "127.0.0.1:3000"
+    });
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(202);
+    expect(availableAdapter.subscribe).toHaveBeenCalledWith(
+      expect.objectContaining({
+        captchaToken: LOCAL_TEST_CAPTCHA_TOKEN
+      })
+    );
+  });
+
+  it("never allows the local-test flag to bypass CAPTCHA on a public host", async () => {
+    process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST = "true";
+    const { captchaToken, ...bodyWithoutCaptcha } = validBody;
+    const { req, res } = mockReqRes({
+      body: bodyWithoutCaptcha,
+      host: "development.hecmedia.org"
+    });
+
+    await handler(req, res);
+
     expect(res.statusCode).toBe(400);
     expect(res.body.errors.captchaToken).toBe("Spam verification failed");
     expect(availableAdapter.subscribe).not.toHaveBeenCalled();

@@ -1,8 +1,12 @@
 import validator from "validator";
 import { getNewsletterAdapter } from "../../../lib/newsletter/adapter";
+import {
+  isNewsletterLocalTestRequest,
+  LOCAL_TEST_CAPTCHA_TOKEN
+} from "../../../lib/newsletter/localTest";
 import formsAreNoSend from "../../../lib/noSend";
 
-function validate(body) {
+function validate(body, { captchaRequired = true } = {}) {
   const errors = {};
   const { firstName, lastName, email, consent, captchaToken } = body || {};
 
@@ -26,9 +30,10 @@ function validate(body) {
     errors.email = "Invalid email address";
   if (consent !== true) errors.consent = "Consent is required to subscribe";
   if (
-    typeof captchaToken !== "string" ||
-    captchaToken.length < 10 ||
-    captchaToken.length > 4096
+    captchaRequired &&
+    (typeof captchaToken !== "string" ||
+      captchaToken.length < 10 ||
+      captchaToken.length > 4096)
   )
     errors.captchaToken = "Spam verification failed";
 
@@ -44,7 +49,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  const errors = validate(req.body);
+  const localTestRequest = isNewsletterLocalTestRequest(req);
+  const errors = validate(req.body, { captchaRequired: !localTestRequest });
   if (Object.keys(errors).length > 0) {
     res.status(400).json({ ok: false, errors });
     return;
@@ -79,7 +85,7 @@ export default async function handler(req, res) {
       lastName: lastName.trim(),
       email: email.trim().toLowerCase(),
       consent,
-      captchaToken,
+      captchaToken: localTestRequest ? LOCAL_TEST_CAPTCHA_TOKEN : captchaToken,
       source: "newsletter-page"
     });
     res.status(result.ok ? 202 : 502).json(result);

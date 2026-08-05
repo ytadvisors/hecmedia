@@ -74,6 +74,25 @@ describe("NewsletterSignupForm", () => {
     ).toHaveAttribute("data-element-id", "newsletter-recaptcha");
   });
 
+  it("submits without CAPTCHA only when the local-test prop disables it", async () => {
+    const onSubscribe = jest.fn().mockResolvedValue({ ok: true });
+    render(
+      <NewsletterSignupForm onSubscribe={onSubscribe} captchaRequired={false} />
+    );
+
+    fillValidForm();
+    fireEvent.click(screen.getByRole("button", { name: /^subscribe$/i }));
+
+    expect(await screen.findByTestId("newsletter-success")).toBeInTheDocument();
+    expect(screen.queryByTestId("captcha-slot")).not.toBeInTheDocument();
+    expect(onSubscribe).toHaveBeenCalledWith({
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "reader@example.com",
+      consent: true
+    });
+  });
+
   it("blocks submission and shows field errors when required fields are missing", async () => {
     const onSubscribe = jest.fn();
     render(<NewsletterSignupForm onSubscribe={onSubscribe} />);
