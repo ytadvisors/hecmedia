@@ -41,16 +41,45 @@ The adapter is available only when both of these are true:
 
 ## Runtime configuration
 
-| Variable                    | Visibility           | Purpose                                |
-| --------------------------- | -------------------- | -------------------------------------- |
-| `RE_CAPTCHA_SITE_KEY`       | public               | Renders the browser CAPTCHA            |
-| `HECTV_NEWSLETTER_ENDPOINT` | server route         | Optional explicit WordPress REST URL   |
-| `WP_HOST`                   | existing app config  | Derives the default WordPress REST URL |
-| `HECMEDIA_NO_SEND_FORMS`    | build/runtime safety | Disables every durable form write      |
+| Variable                         | Visibility             | Purpose                                |
+| -------------------------------- | ---------------------- | -------------------------------------- |
+| `RE_CAPTCHA_SITE_KEY`            | public                 | Renders the browser CAPTCHA            |
+| `HECTV_NEWSLETTER_ENDPOINT`      | server route           | Optional explicit WordPress REST URL   |
+| `WP_HOST`                        | existing app config    | Derives the default WordPress REST URL |
+| `HECMEDIA_NO_SEND_FORMS`         | build/runtime safety   | Disables every durable form write      |
+| `HECMEDIA_NEWSLETTER_LOCAL_TEST` | local development only | Allows a CAPTCHA-free loopback test    |
 
 The reCAPTCHA secret is `HECTV_RECAPTCHA_SECRET_KEY` in the WordPress production
 secret, not this application. `next.config.js` also blocks known server-only
 newsletter and CAPTCHA variable names from its legacy local-environment spread.
+
+### CAPTCHA-free local test
+
+Set `HECMEDIA_NEWSLETTER_LOCAL_TEST=true` while running `yarn dev` on
+`localhost`, leave `RE_CAPTCHA_SITE_KEY` empty, set
+`HECMEDIA_NO_SEND_FORMS=false`, and point `HECTV_NEWSLETTER_ENDPOINT` at a local
+mock or local WordPress bridge. The browser then exercises the real form,
+same-origin API route, adapter, and Thank You redirect without rendering Google
+reCAPTCHA.
+
+For the no-write mock test, run these in separate terminals:
+
+```shell
+yarn newsletter:mock
+
+HECMEDIA_NEWSLETTER_LOCAL_TEST=true \
+HECMEDIA_NO_SEND_FORMS=false \
+HECTV_NEWSLETTER_ENDPOINT=http://127.0.0.1:8093/wp-json/hectv/v1/newsletter/subscribe \
+RE_CAPTCHA_SITE_KEY= \
+yarn dev
+```
+
+Then submit `/newsletter` with a reserved `.invalid` test address. The mock
+accepts the request locally; Google and Mailchimp are never contacted.
+
+The bypass is rejected when `NODE_ENV=production` or the request host is not a
+loopback address. It never disables WordPress's production CAPTCHA check, and
+public staging remains no-send.
 
 ## Deployment order
 

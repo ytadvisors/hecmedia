@@ -30,6 +30,7 @@ function validate({ firstName, lastName, email, consent }) {
 export default function NewsletterSignupForm({
   onSubscribe,
   captchaSiteKey,
+  captchaRequired,
   onSuccess
 }) {
   const [values, setValues] = useState({
@@ -67,7 +68,7 @@ export default function NewsletterSignupForm({
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) return;
-    if (!captchaToken) {
+    if (captchaRequired && !captchaToken) {
       setStatus(STATUS.ERROR);
       setServerError("Please complete spam verification.");
       return;
@@ -77,7 +78,10 @@ export default function NewsletterSignupForm({
     setServerError(null);
 
     try {
-      const result = await onSubscribe({ ...values, captchaToken });
+      const result = await onSubscribe({
+        ...values,
+        ...(captchaRequired ? { captchaToken } : {})
+      });
       if (result && result.ok) {
         setStatus(STATUS.SUCCESS);
         onSuccess();
@@ -187,7 +191,7 @@ export default function NewsletterSignupForm({
         )}
       </div>
 
-      {captchaAvailable ? (
+      {captchaRequired && captchaAvailable && (
         <div
           className="field field--wide captcha-slot"
           data-testid="captcha-slot"
@@ -202,7 +206,9 @@ export default function NewsletterSignupForm({
             expiredCallback={() => setCaptchaToken(null)}
           />
         </div>
-      ) : (
+      )}
+
+      {captchaRequired && !captchaAvailable && (
         <div
           className="field--wide captcha-unavailable"
           data-testid="captcha-unavailable"
@@ -232,10 +238,12 @@ export default function NewsletterSignupForm({
 NewsletterSignupForm.propTypes = {
   onSubscribe: PropTypes.func.isRequired,
   captchaSiteKey: PropTypes.string,
+  captchaRequired: PropTypes.bool,
   onSuccess: PropTypes.func
 };
 
 NewsletterSignupForm.defaultProps = {
   captchaSiteKey: undefined,
+  captchaRequired: true,
   onSuccess: () => {}
 };

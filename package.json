@@ -98,6 +98,7 @@
     "newsletter:production:build": "node scripts/newsletter-production-deploy.js build",
     "newsletter:production:deploy": "node scripts/newsletter-production-deploy.js deploy",
     "newsletter:production:verify": "node scripts/newsletter-production-deploy.js verify",
+    "newsletter:mock": "node scripts/mock-newsletter-endpoint.js",
     "smoke": "node scripts/smoke-test.js"
   },
   "dependencies": {

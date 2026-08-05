@@ -61,4 +61,18 @@ describe("ProgramViewer", () => {
       "program-viewer-row--rail-first-mobile"
     );
   });
+
+  it("passes editor-controlled rail headings to both lists", () => {
+    render(
+      <ProgramViewer
+        trendingTitle="Popular Today"
+        spotlightTitle="Around St. Louis"
+      >
+        <div>content</div>
+      </ProgramViewer>
+    );
+
+    expect(screen.getByText("Popular Today")).toBeInTheDocument();
+    expect(screen.getByText("Around St. Louis")).toBeInTheDocument();
+  });
 });

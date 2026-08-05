@@ -13,6 +13,7 @@ import {
   GET_HEADER_ACTIONS_MENU,
   GET_TOPBAR_CTAS,
   GET_HEC_SITE_SETTINGS,
+  GET_HEC_SITE_PRESENTATION,
   GET_HECTV_SITE_CONTENT,
   GET_CURATED_TRENDING_POSTS,
   GET_NEWEST_VIDEOS
@@ -100,13 +101,19 @@ export const Layout = props => {
     errorPolicy: "all"
   });
 
-  // Settings → HEC Site Settings: maxVideos, For Educators logo/url/label,
-  // and server-capped trendingPosts. The legacy-compatible presentation query
-  // also carries the editor-controlled mobile rail ordering flag.
+  // Settings → HEC Site Settings: maxVideos, For Educators, trendingPosts.
+  // Headings + mobileDisplay use a separate query so partial schemas cannot
+  // blank the whole chrome (same isolation pattern as newsletter settings).
   const {
     data: hecSiteSettingsData,
     loading: hecSiteSettingsLoading
   } = useQuery(GET_HEC_SITE_SETTINGS, {
+    notifyOnNetworkStatusChange: true,
+    errorPolicy: "all",
+    skip: !modernCms
+  });
+
+  const { data: hecPresentationData } = useQuery(GET_HEC_SITE_PRESENTATION, {
     notifyOnNetworkStatusChange: true,
     errorPolicy: "all",
     skip: !modernCms
@@ -117,8 +124,22 @@ export const Layout = props => {
     notifyOnNetworkStatusChange: true,
     errorPolicy: "all"
   });
+
+  const mergedHecSiteSettings =
+    hecSiteSettingsData || hecPresentationData
+      ? {
+          ...(hecSiteSettingsData || {}),
+          trendingSettings: {
+            ...((hecSiteSettingsData && hecSiteSettingsData.trendingSettings) ||
+              {}),
+            ...((hecPresentationData && hecPresentationData.trendingSettings) ||
+              {})
+          }
+        }
+      : undefined;
+
   const siteContent = mergeHecSiteChrome(
-    hecSiteSettingsData,
+    mergedHecSiteSettings,
     siteContentData && siteContentData.hectvSiteContent
   );
   const maxVideos = siteContent.maxVideos || DEFAULT_TRENDING_MAX_VIDEOS;
@@ -275,6 +296,7 @@ export const Layout = props => {
           trendingNowError={trendingNowError}
           trendingMaxVideos={maxVideos}
           railPromo={railPromoFromSiteContent(siteContent)}
+          trendingTitle={siteContent.trendingTitle}
           spotlightTitle={siteContent.spotlightTitle}
           railFirstOnMobile={siteContent.mobileRailFirst}
         >

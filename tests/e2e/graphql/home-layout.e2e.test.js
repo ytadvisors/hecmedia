@@ -7,7 +7,9 @@ import {
   GET_HEADER_MENU,
   GET_HEADER_ACTIONS_MENU,
   GET_HEC_SITE_SETTINGS,
+  GET_HEC_SITE_PRESENTATION,
   GET_NEWEST_VIDEOS,
+  GET_NEWSLETTER_SETTINGS,
   GET_SCHEDULE,
   GET_PAGE_TEMPLATE
 } from "../../../lib/graphql";
@@ -142,6 +144,27 @@ describeModernCms("HeaderMenu (containers/Layout/index.js)", () => {
     expect(Array.isArray(trendingPosts)).toBe(true);
     expect(trendingPosts.length).toBeLessThanOrEqual(
       trendingSettings.maxVideos
+    );
+  });
+
+  it("returns isolated rail headings and mobile display presentation", async () => {
+    const result = await executeQuery(GET_HEC_SITE_PRESENTATION, undefined);
+
+    expect(result.errors).toBeUndefined();
+    const { trendingSettings } = result.data;
+    expect(typeof trendingSettings.trendingTitle).toBe("string");
+    expect(typeof trendingSettings.spotlightTitle).toBe("string");
+    expect(["content-menu", "menu-content"]).toContain(
+      trendingSettings.mobileDisplay
+    );
+  });
+
+  it("returns the newsletter CAPTCHA control from HEC Site Settings", async () => {
+    const result = await executeQuery(GET_NEWSLETTER_SETTINGS, undefined);
+
+    expect(result.errors).toBeUndefined();
+    expect(typeof result.data.newsletterSettings.captchaEnabled).toBe(
+      "boolean"
     );
   });
 });

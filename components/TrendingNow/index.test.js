@@ -51,6 +51,13 @@ describe("TrendingNow", () => {
     );
   });
 
+  it("renders the editor-controlled heading", () => {
+    render(<TrendingNow title="Popular Today" />);
+
+    expect(screen.getByText("Popular Today")).toBeInTheDocument();
+    expect(screen.queryByText("Trending Now")).not.toBeInTheDocument();
+  });
+
   it("renders a loading state", () => {
     render(<TrendingNow loading />);
 

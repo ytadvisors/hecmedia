@@ -20,6 +20,7 @@ export default class extends Component {
       trendingNowError,
       trendingMaxVideos,
       railPromo,
+      trendingTitle = "Trending Now",
       spotlightTitle = "Spotlight STL",
       railFirstOnMobile = false,
       children
@@ -48,6 +49,7 @@ export default class extends Component {
                       maxItems={trendingMaxVideos}
                       loading={trendingNowLoading}
                       error={trendingNowError}
+                      title={trendingTitle}
                     />
                   </div>
                   <div className="col-lg-12 no-padding program-viewer-spotlight">

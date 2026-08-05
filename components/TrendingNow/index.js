@@ -8,14 +8,15 @@ const TrendingNow = ({
   newestVideos,
   maxItems,
   loading,
-  error
+  error,
+  title = "Trending Now"
 }) => {
   const items = toTrendingNowItems(featuredVideos, newestVideos, maxItems);
 
   return (
     <section className="trending-now" aria-labelledby="trending-now-title">
       <div className="title">
-        <b id="trending-now-title">Trending Now</b>
+        <b id="trending-now-title">{title}</b>
       </div>
       {loading && <p className="status">Loading trending stories…</p>}
       {!loading && error && (
