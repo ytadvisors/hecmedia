@@ -1,0 +1,59 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadAndEnableVersioningOnExistingProductionBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:GetBucketVersioning",
+        "s3:ListBucket",
+        "s3:PutBucketVersioning"
+      ],
+      "Resource": "arn:aws:s3:::x2l4ew-k0m7umi"
+    },
+    {
+      "Sid": "PublishProductionAssetsWithoutDelete",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": "arn:aws:s3:::x2l4ew-k0m7umi/*"
+    },
+    {
+      "Sid": "PublishOnlyExistingProductionFunctions",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:GetFunction",
+        "lambda:GetFunctionConfiguration",
+        "lambda:PublishVersion",
+        "lambda:UpdateFunctionCode"
+      ],
+      "Resource": [
+        "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd",
+        "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:*",
+        "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api",
+        "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:*"
+      ]
+    },
+    {
+      "Sid": "ReplicateOnlyReviewedProductionFunctionVersions",
+      "Effect": "Allow",
+      "Action": ["lambda:DisableReplication*", "lambda:EnableReplication*"],
+      "Resource": [
+        "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:*",
+        "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:*"
+      ]
+    },
+    {
+      "Sid": "UpdateOnlyTheExistingProductionDistribution",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:CreateInvalidation",
+        "cloudfront:GetDistribution",
+        "cloudfront:GetDistributionConfig",
+        "cloudfront:GetInvalidation",
+        "cloudfront:UpdateDistribution"
+      ],
+      "Resource": "arn:aws:cloudfront::850335719356:distribution/E2QXRSF2W55RTS"
+    }
+  ]
+}

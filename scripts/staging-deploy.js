@@ -281,13 +281,17 @@ async function build() {
   // staging stack predates Next API routes and has one tightly scoped
   // Lambda@Edge function, so ordinary staging requests receive no API bundle
   // instead of creating a second Lambda or widening IAM. Always restore the
-  // source tree, including after a failed build. Production and any send-
-  // enabled build retain the API route.
+  // source tree, including after a failed build. A governed production build
+  // may also omit the stock API bundle when HECMEDIA_EDGE_API=true because the
+  // reviewed Lambda@Edge handler owns that exact API path. Other send-enabled
+  // builds retain the API route and fail closed if they try to omit it.
   let apiPagesMoved = false;
   if (fs.existsSync(API_PAGES_DIR)) {
-    if (process.env.HECMEDIA_NO_SEND_FORMS !== "true") {
+    const noSendBuild = process.env.HECMEDIA_NO_SEND_FORMS === "true";
+    const governedEdgeApi = process.env.HECMEDIA_EDGE_API === "true";
+    if (!noSendBuild && !governedEdgeApi) {
       throw new Error(
-        "Refusing to omit Next API routes unless HECMEDIA_NO_SEND_FORMS=true."
+        "Refusing to omit Next API routes unless HECMEDIA_NO_SEND_FORMS=true or HECMEDIA_EDGE_API=true."
       );
     }
     if (fs.existsSync(STAGED_API_PAGES_DIR)) {

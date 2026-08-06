@@ -69,7 +69,7 @@ Key application areas:
 
 3. **Safety rails for e2e** — Write-capable e2e paths refuse production hosts (see `tests/e2e/support/writeGuard.js` and comments in `.env.local.example`).
 
-4. **Deploy discipline** — Production deploys are human-gated. Read `DEPLOY.md` before any `yarn deploy` / Serverless run. Some upgrade checkpoints **block deploy** until the Lambda@Edge stack is verified for the target Next version — a green `yarn build` alone is not permission to ship.
+4. **Deploy discipline** — Production deploys are human-gated through the protected GitHub `production` environment. Read `DEPLOY.md` before any release. The legacy `yarn deploy` / Serverless path remains blocked; a green `yarn build` alone is not permission to ship.
 
 ---
 
@@ -127,7 +127,7 @@ See `.env.local.example` for the local Docker CMS pattern. Production and stagin
 | `yarn smoke`                  | Smoke script                    |
 | `yarn lint` / `yarn lint:fix` | ESLint                          |
 
-Deploy-related commands are described in **`DEPLOY.md`**. Treat production deploy as **explicit, human-approved** work only.
+Deploy-related commands are described in **`DEPLOY.md`**. Treat production deploy as **explicit, human-approved** work only; the approved production entrypoint is `.github/workflows/production-deploy.yml`, never a workstation deployment.
 
 ---
 

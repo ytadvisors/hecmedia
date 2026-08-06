@@ -1,0 +1,217 @@
+name: HEC Media production deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Deploy the exact master SHA or restore the pinned sanitized rollback.
+        required: true
+        type: choice
+        options: [deploy, rollback]
+      release_sha:
+        description: Exact 40-character SHA at the protected master branch tip.
+        required: true
+        type: string
+      expected_cloudfront_etag:
+        description: CloudFront ETag captured immediately before authorization.
+        required: true
+        type: string
+      expected_default_lambda_version_arn:
+        description: Exact live default Lambda@Edge version ARN.
+        required: true
+        type: string
+      expected_default_lambda_code_sha256:
+        description: Exact live default Lambda CodeSha256.
+        required: true
+        type: string
+      expected_api_lambda_version_arn:
+        description: Exact live newsletter Lambda@Edge version ARN, or none when absent.
+        required: true
+        type: string
+      request_task_id:
+        description: Positive HEC Media queue-task receipt for this production action.
+        required: true
+        type: string
+      confirmation:
+        description: Type the action-specific production confirmation phrase.
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: hecmedia-production-deployment
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate immutable authorization inputs
+        env:
+          ACTION: ${{ inputs.action }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          DISPATCH_ACTOR: ${{ github.actor }}
+          EXPECTED_API_ARN: ${{ inputs.expected_api_lambda_version_arn }}
+          EXPECTED_CODE_SHA: ${{ inputs.expected_default_lambda_code_sha256 }}
+          EXPECTED_DEFAULT_ARN: ${{ inputs.expected_default_lambda_version_arn }}
+          EXPECTED_ETAG: ${{ inputs.expected_cloudfront_etag }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          REQUEST_TASK_ID: ${{ inputs.request_task_id }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          case "$DISPATCH_ACTOR" in
+            ytwguru|yt-agent-tom|yt-agent-tom-gpt|yt-agent-tom-grok) ;;
+            *) echo "::error title=Production authorization refused::Actor is not an approved HEC Media publisher."; exit 1 ;;
+          esac
+          [[ "$REQUEST_TASK_ID" =~ ^[1-9][0-9]*$ ]] || { echo "::error title=Missing authorization receipt::A positive HEC Media queue-task ID is required."; exit 1; }
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error title=Invalid release::release_sha must be an exact commit SHA."; exit 1; }
+          test "$RELEASE_SHA" = "$WORKFLOW_SHA" || { echo "::error title=Stale release::release_sha must equal the protected workflow revision."; exit 1; }
+          if [ "$ACTION" = deploy ]; then
+            test "$CONFIRMATION" = "DEPLOY HEC FRONTEND PRODUCTION" || { echo "::error title=Confirmation mismatch::Use the exact frontend deploy phrase."; exit 1; }
+            [[ "$EXPECTED_ETAG" =~ ^[A-Z0-9]+$ ]] || { echo "Invalid CloudFront ETag." >&2; exit 1; }
+            [[ "$EXPECTED_DEFAULT_ARN" =~ ^arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:[1-9][0-9]*$ ]] || { echo "Invalid default Lambda ARN." >&2; exit 1; }
+            [[ "$EXPECTED_CODE_SHA" =~ ^[-A-Za-z0-9+/]{20,}={0,2}$ ]] || { echo "Invalid Lambda checksum." >&2; exit 1; }
+            if [ "$EXPECTED_API_ARN" != none ]; then
+              [[ "$EXPECTED_API_ARN" =~ ^arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:[1-9][0-9]*$ ]] || { echo "Invalid API Lambda ARN." >&2; exit 1; }
+            fi
+          else
+            test "$CONFIRMATION" = "ROLLBACK HEC FRONTEND PRODUCTION" || { echo "::error title=Confirmation mismatch::Use the exact frontend rollback phrase."; exit 1; }
+          fi
+
+  deploy-or-rollback:
+    needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: production
+      url: https://hecmedia.org
+    env:
+      APOLLO_CLIENT_URI: https://prod-wp.hectv.org/graphql
+      WP_HOST: https://prod-wp.hectv.org
+      SITE_HOST: https://hecmedia.org
+      HECMEDIA_NO_SEND_FORMS: "false"
+      HECMEDIA_EDGE_API: "true"
+      HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true"
+      HECMEDIA_MODERN_WPGRAPHQL: "true"
+      DEPLOY_SHA: ${{ inputs.release_sha }}
+      EXPECTED_CLOUDFRONT_ETAG: ${{ inputs.expected_cloudfront_etag }}
+      EXPECTED_DEFAULT_LAMBDA_VERSION_ARN: ${{ inputs.expected_default_lambda_version_arn }}
+      EXPECTED_DEFAULT_LAMBDA_CODE_SHA256: ${{ inputs.expected_default_lambda_code_sha256 }}
+      EXPECTED_API_LAMBDA_VERSION_ARN: ${{ inputs.expected_api_lambda_version_arn }}
+      HECMEDIA_PRODUCTION_REQUEST_TASK_ID: ${{ inputs.request_task_id }}
+      PRODUCTION_ACTION: ${{ inputs.action }}
+      PRODUCTION_CONFIRMATION: ${{ inputs.confirmation }}
+      RE_CAPTCHA_SITE_KEY: ${{ secrets.HECMEDIA_PRODUCTION_RECAPTCHA_SITE_KEY }}
+    steps:
+      # Production action dependencies are immutable commit references.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.release_sha }}
+          fetch-depth: 0
+      - name: Verify exact protected revision
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$DEPLOY_SHA"
+          git fetch --no-tags origin master
+          test "$(git rev-parse origin/master)" = "$DEPLOY_SHA"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: inputs.action == 'deploy'
+        with:
+          node-version: "24"
+          cache: yarn
+      - name: Validate production build contract by name
+        if: inputs.action == 'deploy'
+        run: |
+          set -euo pipefail
+          test -n "$RE_CAPTCHA_SITE_KEY"
+          test "$APOLLO_CLIENT_URI" = https://prod-wp.hectv.org/graphql
+          test "$WP_HOST" = https://prod-wp.hectv.org
+          test "$SITE_HOST" = https://hecmedia.org
+          test "$HECMEDIA_NO_SEND_FORMS" = false
+          test "$HECMEDIA_EDGE_API" = true
+          test "$HECMEDIA_DISABLE_IMAGE_OPTIMIZER" = true
+          test "$HECMEDIA_MODERN_WPGRAPHQL" = true
+      - name: Install exact dependencies
+        if: inputs.action == 'deploy'
+        run: yarn install --frozen-lockfile
+      - name: Lint and run Jest coverage
+        if: inputs.action == 'deploy'
+        run: yarn lint && yarn test
+      - name: Verify read-only production content contracts
+        if: inputs.action == 'deploy'
+        env:
+          GATSBY_WP_HOST: https://prod-wp.hectv.org
+          HECMEDIA_E2E_MODERN_WPGRAPHQL: "true"
+          E2E_ALLOW_WRITES: "0"
+        run: yarn test:e2e
+      - name: Package reviewed Lambda@Edge artifacts without AWS credentials
+        if: inputs.action == 'deploy'
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
+        run: node scripts/production-deploy.js build
+      - name: Install pinned Chrome for hydrated production verification
+        id: setup-chrome
+        if: inputs.action == 'deploy'
+        uses: browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd # v2
+        with:
+          chrome-version: "151.0.7922.76"
+      - name: Verify Chrome before production credentials
+        if: inputs.action == 'deploy'
+        env:
+          BROWSER_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          set -euo pipefail
+          test -x "$BROWSER_BIN"
+          "$BROWSER_BIN" --version
+      - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: arn:aws:iam::850335719356:role/hecmedia-production-deploy
+          role-duration-seconds: 7200
+          aws-region: us-east-1
+      - name: Verify the scoped production AWS identity
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = 850335719356
+      - name: Apply the approved production action and verify public recovery
+        env:
+          BROWSER_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          set -euo pipefail
+          if [ "$PRODUCTION_ACTION" = deploy ]; then
+            test -x "$BROWSER_BIN"
+          fi
+          node scripts/production-deploy.js "$PRODUCTION_ACTION"
+      - name: Record immutable successful frontend release tag
+        if: success() && inputs.action == 'deploy'
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+          tag="hecmedia-production-${RELEASE_SHA:0:12}"
+          remote_sha="$(git ls-remote --tags origin "refs/tags/$tag^{}" | awk '{print $1}')"
+          if [ -n "$remote_sha" ]; then
+            test "$remote_sha" = "$RELEASE_SHA"
+            exit 0
+          fi
+          git tag -a "$tag" "$RELEASE_SHA" -m "HEC Media production frontend $RELEASE_SHA"
+          git push origin "refs/tags/$tag"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: hecmedia-production-evidence-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            production-deploy-evidence.json
+            .production-release/build-metadata.json
+            .production-release/cloudfront-before.json
+            .production-release/cloudfront-release.json
+            .production-release/cloudfront-sanitized-rollback.json
+            .production-release/s3-build-id-before.txt
+            .production-release/homepage-before.html
+            .production-release/rollback-home.html
+            .production-release/hydrated-*.html
+            .production-release/browser-*.log

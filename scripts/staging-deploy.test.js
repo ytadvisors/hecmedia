@@ -313,6 +313,41 @@ test("omits API routes only for a no-send staging build and restores them", asyn
   expect(fs.mkdirSync).toHaveBeenCalled();
 });
 
+test("omits stock API routes for the governed edge-API production package", async () => {
+  const originalNoSend = process.env.HECMEDIA_NO_SEND_FORMS;
+  const originalEdgeApi = process.env.HECMEDIA_EDGE_API;
+  process.env.HECMEDIA_NO_SEND_FORMS = "false";
+  process.env.HECMEDIA_EDGE_API = "true";
+  fs.existsSync.mockImplementation(file => {
+    if (file.endsWith("pages/api")) return true;
+    if (file.endsWith(".staging-disabled-pages-api")) return false;
+    if (file.endsWith("default-lambda") || file.endsWith("assets")) return true;
+    if (file.endsWith(".next/serverless/webpack-runtime.js")) return true;
+    if (file.endsWith(".next/serverless/chunks")) return true;
+    return false;
+  });
+
+  try {
+    await build();
+  } finally {
+    if (originalNoSend === undefined) delete process.env.HECMEDIA_NO_SEND_FORMS;
+    else process.env.HECMEDIA_NO_SEND_FORMS = originalNoSend;
+    if (originalEdgeApi === undefined) delete process.env.HECMEDIA_EDGE_API;
+    else process.env.HECMEDIA_EDGE_API = originalEdgeApi;
+  }
+
+  expect(fs.renameSync.mock.calls).toEqual([
+    [
+      expect.stringMatching(/pages\/api$/),
+      expect.stringMatching(/\.staging-disabled-pages-api$/)
+    ],
+    [
+      expect.stringMatching(/\.staging-disabled-pages-api$/),
+      expect.stringMatching(/pages\/api$/)
+    ]
+  ]);
+});
+
 test("syncAssets preserves prior immutable assets during a release", () => {
   syncAssets();
 
@@ -483,20 +518,23 @@ test("calls the governed context guard before the first AWS mutation", () => {
   expect(firstAwsMutation).toBeGreaterThan(guardCall);
 });
 
-test("documents only the governed staging exception at the Next 12 boundary", () => {
+test("documents only the governed staging and production workflows at the Next 12 boundary", () => {
   const deployDocs = realFs.readFileSync(
     path.join(__dirname, "../DEPLOY.md"),
     "utf8"
   );
 
   expect(deployDocs).toContain(
-    "NEXT 12 DEPLOYMENT BOUNDARY — GOVERNED STAGING ONLY"
+    "NEXT 12 DEPLOYMENT BOUNDARY — GOVERNED WORKFLOWS ONLY"
   );
   expect(deployDocs).toContain(".github/workflows/staging-deploy.yml");
+  expect(deployDocs).toContain(".github/workflows/production-deploy.yml");
   expect(deployDocs).toMatch(
     /Direct workstation use of `node scripts\/staging-deploy\.js deploy` is not an[\s>]+approved workaround\./
   );
   expect(deployDocs).toContain("yarn deploy   # BLOCKED");
   expect(deployDocs).toContain("## Governed staging publish and rollback");
+  expect(deployDocs).toContain("## Governed production publish and rollback");
+  expect(deployDocs).toMatch(/Never infer a rollback\s+target as version N-1/);
   expect(deployDocs).toContain("staging-last-known-good");
 });

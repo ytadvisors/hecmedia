@@ -30,4 +30,6 @@ env.yml
 .staging-disabled-pages-api/
 .newsletter-export/
 .newsletter-production/
+.production-release/
+production-deploy-evidence.json
 out/
