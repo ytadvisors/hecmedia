@@ -159,7 +159,7 @@ had reused damaged layer content.
 
 A post-pull comparison established:
 
-| File | Known-good image `e7a885…` | Rejected image `beba781…` |
+| File | File-integrity reference `e7a885…` (not production-contract safe) | Rejected image `beba781…` |
 | --- | ---: | ---: |
 | `/var/www/html/index.php` | 405 bytes | 0 bytes |
 | `/var/www/html/wp-blog-header.php` | 351 bytes | 0 bytes |
@@ -231,7 +231,9 @@ For the staging image:
 3. Verified GraphQL returned `generalSettings.title = "HEC Media"`.
 4. Verified REST posts returned non-empty JSON.
 5. Verified `development.hecmedia.org` returned rendered HTTP 200 HTML.
-6. Pulled both known-good and rejected images and confirmed the zero-byte core-file defect.
+6. Pulled both the nonzero file-integrity reference and rejected image and confirmed the zero-byte
+   core-file defect. The reference image remained production-contract unsafe without the additive
+   GraphQL compatibility expansion.
 
 ## What went well
 

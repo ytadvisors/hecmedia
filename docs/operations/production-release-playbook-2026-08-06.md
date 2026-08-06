@@ -38,8 +38,9 @@ the deployment stops at the last verified compatible pair.
    is quarantined and must never be promoted.
 8. Static `/healthz` proves only that the container and Apache are reachable. It is not an
    application release gate.
-9. No schema/DDL change is included in this release. If one becomes necessary, stop and follow
-   the replicated-PG subscriber-first invariant in a separate reviewed plan.
+9. No database DDL change is included in this release. The required additive GraphQL API-contract
+   expansion remains in scope. If database DDL becomes necessary, stop and follow the replicated-PG
+   subscriber-first invariant in a separate reviewed plan.
 
 ## 3. Verified recovery baseline
 
@@ -105,16 +106,17 @@ and the builder cache, preserve diagnostics, and restart Gate 2 on another prist
 | B2 | Staging enabled a compatibility layer that production disabled | Identical explicit schema-profile configuration in staging and production, proven in task-definition evidence |
 | B3 | Candidate image `beba781…` contains zero-byte WordPress core files | A new image built on a pristine builder; nonzero files and WordPress checksums verified before push and after pull |
 | B4 | ECS health checks only a static file | Application probes must gate staging and production rollout; static health remains infrastructure-only |
-| B5 | Current production frontend artifact has no trustworthy source-SHA metadata | Preserve Lambda version `146` and checksum as the rollback baseline; require source SHA metadata in the candidate |
-| B6 | Backend-first ordering broke SSR | Four-way compatibility matrix passes; frontend deploys first unless the dual-schema backend is independently proven compatible with the current frontend |
+| B5 | Current production frontend artifact has no trustworthy source-SHA metadata | Record Lambda version `146` and checksum as the live/pre-cutover identity; verify sanitized version `147` and its pinned checksum as the sole rollback target; require source SHA metadata in the candidate |
+| B6 | Backend-first ordering broke SSR | Four-way compatibility matrix passes and the frontend deploys first; there is no backend-first exception in this release |
 | B7 | Fresh requests can fail while cached requests look healthy | Verification uses unique query strings, multiple sequential requests, hydrated Chrome routes, and edge-log inspection |
 
 ## 5. Release strategy
 
-Use an **expand → frontend → backend → contract-later** sequence:
+Use an **expand (merge only; do not deploy) → validate → deploy frontend → deploy backend →
+contract later** sequence:
 
-1. Expand the backend contract so it supports both the live frontend's legacy GraphQL operations
-   and the candidate frontend's modern operations.
+1. Merge the backend contract expansion so it supports both the live frontend's legacy GraphQL
+   operations and the candidate frontend's modern operations, but do not deploy it yet.
 2. Prove the exact candidate frontend against both old and expanded backend contracts.
 3. Deploy the backward-compatible frontend first.
 4. Deploy the expanded backend second.
@@ -210,16 +212,38 @@ The local Docker cache involved in the disk-full incident is not trusted.
 **Gate 2:** independent reviewer confirms the post-pull image evidence. The digest `beba781…`
 is explicitly rejected.
 
-## 10. Phase 3 — production-parity staging validation
+## 10. Phase 3 — production-parity preproduction validation
+
+This phase proves every compatibility-matrix cell through a named mechanism before production.
+Evidence from one pairing may not be reused as proof of another.
 
 1. Snapshot both staging services, task definitions, image digest, target health, frontend Lambda
-   version, CloudFront ETag, and `staging-last-known-good` before mutation.
-2. Register new public and admin task-definition revisions by changing only the image digest and
-   the reviewed explicit schema-profile variable. Diff the entire task definition against the
-   baseline.
-3. Deploy both services with ECS rolling replacement and wait for completed rollouts.
-4. Verify the new tasks—not a mixture—are the only registered healthy targets.
-5. Run application probes:
+   version, CloudFront ETag, and `staging-last-known-good` before mutation. Recapture the current
+   production frontend version/checksum and backend task definition/digest.
+2. Reconfirm the current/current baseline with the captured legacy GraphQL operations, fresh REST
+   probes, fresh SSR routes, and hydrated routes against the recovered production pair.
+3. Prove the candidate frontend against the current production backend before changing backend
+   staging:
+
+   - verify in workflow evidence that the governed frontend staging build uses the read-only
+     `https://prod-wp.hectv.org/graphql` and `https://prod-wp.hectv.org` endpoints;
+   - require `E2E_ALLOW_WRITES=0`, no-send forms, and the production-host write guard;
+   - deploy the exact merged frontend candidate to `development.hecmedia.org` through the governed
+     staging workflow;
+   - verify server-rendered and hydrated routes: `/`, `/events`, `/about-us`, `/newsletter`,
+     `/newsletter/thank-you`, `/category/films`, and `/category/arts/two_on_the_aisle`;
+   - run 20 unique cache-busting homepage requests sequentially and require 20/20 HTTP 200, valid
+     `HEC-TV` titles without `undefined`, non-empty bodies, and exact candidate SHA metadata.
+
+   If the effective CMS endpoints differ from the captured current production endpoints, stop;
+   this matrix cell has not been tested.
+4. Register new public and admin backend task-definition revisions by changing only the image
+   digest and reviewed explicit schema-profile variable. Diff the entire task definition against
+   the baseline.
+5. Deploy both backend staging services with ECS rolling replacement and wait for completed
+   rollouts.
+6. Verify the new tasks—not a mixture—are the only registered healthy targets.
+7. Run candidate-backend application probes:
 
    - `POST /graphql` returns JSON and `generalSettings.title = "HEC Media"`
    - all legacy and modern consumer GraphQL documents return without schema errors
@@ -228,28 +252,42 @@ is explicitly rejected.
    - prohibited writes remain blocked on public staging
    - admin service authentication and editor routing are unchanged
 
-6. Deploy the exact merged frontend candidate to `development.hecmedia.org` using the governed
-   staging workflow.
-7. Verify server-rendered and hydrated routes: `/`, `/events`, `/about-us`, `/newsletter`,
-   `/newsletter/thank-you`, `/category/films`, and `/category/arts/two_on_the_aisle`.
-8. Run 20 unique cache-busting homepage requests sequentially. Require 20/20 HTTP 200, valid
-   `HEC-TV` titles without `undefined`, non-empty bodies, and the exact candidate SHA metadata.
-9. Inspect staging Lambda logs and backend logs for schema, PHP, uncaught JavaScript, and 5xx errors.
+8. Run the immutable operation bundle captured from live Lambda version `146` against the candidate
+   backend. Require every legacy document and response shape to pass. This proves the current
+   frontend-contract/candidate-backend cell without changing production.
+9. Prove the candidate frontend against the candidate backend using an isolated exact-candidate SSR
+   harness on a clean runner:
+
+   - check out the same merged frontend SHA and lockfile used in step 3;
+   - use the same Node runtime, install, lint, test, and production build commands as the governed
+     staging workflow;
+   - change only `APOLLO_CLIENT_URI` and `WP_HOST` to the candidate staging backend, retain
+     `E2E_ALLOW_WRITES=0` and no-send forms, and record the effective non-secret endpoint hostnames;
+   - serve the production build locally on the isolated runner and repeat the required SSR,
+     hydration, 20/20 cache-busting, API-contract, and empty-body checks.
+
+   A unit-only contract suite is insufficient for this cell. The exact candidate build must render
+   against the candidate staging backend.
+10. Inspect frontend staging, SSR-harness, and backend logs for schema, PHP, uncaught JavaScript,
+    empty-body, and 5xx errors.
 
 ### Required compatibility matrix
 
-| Frontend | Backend | Required result |
+| Frontend | Backend | Required proof before Gate 3 |
 | --- | --- | --- |
-| Current production frontend baseline | Current production backend `d0b939…` | Baseline passes |
-| Candidate frontend | Current production backend `d0b939…` | Passes before frontend-first cutover |
-| Current production frontend contract | Candidate dual-schema backend | Passes before backend promotion |
-| Candidate frontend | Candidate dual-schema backend | Passes in staging |
+| Current production frontend baseline | Current production backend `d0b939…` | Fresh recovered-production probes and captured legacy operations pass |
+| Candidate frontend | Current production backend `d0b939…` | Governed `development.hecmedia.org` deployment uses the verified read-only production CMS endpoints and passes SSR/hydration/20-request checks |
+| Current production frontend contract | Candidate dual-schema backend | Immutable Lambda `146` operation bundle passes against candidate backend staging |
+| Candidate frontend | Candidate dual-schema backend | Exact-candidate isolated production build passes SSR/hydration/20-request checks against candidate backend staging |
 
 The current production Lambda has no reliable source-SHA metadata, so its contract is represented
 by its immutable version/checksum plus captured operations and edge logs. The candidate must embed
-its exact SHA.
+its exact SHA. Lambda version `146` is the live/pre-cutover identity only. The sole governed
+frontend rollback target is sanitized version `147` with its pinned checksum; rollback uses `147`
+instead of inferring or re-associating `146` so the workflow can verify one immutable artifact and
+restore the no-newsletter-API configuration deterministically.
 
-**Gate 3:** all four matrix cells and all staging application checks pass. Yomi reviews the
+**Gate 3:** all four matrix cells and all preproduction application checks pass. Yomi reviews the
 evidence and explicitly approves proceeding to production.
 
 ## 11. Phase 4 — freeze immutable production inputs
