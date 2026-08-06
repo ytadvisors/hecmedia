@@ -310,6 +310,21 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   expect(workflow).toMatch(
     /aws-actions\/configure-aws-credentials@[0-9a-f]{40}/
   );
+  expect(workflow).toContain(
+    "browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd"
+  );
+  expect(workflow).toContain('chrome-version: "151.0.7922.76"');
+  expect(workflow).toContain(
+    ["BROWSER_BIN: $", "{{ steps.setup-chrome.outputs.chrome-path }}"].join("")
+  );
+  const browserPreflight = workflow.indexOf(
+    "Verify Chrome before production credentials"
+  );
+  const awsCredentials = workflow.indexOf(
+    "aws-actions/configure-aws-credentials@"
+  );
+  expect(browserPreflight).toBeGreaterThan(-1);
+  expect(awsCredentials).toBeGreaterThan(browserPreflight);
   expect(workflow).not.toContain("AWS_ACCESS_KEY_ID");
   expect(workflow).not.toContain("AWS_SECRET_ACCESS_KEY");
   expect(workflow).not.toContain("yarn deploy");

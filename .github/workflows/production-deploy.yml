@@ -153,6 +153,20 @@ jobs:
         env:
           NODE_OPTIONS: --openssl-legacy-provider
         run: node scripts/production-deploy.js build
+      - name: Install pinned Chrome for hydrated production verification
+        id: setup-chrome
+        if: inputs.action == 'deploy'
+        uses: browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd # v2
+        with:
+          chrome-version: "151.0.7922.76"
+      - name: Verify Chrome before production credentials
+        if: inputs.action == 'deploy'
+        env:
+          BROWSER_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          set -euo pipefail
+          test -x "$BROWSER_BIN"
+          "$BROWSER_BIN" --version
       - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: arn:aws:iam::850335719356:role/hecmedia-production-deploy
@@ -163,12 +177,12 @@ jobs:
           set -euo pipefail
           test "$(aws sts get-caller-identity --query Account --output text)" = 850335719356
       - name: Apply the approved production action and verify public recovery
+        env:
+          BROWSER_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           set -euo pipefail
           if [ "$PRODUCTION_ACTION" = deploy ]; then
-            BROWSER_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-            test -n "$BROWSER_BIN"
-            export BROWSER_BIN
+            test -x "$BROWSER_BIN"
           fi
           node scripts/production-deploy.js "$PRODUCTION_ACTION"
       - name: Record immutable successful frontend release tag
