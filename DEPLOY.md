@@ -1,5 +1,10 @@
 # Deploy & Rollback
 
+Before the next HEC Media production release, review and approve the
+[2026-08-06 production release playbook](docs/operations/production-release-playbook-2026-08-06.md)
+and its [incident report/RCA](docs/incidents/2026-08-06-production-deployment.md). The playbook's
+cross-repository compatibility gates and stop conditions supplement this workflow reference.
+
 > **NEXT 12 DEPLOYMENT BOUNDARY — GOVERNED WORKFLOWS ONLY**
 >
 > The `upgrade/next16` compatibility checkpoint upgrades the application runtime to
