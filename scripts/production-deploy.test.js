@@ -9,6 +9,7 @@ const {
   assertGovernedDeployContext,
   configureProductionDistribution,
   configureSanitizedRollback,
+  parseJsonOutput,
   requireBuildContract
 } = require("./production-deploy");
 
@@ -116,6 +117,18 @@ test("requires the exact send-enabled production build contract", () => {
       APOLLO_CLIENT_URI: "https://example.org"
     })
   ).toThrow("APOLLO_CLIENT_URI must equal");
+});
+
+test("parseJsonOutput treats empty get-bucket-versioning stdout as unversioned {}", () => {
+  // AWS CLI returns empty body when bucket versioning was never configured.
+  expect(parseJsonOutput("", { allowEmptyObject: true })).toEqual({});
+  expect(parseJsonOutput("   \n", { allowEmptyObject: true })).toEqual({});
+  expect(parseJsonOutput('{"Status":"Enabled"}')).toEqual({
+    Status: "Enabled"
+  });
+  expect(parseJsonOutput(null, { allowEmptyObject: true })).toEqual({});
+  expect(() => parseJsonOutput("")).toThrow(/empty stdout/);
+  expect(() => parseJsonOutput("not-json")).toThrow(/parse failed/);
 });
 
 test("allows production mutation only from the governed workflow", () => {

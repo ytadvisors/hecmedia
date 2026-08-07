@@ -54,8 +54,29 @@ function run(command, args, options = {}) {
   });
 }
 
-function runJson(command, args) {
-  return JSON.parse(run(command, args));
+/**
+ * Parse AWS CLI JSON stdout.
+ * `aws s3api get-bucket-versioning` returns empty body when versioning has
+ * never been configured — treat that as {} so deploy can enable versioning.
+ */
+function parseJsonOutput(text, options = {}) {
+  const trimmed = String(text == null ? "" : text).trim();
+  if (!trimmed) {
+    if (options.allowEmptyObject) {
+      return {};
+    }
+    throw new Error("Expected JSON output but command returned empty stdout");
+  }
+  try {
+    return JSON.parse(trimmed);
+  } catch (err) {
+    const message = err && err.message ? err.message : String(err);
+    throw new Error(`Expected JSON output but parse failed: ${message}`);
+  }
+}
+
+function runJson(command, args, options = {}) {
+  return parseJsonOutput(run(command, args), options);
 }
 
 function clone(value) {
@@ -818,12 +839,12 @@ function deploy() {
 
   const baselineConfigPath = path.join(RELEASE_DIR, "cloudfront-before.json");
   fs.writeFileSync(baselineConfigPath, JSON.stringify(baseline, null, 2));
-  const bucketVersioning = runJson("aws", [
-    "s3api",
-    "get-bucket-versioning",
-    "--bucket",
-    BUCKET_NAME
-  ]);
+  // Empty stdout = never-configured (not an error); Status absent → enable below.
+  const bucketVersioning = runJson(
+    "aws",
+    ["s3api", "get-bucket-versioning", "--bucket", BUCKET_NAME],
+    { allowEmptyObject: true }
+  );
   const baselineBuildId = captureObject(
     "BUILD_ID",
     path.join(RELEASE_DIR, "s3-build-id-before.txt")
@@ -864,12 +885,11 @@ function deploy() {
         "Status=Enabled"
       ]);
     }
-    const enabled = runJson("aws", [
-      "s3api",
-      "get-bucket-versioning",
-      "--bucket",
-      BUCKET_NAME
-    ]);
+    const enabled = runJson(
+      "aws",
+      ["s3api", "get-bucket-versioning", "--bucket", BUCKET_NAME],
+      { allowEmptyObject: true }
+    );
     if (enabled.Status !== "Enabled") {
       throw new Error("Production S3 versioning did not become enabled.");
     }
@@ -997,5 +1017,6 @@ module.exports = {
   assertGovernedDeployContext,
   configureProductionDistribution,
   configureSanitizedRollback,
+  parseJsonOutput,
   requireBuildContract
 };
