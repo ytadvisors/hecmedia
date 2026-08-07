@@ -120,7 +120,9 @@ function listFiles(directory) {
       return [];
     } catch (err) {
       throw new Error(
-        `listFiles failed on ${entryPath}: ${err && err.message ? err.message : err}`
+        `listFiles failed on ${entryPath}: ${
+          err && err.message ? err.message : err
+        }`
       );
     }
   });
@@ -137,7 +139,12 @@ function assertNoEmbeddedAccessKeys(directory) {
   }
 }
 
-function assertFunctionContract(config, expectedArn, expectedMemory, options = {}) {
+function assertFunctionContract(
+  config,
+  expectedArn,
+  expectedMemory,
+  options = {}
+) {
   // Published Lambda@Edge versions are immutable. Live CloudFront still pins
   // historical :146 which was published on nodejs12.x; $LATEST and new
   // publishes must be nodejs24.x. Allow both for baseline version checks.
@@ -157,7 +164,9 @@ function assertFunctionContract(config, expectedArn, expectedMemory, options = {
   ) {
     throw new Error(
       `Lambda runtime contract drifted for ${expectedArn}` +
-        ` (runtime=${config && config.Runtime}, allowed=${allowedRuntimes.join(",")}).`
+        ` (runtime=${config && config.Runtime}, allowed=${allowedRuntimes.join(
+          ","
+        )}).`
     );
   }
 }
@@ -437,7 +446,9 @@ function zipDirectory(directory, zipPath) {
     }
   } catch (err) {
     throw new Error(
-      `Failed to remove existing zip ${zipPath}: ${err && err.message ? err.message : err}`
+      `Failed to remove existing zip ${zipPath}: ${
+        err && err.message ? err.message : err
+      }`
     );
   }
   run("zip", ["-r", "-X", "-q", zipPath, "."], { cwd: directory });
@@ -656,6 +667,17 @@ function captureHomepage(destination) {
   return { title, sha256: fileSha256(destination) };
 }
 
+function assertHydratedNavigation(dom, route) {
+  const navigation = String(dom || "").match(
+    /<ul\b[^>]*class="[^"]*\btop-navigation\b[^"]*"[^>]*>([\s\S]*?)<\/ul>/i
+  );
+  if (!navigation || !/<li\b/i.test(navigation[1])) {
+    throw new Error(
+      `Hydrated production route ${route} has no primary navigation items.`
+    );
+  }
+}
+
 function verifyHydratedRoutes(browserPath) {
   if (!browserPath || !fs.existsSync(browserPath)) {
     throw new Error(
@@ -705,6 +727,7 @@ function verifyHydratedRoutes(browserPath) {
         `Hydrated production route ${route} did not render the HEC site.`
       );
     }
+    assertHydratedNavigation(dom, route);
     if (/incompatible-href-as|provided .as. value.*incompatible/i.test(logs)) {
       throw new Error(
         `Hydrated production route ${route} emitted a dynamic-route error.`
@@ -1015,6 +1038,7 @@ module.exports = {
   assertDistributionContract,
   assertFunctionContract,
   assertGovernedDeployContext,
+  assertHydratedNavigation,
   configureProductionDistribution,
   configureSanitizedRollback,
   parseJsonOutput,

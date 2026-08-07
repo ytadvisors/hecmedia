@@ -1,8 +1,9 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, wait } from "@testing-library/react";
 import { useQuery } from "@apollo/react-hooks";
 import { Layout } from "./index";
 import { GET_HEADER_MENU, GET_LEGACY_HEADER_MENU } from "../../lib/graphql";
+import { fetchMenuBySlug } from "../../lib/wpMenuRest";
 
 jest.mock("@apollo/react-hooks", () => ({
   useQuery: jest.fn()
@@ -41,18 +42,28 @@ jest.mock("../../components/ProgramViewer", () => {
 
 jest.mock("../../components/Header", () => {
   const MockReact = require("react");
-  return ({ header, topbarCtas = [] }) =>
-    MockReact.createElement(
-      "div",
-      { "data-testid": "header" },
-      header &&
-        header.edges &&
-        header.edges
-          .flatMap(({ node }) => node.menuItems.edges)
+  const getMenuItemEdges = connection => {
+    const edges = (connection && connection.edges) || [];
+    const nestedEdges =
+      edges[0] &&
+      edges[0].node &&
+      edges[0].node.menuItems &&
+      edges[0].node.menuItems.edges;
+    return nestedEdges || edges;
+  };
+  return {
+    __esModule: true,
+    getMenuItemEdges,
+    default: ({ header, topbarCtas = [] }) =>
+      MockReact.createElement(
+        "div",
+        { "data-testid": "header" },
+        getMenuItemEdges(header)
           .map(({ node }) => node.label)
           .join(", "),
-      topbarCtas.map(cta => `${cta.label}:${cta.url}`).join(", ")
-    );
+        topbarCtas.map(cta => `${cta.label}:${cta.url}`).join(", ")
+      )
+  };
 });
 jest.mock("../../components/Banner", () => {
   const MockReact = require("react");
@@ -100,6 +111,8 @@ const emptyQuery = { data: undefined };
 describe("Layout", () => {
   beforeEach(() => {
     useQuery.mockReset();
+    fetchMenuBySlug.mockReset();
+    fetchMenuBySlug.mockResolvedValue(null);
   });
 
   it("supplies curated and newest videos to Trending Now without using Spotlight", () => {
@@ -342,6 +355,65 @@ describe("Layout", () => {
     render(<Layout dispatch={jest.fn()} />);
 
     expect(screen.getByTestId("header")).toHaveTextContent("PROGRAMS");
+  });
+
+  it("restores Header from REST when WPGraphQL returns an empty menu", async () => {
+    const restHeader = {
+      edges: [
+        {
+          node: {
+            menuItems: {
+              edges: [
+                { node: { label: "Arts", path: "/category/arts/" } },
+                {
+                  node: {
+                    label: "Genres",
+                    path: "/category/",
+                    childItems: {
+                      edges: [
+                        {
+                          node: {
+                            label: "Community",
+                            path: "/category/community/"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    };
+    fetchMenuBySlug.mockImplementation(slug =>
+      Promise.resolve(slug === "header" ? restHeader : null)
+    );
+    // The REST state update rerenders Layout. Keep subsequent hook reads
+    // defined after the first render consumes the ordered responses below.
+    useQuery.mockReturnValue(emptyQuery);
+
+    useQuery
+      .mockReturnValueOnce({ data: {}, loading: false }) // layout
+      .mockReturnValueOnce({ data: { header: { edges: [] } } }) // header
+      .mockReturnValueOnce(emptyQuery) // footer menu
+      .mockReturnValueOnce(emptyQuery) // social menu
+      .mockReturnValueOnce(emptyQuery) // header actions
+      .mockReturnValueOnce(emptyQuery) // topbar option
+      .mockReturnValueOnce(emptyQuery) // hec site settings
+      .mockReturnValueOnce(emptyQuery) // hec presentation
+      .mockReturnValueOnce(emptyQuery) // legacy site content
+      .mockReturnValueOnce(emptyQuery) // newest
+      .mockReturnValueOnce(emptyQuery) // curated
+      .mockReturnValueOnce(emptyQuery); // live
+
+    render(<Layout dispatch={jest.fn()} />);
+
+    await wait(() =>
+      expect(screen.getByTestId("header")).toHaveTextContent("Arts, Genres")
+    );
+    expect(fetchMenuBySlug).toHaveBeenCalledWith("header");
   });
 
   it("keeps the shell usable when the isolated header menu is unavailable", () => {

@@ -19,7 +19,7 @@ import {
   GET_NEWEST_VIDEOS
 } from "../../lib/graphql";
 import ProgramViewer from "../../components/ProgramViewer";
-import Header from "../../components/Header";
+import Header, { getMenuItemEdges } from "../../components/Header";
 import Banner from "../../components/Banner";
 import Footer, { getFooterMenuItemEdges } from "../../components/Footer";
 import BottomNav from "../../components/BottomNav/index";
@@ -42,7 +42,8 @@ export const Layout = props => {
   const { pageForm: { search: { values } = {} } = {}, dispatch } = props;
 
   const [currentlyPlaying, setPlaying] = useState(false);
-  // REST fallbacks when WPGraphQL hides unassigned menus (footer/social).
+  // REST fallbacks when WPGraphQL hides unassigned classic menus.
+  const [restHeader, setRestHeader] = useState(null);
   const [restFooter, setRestFooter] = useState(null);
   const [restSocial, setRestSocial] = useState(null);
 
@@ -176,7 +177,8 @@ export const Layout = props => {
   });
 
   const { spotLight: { nodes: spotLightPosts = [] } = {} } = data || {};
-  const header = (headerData && headerData.header) || (data && data.header);
+  const graphqlHeader =
+    (headerData && headerData.header) || (data && data.header);
   // Prefer isolated footer/social menu queries; fall back to GET_LAYOUT fields
   // only if an older shell still embeds them.
   const graphqlFooter =
@@ -184,10 +186,18 @@ export const Layout = props => {
   const graphqlSocial =
     (socialMenuData && socialMenuData.social) || (data && data.social);
 
-  // When GraphQL returns no footer/social items (unassigned menus are private
-  // in WPGraphQL), load the classic menus via the public wp-api-menus REST API.
+  // When GraphQL returns no classic-menu items (unassigned menus are private
+  // in WPGraphQL), load them via the public wp-api-menus REST API.
   useEffect(() => {
     let cancelled = false;
+    const graphqlHasHeader = getMenuItemEdges(graphqlHeader).length > 0;
+    if (!graphqlHasHeader && !restHeader) {
+      fetchMenuBySlug("header").then(shape => {
+        if (!cancelled && shape && getMenuItemEdges(shape).length > 0) {
+          setRestHeader(shape);
+        }
+      });
+    }
     const graphqlHasFooter = getFooterMenuItemEdges(graphqlFooter).length > 0;
     if (!graphqlHasFooter && !restFooter) {
       fetchMenuBySlug("footer").then(shape => {
@@ -215,7 +225,12 @@ export const Layout = props => {
     return () => {
       cancelled = true;
     };
-  }, [graphqlFooter, graphqlSocial]);
+  }, [graphqlHeader, graphqlFooter, graphqlSocial]);
+
+  const header =
+    getMenuItemEdges(graphqlHeader).length > 0
+      ? graphqlHeader
+      : restHeader || graphqlHeader;
 
   const footer =
     getFooterMenuItemEdges(graphqlFooter).length > 0
