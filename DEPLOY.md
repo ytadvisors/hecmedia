@@ -30,7 +30,7 @@ cross-repository compatibility gates and stop conditions supplement this workflo
 > public cutover; scans the uncompressed package for AWS access keys; enables S3
 > versioning; updates only existing production resources; verifies rendered and
 > hydrated routes; and automatically restores the immutable sanitized Lambda version
-> `147` if post-cutover verification fails. Direct workstation production mutation is
+> `150` if post-cutover verification fails. Direct workstation production mutation is
 > not an approved workaround. A green build or test alone is not permission to ship.
 
 ## Legacy full-stack deployment (blocked)
@@ -76,7 +76,7 @@ managed upload media, all rendered remote `src` and `srcset` candidates must ret
 utility routes may record an empty media inventory.
 
 Manual rollback uses the same workflow with `action=rollback` and the literal confirmation
-`ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the immutable checksum of version `147`, moves all
+`ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the immutable checksum of version `150`, moves all
 four owned SSR associations to that version, removes the newsletter API behavior, waits for
 CloudFront and invalidation completion, and verifies the public homepage. Never infer a rollback
 target as version N-1.

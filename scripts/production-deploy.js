@@ -16,9 +16,11 @@ const API_FUNCTION_NAME = "x2l4ew-api";
 const DEFAULT_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${DEFAULT_FUNCTION_NAME}`;
 const API_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${API_FUNCTION_NAME}`;
 const EDGE_EXECUTION_ROLE = "arn:aws:iam::850335719356:role/x2l4ew-0kb1zus";
-const SANITIZED_ROLLBACK_ARN = `${DEFAULT_FUNCTION_ARN}:147`;
+// Immutable, credential-free rollback retained outside the normal release lane.
+// Do not delete this published version while it is pinned here and in the playbook.
+const SANITIZED_ROLLBACK_ARN = `${DEFAULT_FUNCTION_ARN}:150`;
 const SANITIZED_ROLLBACK_CODE_SHA256 =
-  "bK0kKF/F6KYZJp75jfK+kZ6swsA1yqljdpusPoBgAek=";
+  "InGBmR1WRmFN+iojEtw/HdYER96Dlge410JFw3THEag=";
 const API_PATH = "api/newsletter/subscribe";
 const REPO_ROOT = path.join(__dirname, "..");
 const BUILD_DIR = path.join(REPO_ROOT, ".serverless_nextjs");
@@ -93,6 +95,14 @@ function versionedArn(baseArn, version) {
     throw new Error(`Invalid published Lambda@Edge ARN: ${arn}`);
   }
   return arn;
+}
+
+function publishedVersionFromArn(arn) {
+  const match = String(arn || "").match(/:([1-9][0-9]*)$/);
+  if (!match) {
+    throw new Error(`Invalid published Lambda@Edge ARN: ${arn}`);
+  }
+  return match[1];
 }
 
 function zipCodeSha256(zipPath) {
@@ -933,7 +943,10 @@ function writeEvidence(state) {
 }
 
 function verifySanitizedRollbackVersion() {
-  const config = functionConfiguration(DEFAULT_FUNCTION_NAME, "147");
+  const config = functionConfiguration(
+    DEFAULT_FUNCTION_NAME,
+    publishedVersionFromArn(SANITIZED_ROLLBACK_ARN)
+  );
   assertFunctionContract(config, SANITIZED_ROLLBACK_ARN, 3000);
   if (
     config.FunctionArn !== SANITIZED_ROLLBACK_ARN ||
@@ -957,7 +970,7 @@ function applySanitizedRollback(state) {
   nextState.rollback_invalidation_id = invalidate(["/*"]);
   const rollbackHome = path.join(RELEASE_DIR, "rollback-home.html");
   nextState.rollback_home = captureHomepage(rollbackHome);
-  nextState.rollback_outcome = "sanitized-version-147-restored";
+  nextState.rollback_outcome = "sanitized-version-150-restored";
   writeEvidence(nextState);
   return nextState;
 }
@@ -1217,6 +1230,7 @@ if (require.main === module) {
 module.exports = {
   API_PATH,
   SANITIZED_ROLLBACK_ARN,
+  SANITIZED_ROLLBACK_CODE_SHA256,
   apiBehavior,
   assertDistributionContract,
   assertFunctionContract,
@@ -1228,5 +1242,6 @@ module.exports = {
   configureSanitizedRollback,
   extractRemoteImageUrls,
   parseJsonOutput,
+  publishedVersionFromArn,
   requireBuildContract
 };
