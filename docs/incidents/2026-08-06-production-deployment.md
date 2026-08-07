@@ -314,13 +314,13 @@ though the browser could not load the object.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Canonicalize staging and production WordPress upload URLs to the public S3 archive                                                                               | Incomplete environment-specific upload origins                                           |
 | Use a finite component fallback chain: public archive → active WordPress origin → local placeholder                                                              | New media awaiting archive propagation without retry loops                               |
-| Before production credentials, resolve the real Spotlight and representative category-card URLs, perform ranged GETs, and require successful `image/*` responses | Valid metadata pointing to missing or non-image content                                  |
+| Before protected-environment approval, resolve the real Spotlight and representative category-card URLs, perform ranged GETs, and require successful `image/*` responses | Valid metadata pointing to missing or non-image content                                  |
 | After cutover, extract every remote image URL from hydrated required routes, probe each unique URL, require `image/*`, and save the route-to-image inventory     | Rendering changes that bypass the shared resolver or expose route-specific broken assets |
 
 This follow-up changes the acceptance criterion from “the page and query returned 200” to “the
-candidate-selected media objects loaded as images before approval, and the actually rendered media
-objects loaded as images after cutover.” Any 404, request failure, empty rendered-media set, or
-non-image response is a release failure.
+candidate-selected media objects loaded as images before environment approval, and the actually
+rendered media objects loaded as images after cutover.” Any 404, request failure, empty
+rendered-media set, or non-image response is a release failure.
 
 ## Corrective and preventive actions
 

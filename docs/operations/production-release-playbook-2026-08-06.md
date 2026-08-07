@@ -440,9 +440,10 @@ recapture. Do not edit inputs in place or guess a replacement.
 
 1. The named deployment commander dispatches `.github/workflows/production-deploy.yml` from the
    exact protected `master` tip with the frozen inputs.
-2. Confirm authorization and all no-AWS-credentials tests pass before approving the protected
-   environment, including the live production media contract that probes the exact Spotlight and
-   category-card image URLs resolved by the candidate code.
+2. Confirm authorization and the dedicated no-credential media preflight pass before approving the
+   protected environment. That preflight probes the exact Spotlight and category-card image URLs
+   resolved by the candidate code. The protected job reruns the full no-credential test suite
+   before it receives AWS credentials.
 3. Yomi reviews the frozen inputs and approves the production environment.
 4. Let the governed workflow package artifacts, publish versioned Lambda functions, update the
    existing CloudFront distribution, wait for propagation, invalidate, and run its verifier.

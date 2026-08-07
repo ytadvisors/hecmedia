@@ -68,6 +68,11 @@ The workflow packages before receiving AWS credentials. Its OIDC role can update
 or delete S3 objects. A successful release receives an immutable
 `hecmedia-production-<12-character-sha>` tag and uploads release evidence.
 
+For a deploy action, the protected-environment approval prompt appears only after a separate
+no-credential media preflight resolves the candidate's live Spotlight and representative category
+image URLs and confirms that they return images. The protected job reruns the full tests before it
+receives AWS credentials or mutates production.
+
 Manual rollback uses the same workflow with `action=rollback` and the literal confirmation
 `ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the immutable checksum of version `147`, moves all
 four owned SSR associations to that version, removes the newsletter API behavior, waits for
