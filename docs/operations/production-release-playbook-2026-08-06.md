@@ -110,13 +110,15 @@ and the builder cache, preserve diagnostics, and restart Gate 2 on another prist
 | B3 | Candidate image `beba781…` contains zero-byte WordPress core files | A new image built on a pristine builder; nonzero files and WordPress checksums verified before push and after pull |
 | B4 | ECS health checks only a static file | Application probes must gate staging and production rollout; static health remains infrastructure-only |
 | B5 | Current production frontend artifact has no trustworthy source-SHA metadata | Record Lambda version `146` and checksum as the live/pre-cutover identity; verify sanitized version `147` and its pinned checksum as the sole rollback target; require source SHA metadata in the candidate |
-| B6 | Backend-first ordering broke SSR | Four-way compatibility matrix passes and the frontend deploys first; there is no backend-first exception in this release |
+| B6 | Backend-first ordering broke SSR | Default path is four-way matrix pass + frontend-first. **Exception (this trial):** if Cell 2 (candidate FE × current production backend) fails because the candidate requires modern fields the recovery backend lacks, and Cells 1/3/4 pass with dual-schema expand, production may land the dual-schema **backend expand first**, then the candidate frontend — only after co-signed amendment + Yomi go |
 | B7 | Fresh requests can fail while cached requests look healthy | Verification uses unique query strings, multiple sequential requests, hydrated Chrome routes, and edge-log inspection |
 
 ## 5. Release strategy
 
-Use an **expand (merge only; do not deploy) → validate → deploy frontend → deploy backend →
-contract later** sequence:
+Use an **expand (merge only; do not deploy) → validate → deploy consumers safely →
+contract later** sequence.
+
+### Default path (Cell 2 passes)
 
 1. Merge the backend contract expansion so it supports both the live frontend's legacy GraphQL
    operations and the candidate frontend's modern operations, but do not deploy it yet.
@@ -125,8 +127,26 @@ contract later** sequence:
 4. Deploy the expanded backend second.
 5. Remove legacy fields only in a later release after production telemetry proves they are unused.
 
-This ensures either frontend can operate during CloudFront propagation and either backend can
-operate during the ECS rolling update.
+### Exception path — Cell 2 fails (this trial, co-signed)
+
+When the **candidate frontend is not backward-compatible** with the current production backend
+(Cell 2 fails — e.g. candidate requires `trendingSettings` / `topbarCtas` that recovery prod lacks)
+**and** all of the following hold:
+
+- Cell 1 passes (live FE × current production backend);
+- Cell 3 passes (live FE contract / Lambda 146 ops × candidate dual-schema backend in staging);
+- Cell 4 passes (candidate FE ops × candidate dual-schema backend in staging);
+- dual-schema expand is proven not to break live Lambda 146 fields (`PostToCategoryConnectionWhereArgs.shouldOutputInFlatList`, `Event.excerpt`, etc.);
+- this exception is recorded in the evidence package and co-signed (Yomi + two independent model families on the exact amendment commit);
+
+then production cutover is:
+
+1. **Deploy dual-schema backend expand first** (provider expand; live FE continues).
+2. Verify production GraphQL dual-schema + live public site (20/20 fresh probes, no schema errors).
+3. **Deploy candidate frontend second**.
+4. Soak; remove legacy fields only later.
+
+This is still expand/contract. It is **not** a blank backend-first for incompatible modern-only backends without dual-schema proof.
 
 ## 6. Roles and communications
 
@@ -314,8 +334,13 @@ frontend rollback target is sanitized version `147` with its pinned checksum; ro
 instead of inferring or re-associating `146` so the workflow can verify one immutable artifact and
 restore the no-newsletter-API configuration deterministically.
 
-**Gate 3:** all four matrix cells and all preproduction application checks pass. Yomi reviews the
-evidence and explicitly approves proceeding to production.
+**Cell 2 failure handling:** If Cell 2 fails and Cells 1/3/4 pass under dual-schema, stop the
+default FE-first path and use §5 Exception path (backend expand first). Record the failed Cell 2
+evidence; do not invent a pass. Gate 3 may still close for the exception path only when that
+evidence package is co-signed.
+
+**Gate 3:** all four matrix cells pass **or** Cells 1/3/4 pass with documented Cell 2 failure and
+co-signed §5 Exception path. Yomi reviews the evidence and explicitly approves proceeding.
 
 ## 11. Phase 4 — freeze immutable production inputs
 
@@ -343,7 +368,10 @@ Immediately before dispatch, the named deployment commander records fresh values
 If any value changes between capture and protected-environment approval, cancel the run and
 recapture. Do not edit inputs in place or guess a replacement.
 
-## 12. Phase 5 — deploy frontend first
+## 12. Phase 5 — production cutover
+
+### Default: deploy frontend first
+
 
 1. The named deployment commander dispatches `.github/workflows/production-deploy.yml` from the
    exact protected `master` tip with the frozen inputs.
@@ -369,7 +397,22 @@ recapture. Do not edit inputs in place or guess a replacement.
 **Gate 4:** candidate frontend is healthy against the old production backend. If it fails, execute
 the frontend rollback in section 14 and stop the release.
 
-## 13. Phase 6 — deploy backend second
+### Exception: dual-schema backend expand first (Cell 2 failed)
+
+Use only when §5 Exception path is co-signed and Gate 3 closed under that path.
+
+1. Freeze immutable production inputs (backend digest, current TD/image, queue receipt,
+   `DEPLOY HEC BACKEND PRODUCTION`).
+2. Confirm no concurrent production workflow runs (cancel or document terminal state of any zombie).
+3. Dispatch the governed backend production workflow with the dual-schema staging digest.
+4. Yomi approves the protected `production` environment.
+5. After rollout, require dual-schema GraphQL probes (legacy flat-list + modern
+   `trendingSettings` / `topbarCtas`), `/readyz.php` when exposed, and 20/20 public homepage probes.
+6. Only then proceed to candidate frontend production deploy (Phase 5 default steps against the
+   expanded backend).
+
+## 13. Phase 6 — deploy backend second (default path only)
+
 
 1. Recapture production ECS task definition and image digest after the frontend soak.
 2. The named deployment commander dispatches the backend governed production workflow with the
