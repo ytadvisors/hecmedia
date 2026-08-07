@@ -633,8 +633,10 @@ paths are listed.
 | 2026-08-07T00:45Z | Co-signs landed | #258, #259 merged on `master` |
 | 2026-08-07T00:56Z | Fresh backend expand dispatched | Run **[31136386999](https://github.com/ytadvisors/hectv-wp/actions/runs/31136386999)** · SHA `bbac1c02…` · digest `12cf1fb5…` · actor `yt-agent-tom-grok` |
 | 2026-08-07T00:57Z | Authorize success | `deploy-and-verify` waiting on protected env `production` (reviewer: `ytwguru` only) |
-| *open* | **Awaiting right-hand panel GO/NO-GO** | Each **unflagged** provider seat (OpenAI + Anthropic; others if unflagged) verdict on receipt **31136386999** via playbook PR / §18 — not chat-only |
-| *open* | **Awaiting Yomi env approval** | Approve **only after** right-hand panel GO; never approve zombie [31128179764](https://github.com/ytadvisors/hectv-wp/actions/runs/31128179764) (`f940fd`) |
+| 2026-08-07T01:50Z | **OpenAI right-hand GO** | `yt-agent-tom-gpt` on #260 head `2251475`: Launch coordination receipt **31136386999** → **GO** (env approve only that run; frozen SHA/digest) |
+| 2026-08-07T01:53Z | Process policy on master | hecmedia **#260 MERGED** (`1fba22a`) |
+| 2026-08-07T~now | **Anthropic right-hand GO** | `yt-agent-kronos-grok` revalidated run + staging dual-schema → **GO** on receipt **31136386999** |
+| *open* | **Awaiting Yomi env approval** | Right-hand panel (unflagged providers) **GO** complete. Yomi: Approve protected `production` on [31136386999](https://github.com/ytadvisors/hectv-wp/actions/runs/31136386999) **only**. Never zombie [31128179764](https://github.com/ytadvisors/hectv-wp/actions/runs/31128179764) |
 | *pending* | FE production | After backend success + dual-schema GraphQL verify; separate receipt + section 18 entry |
 
 #### Never approve
