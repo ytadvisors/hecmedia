@@ -89,9 +89,19 @@ function fileSha256(filePath) {
 }
 
 function listFiles(directory) {
-  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const entries = fs.readdirSync(directory, { withFileTypes: true });
+  return entries.flatMap(entry => {
+    if (!entry || typeof entry.name !== "string") return [];
     const entryPath = path.join(directory, entry.name);
-    return entry.isDirectory() ? listFiles(entryPath) : [entryPath];
+    try {
+      if (entry.isDirectory()) return listFiles(entryPath);
+      if (entry.isFile()) return [entryPath];
+      return [];
+    } catch (err) {
+      throw new Error(
+        `listFiles failed on ${entryPath}: ${err && err.message ? err.message : err}`
+      );
+    }
   });
 }
 
@@ -405,14 +415,19 @@ async function build() {
   requireBuildContract();
   fs.rmSync(RELEASE_DIR, { recursive: true, force: true });
   fs.mkdirSync(RELEASE_DIR, { recursive: true });
+  console.log("production-deploy: starting edge package build");
   await buildDefaultEdgePackage();
+  console.log("production-deploy: edge package build finished");
   if (!fs.existsSync(DEFAULT_LAMBDA_DIR) || !fs.existsSync(ASSETS_DIR)) {
     throw new Error(
       "Lambda@Edge build did not produce default-lambda and assets."
     );
   }
+  console.log("production-deploy: scanning for embedded access keys");
   assertNoEmbeddedAccessKeys(BUILD_DIR);
+  console.log("production-deploy: zipping default-lambda");
   zipDirectory(DEFAULT_LAMBDA_DIR, DEFAULT_ZIP);
+  console.log("production-deploy: packaging api edge");
   packageApiEdge();
   const metadata = {
     release_sha: process.env.DEPLOY_SHA,
@@ -946,7 +961,7 @@ async function main() {
 
 if (require.main === module) {
   main().catch(error => {
-    console.error(error.message || error);
+    console.error(error && error.stack ? error.stack : error);
     process.exitCode = 1;
   });
 }

@@ -160,7 +160,7 @@ function discardEmptyApiLambdaBundle() {
         "Generated api-lambda has no manifest but contains files. Refusing to discard it."
       );
     }
-    fs.rmSync(API_LAMBDA_DIR, { recursive: true, force: false });
+    fs.rmSync(API_LAMBDA_DIR, { recursive: true, force: true });
     console.log(
       "Discarded generated api-lambda after verifying the manifest-less directory is empty."
     );
@@ -208,7 +208,7 @@ function discardEmptyApiLambdaBundle() {
     );
   }
 
-  fs.rmSync(API_LAMBDA_DIR, { recursive: true, force: false });
+  fs.rmSync(API_LAMBDA_DIR, { recursive: true, force: true });
   console.log(
     "Discarded generated api-lambda after verifying it has zero API routes."
   );
@@ -258,7 +258,7 @@ function discardUnusedImageLambdaBundle() {
     );
   }
 
-  fs.rmSync(IMAGE_LAMBDA_DIR, { recursive: true, force: false });
+  fs.rmSync(IMAGE_LAMBDA_DIR, { recursive: true, force: true });
   console.log(
     "Discarded generated image-lambda after verifying the staging optimizer flag and zero next/image imports."
   );
