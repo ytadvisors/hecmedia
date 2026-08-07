@@ -279,13 +279,13 @@ For the staging image:
 
 | Action | Owner | Completion evidence |
 | --- | --- | --- |
-| Assign Claude as sole production deployment commander | Yomi / Tom | Approved playbook and named executor |
+| Assign exactly one approved production deployment commander per attempt | Yomi / Tom | Co-signed playbook, named executor, and other lanes confirmed read-only |
 | Add production-safe dual-schema compatibility | Backend owner | Reviewed PR and legacy + modern consumer tests |
 | Remove staging-only contract drift | Backend owner | Identical schema-profile evidence in staging and production candidate configs |
-| Rebuild on a pristine no-cache builder | Claude executor | New SHA-tagged digest plus builder provenance |
+| Rebuild on a pristine no-cache builder | Selected executor | New SHA-tagged digest plus builder provenance |
 | Add non-empty core-file and WordPress checksum tests | Backend owner | Pre-push and post-pull results |
 | Add real GraphQL, REST, and SSR release gates | Frontend + backend owners | Four-way compatibility matrix and 20/20 fresh probes |
-| Prove immutable rollback targets | Claude executor | Lambda version/checksum and ECS task definition/digest evidence |
+| Prove immutable rollback targets | Selected executor | Lambda version/checksum and ECS task definition/digest evidence |
 
 ### P1 — within 24 hours
 
@@ -297,7 +297,7 @@ For the staging image:
 | Enable suitable CloudFront access/error observability | Platform owner | Reviewed logging/metrics configuration and retention |
 | Record source SHA in every production SSR response | Frontend owner | Verified metadata on all required routes |
 | Quarantine the damaged Docker cache and rejected digest | Platform owner | Builder replacement evidence and denylist/runbook entry |
-| Keep the default Colima builder out of the release path | Claude executor | New isolated/remote builder identity and healthy filesystem evidence |
+| Keep the default Colima builder out of the release path | Selected executor | New isolated/remote builder identity and healthy filesystem evidence |
 
 ### P2 — within 7 days
 
@@ -306,7 +306,7 @@ For the staging image:
 | Upgrade the production Lambda@Edge runtime from Node.js 12 | Frontend owner | Staging soak and governed production plan |
 | Add canary/weighted backend validation before full rollout | Platform/backend owners | Proven rollback test and consumer probe |
 | Add a cross-repository release manifest | Platform owner | One signed record of frontend SHA, backend SHA/digest, schema profile, and rollback pair |
-| Exercise a game-day rollback | Claude executor + reviewer | Timed evidence without customer impact |
+| Exercise a game-day rollback | Selected executor + independent reviewer | Timed evidence without customer impact |
 | Add disk-capacity and builder-filesystem alarms | Platform owner | Alert test and cache quarantine behavior |
 
 ## Evidence references

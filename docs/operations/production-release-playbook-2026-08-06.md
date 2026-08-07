@@ -6,7 +6,9 @@
 
 **Decision owner:** Yomi Toba
 
-**Production deployment commander:** Claude lane (`yt-agent-tom`)
+**Execution policy:** Model-neutral, single commander
+
+**Selected commander for this trial:** Grok lane (`yt-agent-tom-grok`)
 
 **Systems:** `ytadvisors/hecmedia`, `ytadvisors/hectv-wp`, AWS account `850335719356`
 
@@ -22,8 +24,9 @@ the deployment stops at the last verified compatible pair.
 
 ## 2. Non-negotiable controls
 
-1. Claude is the sole production deployment executor. Other model lanes may prepare changes or
-   review evidence, but they do not dispatch, approve, or mutate production.
+1. Execution is model-neutral. At Gate 0, Yomi names exactly one approved model lane as production
+   deployment commander for the attempt. For this trial that lane is Grok (`yt-agent-tom-grok`).
+   Other model lanes may prepare or review evidence, but they do not dispatch or mutate production.
 2. Yomi provides the final go/no-go and the independent protected-environment approval.
 3. Production changes run only through the governed GitHub workflows. No workstation production
    deploy, direct CloudFront cutover, or direct ECS release is part of this playbook.
@@ -130,14 +133,37 @@ operate during the ECS rolling update.
 | Role | Responsibility |
 | --- | --- |
 | Yomi | Approves this plan, selects go/no-go, and approves the protected production environments |
-| Claude deployment commander | Owns the command log, snapshots baselines, dispatches workflows, monitors rollouts, and invokes rollback |
+| Named deployment commander | Owns the command log, snapshots baselines, dispatches workflows, monitors rollouts, and invokes rollback; Grok (`yt-agent-tom-grok`) holds this role for the current trial |
 | Backend change author | Implements the production-safe dual-schema layer and application-readiness check through branch → PR → merge |
 | Frontend change author | Ensures candidate operations tolerate both backend contracts and preserves no-write test behavior |
 | Independent reviewers | Review code, plan, immutable inputs, test evidence, and stop-condition decisions; no production mutation |
 | Incident scribe | Records timestamps, workflow URLs, SHAs, digests, task definitions, Lambda versions, invalidations, probe results, and decisions |
 
-One person—the Claude deployment commander—calls each step. Parallel operators must not dispatch
-independent workflows or make overlapping AWS changes.
+One named commander calls each step. Parallel operators must not dispatch independent workflows or
+make overlapping AWS changes. A co-signed playbook authorizes any otherwise-approved model lane to
+execute only inside its exact action envelope; it does not grant credentials or permit deviations.
+
+### Executor-neutral hypothesis trial
+
+**Hypothesis:** once this deterministic playbook is co-signed, safe execution depends on the gates,
+immutable inputs, governed credentials, and stop conditions—not on the commander's model family.
+
+The playbook is co-signed when Yomi approves it and at least two independent model families record
+approval of the same commit, including at least one family other than the selected executor's. A
+review of an earlier commit does not count. Co-signing authorizes execution only after every P0 and
+Gate 0–3 condition is evidenced.
+
+This Grok-led trial succeeds when:
+
+- Grok is the only lane that dispatches or mutates staging/production for the attempt;
+- every command and decision maps to a numbered playbook step;
+- every immutable input, approval, probe, soak, and output is captured in the evidence package;
+- no stop condition is bypassed, and any triggered rollback follows section 14 before diagnosis;
+- an independent post-run reviewer can reconstruct the release without relying on chat history.
+
+A correct stop or rollback is evidence that the playbook worked; it is not automatically a failed
+trial. An undocumented deviation, concurrent executor, missing approval, or unreviewed substitution
+invalidates the trial and immediately ends the playbook's authorization.
 
 ## 7. Phase 0 — review and release lock
 
@@ -149,7 +175,8 @@ independent workflows or make overlapping AWS changes.
    freeze through final verification.
 6. Record UTC and CT start times in the evidence directory.
 
-**Gate 0:** Yomi approves the reviewed playbook and names Claude as deployment commander.
+**Gate 0:** Yomi approves the exact co-signed playbook commit and names one approved deployment
+commander. For this trial the named commander is Grok (`yt-agent-tom-grok`).
 
 ## 8. Phase 1 — repair the backend contract
 
@@ -292,7 +319,7 @@ evidence and explicitly approves proceeding to production.
 
 ## 11. Phase 4 — freeze immutable production inputs
 
-Immediately before dispatch, Claude records fresh values:
+Immediately before dispatch, the named deployment commander records fresh values:
 
 ### Frontend
 
@@ -318,15 +345,15 @@ recapture. Do not edit inputs in place or guess a replacement.
 
 ## 12. Phase 5 — deploy frontend first
 
-1. Claude dispatches `.github/workflows/production-deploy.yml` from the exact protected `master`
-   tip with the frozen inputs.
+1. The named deployment commander dispatches `.github/workflows/production-deploy.yml` from the
+   exact protected `master` tip with the frozen inputs.
 2. Confirm authorization and all no-AWS-credentials tests pass before approving the protected
    environment.
 3. Yomi reviews the frozen inputs and approves the production environment.
 4. Let the governed workflow package artifacts, publish versioned Lambda functions, update the
    existing CloudFront distribution, wait for propagation, invalidate, and run its verifier.
 5. Do not dispatch the backend while CloudFront is deploying.
-6. After workflow success, Claude independently verifies:
+6. After workflow success, the named deployment commander verifies:
 
    - CloudFront associations point only to the new versioned Lambda ARNs
    - the exact candidate SHA appears in rendered metadata
@@ -345,8 +372,9 @@ the frontend rollback in section 14 and stop the release.
 ## 13. Phase 6 — deploy backend second
 
 1. Recapture production ECS task definition and image digest after the frontend soak.
-2. Claude dispatches the backend governed production workflow with the exact merged SHA, proven
-   staging digest, recaptured baseline, queue-task receipt, and confirmation phrase.
+2. The named deployment commander dispatches the backend governed production workflow with the
+   exact merged SHA, proven staging digest, recaptured baseline, queue-task receipt, and
+   confirmation phrase.
 3. Yomi reviews and approves the protected production environment.
 4. Monitor the ECS circuit-breaker rollout until only candidate tasks are registered and healthy.
 5. Require real application checks during rollout, not only target-group health:
@@ -444,6 +472,8 @@ Reviewers should explicitly answer:
 - [ ] Is the replacement image built and post-pull verified on a pristine builder?
 - [ ] Do all four compatibility-matrix cells pass?
 - [ ] Are rollback targets immutable and verified?
-- [ ] Is Claude confirmed as the only production executor?
+- [ ] Is one approved deployment commander named, and are all other lanes confirmed read-only?
+- [ ] Do Yomi and at least two independent model families approve this exact commit, including one
+      family other than the selected commander's?
 - [ ] Is the queue-task receipt valid for this exact attempt?
 - [ ] Go / no-go decision recorded by Yomi?
