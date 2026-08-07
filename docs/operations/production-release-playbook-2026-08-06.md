@@ -91,7 +91,7 @@ This is the state to preserve until the release reaches its next explicit gate.
 | Public site | `https://hecmedia.org` returns HTTP 200 with title `HEC-TV \| Home` |
 | Production frontend | CloudFront `E2QXRSF2W55RTS`; ETag `E2YN27AV1NE3XR`; Lambda@Edge `x2l4ew-l5vb7pd:146`; code SHA `5CzpPZ0xXqsNoDJ+Nr8mzRuY9kUKNkIKF6bovFjKsS4=` |
 | Newsletter edge behavior | Absent (`none`) |
-| Production frontend rollback | Immutable sanitized Lambda version `147`, verified by the governed workflow before cutover |
+| Production frontend rollback | Immutable sanitized Lambda version `150`, verified by the governed workflow before cutover |
 | Production backend | ECS task definition `hectv-wp-production-rollback-pr34-safe:3`; 4 desired / 4 running / 0 pending; rollout complete |
 | Production backend image | `sha256:b0764544d2a46fa51e2a325b181d53bb66a251cb354090b10ba1d6955dc38d36`; source label `d0b939ec0186a23e4ce10014aeaf10c738af7b59` |
 | Staging frontend | `https://development.hecmedia.org`; Lambda@Edge `mf64oua-5ao6wt:172`; deployed SHA metadata `025a5b5b8b8217705fbe5478d026e75d56616142` |
@@ -146,7 +146,7 @@ and the builder cache, preserve diagnostics, and restart Gate 2 on another prist
 | B2 | Staging enabled a compatibility layer that production disabled | Identical explicit schema-profile configuration in staging and production, proven in task-definition evidence |
 | B3 | Candidate image `beba781…` contains zero-byte WordPress core files | A new image built on a pristine builder; nonzero files and WordPress checksums verified before push and after pull |
 | B4 | ECS health checks only a static file | Application probes must gate staging and production rollout; static health remains infrastructure-only |
-| B5 | Current production frontend artifact has no trustworthy source-SHA metadata | Record Lambda version `146` and checksum as the live/pre-cutover identity; verify sanitized version `147` and its pinned checksum as the sole rollback target; require source SHA metadata in the candidate |
+| B5 | Current production frontend artifact has no trustworthy source-SHA metadata | Record Lambda version `146` and checksum as the live/pre-cutover identity; verify sanitized version `150` and its pinned checksum as the sole rollback target; require source SHA metadata in the candidate |
 | B6 | Backend-first ordering broke SSR | Default path is four-way matrix pass + frontend-first. **Exception (this trial):** if Cell 2 (candidate FE × current production backend) fails because the candidate requires modern fields the recovery backend lacks, and Cells 1/3/4 pass with dual-schema expand, production may land the dual-schema **backend expand first**, then the candidate frontend — only after co-signed amendment + Yomi go |
 | B7 | Fresh requests can fail while cached requests look healthy | Verification uses unique query strings, multiple sequential requests, hydrated Chrome routes, and edge-log inspection |
 
@@ -395,7 +395,7 @@ Evidence from one pairing may not be reused as proof of another.
 The current production Lambda has no reliable source-SHA metadata, so its contract is represented
 by its immutable version/checksum plus captured operations and edge logs. The candidate must embed
 its exact SHA. Lambda version `146` is the live/pre-cutover identity only. The sole governed
-frontend rollback target is sanitized version `147` with its pinned checksum; rollback uses `147`
+frontend rollback target is sanitized version `150` with its pinned checksum; rollback uses `150`
 instead of inferring or re-associating `146` so the workflow can verify one immutable artifact and
 restore the no-newsletter-API configuration deterministically.
 
@@ -417,7 +417,9 @@ Immediately before dispatch, the named deployment commander records fresh values
 - CloudFront distribution `E2QXRSF2W55RTS` ETag
 - current default Lambda@Edge version ARN and `CodeSha256`
 - current newsletter API Lambda ARN or literal `none`
-- sanitized rollback version `147` checksum verification
+- sanitized rollback version `150` checksum verification
+  (`InGBmR1WRmFN+iojEtw/HdYER96Dlge410JFw3THEag=`); this immutable version is a
+  protected deployment dependency and must not be deleted while pinned by the workflow
 - positive queue-task receipt
 - confirmation phrase `DEPLOY HEC FRONTEND PRODUCTION`
 
@@ -512,7 +514,7 @@ release outcome.
 1. Stop; do not dispatch the backend.
 2. Use the governed frontend workflow with `action=rollback` and confirmation
    `ROLLBACK HEC FRONTEND PRODUCTION`.
-3. Verify pinned sanitized Lambda version `147`, CloudFront deployment, completed invalidation,
+3. Verify pinned sanitized Lambda version `150`, CloudFront deployment, completed invalidation,
    homepage, hydrated routes, and edge logs.
 4. Record the failed candidate Lambda versions but do not infer rollback as version N-1.
 
