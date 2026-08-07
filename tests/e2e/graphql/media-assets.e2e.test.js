@@ -11,6 +11,10 @@ import {
 } from "../../../lib/mediaUrl";
 import { executeQuery } from "../support/graphqlClient";
 
+const {
+  extractRemoteImageCandidates
+} = require("../../../scripts/media-image-candidates");
+
 const describeMediaAssets =
   process.env.HECMEDIA_E2E_MEDIA_ASSETS === "true" ? describe : describe.skip;
 
@@ -66,34 +70,6 @@ const probeImagesSequentially = async (candidates, results = []) => {
   const [candidate, ...remaining] = candidates;
   const result = await probeImage(candidate);
   return probeImagesSequentially(remaining, [...results, result]);
-};
-
-const extractRemoteImageCandidates = html => {
-  const candidates = [];
-  const imagePattern = /<img\b[^>]*>/gi;
-  const content = String(html || "");
-  let image = imagePattern.exec(content);
-
-  while (image) {
-    const imageAttributePattern = /\b(src|srcset)=["']([^"']+)["']/gi;
-    let attribute = imageAttributePattern.exec(image[0]);
-    while (attribute) {
-      const rawValue = attribute[2].replace(/&amp;/g, "&");
-      const values =
-        attribute[1].toLowerCase() === "srcset"
-          ? rawValue.split(",").map(value => value.trim().split(/\s+/)[0])
-          : [rawValue.trim()];
-      values.forEach(url => {
-        if (/^https?:\/\//i.test(url) && !candidates.includes(url)) {
-          candidates.push(url);
-        }
-      });
-      attribute = imageAttributePattern.exec(image[0]);
-    }
-    image = imagePattern.exec(content);
-  }
-
-  return candidates;
 };
 
 describeMediaAssets("Production media assets", () => {

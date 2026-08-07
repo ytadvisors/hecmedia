@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { execFileSync, spawnSync } = require("child_process");
+const { extractRemoteImageCandidates } = require("./media-image-candidates");
 const { build: buildDefaultEdgePackage } = require("./staging-deploy");
 
 const REGION = "us-east-1";
@@ -697,34 +698,6 @@ const HYDRATED_MEDIA_REQUIREMENTS = {
   "/newsletter": { minimum: 0 }
 };
 
-function extractRemoteImageUrls(dom) {
-  const urls = [];
-  const content = String(dom || "");
-  const imagePattern = /<img\b[^>]*>/gi;
-  let image = imagePattern.exec(content);
-
-  while (image) {
-    const attributePattern = /\b(src|srcset)=["']([^"']+)["']/gi;
-    let attribute = attributePattern.exec(image[0]);
-    while (attribute) {
-      const rawValue = attribute[2].replace(/&amp;/g, "&");
-      const candidates =
-        attribute[1].toLowerCase() === "srcset"
-          ? rawValue.split(",").map(value => value.trim().split(/\s+/)[0])
-          : [rawValue.trim()];
-      candidates.forEach(source => {
-        if (/^https?:\/\//i.test(source) && !urls.includes(source)) {
-          urls.push(source);
-        }
-      });
-      attribute = attributePattern.exec(image[0]);
-    }
-    image = imagePattern.exec(content);
-  }
-
-  return urls;
-}
-
 function extractMediaVerificationSurface(dom, surface) {
   const content = String(dom || "");
   const escapedSurface = String(surface).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -770,8 +743,8 @@ function assertHydratedImageSources(dom, route) {
   const verificationDom = requirement.surface
     ? extractMediaVerificationSurface(dom, requirement.surface)
     : dom;
-  const imageUrls = extractRemoteImageUrls(dom);
-  const mediaImageUrls = extractRemoteImageUrls(verificationDom).filter(
+  const imageUrls = extractRemoteImageCandidates(dom);
+  const mediaImageUrls = extractRemoteImageCandidates(verificationDom).filter(
     isProductionMediaUrl
   );
 
@@ -1226,7 +1199,7 @@ module.exports = {
   assertRemoteImageResponse,
   configureProductionDistribution,
   configureSanitizedRollback,
-  extractRemoteImageUrls,
+  extractRemoteImageCandidates,
   parseJsonOutput,
   requireBuildContract
 };

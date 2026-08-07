@@ -12,7 +12,7 @@ const {
   assertRemoteImageResponse,
   configureProductionDistribution,
   configureSanitizedRollback,
-  extractRemoteImageUrls,
+  extractRemoteImageCandidates,
   parseJsonOutput,
   requireBuildContract
 } = require("./production-deploy");
@@ -160,7 +160,7 @@ test("production verification inventories src and srcset candidates", () => {
     "<img src='https://media.example.com/second.jpg'>"
   ].join("");
 
-  expect(extractRemoteImageUrls(dom)).toEqual([
+  expect(extractRemoteImageCandidates(dom)).toEqual([
     "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story.jpg?x=1&y=2",
     "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story-small.jpg",
     "https://media.example.com/story-large.jpg",
