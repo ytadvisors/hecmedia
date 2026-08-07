@@ -7,6 +7,7 @@ const {
   assertDistributionContract,
   assertFunctionContract,
   assertGovernedDeployContext,
+  assertHydratedNavigation,
   configureProductionDistribution,
   configureSanitizedRollback,
   parseJsonOutput,
@@ -129,6 +130,21 @@ test("parseJsonOutput treats empty get-bucket-versioning stdout as unversioned {
   expect(parseJsonOutput(null, { allowEmptyObject: true })).toEqual({});
   expect(() => parseJsonOutput("")).toThrow(/empty stdout/);
   expect(() => parseJsonOutput("not-json")).toThrow(/parse failed/);
+});
+
+test("production verification requires hydrated primary navigation items", () => {
+  expect(() =>
+    assertHydratedNavigation(
+      '<ul class="pull-left top-navigation left-links"><li>Arts</li></ul>',
+      "/"
+    )
+  ).not.toThrow();
+  expect(() =>
+    assertHydratedNavigation(
+      '<ul class="pull-left top-navigation left-links"></ul>',
+      "/"
+    )
+  ).toThrow("has no primary navigation items");
 });
 
 test("allows production mutation only from the governed workflow", () => {
