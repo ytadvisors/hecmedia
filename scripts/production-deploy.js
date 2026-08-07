@@ -116,11 +116,15 @@ function assertNoEmbeddedAccessKeys(directory) {
   }
 }
 
-function assertFunctionContract(config, expectedArn, expectedMemory) {
+function assertFunctionContract(config, expectedArn, expectedMemory, options = {}) {
+  // Published Lambda@Edge versions are immutable. Live CloudFront still pins
+  // historical :146 which was published on nodejs12.x; $LATEST and new
+  // publishes must be nodejs24.x. Allow both for baseline version checks.
+  const allowedRuntimes = options.allowedRuntimes || ["nodejs24.x"];
   if (
     !config ||
     config.FunctionArn !== expectedArn ||
-    config.Runtime !== "nodejs24.x" ||
+    !allowedRuntimes.includes(config.Runtime) ||
     config.Handler !== "index.handler" ||
     config.Role !== EDGE_EXECUTION_ROLE ||
     config.Timeout !== 30 ||
@@ -130,7 +134,10 @@ function assertFunctionContract(config, expectedArn, expectedMemory) {
     config.LastUpdateStatus !== "Successful" ||
     JSON.stringify(config.Architectures || []) !== JSON.stringify(["x86_64"])
   ) {
-    throw new Error(`Lambda runtime contract drifted for ${expectedArn}.`);
+    throw new Error(
+      `Lambda runtime contract drifted for ${expectedArn}` +
+        ` (runtime=${config && config.Runtime}, allowed=${allowedRuntimes.join(",")}).`
+    );
   }
 }
 
@@ -790,7 +797,10 @@ function deploy() {
     DEFAULT_FUNCTION_NAME,
     expectedDefaultArn.split(":").pop()
   );
-  assertFunctionContract(baselineFunction, expectedDefaultArn, 3000);
+  // Baseline published version may predate the nodejs24 upgrade.
+  assertFunctionContract(baselineFunction, expectedDefaultArn, 3000, {
+    allowedRuntimes: ["nodejs12.x", "nodejs24.x"]
+  });
   if (baselineFunction.CodeSha256 !== expectedDefaultCodeSha) {
     throw new Error("Baseline Lambda checksum changed after authorization.");
   }
