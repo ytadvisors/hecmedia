@@ -761,6 +761,7 @@ function verifyHydratedRoutes(browserPath) {
     "/",
     "/category/films",
     "/category/arts/two_on_the_aisle",
+    "/posts/hec-on-youtube",
     "/newsletter"
   ];
   const verifiedImages = new Set();

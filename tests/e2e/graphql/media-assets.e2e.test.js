@@ -1,6 +1,11 @@
 import fetch from "isomorphic-unfetch";
-import { GET_CATEGORY_INFO, GET_LAYOUT } from "../../../lib/graphql";
+import {
+  GET_CATEGORY_INFO,
+  GET_LAYOUT,
+  GET_PAGE_INFO
+} from "../../../lib/graphql";
 import { getPostImgSrc } from "../../../lib/getFunctions";
+import { rewritePublicMediaHtml } from "../../../lib/mediaUrl";
 import { executeQuery } from "../support/graphqlClient";
 
 const describeMediaAssets =
@@ -8,6 +13,8 @@ const describeMediaAssets =
 
 const wait = milliseconds =>
   new Promise(resolve => setTimeout(resolve, milliseconds));
+
+const MAX_PROBE_ATTEMPTS = 5;
 
 const probeImage = async ({ title, url }, attempt = 1) => {
   try {
@@ -18,6 +25,14 @@ const probeImage = async ({ title, url }, attempt = 1) => {
     const contentType = response.headers.get("content-type") || "";
     await response.buffer();
 
+    if (
+      attempt < MAX_PROBE_ATTEMPTS &&
+      (response.status === 429 || response.status >= 500)
+    ) {
+      await wait(attempt * 500);
+      return probeImage({ title, url }, attempt + 1);
+    }
+
     return {
       title,
       url,
@@ -26,8 +41,8 @@ const probeImage = async ({ title, url }, attempt = 1) => {
       ok: response.ok && contentType.startsWith("image/")
     };
   } catch (error) {
-    if (attempt < 3) {
-      await wait(attempt * 200);
+    if (attempt < MAX_PROBE_ATTEMPTS) {
+      await wait(attempt * 500);
       return probeImage({ title, url }, attempt + 1);
     }
 
@@ -48,6 +63,30 @@ const probeImagesSequentially = async (candidates, results = []) => {
   const [candidate, ...remaining] = candidates;
   const result = await probeImage(candidate);
   return probeImagesSequentially(remaining, [...results, result]);
+};
+
+const extractRemoteImageCandidates = html => {
+  const candidates = [];
+  const imagePattern = /<img\b[^>]*>/gi;
+  const content = String(html || "");
+  let image = imagePattern.exec(content);
+
+  while (image) {
+    const imageAttributePattern = /\b(?:src|srcset)=["']([^"']+)["']/gi;
+    let attribute = imageAttributePattern.exec(image[0]);
+    while (attribute) {
+      attribute[1].split(",").forEach(candidate => {
+        const url = candidate.trim().split(/\s+/)[0];
+        if (/^https?:\/\//i.test(url) && !candidates.includes(url)) {
+          candidates.push(url);
+        }
+      });
+      attribute = imageAttributePattern.exec(image[0]);
+    }
+    image = imagePattern.exec(content);
+  }
+
+  return candidates;
 };
 
 describeMediaAssets("Production media assets", () => {
@@ -92,4 +131,34 @@ describeMediaAssets("Production media assets", () => {
 
     expect(failures).toEqual([]);
   }, 30000);
+
+  it("resolves every inline banner on the HEC on YouTube article", async () => {
+    const result = await executeQuery(GET_PAGE_INFO, {
+      slug: "hec-on-youtube"
+    });
+
+    expect(result.errors).toBeUndefined();
+    expect(result.data.post).not.toBeNull();
+
+    const rewrittenContent = rewritePublicMediaHtml(result.data.post.content);
+    const urls = extractRemoteImageCandidates(rewrittenContent);
+
+    expect(urls.length).toBeGreaterThanOrEqual(9);
+    expect(
+      urls.filter(url =>
+        /https?:\/\/(?:staging-wp|prod-wp|prod-wp-ecs)\.hectv\.org\/wp-content\/uploads\//i.test(
+          url
+        )
+      )
+    ).toEqual([]);
+
+    const candidates = urls.map((url, index) => ({
+      title: `HEC on YouTube banner ${index + 1}`,
+      url
+    }));
+    const results = await probeImagesSequentially(candidates);
+    const failures = results.filter(image => !image.ok);
+
+    expect(failures).toEqual([]);
+  }, 90000);
 });

@@ -97,4 +97,24 @@ describe("article header image sizing (component)", () => {
       "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2026/07/article.jpg"
     );
   });
+
+  it("rewrites production upload URLs in GraphQL-rendered article HTML", () => {
+    const { container } = renderPost(
+      { data: undefined },
+      {
+        content:
+          '<p><img src="https://prod-wp.hectv.org/wp-content/uploads/2025/07/Spotlight-STL-Banner-1024x169.png" srcset="https://prod-wp.hectv.org/wp-content/uploads/2025/07/Spotlight-STL-Banner-300x50.png 300w"></p>'
+      }
+    );
+
+    const image = container.querySelector(".blog-content img");
+    expect(image).toHaveAttribute(
+      "src",
+      "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2025/07/Spotlight-STL-Banner-1024x169.png"
+    );
+    expect(image).toHaveAttribute(
+      "srcset",
+      "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2025/07/Spotlight-STL-Banner-300x50.png 300w"
+    );
+  });
 });

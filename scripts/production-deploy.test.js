@@ -395,10 +395,9 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   const protectedEnvironment = workflow.indexOf("      name: production");
   expect(mediaPreflight).toBeGreaterThan(-1);
   expect(workflow).toContain("needs: [authorize, media-preflight]");
-  expect(workflow).toContain("HECMEDIA_E2E_MEDIA_ASSETS: \"true\"");
-  expect(workflow).toContain(
-    "tests/e2e/graphql/media-assets.e2e.test.js"
-  );
+  expect(workflow).toContain('HECMEDIA_E2E_MEDIA_ASSETS: "true"');
+  expect(workflow).toContain("tests/e2e/graphql/media-assets.e2e.test.js");
+  expect(script).toContain('"/posts/hec-on-youtube"');
   expect(protectedEnvironment).toBeGreaterThan(mediaPreflight);
   const browserPreflight = workflow.indexOf(
     "Verify Chrome before production credentials"
