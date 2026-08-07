@@ -6,9 +6,15 @@
 
 **Decision owner:** Yomi Toba
 
-**Execution policy:** Model-neutral, single commander
+**Execution policy:** Model-neutral; one commander + one right-hand lieutenant per deployment;
+provider representation required
 
 **Selected commander for this trial:** Grok lane (`yt-agent-tom-grok`)
+
+**Selected lieutenant (right hand) for this trial:** GPT lane (`yt-agent-tom-gpt`)
+
+**Provider representation for this trial:** Grok (commander) · GPT (lieutenant / co-sign) ·
+Anthropic/`yt-agent-kronos-grok` or `yt-agent-kronos` (foreign co-sign / jury as required)
 
 **Systems:** `ytadvisors/hecmedia`, `ytadvisors/hectv-wp`, AWS account `850335719356`
 
@@ -28,36 +34,45 @@ the deployment stops at the last verified compatible pair.
 
 ## 2. Non-negotiable controls
 
-1. Execution is model-neutral. At Gate 0, Yomi names exactly one approved model lane as production
-   deployment commander for the attempt. For this trial that lane is Grok (`yt-agent-tom-grok`).
-   Other model lanes may prepare or review evidence, but they do not dispatch or mutate production.
-2. Yomi provides the final go/no-go and the independent protected-environment approval.
-3. **No production dispatch without a co-signed playbook.** The exact playbook commit (or a
+1. Execution is model-neutral. At Gate 0, Yomi names the **deployment commander** and the
+   **right-hand lieutenant** for the attempt (two distinct model lanes). For this trial:
+   commander = Grok (`yt-agent-tom-grok`); lieutenant = GPT (`yt-agent-tom-gpt`). Only the
+   commander dispatches or mutates production; the lieutenant coordinates, co-signs, and may
+   prepare/review evidence. No other lane dispatches production for the attempt.
+2. **Commander + lieutenant coordinate the release.** They share the playbook surface (section 18),
+   agree frozen inputs and GO/NO-GO on each production receipt before Yomi is asked for protected-
+   environment approval, and record disagreements as stop conditions until resolved or Yomi rules.
+3. **Every release requires a named representative from each active provider family** participating
+   in the fleet's governed production path (at minimum: the commander's provider, the lieutenant's
+   provider, and any other provider family required for foreign co-sign / mixed-jury). A provider
+   without a named rep on the attempt may not silently share command. Missing provider coverage is
+   a Gate 0 failure.
+4. Yomi provides the final go/no-go and the independent protected-environment approval.
+5. **No production dispatch without a co-signed playbook.** The exact playbook commit (or a
    co-signed amendment commit) must carry Yomi approval plus at least two independent model-family
    approvals, including one family other than the selected commander. A chat-only “GO” does not
    authorize production. Signoff lives on the playbook PR/commit (and, for each receipt, on the
    living deployment log in section 18).
-4. **Deployment progress is documented in this playbook.** The named commander updates section 18
+6. **Deployment progress is documented in this playbook.** The named commander updates section 18
    (Deployment log) via branch → PR → merge as gates open, receipts are dispatched, GO/NO-GO
    decisions land, environments are approved, and cutovers complete or roll back. Other lanes
    propose amendments the same way. Queue/Discord may notify; the playbook is the durable record.
-5. Production changes run only through the governed GitHub workflows. No workstation production
+7. Production changes run only through the governed GitHub workflows. No workstation production
    deploy, direct CloudFront cutover, or direct ECS release is part of this playbook.
-6. Every release input is immutable: exact merged SHA, image digest, CloudFront ETag, versioned
+8. Every release input is immutable: exact merged SHA, image digest, CloudFront ETag, versioned
    Lambda ARN, Lambda checksum, current ECS task definition, and current image digest.
-7. The backend release is expand/contract. It must preserve the schema used by the currently
+9. The backend release is expand/contract. It must preserve the schema used by the currently
    deployed frontend while exposing the new schema. Legacy fields are not removed today.
-8. Staging must exercise the same GraphQL compatibility profile as production. Environment-only
+10. Staging must exercise the same GraphQL compatibility profile as production. Environment-only
    staging resolvers may not make an otherwise incompatible backend appear safe.
-9. Image integrity is verified independently of Docker/ECR success. The known-bad digest
+11. Image integrity is verified independently of Docker/ECR success. The known-bad digest
    `sha256:beba7812ee56969a4646d09c5afb01ccef4d525e8e5968e2307b140fab664a83`
    is quarantined and must never be promoted.
-10. Static `/healthz` proves only that the container and Apache are reachable. It is not an
+12. Static `/healthz` proves only that the container and Apache are reachable. It is not an
    application release gate.
-11. No database DDL change is included in this release. The required additive GraphQL API-contract
+13. No database DDL change is included in this release. The required additive GraphQL API-contract
    expansion remains in scope. If database DDL becomes necessary, stop and follow the replicated-PG
-   subscriber-first invariant in a separate reviewed plan.
-## 3. Verified recovery baseline
+   subscriber-first invariant in a separate reviewed plan.## 3. Verified recovery baseline
 
 This is the state to preserve until the release reaches its next explicit gate.
 
@@ -164,27 +179,32 @@ This is still expand/contract. It is **not** a blank backend-first for incompati
 
 | Role | Responsibility |
 | --- | --- |
-| Yomi | Approves this plan, selects go/no-go, and approves the protected production environments |
-| Named deployment commander | Owns the command log, snapshots baselines, dispatches workflows, monitors rollouts, and invokes rollback; Grok (`yt-agent-tom-grok`) holds this role for the current trial |
+| Yomi | Approves this plan, names commander and lieutenant, selects final go/no-go, and approves the protected production environments |
+| Deployment commander | Owns dispatch authority for the attempt: command log, baselines, governed `workflow_dispatch`, rollout monitor, rollback invoke; for this trial Grok (`yt-agent-tom-grok`) |
+| Right-hand lieutenant | Commander's coordination partner for the attempt: pre-flight review, GO/NO-GO on each production receipt, playbook §18 co-authorship, stop-condition calls with commander; does **not** dispatch production unless Yomi reassigns command mid-attempt; for this trial GPT (`yt-agent-tom-gpt`) |
+| Provider representatives | At least one named account/lane per active provider family on the release (commander, lieutenant, and/or foreign co-signer). Provider coverage is recorded at Gate 0 and in §18 |
 | Backend change author | Implements the production-safe dual-schema layer and application-readiness check through branch → PR → merge |
 | Frontend change author | Ensures candidate operations tolerate both backend contracts and preserves no-write test behavior |
-| Independent reviewers | Review code, plan, immutable inputs, test evidence, and stop-condition decisions; no production mutation |
+| Independent reviewers / foreign co-sign | Review code, plan, immutable inputs, test evidence, and stop conditions; supply foreign-family approval for co-sign/jury; no production mutation |
 | Incident scribe | Records timestamps, workflow URLs, SHAs, digests, task definitions, Lambda versions, invalidations, probe results, and decisions into **section 18** of this playbook (and the evidence package) |
-| Co-signing model lanes (e.g. GPT) | Review evidence, post GO/NO-GO on the **playbook deployment log PR or section 18**, and co-sign amendments; do not dispatch production |
 
-One named commander calls each step. Parallel operators must not dispatch independent workflows or
-make overlapping AWS changes. A co-signed playbook authorizes any otherwise-approved model lane to
-execute only inside its exact action envelope; it does not grant credentials or permit deviations.
+The commander and lieutenant **coordinate the release** as a pair. One named commander still owns
+each dispatch call so concurrent executors cannot race. Parallel operators must not dispatch
+independent workflows or make overlapping AWS changes. A co-signed playbook authorizes execution
+only inside its exact action envelope; it does not grant credentials or permit deviations.
 
 **Required communications path for production work**
 
 1. Propose or update the playbook (this file) with the exact step, immutable inputs, and receipt.
-2. Obtain approved signoff (Yomi + required model families) on that commit or amendment.
-3. Commander dispatches only the governed workflow named in the playbook for that step.
-4. Immediately document the dispatch, waits, approvals, outcomes, and stop/rollback decisions by
+2. Obtain approved signoff (Yomi + required provider representatives / model families) on that
+   commit or amendment.
+3. Commander and lieutenant align on the receipt (lieutenant GO/NO-GO recorded on §18 or the PR).
+4. Only after lieutenant GO (unless Yomi explicitly overrides in §18): commander dispatches the
+   governed workflow named in the playbook for that step.
+5. Immediately document the dispatch, waits, approvals, outcomes, and stop/rollback decisions by
    updating section 18 through a follow-up PR (or the same open process PR if still unmerged).
-5. Secondary channels (Discord, queue) may alert humans; they do not replace playbook signoff or the
-   deployment log.
+6. Secondary channels (Discord, queue) may alert humans; they do not replace playbook signoff, the
+   commander/lieutenant pair, or the deployment log.
 
 ### Executor-neutral hypothesis trial
 
@@ -199,6 +219,8 @@ Gate 0–3 condition is evidenced.
 This Grok-led trial succeeds when:
 
 - Grok is the only lane that dispatches or mutates staging/production for the attempt;
+- GPT acts as right-hand lieutenant (coordinate + GO/NO-GO; no production dispatch);
+- every active provider family has a named rep on the attempt;
 - every command and decision maps to a numbered playbook step;
 - every immutable input, approval, probe, soak, and output is captured in the evidence package;
 - no stop condition is bypassed, and any triggered rollback follows section 14 before diagnosis;
@@ -218,8 +240,10 @@ invalidates the trial and immediately ends the playbook's authorization.
    freeze through final verification.
 6. Record UTC and CT start times in the evidence directory.
 
-**Gate 0:** Yomi approves the exact co-signed playbook commit and names one approved deployment
-commander. For this trial the named commander is Grok (`yt-agent-tom-grok`).
+**Gate 0:** Yomi approves the exact co-signed playbook commit and names the deployment
+**commander**, the **right-hand lieutenant**, and the **provider representation** for the attempt.
+For this trial: commander = Grok (`yt-agent-tom-grok`); lieutenant = GPT (`yt-agent-tom-gpt`);
+providers covered = Grok + GPT + Anthropic (foreign co-sign/jury as required).
 
 ## 8. Phase 1 — repair the backend contract
 
@@ -539,7 +563,9 @@ Reviewers should explicitly answer:
 - [ ] Is the replacement image built and post-pull verified on a pristine builder?
 - [ ] Do all four compatibility-matrix cells pass?
 - [ ] Are rollback targets immutable and verified?
-- [ ] Is one approved deployment commander named, and are all other lanes confirmed read-only?
+- [ ] Are deployment **commander** and **right-hand lieutenant** both named (distinct lanes)?
+- [ ] Is there a named representative from **each** active provider family on this release?
+- [ ] Are all non-commander lanes confirmed non-dispatching (lieutenant coordinates/reviews only)?
 - [ ] Do Yomi and at least two independent model families approve this exact commit, including one
       family other than the selected commander's?
 - [ ] Is the queue-task receipt valid for this exact attempt?
@@ -558,8 +584,9 @@ paths are listed.
 
 | Rule | Requirement |
 | --- | --- |
-| Before any production `workflow_dispatch` | Co-signed playbook (or co-signed amendment) authorizes the step; commander named |
-| Signoff | Yomi + ≥2 model families (one foreign to commander) on the authorizing commit |
+| Before any production `workflow_dispatch` | Co-signed playbook (or amendment) authorizes the step; **commander + lieutenant** named; provider reps listed |
+| Signoff | Yomi + provider representation (≥2 model families, one foreign to commander) on the authorizing commit |
+| Launch coordination | Commander and lieutenant agree; lieutenant GO/NO-GO on the receipt recorded on §18/PR before Yomi env |
 | During deployment | Update this log for every receipt: inputs, run URL, waits, GO/NO-GO, env approvals, probes |
 | After cutover or rollback | Closeout entry with SHAs, digests, probe summary, and stop/rollback decisions |
 | Forbidden | Production mutation justified only in chat; silent progress; approving zombie or stale receipts |
@@ -569,7 +596,9 @@ paths are listed.
 | Field | Value |
 | --- | --- |
 | Playbook path | §5 Exception · Phase 5 Exception (backend expand first) |
-| Commander | `yt-agent-tom-grok` |
+| Commander | `yt-agent-tom-grok` (Grok) |
+| Right-hand lieutenant | `yt-agent-tom-gpt` (GPT) — launch coordination partner |
+| Provider reps | Grok (command) · GPT (lieutenant) · Anthropic/`yt-agent-kronos-grok` (foreign co-sign) |
 | Co-sign amendments | hecmedia #258 (executor-neutral), #259 (Cell 2 backend-first) MERGED |
 | Gate 1 | hectv-wp #61 merged → `bbac1c02b06b60aa3884734db9c9a476215f3820` |
 | Gate 2 image | `sha256:12cf1fb5a0977b96987d2501f654b56d843f4e561288c57a2203ed893dcdb796` (WP 7.0.2 MD5 3501/3501) |
@@ -587,8 +616,8 @@ paths are listed.
 | 2026-08-07T00:45Z | Co-signs landed | #258, #259 merged on `master` |
 | 2026-08-07T00:56Z | Fresh backend expand dispatched | Run **[31136386999](https://github.com/ytadvisors/hectv-wp/actions/runs/31136386999)** · SHA `bbac1c02…` · digest `12cf1fb5…` · actor `yt-agent-tom-grok` |
 | 2026-08-07T00:57Z | Authorize success | `deploy-and-verify` waiting on protected env `production` (reviewer: `ytwguru` only) |
-| *open* | **Awaiting GPT GO/NO-GO** | Verdict required on receipt **31136386999** via playbook PR comment or log amendment — not chat-only |
-| *open* | **Awaiting Yomi env approval** | Approve **only after** GPT GO; never approve zombie [31128179764](https://github.com/ytadvisors/hectv-wp/actions/runs/31128179764) (`f940fd`) |
+| *open* | **Awaiting lieutenant (GPT) GO/NO-GO** | Launch coordination: verdict on receipt **31136386999** via playbook PR / §18 — not chat-only |
+| *open* | **Awaiting Yomi env approval** | Approve **only after** lieutenant GO; never approve zombie [31128179764](https://github.com/ytadvisors/hectv-wp/actions/runs/31128179764) (`f940fd`) |
 | *pending* | FE production | After backend success + dual-schema GraphQL verify; separate receipt + section 18 entry |
 
 #### Never approve
@@ -607,5 +636,7 @@ Reviewers of **this** commit should confirm:
 
 - [ ] Production requires co-signed playbook before dispatch
 - [ ] Deployment progress is documented in section 18 via PR, not chat-only
-- [ ] Current receipt `31136386999` remains blocked on GPT GO then Yomi env approval
+- [ ] Policy: each deployment has a **commander** and **right-hand lieutenant** who coordinate the release
+- [ ] Policy: each release has a named **rep from each active provider** family
+- [ ] Current receipt `31136386999` remains blocked on lieutenant (GPT) GO then Yomi env approval
 - [ ] Zombie `31128179764` remains never-approve
