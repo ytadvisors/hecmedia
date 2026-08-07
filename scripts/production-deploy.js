@@ -399,7 +399,19 @@ function configureSanitizedRollback(config) {
 }
 
 function zipDirectory(directory, zipPath) {
-  fs.rmSync(zipPath, { force: true });
+  // Node 24 on GHA: fs.rmSync(zipPath, { force: true }) can throw
+  // TypeError: Cannot read properties of undefined (reading 'uid')
+  // when the target does not exist (seen in FE prod run 31145148944).
+  // Prefer exists + unlink for a single file path.
+  try {
+    if (fs.existsSync(zipPath)) {
+      fs.unlinkSync(zipPath);
+    }
+  } catch (err) {
+    throw new Error(
+      `Failed to remove existing zip ${zipPath}: ${err && err.message ? err.message : err}`
+    );
+  }
   run("zip", ["-r", "-X", "-q", zipPath, "."], { cwd: directory });
 }
 
