@@ -32,5 +32,6 @@ describe("ListOfFeaturedPosts", () => {
     expect(screen.getByText("HEC-TV SPOTLIGHT")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "HEC-TV SPOTLIGHT" })).toBeNull();
     expect(document.querySelectorAll(".magazine-list > li")).toHaveLength(5);
+    expect(document.querySelectorAll(".magazine-list img")).toHaveLength(5);
   });
 });

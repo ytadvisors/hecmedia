@@ -12,6 +12,16 @@ import MediaImage from "../MediaImage";
 const defaultImage = "/static/assets/nothumbnail.png";
 const playButton = "/static/assets/play-button.png";
 
+export const getWallpaperBackgroundImage = source => {
+  const primary = source || defaultImage;
+  return [
+    ...new Set([primary, getWordPressMediaFallbackUrl(primary), defaultImage])
+  ]
+    .filter(Boolean)
+    .map(candidate => `url("${candidate}")`)
+    .join(", ");
+};
+
 export default class ListOfPosts extends Component {
   constructor(props) {
     super(props);
@@ -246,7 +256,9 @@ export default class ListOfPosts extends Component {
             <div
               className="wallpaper"
               style={{
-                backgroundImage: `url(${getPostImgSrc(post) || defaultImage})`
+                backgroundImage: getWallpaperBackgroundImage(
+                  getPostImgSrc(post)
+                )
               }}
             >
               {(post.redirect && (
@@ -303,10 +315,9 @@ export default class ListOfPosts extends Component {
         <div
           className="wallpaper"
           style={{
-            backgroundImage: `url(${getPostImgSrc(
-              post,
-              !isMobile ? "small" : ""
-            )})`
+            backgroundImage: getWallpaperBackgroundImage(
+              getPostImgSrc(post, !isMobile ? "small" : "")
+            )
           }}
         >
           <a href={this.getLink(post)}>
@@ -339,7 +350,9 @@ export default class ListOfPosts extends Component {
   getWallpaper = (post, content) => (
     <div
       className="wallpaper"
-      style={{ backgroundImage: `url(${getPostImgSrc(post)})` }}
+      style={{
+        backgroundImage: getWallpaperBackgroundImage(getPostImgSrc(post))
+      }}
     >
       <a href={this.getLink(post)}>
         <span>
@@ -525,7 +538,11 @@ export default class ListOfPosts extends Component {
       }
     }
     return (
-      <section className="post-list-container clearfix" style={style}>
+      <section
+        className="post-list-container clearfix"
+        style={style}
+        data-media-verification="post-list"
+      >
         {title ? <div className="title">{title}</div> : ""}
         {posts.length > 0 && mainContent}
         {posts.length > 0 && remainingPosts}

@@ -457,8 +457,9 @@ recapture. Do not edit inputs in place or guess a replacement.
    - newsletter GET returns 405 JSON and an invalid POST returns 400 JSON without enrollment
    - 20/20 unique cache-busting homepage requests pass
    - hydrated Chrome routes contain no 404 or uncaught errors
-   - hydrated Chrome routes render a non-empty set of remote media images, and every rendered
-     image URL returns successfully; store the route-to-image inventory as release evidence
+   - hydrated Chrome content routes render managed upload media (including `srcset` candidates),
+     every rendered remote image URL returns successfully, and utility routes may record an empty
+     inventory; store the route-to-image inventory as release evidence
    - Lambda@Edge logs contain no new schema or rendering errors
 
 7. Soak for 10 minutes with sequential, low-rate probes.

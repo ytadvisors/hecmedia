@@ -1,5 +1,9 @@
 import React from "react";
 import { DEFAULT_RAIL_PROMO } from "../../lib/stagingCompatibility";
+import getPublicMediaUrl, {
+  getWordPressMediaFallbackUrl
+} from "../../lib/mediaUrl";
+import MediaImage from "../MediaImage";
 
 /**
  * Resolve a display URL for the For Educators rail logo.
@@ -8,10 +12,10 @@ import { DEFAULT_RAIL_PROMO } from "../../lib/stagingCompatibility";
  *  - S3/CDN URLs when Media Offload has synced the attachment
  *  - staging-wp / WP host upload URLs when the file is local-only
  *
- * Never force a blind rewrite of public WP upload URLs onto the S3 bucket:
- * freshly selected logos may not be offloaded yet, and that produced an empty
- * broken image (browser alt text "For Educators") despite a valid GraphQL link.
- * Only remap private LAN hosts (localhost / Tailscale) onto WP_HOST.
+ * This helper only remaps private LAN hosts (localhost / Tailscale) onto
+ * WP_HOST. SideNavigation separately canonicalizes known public WordPress
+ * uploads to the archive and retains the active WordPress URL as a fallback,
+ * so freshly selected, not-yet-offloaded logos remain visible.
  */
 export const getPublicRailPromoUrl = sourceUrl => {
   const publicWordPressHost = process.env.WP_HOST;
@@ -25,7 +29,7 @@ export const getPublicRailPromoUrl = sourceUrl => {
       source.hostname.endsWith(".ts.net");
 
     if (!isPrivateWordPressHost) {
-      // Public host (staging-wp, S3, CDN) — trust GraphQL as returned.
+      // Public host (staging-wp, S3, CDN) — leave mapping to the image chain.
       return sourceUrl;
     }
 
@@ -33,7 +37,6 @@ export const getPublicRailPromoUrl = sourceUrl => {
 
     const publicHost = new URL(publicWordPressHost);
     // Private origin only: surface the same path on the public WP host.
-    // Do not chain into S3 rewrite — local-only uploads 403 there.
     return `${publicHost.origin}${source.pathname}${source.search}${source.hash}`;
   } catch (error) {
     return sourceUrl;
@@ -42,13 +45,17 @@ export const getPublicRailPromoUrl = sourceUrl => {
 
 export const SideNavigation = ({ children, railPromo }) => {
   const image = railPromo && railPromo.image;
+  const publicSource =
+    image && getPublicMediaUrl(getPublicRailPromoUrl(image.sourceUrl));
 
   return (
     <section className="side-navigation">
       {image && image.sourceUrl && railPromo.url && (
         <a className="rail-promo" href={railPromo.url}>
-          <img
-            src={getPublicRailPromoUrl(image.sourceUrl)}
+          <MediaImage
+            src={publicSource}
+            fallbackSrc={getWordPressMediaFallbackUrl(publicSource)}
+            finalSrc={DEFAULT_RAIL_PROMO.image.sourceUrl}
             alt={railPromo.alt || image.altText || "For Educators"}
           />
         </a>

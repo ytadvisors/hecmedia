@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { getPublicRailPromoUrl, SideNavigation } from "./index";
 import { DEFAULT_RAIL_PROMO } from "../../lib/stagingCompatibility";
 
@@ -35,6 +35,47 @@ describe("SideNavigation", () => {
       "src",
       "https://img.test/for-educators.png"
     );
+  });
+
+  it("tries the public archive, active WordPress, and default promo in order", () => {
+    const originalHost = process.env.WP_HOST;
+    process.env.WP_HOST = "https://prod-wp.hectv.org";
+
+    try {
+      render(
+        <SideNavigation
+          railPromo={{
+            image: {
+              sourceUrl:
+                "https://prod-wp.hectv.org/wp-content/uploads/2026/08/For-Educators.jpg",
+              altText: "For Educators"
+            },
+            url: "/category/education"
+          }}
+        />
+      );
+
+      const image = screen.getByRole("img", { name: "For Educators" });
+      expect(image).toHaveAttribute(
+        "src",
+        "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2026/08/For-Educators.jpg"
+      );
+
+      fireEvent.error(image);
+      expect(image).toHaveAttribute(
+        "src",
+        "https://prod-wp.hectv.org/wp-content/uploads/2026/08/For-Educators.jpg"
+      );
+
+      fireEvent.error(image);
+      expect(image).toHaveAttribute("src", DEFAULT_RAIL_PROMO.image.sourceUrl);
+
+      fireEvent.error(image);
+      expect(image).toHaveAttribute("src", DEFAULT_RAIL_PROMO.image.sourceUrl);
+    } finally {
+      if (originalHost === undefined) delete process.env.WP_HOST;
+      else process.env.WP_HOST = originalHost;
+    }
   });
 
   it("routes private WordPress media through the public staging host", () => {

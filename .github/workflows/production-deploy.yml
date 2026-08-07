@@ -119,6 +119,7 @@ jobs:
         if: inputs.action == 'deploy'
         env:
           APOLLO_CLIENT_URI: https://prod-wp.hectv.org/graphql
+          WP_HOST: https://prod-wp.hectv.org
           GATSBY_WP_HOST: https://prod-wp.hectv.org
           HECMEDIA_E2E_MEDIA_ASSETS: "true"
           E2E_ALLOW_WRITES: "0"

@@ -150,22 +150,80 @@ test("production verification requires hydrated primary navigation items", () =>
   ).toThrow("has no primary navigation items");
 });
 
-test("production verification extracts and requires hydrated remote images", () => {
+test("production verification inventories src and srcset candidates", () => {
   const dom = [
     '<img src="/static/assets/logo.png">',
-    '<img src="https://media.example.com/story.jpg?x=1&amp;y=2">',
+    '<section data-media-verification="post-list">',
+    '<img src="https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story.jpg?x=1&amp;y=2" srcset="https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story-small.jpg 320w, https://media.example.com/story-large.jpg 1280w">',
+    "</section>",
     '<img src="https://media.example.com/story.jpg?x=1&amp;y=2">',
     "<img src='https://media.example.com/second.jpg'>"
   ].join("");
 
   expect(extractRemoteImageUrls(dom)).toEqual([
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story.jpg?x=1&y=2",
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story-small.jpg",
+    "https://media.example.com/story-large.jpg",
     "https://media.example.com/story.jpg?x=1&y=2",
     "https://media.example.com/second.jpg"
   ]);
-  expect(assertHydratedImageSources(dom, "/")).toHaveLength(2);
+  expect(assertHydratedImageSources(dom, "/")).toMatchObject({
+    imageUrls: expect.any(Array),
+    mediaImageUrls: [
+      "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story.jpg?x=1&y=2",
+      "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story-small.jpg"
+    ],
+    minimumMediaImages: 1,
+    verificationSurface: "post-list"
+  });
+});
+
+test("production verification rejects promo-only content route inventories", () => {
   expect(() =>
-    assertHydratedImageSources('<img src="/static/assets/logo.png">', "/")
-  ).toThrow("has no remote media images to verify");
+    assertHydratedImageSources(
+      '<img src="https://asset.ytadvisors.com/hectv/promo.jpg"><section data-media-verification="post-list"><p>No cards</p></section>',
+      "/"
+    )
+  ).toThrow("has 0 production media image candidate(s)");
+});
+
+test("production verification scopes article proof to article content", () => {
+  const articleImage =
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/article.jpg";
+  const relatedImage =
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/related.jpg";
+  const articleDom = [
+    '<div data-media-verification="article-content">',
+    `<div><p><img src="${articleImage}"></p></div>`,
+    "</div>",
+    `<section><img src="${relatedImage}"></section>`
+  ].join("");
+
+  expect(
+    assertHydratedImageSources(articleDom, "/posts/hec-on-youtube")
+  ).toMatchObject({
+    mediaImageUrls: [articleImage],
+    verificationSurface: "article-content"
+  });
+  expect(() =>
+    assertHydratedImageSources(
+      `<div data-media-verification="article-content"><p>No banners</p></div><img src="${relatedImage}">`,
+      "/posts/hec-on-youtube"
+    )
+  ).toThrow("in article-content; requires at least 1");
+});
+
+test("production verification allows utility routes with no remote images", () => {
+  expect(
+    assertHydratedImageSources(
+      '<img src="/static/assets/newsletter-illustration.png">',
+      "/newsletter"
+    )
+  ).toMatchObject({
+    imageUrls: [],
+    mediaImageUrls: [],
+    minimumMediaImages: 0
+  });
 });
 
 test("production verification requires an image response from rendered URLs", () => {

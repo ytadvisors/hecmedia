@@ -1,8 +1,15 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import TrendingNow from "./index";
 
 describe("TrendingNow", () => {
+  const originalWpHost = process.env.WP_HOST;
+
+  afterEach(() => {
+    if (originalWpHost === undefined) delete process.env.WP_HOST;
+    else process.env.WP_HOST = originalWpHost;
+  });
+
   it("renders thumbnail links without a staging-only label", () => {
     const { container } = render(
       <TrendingNow
@@ -48,6 +55,39 @@ describe("TrendingNow", () => {
     expect(container.querySelector(".trending-list img")).toHaveAttribute(
       "src",
       "/static/assets/spotlight-img.jpg"
+    );
+  });
+
+  it("uses the public archive before the configured WordPress fallback", () => {
+    process.env.WP_HOST = "https://prod-wp.hectv.org";
+
+    const { container } = render(
+      <TrendingNow
+        newestVideos={[
+          {
+            postId: 2,
+            title: "An archived story",
+            link: "/posts/archived-story",
+            postDetails: {
+              videoImage: {
+                medium:
+                  "https://prod-wp.hectv.org/wp-content/uploads/2026/07/story.jpg"
+              }
+            }
+          }
+        ]}
+      />
+    );
+    const image = container.querySelector(".trending-list img");
+
+    expect(image).toHaveAttribute(
+      "src",
+      "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2026/07/story.jpg"
+    );
+    fireEvent.error(image);
+    expect(image).toHaveAttribute(
+      "src",
+      "https://prod-wp.hectv.org/wp-content/uploads/2026/07/story.jpg"
     );
   });
 

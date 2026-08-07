@@ -678,28 +678,119 @@ function assertHydratedNavigation(dom, route) {
   }
 }
 
+const PRODUCTION_MEDIA_HOSTS = new Set([
+  "prd-hectv-wp-media.s3.us-east-2.amazonaws.com",
+  "prod-wp.hectv.org",
+  "prod-wp-ecs.hectv.org"
+]);
+const HYDRATED_MEDIA_REQUIREMENTS = {
+  "/": { minimum: 1, surface: "post-list" },
+  "/category/films": { minimum: 1, surface: "post-list" },
+  "/category/arts/two_on_the_aisle": {
+    minimum: 1,
+    surface: "post-list"
+  },
+  "/posts/hec-on-youtube": {
+    minimum: 1,
+    surface: "article-content"
+  },
+  "/newsletter": { minimum: 0 }
+};
+
 function extractRemoteImageUrls(dom) {
   const urls = [];
-  const imagePattern = /<img\b[^>]*\bsrc=["']([^"']+)["']/gi;
-  let match = imagePattern.exec(String(dom || ""));
-  while (match) {
-    const source = match[1].replace(/&amp;/g, "&");
-    if (/^https?:\/\//i.test(source) && !urls.includes(source)) {
-      urls.push(source);
+  const content = String(dom || "");
+  const imagePattern = /<img\b[^>]*>/gi;
+  let image = imagePattern.exec(content);
+
+  while (image) {
+    const attributePattern = /\b(src|srcset)=["']([^"']+)["']/gi;
+    let attribute = attributePattern.exec(image[0]);
+    while (attribute) {
+      const rawValue = attribute[2].replace(/&amp;/g, "&");
+      const candidates =
+        attribute[1].toLowerCase() === "srcset"
+          ? rawValue.split(",").map(value => value.trim().split(/\s+/)[0])
+          : [rawValue.trim()];
+      candidates.forEach(source => {
+        if (/^https?:\/\//i.test(source) && !urls.includes(source)) {
+          urls.push(source);
+        }
+      });
+      attribute = attributePattern.exec(image[0]);
     }
-    match = imagePattern.exec(String(dom || ""));
+    image = imagePattern.exec(content);
   }
+
   return urls;
 }
 
+function extractMediaVerificationSurface(dom, surface) {
+  const content = String(dom || "");
+  const escapedSurface = String(surface).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const openingPattern = new RegExp(
+    `<([a-z][\\w:-]*)\\b[^>]*\\bdata-media-verification=["']${escapedSurface}["'][^>]*>`,
+    "i"
+  );
+  const opening = openingPattern.exec(content);
+  if (!opening) return "";
+
+  const tagPattern = new RegExp(`<\\/?${opening[1]}\\b[^>]*>`, "gi");
+  tagPattern.lastIndex = opening.index + opening[0].length;
+  let depth = 1;
+  let tag = tagPattern.exec(content);
+  while (tag) {
+    if (/^<\//.test(tag[0])) depth -= 1;
+    else if (!/\/>$/.test(tag[0])) depth += 1;
+
+    if (depth === 0) {
+      return content.slice(opening.index, tagPattern.lastIndex);
+    }
+    tag = tagPattern.exec(content);
+  }
+
+  return "";
+}
+
+function isProductionMediaUrl(url) {
+  try {
+    const candidate = new URL(url);
+    return (
+      /^https?:$/.test(candidate.protocol) &&
+      PRODUCTION_MEDIA_HOSTS.has(candidate.hostname) &&
+      candidate.pathname.startsWith("/wp-content/uploads/")
+    );
+  } catch (error) {
+    return false;
+  }
+}
+
 function assertHydratedImageSources(dom, route) {
-  const urls = extractRemoteImageUrls(dom);
-  if (urls.length === 0) {
+  const requirement = HYDRATED_MEDIA_REQUIREMENTS[route] || { minimum: 0 };
+  const verificationDom = requirement.surface
+    ? extractMediaVerificationSurface(dom, requirement.surface)
+    : dom;
+  const imageUrls = extractRemoteImageUrls(dom);
+  const mediaImageUrls = extractRemoteImageUrls(verificationDom).filter(
+    isProductionMediaUrl
+  );
+
+  if (mediaImageUrls.length < requirement.minimum) {
     throw new Error(
-      `Hydrated production route ${route} has no remote media images to verify.`
+      `Hydrated production route ${route} has ${
+        mediaImageUrls.length
+      } production media image candidate(s) in ${requirement.surface ||
+        "the document"}; requires at least ${requirement.minimum}.`
     );
   }
-  return urls;
+
+  return {
+    route,
+    imageUrls,
+    mediaImageUrls,
+    minimumMediaImages: requirement.minimum,
+    verificationSurface: requirement.surface || "document"
+  };
 }
 
 function assertRemoteImageResponse(url, route, result) {
@@ -757,13 +848,7 @@ function verifyHydratedRoutes(browserPath) {
       "BROWSER_BIN must name an installed Chrome or Chromium binary."
     );
   }
-  const routes = [
-    "/",
-    "/category/films",
-    "/category/arts/two_on_the_aisle",
-    "/posts/hec-on-youtube",
-    "/newsletter"
-  ];
+  const routes = Object.keys(HYDRATED_MEDIA_REQUIREMENTS);
   const verifiedImages = new Set();
   const mediaEvidence = [];
   routes.forEach((route, index) => {
@@ -806,14 +891,14 @@ function verifyHydratedRoutes(browserPath) {
       );
     }
     assertHydratedNavigation(dom, route);
-    const imageUrls = assertHydratedImageSources(dom, route);
-    imageUrls.forEach(url => {
+    const routeMediaEvidence = assertHydratedImageSources(dom, route);
+    routeMediaEvidence.imageUrls.forEach(url => {
       if (!verifiedImages.has(url)) {
         verifyRemoteImage(url, route);
         verifiedImages.add(url);
       }
     });
-    mediaEvidence.push({ route, imageUrls });
+    mediaEvidence.push(routeMediaEvidence);
     if (/incompatible-href-as|provided .as. value.*incompatible/i.test(logs)) {
       throw new Error(
         `Hydrated production route ${route} emitted a dynamic-route error.`

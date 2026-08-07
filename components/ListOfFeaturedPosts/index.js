@@ -1,5 +1,4 @@
 import React from "react";
-import LazyLoad from "react-lazyload";
 import { getPostImgSrc } from "../../lib/getFunctions";
 import { getWordPressMediaFallbackUrl } from "../../lib/mediaUrl";
 import MediaImage from "../MediaImage";
@@ -33,15 +32,14 @@ export default props => {
               <a href={url}>
                 <div className="row">
                   <div className="magazine-img col-xs-5 no-padding">
-                    <LazyLoad height={50}>
-                      <MediaImage
-                        src={source}
-                        fallbackSrc={getWordPressMediaFallbackUrl(source)}
-                        finalSrc={fallbackThumbnail}
-                        className="img-responsive"
-                        alt="cover"
-                      />
-                    </LazyLoad>
+                    <MediaImage
+                      src={source}
+                      fallbackSrc={getWordPressMediaFallbackUrl(source)}
+                      finalSrc={fallbackThumbnail}
+                      className="img-responsive"
+                      alt="cover"
+                      loading="lazy"
+                    />
                   </div>
                   <div
                     className="magazine-info col-xs-7 no-padding"

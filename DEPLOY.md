@@ -71,7 +71,9 @@ or delete S3 objects. A successful release receives an immutable
 For a deploy action, the protected-environment approval prompt appears only after a separate
 no-credential media preflight resolves the candidate's live Spotlight and representative category
 image URLs and confirms that they return images. The protected job reruns the full tests before it
-receives AWS credentials or mutates production.
+receives AWS credentials or mutates production. After cutover, hydrated content routes must contain
+managed upload media, all rendered remote `src` and `srcset` candidates must return images, and
+utility routes may record an empty media inventory.
 
 Manual rollback uses the same workflow with `action=rollback` and the literal confirmation
 `ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the immutable checksum of version `147`, moves all

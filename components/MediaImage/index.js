@@ -2,8 +2,7 @@ import React from "react";
 
 /**
  * Render an image with an ordered, finite fallback chain. The index lives on
- * the DOM node so a failed fallback cannot loop forever through React's image
- * error event.
+ * React state so parent renders cannot restore a source that already failed.
  */
 const MediaImage = ({
   src,
@@ -13,22 +12,28 @@ const MediaImage = ({
   onError,
   ...imageProps
 }) => {
-  const candidates = [...new Set([src, fallbackSrc, finalSrc].filter(Boolean))];
+  const candidates = React.useMemo(
+    () => [...new Set([src, fallbackSrc, finalSrc].filter(Boolean))],
+    [src, fallbackSrc, finalSrc]
+  );
+  const candidateKey = candidates.join("\u0000");
+  const [candidateState, setCandidateState] = React.useState({
+    key: candidateKey,
+    index: 0
+  });
+  const candidateIndex =
+    candidateState.key === candidateKey ? candidateState.index : 0;
 
   const handleError = event => {
-    const image = event.currentTarget;
-    const currentIndex = Number(
-      image.getAttribute("data-media-candidate-index") || "0"
-    );
-    const nextSrc = candidates[currentIndex + 1];
-
-    if (nextSrc) {
-      image.setAttribute(
-        "data-media-candidate-index",
-        String(currentIndex + 1)
-      );
-      image.setAttribute("src", nextSrc);
-    }
+    setCandidateState(current => {
+      const currentIndex = current.key === candidateKey ? current.index : 0;
+      if (currentIndex >= candidates.length - 1) {
+        return current.key === candidateKey
+          ? current
+          : { key: candidateKey, index: currentIndex };
+      }
+      return { key: candidateKey, index: currentIndex + 1 };
+    });
 
     if (onError) onError(event);
   };
@@ -36,9 +41,9 @@ const MediaImage = ({
   return (
     <img
       {...imageProps}
-      src={candidates[0]}
+      src={candidates[candidateIndex]}
       alt={alt}
-      data-media-candidate-index="0"
+      data-media-candidate-index={candidateIndex}
       onError={handleError}
     />
   );

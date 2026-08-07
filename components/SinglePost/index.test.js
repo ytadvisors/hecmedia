@@ -108,6 +108,10 @@ describe("article header image sizing (component)", () => {
     );
 
     const image = container.querySelector(".blog-content img");
+    expect(container.querySelector(".blog-content")).toHaveAttribute(
+      "data-media-verification",
+      "article-content"
+    );
     expect(image).toHaveAttribute(
       "src",
       "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2025/07/Spotlight-STL-Banner-1024x169.png"

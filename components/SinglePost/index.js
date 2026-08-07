@@ -229,7 +229,10 @@ const SinglePost = props => {
         </div>
       )}
       {showPodcasts && <PodcastLinks podcasts={podcasts} />}
-      <div className={`blog-content ${(classes && classes.content) || ""}`}>
+      <div
+        className={`blog-content ${(classes && classes.content) || ""}`}
+        data-media-verification="article-content"
+      >
         <div
           dangerouslySetInnerHTML={{ __html: rewritePublicMediaHtml(content) }}
         />
