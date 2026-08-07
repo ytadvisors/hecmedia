@@ -180,6 +180,9 @@ then production cutover is:
 
 1. **Deploy dual-schema backend expand first** (provider expand; live FE continues).
 2. Verify production GraphQL dual-schema + live public site (20/20 fresh probes, no schema errors).
+   The frontend preflight must also resolve the exact image URLs produced by the application for
+   the current Spotlight rail and at least ten posts from a representative category. Every probe
+   must return an `image/*` response; a valid GraphQL URL that returns 404 is a release blocker.
 3. **Deploy candidate frontend second**.
 4. Soak; remove legacy fields only later.
 
@@ -438,7 +441,8 @@ recapture. Do not edit inputs in place or guess a replacement.
 1. The named deployment commander dispatches `.github/workflows/production-deploy.yml` from the
    exact protected `master` tip with the frozen inputs.
 2. Confirm authorization and all no-AWS-credentials tests pass before approving the protected
-   environment.
+   environment, including the live production media contract that probes the exact Spotlight and
+   category-card image URLs resolved by the candidate code.
 3. Yomi reviews the frozen inputs and approves the production environment.
 4. Let the governed workflow package artifacts, publish versioned Lambda functions, update the
    existing CloudFront distribution, wait for propagation, invalidate, and run its verifier.
@@ -452,6 +456,8 @@ recapture. Do not edit inputs in place or guess a replacement.
    - newsletter GET returns 405 JSON and an invalid POST returns 400 JSON without enrollment
    - 20/20 unique cache-busting homepage requests pass
    - hydrated Chrome routes contain no 404 or uncaught errors
+   - hydrated Chrome routes render a non-empty set of remote media images, and every rendered
+     image URL returns successfully; store the route-to-image inventory as release evidence
    - Lambda@Edge logs contain no new schema or rendering errors
 
 7. Soak for 10 minutes with sequential, low-rate probes.

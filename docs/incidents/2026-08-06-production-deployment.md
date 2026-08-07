@@ -273,6 +273,55 @@ For the staging image:
 7. **Cross-repository releases need one commander and one plan.** Backend, frontend, CloudFront,
    and rollback order must be reviewed together.
 
+## 2026-08-07 follow-up: production media-origin regression
+
+**Status:** Mitigation and release-gate fixes prepared; production deployment pending review
+
+At approximately 04:29–04:32 CT on 2026-08-07, post-release visual inspection found missing
+thumbnail images on older Two on the Aisle cards, the Spotlight listing, and the Spotlight STL
+sidebar. The affected pages and text content remained available, but the browser rendered broken
+image placeholders or text-only cards.
+
+### Follow-up RCA
+
+WordPress returned valid attachment metadata whose URLs used
+`https://prod-wp.hectv.org/wp-content/uploads/...`. Those exact production WordPress/EFS URLs
+returned HTTP 404. Read-only object checks found the same upload paths intact and returning
+`image/*` responses from the public archive at
+`https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/...`.
+
+The frontend already had a media-origin compatibility function, but it canonicalized only the
+staging WordPress upload host to the public S3 archive. When the release switched content reads to
+the production WordPress backend, production-host attachment URLs bypassed that mapping and were
+rendered directly against the incomplete EFS origin. No object loss was found in the public S3
+archive.
+
+The earlier header-image sizing change was inspected and is not the regression boundary. It kept
+article-page hero selection separate from card-thumbnail selection. The relevant boundary is the
+staging-only host condition in the shared media URL compatibility code.
+
+### Why validation did not catch it
+
+The release gates proved HTTP page availability, GraphQL schema compatibility, response shape,
+navigation, and absence of browser exceptions. They did not dereference the media URLs returned by
+GraphQL, require an `image/*` response, inventory the images present in hydrated pages, or fail the
+release when an image request returned 404. A syntactically valid GraphQL URL therefore passed even
+though the browser could not load the object.
+
+### Follow-up corrective controls
+
+| Control                                                                                                                                                          | Failure class covered                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Canonicalize staging and production WordPress upload URLs to the public S3 archive                                                                               | Incomplete environment-specific upload origins                                           |
+| Use a finite component fallback chain: public archive → active WordPress origin → local placeholder                                                              | New media awaiting archive propagation without retry loops                               |
+| Before production credentials, resolve the real Spotlight and representative category-card URLs, perform ranged GETs, and require successful `image/*` responses | Valid metadata pointing to missing or non-image content                                  |
+| After cutover, extract every remote image URL from hydrated required routes, probe each unique URL, require `image/*`, and save the route-to-image inventory     | Rendering changes that bypass the shared resolver or expose route-specific broken assets |
+
+This follow-up changes the acceptance criterion from “the page and query returned 200” to “the
+candidate-selected media objects loaded as images before approval, and the actually rendered media
+objects loaded as images after cutover.” Any 404, request failure, empty rendered-media set, or
+non-image response is a release failure.
+
 ## Corrective and preventive actions
 
 ### P0 — required before the next production attempt
@@ -285,6 +334,7 @@ For the staging image:
 | Rebuild on a pristine no-cache builder | Selected executor | New SHA-tagged digest plus builder provenance |
 | Add non-empty core-file and WordPress checksum tests | Backend owner | Pre-push and post-pull results |
 | Add real GraphQL, REST, and SSR release gates | Frontend + backend owners | Four-way compatibility matrix and 20/20 fresh probes |
+| Add pre-approval and post-cutover media-object gates | Frontend owner | Live GraphQL-selected media probes plus hydrated route-to-image evidence |
 | Prove immutable rollback targets | Selected executor | Lambda version/checksum and ECS task definition/digest evidence |
 
 ### P1 — within 24 hours

@@ -6,6 +6,8 @@ import { IoIosCalendar } from "react-icons/io";
 import LazyLoad from "react-lazyload";
 import NewsLetterContainer from "../../containers/NewsLetterContainer";
 import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
+import { getWordPressMediaFallbackUrl } from "../../lib/mediaUrl";
+import MediaImage from "../MediaImage";
 
 const defaultImage = "/static/assets/nothumbnail.png";
 const playButton = "/static/assets/play-button.png";
@@ -45,8 +47,10 @@ export default class ListOfPosts extends Component {
     <a href={link} className="thumbnail-link">
       {isVideo && <img src={playButton} className="play-icon" alt="play" />}
       <LazyLoad height={200}>
-        <img
+        <MediaImage
           src={thumbnail || defaultImage}
+          fallbackSrc={getWordPressMediaFallbackUrl(thumbnail)}
+          finalSrc={defaultImage}
           className="img-responsive full-width thumbnail-img"
           alt=""
         />

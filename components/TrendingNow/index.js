@@ -1,5 +1,7 @@
 import React from "react";
 import toTrendingNowItems from "../../lib/trendingNow";
+import { getWordPressMediaFallbackUrl } from "../../lib/mediaUrl";
+import MediaImage from "../MediaImage";
 
 const fallbackThumbnail = "/static/assets/spotlight-img.jpg";
 
@@ -32,8 +34,10 @@ const TrendingNow = ({
           {items.map(item => (
             <li key={item.id}>
               <a href={item.href}>
-                <img
+                <MediaImage
                   src={item.image || fallbackThumbnail}
+                  fallbackSrc={getWordPressMediaFallbackUrl(item.image)}
+                  finalSrc={fallbackThumbnail}
                   alt=""
                   loading="lazy"
                   aria-hidden="true"

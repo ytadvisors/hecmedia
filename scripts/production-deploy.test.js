@@ -7,9 +7,12 @@ const {
   assertDistributionContract,
   assertFunctionContract,
   assertGovernedDeployContext,
+  assertHydratedImageSources,
   assertHydratedNavigation,
+  assertRemoteImageResponse,
   configureProductionDistribution,
   configureSanitizedRollback,
+  extractRemoteImageUrls,
   parseJsonOutput,
   requireBuildContract
 } = require("./production-deploy");
@@ -145,6 +148,48 @@ test("production verification requires hydrated primary navigation items", () =>
       "/"
     )
   ).toThrow("has no primary navigation items");
+});
+
+test("production verification extracts and requires hydrated remote images", () => {
+  const dom = [
+    '<img src="/static/assets/logo.png">',
+    '<img src="https://media.example.com/story.jpg?x=1&amp;y=2">',
+    '<img src="https://media.example.com/story.jpg?x=1&amp;y=2">',
+    "<img src='https://media.example.com/second.jpg'>"
+  ].join("");
+
+  expect(extractRemoteImageUrls(dom)).toEqual([
+    "https://media.example.com/story.jpg?x=1&y=2",
+    "https://media.example.com/second.jpg"
+  ]);
+  expect(assertHydratedImageSources(dom, "/")).toHaveLength(2);
+  expect(() =>
+    assertHydratedImageSources('<img src="/static/assets/logo.png">', "/")
+  ).toThrow("has no remote media images to verify");
+});
+
+test("production verification requires an image response from rendered URLs", () => {
+  expect(() =>
+    assertRemoteImageResponse("https://media.example.com/story.jpg", "/", {
+      status: 0,
+      stdout: "206\timage/jpeg",
+      stderr: ""
+    })
+  ).not.toThrow();
+  expect(() =>
+    assertRemoteImageResponse("https://media.example.com/story.jpg", "/", {
+      status: 0,
+      stdout: "200\ttext/html",
+      stderr: ""
+    })
+  ).toThrow("returned non-image content type text/html");
+  expect(() =>
+    assertRemoteImageResponse("https://media.example.com/missing.jpg", "/", {
+      status: 22,
+      stdout: "404\ttext/html",
+      stderr: "curl: (22) The requested URL returned error: 404"
+    })
+  ).toThrow("has a broken image");
 });
 
 test("allows production mutation only from the governed workflow", () => {

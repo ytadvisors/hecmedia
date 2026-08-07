@@ -146,6 +146,7 @@ jobs:
         env:
           GATSBY_WP_HOST: https://prod-wp.hectv.org
           HECMEDIA_E2E_MODERN_WPGRAPHQL: "true"
+          HECMEDIA_E2E_MEDIA_ASSETS: "true"
           E2E_ALLOW_WRITES: "0"
         run: yarn test:e2e
       - name: Package reviewed Lambda@Edge artifacts without AWS credentials
@@ -214,4 +215,5 @@ jobs:
             .production-release/homepage-before.html
             .production-release/rollback-home.html
             .production-release/hydrated-*.html
+            .production-release/hydrated-media.json
             .production-release/browser-*.log

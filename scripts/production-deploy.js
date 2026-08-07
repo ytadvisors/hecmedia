@@ -678,6 +678,79 @@ function assertHydratedNavigation(dom, route) {
   }
 }
 
+function extractRemoteImageUrls(dom) {
+  const urls = [];
+  const imagePattern = /<img\b[^>]*\bsrc=["']([^"']+)["']/gi;
+  let match = imagePattern.exec(String(dom || ""));
+  while (match) {
+    const source = match[1].replace(/&amp;/g, "&");
+    if (/^https?:\/\//i.test(source) && !urls.includes(source)) {
+      urls.push(source);
+    }
+    match = imagePattern.exec(String(dom || ""));
+  }
+  return urls;
+}
+
+function assertHydratedImageSources(dom, route) {
+  const urls = extractRemoteImageUrls(dom);
+  if (urls.length === 0) {
+    throw new Error(
+      `Hydrated production route ${route} has no remote media images to verify.`
+    );
+  }
+  return urls;
+}
+
+function assertRemoteImageResponse(url, route, result) {
+  const detail = String(result.stderr || "")
+    .trim()
+    .slice(0, 500);
+  if (result.status !== 0) {
+    throw new Error(
+      `Hydrated production route ${route} has a broken image ${url}${
+        detail ? `: ${detail}` : ""
+      }`
+    );
+  }
+
+  const [, contentType = ""] = String(result.stdout || "")
+    .trim()
+    .split("\t");
+  if (!/^image\//i.test(contentType)) {
+    throw new Error(
+      `Hydrated production route ${route} image ${url} returned non-image content type ${contentType ||
+        "unknown"}.`
+    );
+  }
+}
+
+function verifyRemoteImage(url, route) {
+  const result = spawnSync(
+    "curl",
+    [
+      "--fail",
+      "--silent",
+      "--show-error",
+      "--location",
+      "--retry",
+      "2",
+      "--retry-all-errors",
+      "--max-time",
+      "20",
+      "--range",
+      "0-0",
+      "--output",
+      "/dev/null",
+      "--write-out",
+      "%{http_code}\t%{content_type}",
+      url
+    ],
+    { encoding: "utf8", timeout: 30000, maxBuffer: 1024 * 1024 }
+  );
+  assertRemoteImageResponse(url, route, result);
+}
+
 function verifyHydratedRoutes(browserPath) {
   if (!browserPath || !fs.existsSync(browserPath)) {
     throw new Error(
@@ -690,6 +763,8 @@ function verifyHydratedRoutes(browserPath) {
     "/category/arts/two_on_the_aisle",
     "/newsletter"
   ];
+  const verifiedImages = new Set();
+  const mediaEvidence = [];
   routes.forEach((route, index) => {
     const result = spawnSync(
       browserPath,
@@ -699,7 +774,9 @@ function verifyHydratedRoutes(browserPath) {
         "--disable-gpu",
         "--enable-logging=stderr",
         "--v=1",
-        "--virtual-time-budget=5000",
+        "--window-size=1920,12000",
+        "--run-all-compositor-stages-before-draw",
+        "--virtual-time-budget=7000",
         "--dump-dom",
         `https://hecmedia.org${route}`
       ],
@@ -728,6 +805,14 @@ function verifyHydratedRoutes(browserPath) {
       );
     }
     assertHydratedNavigation(dom, route);
+    const imageUrls = assertHydratedImageSources(dom, route);
+    imageUrls.forEach(url => {
+      if (!verifiedImages.has(url)) {
+        verifyRemoteImage(url, route);
+        verifiedImages.add(url);
+      }
+    });
+    mediaEvidence.push({ route, imageUrls });
     if (/incompatible-href-as|provided .as. value.*incompatible/i.test(logs)) {
       throw new Error(
         `Hydrated production route ${route} emitted a dynamic-route error.`
@@ -743,6 +828,18 @@ function verifyHydratedRoutes(browserPath) {
       );
     }
   });
+  fs.writeFileSync(
+    path.join(RELEASE_DIR, "hydrated-media.json"),
+    JSON.stringify(
+      {
+        checkedAt: new Date().toISOString(),
+        uniqueImageCount: verifiedImages.size,
+        routes: mediaEvidence
+      },
+      null,
+      2
+    )
+  );
 }
 
 function writeEvidence(state) {
@@ -1038,9 +1135,12 @@ module.exports = {
   assertDistributionContract,
   assertFunctionContract,
   assertGovernedDeployContext,
+  assertHydratedImageSources,
   assertHydratedNavigation,
+  assertRemoteImageResponse,
   configureProductionDistribution,
   configureSanitizedRollback,
+  extractRemoteImageUrls,
   parseJsonOutput,
   requireBuildContract
 };
