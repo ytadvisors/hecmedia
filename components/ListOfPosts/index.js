@@ -6,9 +6,21 @@ import { IoIosCalendar } from "react-icons/io";
 import LazyLoad from "react-lazyload";
 import NewsLetterContainer from "../../containers/NewsLetterContainer";
 import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
+import { getWordPressMediaFallbackUrl } from "../../lib/mediaUrl";
+import MediaImage from "../MediaImage";
 
 const defaultImage = "/static/assets/nothumbnail.png";
 const playButton = "/static/assets/play-button.png";
+
+export const getWallpaperBackgroundImage = source => {
+  const primary = source || defaultImage;
+  return [
+    ...new Set([primary, getWordPressMediaFallbackUrl(primary), defaultImage])
+  ]
+    .filter(Boolean)
+    .map(candidate => `url("${candidate}")`)
+    .join(", ");
+};
 
 export default class ListOfPosts extends Component {
   constructor(props) {
@@ -45,8 +57,10 @@ export default class ListOfPosts extends Component {
     <a href={link} className="thumbnail-link">
       {isVideo && <img src={playButton} className="play-icon" alt="play" />}
       <LazyLoad height={200}>
-        <img
+        <MediaImage
           src={thumbnail || defaultImage}
+          fallbackSrc={getWordPressMediaFallbackUrl(thumbnail)}
+          finalSrc={defaultImage}
           className="img-responsive full-width thumbnail-img"
           alt=""
         />
@@ -242,7 +256,9 @@ export default class ListOfPosts extends Component {
             <div
               className="wallpaper"
               style={{
-                backgroundImage: `url(${getPostImgSrc(post) || defaultImage})`
+                backgroundImage: getWallpaperBackgroundImage(
+                  getPostImgSrc(post)
+                )
               }}
             >
               {(post.redirect && (
@@ -299,10 +315,9 @@ export default class ListOfPosts extends Component {
         <div
           className="wallpaper"
           style={{
-            backgroundImage: `url(${getPostImgSrc(
-              post,
-              !isMobile ? "small" : ""
-            )})`
+            backgroundImage: getWallpaperBackgroundImage(
+              getPostImgSrc(post, !isMobile ? "small" : "")
+            )
           }}
         >
           <a href={this.getLink(post)}>
@@ -335,7 +350,9 @@ export default class ListOfPosts extends Component {
   getWallpaper = (post, content) => (
     <div
       className="wallpaper"
-      style={{ backgroundImage: `url(${getPostImgSrc(post)})` }}
+      style={{
+        backgroundImage: getWallpaperBackgroundImage(getPostImgSrc(post))
+      }}
     >
       <a href={this.getLink(post)}>
         <span>
@@ -521,7 +538,11 @@ export default class ListOfPosts extends Component {
       }
     }
     return (
-      <section className="post-list-container clearfix" style={style}>
+      <section
+        className="post-list-container clearfix"
+        style={style}
+        data-media-verification="post-list"
+      >
         {title ? <div className="title">{title}</div> : ""}
         {posts.length > 0 && mainContent}
         {posts.length > 0 && remainingPosts}

@@ -7,9 +7,12 @@ const {
   assertDistributionContract,
   assertFunctionContract,
   assertGovernedDeployContext,
+  assertHydratedImageSources,
   assertHydratedNavigation,
+  assertRemoteImageResponse,
   configureProductionDistribution,
   configureSanitizedRollback,
+  extractRemoteImageUrls,
   parseJsonOutput,
   requireBuildContract
 } = require("./production-deploy");
@@ -145,6 +148,106 @@ test("production verification requires hydrated primary navigation items", () =>
       "/"
     )
   ).toThrow("has no primary navigation items");
+});
+
+test("production verification inventories src and srcset candidates", () => {
+  const dom = [
+    '<img src="/static/assets/logo.png">',
+    '<section data-media-verification="post-list">',
+    '<img src="https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story.jpg?x=1&amp;y=2" srcset="https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story-small.jpg 320w, https://media.example.com/story-large.jpg 1280w">',
+    "</section>",
+    '<img src="https://media.example.com/story.jpg?x=1&amp;y=2">',
+    "<img src='https://media.example.com/second.jpg'>"
+  ].join("");
+
+  expect(extractRemoteImageUrls(dom)).toEqual([
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story.jpg?x=1&y=2",
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story-small.jpg",
+    "https://media.example.com/story-large.jpg",
+    "https://media.example.com/story.jpg?x=1&y=2",
+    "https://media.example.com/second.jpg"
+  ]);
+  expect(assertHydratedImageSources(dom, "/")).toMatchObject({
+    imageUrls: expect.any(Array),
+    mediaImageUrls: [
+      "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story.jpg?x=1&y=2",
+      "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story-small.jpg"
+    ],
+    minimumMediaImages: 1,
+    verificationSurface: "post-list"
+  });
+});
+
+test("production verification rejects promo-only content route inventories", () => {
+  expect(() =>
+    assertHydratedImageSources(
+      '<img src="https://asset.ytadvisors.com/hectv/promo.jpg"><section data-media-verification="post-list"><p>No cards</p></section>',
+      "/"
+    )
+  ).toThrow("has 0 production media image candidate(s)");
+});
+
+test("production verification scopes article proof to article content", () => {
+  const articleImage =
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/article.jpg";
+  const relatedImage =
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/related.jpg";
+  const articleDom = [
+    '<div data-media-verification="article-content">',
+    `<div><p><img src="${articleImage}"></p></div>`,
+    "</div>",
+    `<section><img src="${relatedImage}"></section>`
+  ].join("");
+
+  expect(
+    assertHydratedImageSources(articleDom, "/posts/hec-on-youtube")
+  ).toMatchObject({
+    mediaImageUrls: [articleImage],
+    verificationSurface: "article-content"
+  });
+  expect(() =>
+    assertHydratedImageSources(
+      `<div data-media-verification="article-content"><p>No banners</p></div><img src="${relatedImage}">`,
+      "/posts/hec-on-youtube"
+    )
+  ).toThrow("in article-content; requires at least 1");
+});
+
+test("production verification allows utility routes with no remote images", () => {
+  expect(
+    assertHydratedImageSources(
+      '<img src="/static/assets/newsletter-illustration.png">',
+      "/newsletter"
+    )
+  ).toMatchObject({
+    imageUrls: [],
+    mediaImageUrls: [],
+    minimumMediaImages: 0
+  });
+});
+
+test("production verification requires an image response from rendered URLs", () => {
+  expect(() =>
+    assertRemoteImageResponse("https://media.example.com/story.jpg", "/", {
+      status: 0,
+      stdout: "206\timage/jpeg",
+      stderr: ""
+    })
+  ).not.toThrow();
+  expect(() =>
+    assertRemoteImageResponse("https://media.example.com/story.jpg", "/", {
+      status: 0,
+      stdout: "200\ttext/html",
+      stderr: ""
+    })
+  ).toThrow("returned non-image content type text/html");
+  expect(() =>
+    assertRemoteImageResponse("https://media.example.com/missing.jpg", "/", {
+      status: 22,
+      stdout: "404\ttext/html",
+      stderr: "curl: (22) The requested URL returned error: 404"
+    })
+  ).toThrow("has a broken image");
 });
 
 test("allows production mutation only from the governed workflow", () => {
@@ -346,6 +449,14 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   expect(workflow).toContain(
     ["BROWSER_BIN: $", "{{ steps.setup-chrome.outputs.chrome-path }}"].join("")
   );
+  const mediaPreflight = workflow.indexOf("  media-preflight:");
+  const protectedEnvironment = workflow.indexOf("      name: production");
+  expect(mediaPreflight).toBeGreaterThan(-1);
+  expect(workflow).toContain("needs: [authorize, media-preflight]");
+  expect(workflow).toContain('HECMEDIA_E2E_MEDIA_ASSETS: "true"');
+  expect(workflow).toContain("tests/e2e/graphql/media-assets.e2e.test.js");
+  expect(script).toContain('"/posts/hec-on-youtube"');
+  expect(protectedEnvironment).toBeGreaterThan(mediaPreflight);
   const browserPreflight = workflow.indexOf(
     "Verify Chrome before production credentials"
   );

@@ -17,7 +17,8 @@ const routes = [
   "/newsletter",
   "/newsletter/thank-you",
   "/category/films",
-  "/category/arts/two_on_the_aisle"
+  "/category/arts/two_on_the_aisle",
+  "/posts/hec-on-youtube"
 ];
 
 function fail(message) {

@@ -82,8 +82,53 @@ jobs:
             test "$CONFIRMATION" = "ROLLBACK HEC FRONTEND PRODUCTION" || { echo "::error title=Confirmation mismatch::Use the exact frontend rollback phrase."; exit 1; }
           fi
 
-  deploy-or-rollback:
+  media-preflight:
+    name: Verify production media before environment approval
     needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      DEPLOY_SHA: ${{ inputs.release_sha }}
+    steps:
+      - name: Record rollback media-preflight bypass
+        if: inputs.action == 'rollback'
+        run: echo "Rollback uses the pinned sanitized Lambda and does not build a content candidate."
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: inputs.action == 'deploy'
+        with:
+          ref: ${{ inputs.release_sha }}
+          fetch-depth: 0
+      - name: Verify exact protected revision before media checks
+        if: inputs.action == 'deploy'
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$DEPLOY_SHA"
+          git fetch --no-tags origin master
+          test "$(git rev-parse origin/master)" = "$DEPLOY_SHA"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: inputs.action == 'deploy'
+        with:
+          node-version: "24"
+          cache: yarn
+      - name: Install exact dependencies for media preflight
+        if: inputs.action == 'deploy'
+        run: yarn install --frozen-lockfile
+      - name: Probe candidate-resolved production media without credentials
+        if: inputs.action == 'deploy'
+        env:
+          APOLLO_CLIENT_URI: https://prod-wp.hectv.org/graphql
+          WP_HOST: https://prod-wp.hectv.org
+          GATSBY_WP_HOST: https://prod-wp.hectv.org
+          HECMEDIA_E2E_MEDIA_ASSETS: "true"
+          E2E_ALLOW_WRITES: "0"
+        run: >-
+          yarn test:e2e --runInBand
+          tests/e2e/graphql/media-assets.e2e.test.js
+
+  deploy-or-rollback:
+    needs: [authorize, media-preflight]
     runs-on: ubuntu-latest
     timeout-minutes: 90
     environment:
@@ -146,6 +191,7 @@ jobs:
         env:
           GATSBY_WP_HOST: https://prod-wp.hectv.org
           HECMEDIA_E2E_MODERN_WPGRAPHQL: "true"
+          HECMEDIA_E2E_MEDIA_ASSETS: "true"
           E2E_ALLOW_WRITES: "0"
         run: yarn test:e2e
       - name: Package reviewed Lambda@Edge artifacts without AWS credentials
@@ -214,4 +260,5 @@ jobs:
             .production-release/homepage-before.html
             .production-release/rollback-home.html
             .production-release/hydrated-*.html
+            .production-release/hydrated-media.json
             .production-release/browser-*.log

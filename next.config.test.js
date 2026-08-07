@@ -5,6 +5,7 @@ jest.mock("dotenv", () => ({
 const configuredEnvironment = [
   "APOLLO_CLIENT_URI",
   "WP_HOST",
+  "GATSBY_WP_HOST",
   "HECTV_NEWSLETTER_ENDPOINT",
   "HECTV_NEWSLETTER_SHARED_SECRET",
   "HECTV_RECAPTCHA_SECRET_KEY",
@@ -41,6 +42,14 @@ test("inlines the SSR endpoints supplied by the staging build", () => {
     APOLLO_CLIENT_URI: "https://prod-wp.hectv.org/graphql",
     WP_HOST: "https://prod-wp.hectv.org"
   });
+});
+
+test("inlines the legacy public WordPress host used by media fallbacks", () => {
+  process.env.GATSBY_WP_HOST = "https://prod-wp.hectv.org";
+
+  const config = require("./next.config");
+
+  expect(config.env.GATSBY_WP_HOST).toBe("https://prod-wp.hectv.org");
 });
 
 test("inlines the staging reCAPTCHA site key for the newsletter preview", () => {

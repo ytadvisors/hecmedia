@@ -1,6 +1,9 @@
 import React from "react";
-import LazyLoad from "react-lazyload";
 import { getPostImgSrc } from "../../lib/getFunctions";
+import { getWordPressMediaFallbackUrl } from "../../lib/mediaUrl";
+import MediaImage from "../MediaImage";
+
+const fallbackThumbnail = "/static/assets/nothumbnail.png";
 
 export default props => {
   const {
@@ -21,6 +24,7 @@ export default props => {
         {entries.map(entry => {
           const { title: entryTitle, link } = entry;
           const img = getPostImgSrc(entry);
+          const source = img && img.replace(/^https?:\/\//, "https://");
           const url = link.replace(/https?:\/\/[^/]+/, "");
 
           return (
@@ -28,13 +32,14 @@ export default props => {
               <a href={url}>
                 <div className="row">
                   <div className="magazine-img col-xs-5 no-padding">
-                    <LazyLoad height={50}>
-                      <img
-                        src={img.replace(/^https?:\/\//, "https://")}
-                        className="img-responsive"
-                        alt="cover"
-                      />
-                    </LazyLoad>
+                    <MediaImage
+                      src={source}
+                      fallbackSrc={getWordPressMediaFallbackUrl(source)}
+                      finalSrc={fallbackThumbnail}
+                      className="img-responsive"
+                      alt="cover"
+                      loading="lazy"
+                    />
                   </div>
                   <div
                     className="magazine-info col-xs-7 no-padding"

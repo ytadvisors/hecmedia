@@ -1,5 +1,9 @@
 import React from "react";
 import toTrendingNowItems from "../../lib/trendingNow";
+import getPublicMediaUrl, {
+  getWordPressMediaFallbackUrl
+} from "../../lib/mediaUrl";
+import MediaImage from "../MediaImage";
 
 const fallbackThumbnail = "/static/assets/spotlight-img.jpg";
 
@@ -29,19 +33,24 @@ const TrendingNow = ({
       )}
       {!loading && !error && items.length > 0 && (
         <ul className="trending-list">
-          {items.map(item => (
-            <li key={item.id}>
-              <a href={item.href}>
-                <img
-                  src={item.image || fallbackThumbnail}
-                  alt=""
-                  loading="lazy"
-                  aria-hidden="true"
-                />
-                <span>{item.title}</span>
-              </a>
-            </li>
-          ))}
+          {items.map(item => {
+            const source = getPublicMediaUrl(item.image) || fallbackThumbnail;
+            return (
+              <li key={item.id}>
+                <a href={item.href}>
+                  <MediaImage
+                    src={source}
+                    fallbackSrc={getWordPressMediaFallbackUrl(source)}
+                    finalSrc={fallbackThumbnail}
+                    alt=""
+                    loading="lazy"
+                    aria-hidden="true"
+                  />
+                  <span>{item.title}</span>
+                </a>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
