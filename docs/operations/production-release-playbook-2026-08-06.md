@@ -1,8 +1,8 @@
 # HEC Media same-day production release playbook
 
-**Status:** Draft for review; this document does not authorize a deployment
+**Status:** Required process document for production deployment (co-signed attempt)
 
-**Prepared:** 2026-08-06
+**Prepared:** 2026-08-06 · **Process lock:** 2026-08-07
 
 **Decision owner:** Yomi Toba
 
@@ -11,6 +11,10 @@
 **Selected commander for this trial:** Grok lane (`yt-agent-tom-grok`)
 
 **Systems:** `ytadvisors/hecmedia`, `ytadvisors/hectv-wp`, AWS account `850335719356`
+
+**Cross-communication surface:** this playbook file on `master` (and open PRs that update it).
+Chat, Discord, and queue tasks are secondary; they do not replace playbook signoff or the living
+deployment log in section 18.
 
 ## 1. Objective
 
@@ -28,23 +32,31 @@ the deployment stops at the last verified compatible pair.
    deployment commander for the attempt. For this trial that lane is Grok (`yt-agent-tom-grok`).
    Other model lanes may prepare or review evidence, but they do not dispatch or mutate production.
 2. Yomi provides the final go/no-go and the independent protected-environment approval.
-3. Production changes run only through the governed GitHub workflows. No workstation production
+3. **No production dispatch without a co-signed playbook.** The exact playbook commit (or a
+   co-signed amendment commit) must carry Yomi approval plus at least two independent model-family
+   approvals, including one family other than the selected commander. A chat-only “GO” does not
+   authorize production. Signoff lives on the playbook PR/commit (and, for each receipt, on the
+   living deployment log in section 18).
+4. **Deployment progress is documented in this playbook.** The named commander updates section 18
+   (Deployment log) via branch → PR → merge as gates open, receipts are dispatched, GO/NO-GO
+   decisions land, environments are approved, and cutovers complete or roll back. Other lanes
+   propose amendments the same way. Queue/Discord may notify; the playbook is the durable record.
+5. Production changes run only through the governed GitHub workflows. No workstation production
    deploy, direct CloudFront cutover, or direct ECS release is part of this playbook.
-4. Every release input is immutable: exact merged SHA, image digest, CloudFront ETag, versioned
+6. Every release input is immutable: exact merged SHA, image digest, CloudFront ETag, versioned
    Lambda ARN, Lambda checksum, current ECS task definition, and current image digest.
-5. The backend release is expand/contract. It must preserve the schema used by the currently
+7. The backend release is expand/contract. It must preserve the schema used by the currently
    deployed frontend while exposing the new schema. Legacy fields are not removed today.
-6. Staging must exercise the same GraphQL compatibility profile as production. Environment-only
+8. Staging must exercise the same GraphQL compatibility profile as production. Environment-only
    staging resolvers may not make an otherwise incompatible backend appear safe.
-7. Image integrity is verified independently of Docker/ECR success. The known-bad digest
+9. Image integrity is verified independently of Docker/ECR success. The known-bad digest
    `sha256:beba7812ee56969a4646d09c5afb01ccef4d525e8e5968e2307b140fab664a83`
    is quarantined and must never be promoted.
-8. Static `/healthz` proves only that the container and Apache are reachable. It is not an
+10. Static `/healthz` proves only that the container and Apache are reachable. It is not an
    application release gate.
-9. No database DDL change is included in this release. The required additive GraphQL API-contract
+11. No database DDL change is included in this release. The required additive GraphQL API-contract
    expansion remains in scope. If database DDL becomes necessary, stop and follow the replicated-PG
    subscriber-first invariant in a separate reviewed plan.
-
 ## 3. Verified recovery baseline
 
 This is the state to preserve until the release reaches its next explicit gate.
@@ -157,11 +169,22 @@ This is still expand/contract. It is **not** a blank backend-first for incompati
 | Backend change author | Implements the production-safe dual-schema layer and application-readiness check through branch → PR → merge |
 | Frontend change author | Ensures candidate operations tolerate both backend contracts and preserves no-write test behavior |
 | Independent reviewers | Review code, plan, immutable inputs, test evidence, and stop-condition decisions; no production mutation |
-| Incident scribe | Records timestamps, workflow URLs, SHAs, digests, task definitions, Lambda versions, invalidations, probe results, and decisions |
+| Incident scribe | Records timestamps, workflow URLs, SHAs, digests, task definitions, Lambda versions, invalidations, probe results, and decisions into **section 18** of this playbook (and the evidence package) |
+| Co-signing model lanes (e.g. GPT) | Review evidence, post GO/NO-GO on the **playbook deployment log PR or section 18**, and co-sign amendments; do not dispatch production |
 
 One named commander calls each step. Parallel operators must not dispatch independent workflows or
 make overlapping AWS changes. A co-signed playbook authorizes any otherwise-approved model lane to
 execute only inside its exact action envelope; it does not grant credentials or permit deviations.
+
+**Required communications path for production work**
+
+1. Propose or update the playbook (this file) with the exact step, immutable inputs, and receipt.
+2. Obtain approved signoff (Yomi + required model families) on that commit or amendment.
+3. Commander dispatches only the governed workflow named in the playbook for that step.
+4. Immediately document the dispatch, waits, approvals, outcomes, and stop/rollback decisions by
+   updating section 18 through a follow-up PR (or the same open process PR if still unmerged).
+5. Secondary channels (Discord, queue) may alert humans; they do not replace playbook signoff or the
+   deployment log.
 
 ### Executor-neutral hypothesis trial
 
@@ -475,7 +498,8 @@ known-compatible pair first.
 The release is not complete until the following are stored under the executor's absolute
 `~/.openclaw/workspace-<agent>/deliverables/hecmedia/` path and GitHub artifacts where supported:
 
-- approved playbook and review URL
+- approved playbook and review URL (co-signed commit)
+- section 18 deployment log entries for every production receipt (dispatch → approve → outcome)
 - final frontend and backend SHAs
 - image tag, ECR digest, architecture, label, core-file checksums, and post-pull test results
 - staging before/after task definitions and full diff
@@ -520,3 +544,68 @@ Reviewers should explicitly answer:
       family other than the selected commander's?
 - [ ] Is the queue-task receipt valid for this exact attempt?
 - [ ] Go / no-go decision recorded by Yomi?
+- [ ] Is section 18 updated for every production receipt (or is an open PR doing so)?
+- [ ] Are GO/NO-GO and env approvals recorded on the playbook surface, not only in chat?
+
+## 18. Deployment log (living record)
+
+This section is the **required cross-communication surface** for the production attempt. The
+commander (and co-signing lanes via PR) append dated entries here as the release moves. Do not
+consider a production step complete until its outcome is recorded here and the evidence package
+paths are listed.
+
+### Process (going forward)
+
+| Rule | Requirement |
+| --- | --- |
+| Before any production `workflow_dispatch` | Co-signed playbook (or co-signed amendment) authorizes the step; commander named |
+| Signoff | Yomi + ≥2 model families (one foreign to commander) on the authorizing commit |
+| During deployment | Update this log for every receipt: inputs, run URL, waits, GO/NO-GO, env approvals, probes |
+| After cutover or rollback | Closeout entry with SHAs, digests, probe summary, and stop/rollback decisions |
+| Forbidden | Production mutation justified only in chat; silent progress; approving zombie or stale receipts |
+
+### Attempt: dual-schema backend expand first (Cell 2 exception) — 2026-08-07
+
+| Field | Value |
+| --- | --- |
+| Playbook path | §5 Exception · Phase 5 Exception (backend expand first) |
+| Commander | `yt-agent-tom-grok` |
+| Co-sign amendments | hecmedia #258 (executor-neutral), #259 (Cell 2 backend-first) MERGED |
+| Gate 1 | hectv-wp #61 merged → `bbac1c02b06b60aa3884734db9c9a476215f3820` |
+| Gate 2 image | `sha256:12cf1fb5a0977b96987d2501f654b56d843f4e561288c57a2203ed893dcdb796` (WP 7.0.2 MD5 3501/3501) |
+| Gate 3 | Staging `:34`; Cell 2 FAIL; Cells 1/3/4 PASS |
+| Auth task | `86661` |
+| Confirmation | `DEPLOY HEC BACKEND PRODUCTION` |
+| Expected prod baseline TD | `arn:aws:ecs:us-east-2:850335719356:task-definition/hectv-wp-production-rollback-pr34-safe:3` |
+| Expected prod baseline image | `sha256:b0764544d2a46fa51e2a325b181d53bb66a251cb354090b10ba1d6955dc38d36` |
+
+#### Receipt log
+
+| UTC | Event | Detail |
+| --- | --- | --- |
+| 2026-08-07T00:09Z | Stale expand cancelled | Run `31133641279` cancelled after GPT NO-GO (missing co-sign / Gate2 checksum / zombie hygiene) |
+| 2026-08-07T00:45Z | Co-signs landed | #258, #259 merged on `master` |
+| 2026-08-07T00:56Z | Fresh backend expand dispatched | Run **[31136386999](https://github.com/ytadvisors/hectv-wp/actions/runs/31136386999)** · SHA `bbac1c02…` · digest `12cf1fb5…` · actor `yt-agent-tom-grok` |
+| 2026-08-07T00:57Z | Authorize success | `deploy-and-verify` waiting on protected env `production` (reviewer: `ytwguru` only) |
+| *open* | **Awaiting GPT GO/NO-GO** | Verdict required on receipt **31136386999** via playbook PR comment or log amendment — not chat-only |
+| *open* | **Awaiting Yomi env approval** | Approve **only after** GPT GO; never approve zombie [31128179764](https://github.com/ytadvisors/hectv-wp/actions/runs/31128179764) (`f940fd`) |
+| *pending* | FE production | After backend success + dual-schema GraphQL verify; separate receipt + section 18 entry |
+
+#### Never approve
+
+- Zombie production run `31128179764` (head `f940fd…`) — API-uncancellable ghost; no waiver path
+- Cancelled receipt `31133641279`
+
+#### Evidence root
+
+`~/.openclaw/workspace-tom-grok/deliverables/hecmedia/release-2026-08-06-playbook-exec/`
+(Command log, Gate 2–3 artifacts; **authoritative narrative remains this section after merge**.)
+
+### Signoff block for this process amendment
+
+Reviewers of **this** commit should confirm:
+
+- [ ] Production requires co-signed playbook before dispatch
+- [ ] Deployment progress is documented in section 18 via PR, not chat-only
+- [ ] Current receipt `31136386999` remains blocked on GPT GO then Yomi env approval
+- [ ] Zombie `31128179764` remains never-approve
