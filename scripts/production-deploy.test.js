@@ -305,6 +305,29 @@ test("production verification inventories src and srcset candidates", () => {
   });
 });
 
+test("production verification ignores noscript fallback pixels", () => {
+  const contentImage =
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story.jpg";
+  const dom = [
+    '<noscript><img src="https://www.facebook.com/tr?id=420290078314527&amp;ev=PageView&amp;noscript=1"></noscript>',
+    '<section data-media-verification="post-list">',
+    `<img src="${contentImage}">`,
+    "</section>",
+    '<img src="https://media.example.com/navigation.jpg">'
+  ].join("");
+
+  expect(extractRemoteImageUrls(dom)).toEqual([
+    contentImage,
+    "https://media.example.com/navigation.jpg"
+  ]);
+  expect(assertHydratedImageSources(dom, "/")).toMatchObject({
+    imageUrls: [contentImage, "https://media.example.com/navigation.jpg"],
+    mediaImageUrls: [contentImage],
+    minimumMediaImages: 1,
+    verificationSurface: "post-list"
+  });
+});
+
 test("production verification rejects promo-only content route inventories", () => {
   expect(() =>
     assertHydratedImageSources(
