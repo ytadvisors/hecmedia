@@ -186,7 +186,19 @@ test("browser acceptance requires one exact GTM loader and dataLayer bootstrap",
     ],
     gtmLoaderUrls: ["https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN"],
     hasHecYoutubeLink: true,
-    hasNewsletterForm: true,
+    newsletterForm: {
+      consentCount: 1,
+      consentEnabled: true,
+      consentVisible: true,
+      emailCount: 1,
+      emailEditable: true,
+      emailVisible: true,
+      formCount: 1,
+      formVisible: true,
+      submitCount: 1,
+      submitEnabled: true,
+      submitVisible: true
+    },
     pageErrors: [],
     route: "/newsletter",
     statusCode: 200
@@ -221,6 +233,25 @@ test("browser acceptance requires one exact GTM loader and dataLayer bootstrap",
       consoleErrors: ["Refused to load script due to CSP"]
     })
   ).toThrow("console, CSP, or runtime error");
+  expect(() =>
+    assertBrowserAcceptanceEvidence({
+      ...exactEvidence,
+      newsletterForm: {
+        ...exactEvidence.newsletterForm,
+        formVisible: false
+      }
+    })
+  ).toThrow("visible, send-enabled form controls");
+  expect(() =>
+    assertBrowserAcceptanceEvidence({
+      ...exactEvidence,
+      newsletterForm: {
+        ...exactEvidence.newsletterForm,
+        emailEditable: false,
+        submitEnabled: false
+      }
+    })
+  ).toThrow("visible, send-enabled form controls");
 });
 
 test("browser acceptance permits only reviewed production, GTM, and form resources", () => {

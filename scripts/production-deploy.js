@@ -965,10 +965,26 @@ function assertBrowserAcceptanceEvidence(evidence) {
       `Browser production route ${route} lost the HEC on YouTube navigation link.`
     );
   }
-  if (route === "/newsletter" && !evidence.hasNewsletterForm) {
-    throw new Error(
-      "Browser production newsletter route did not render the send-enabled form controls."
-    );
+  if (route === "/newsletter") {
+    const form = evidence.newsletterForm;
+    if (
+      !form ||
+      form.formCount !== 1 ||
+      form.emailCount !== 1 ||
+      form.consentCount !== 1 ||
+      form.submitCount !== 1 ||
+      !form.formVisible ||
+      !form.emailVisible ||
+      !form.emailEditable ||
+      !form.consentVisible ||
+      !form.consentEnabled ||
+      !form.submitVisible ||
+      !form.submitEnabled
+    ) {
+      throw new Error(
+        "Browser production newsletter route did not render visible, send-enabled form controls."
+      );
+    }
   }
   if (
     (evidence.consoleErrors && evidence.consoleErrors.length > 0) ||
@@ -1161,6 +1177,35 @@ async function verifyBrowserAcceptance(browserPath) {
           ) {
             assertHydratedImageSources(dom, route);
           }
+          let newsletterForm = null;
+          if (route === "/newsletter") {
+            const form = page.locator("form.newsletter-signup-form");
+            const email = form.locator("#newsletter-email");
+            const consent = form.locator("#newsletter-consent");
+            const submit = form.locator('button[type="submit"]');
+            newsletterForm = {
+              formCount: await form.count(),
+              emailCount: await email.count(),
+              consentCount: await consent.count(),
+              submitCount: await submit.count()
+            };
+            if (
+              newsletterForm.formCount === 1 &&
+              newsletterForm.emailCount === 1 &&
+              newsletterForm.consentCount === 1 &&
+              newsletterForm.submitCount === 1
+            ) {
+              Object.assign(newsletterForm, {
+                formVisible: await form.isVisible(),
+                emailVisible: await email.isVisible(),
+                emailEditable: await email.isEditable(),
+                consentVisible: await consent.isVisible(),
+                consentEnabled: await consent.isEnabled(),
+                submitVisible: await submit.isVisible(),
+                submitEnabled: await submit.isEnabled()
+              });
+            }
+          }
           const routeEvidence = {
             blockedResourceErrors,
             blockedThirdPartyRequests,
@@ -1185,13 +1230,7 @@ async function verifyBrowserAcceptance(browserPath) {
             hasHecYoutubeLink:
               (await page.locator('a[href="/posts/hec-on-youtube"]').count()) >
               0,
-            hasNewsletterForm:
-              route !== "/newsletter" ||
-              ((await page.locator("form.newsletter-signup-form").count()) ===
-                1 &&
-                (await page.locator("#newsletter-email").count()) === 1 &&
-                (await page.locator("#newsletter-consent").count()) === 1 &&
-                (await page.locator('button[type="submit"]').count()) === 1),
+            newsletterForm,
             pageErrors,
             route,
             statusCode: response ? response.status() : 0

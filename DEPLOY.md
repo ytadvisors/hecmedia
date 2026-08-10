@@ -85,8 +85,9 @@ utility routes may record an empty media inventory.
 
 Post-cutover acceptance also launches the pinned real Chrome binary through Playwright on the
 homepage, `/posts/hec-on-youtube`, and `/newsletter`. It requires hydrated route-appropriate
-identity, primary navigation, representative content/media, the HEC on YouTube link, and the
-send-enabled newsletter form controls without submitting the form. On every representative route
+identity, primary navigation, representative content/media, the HEC on YouTube link, and exactly
+one visible newsletter form with a visible/editable email input plus visible/enabled consent and
+submit controls, without submitting the form. On every representative route
 it requires exactly one request for
 `https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN`, requires that exact resource to return
 HTTP 200, and requires exactly one `window.dataLayer` `gtm.js` bootstrap with a numeric `gtm.start`.
