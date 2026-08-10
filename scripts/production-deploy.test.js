@@ -126,10 +126,14 @@ test("requires the exact send-enabled production build contract", () => {
   ).toThrow("APOLLO_CLIENT_URI must equal");
   expect(() =>
     requireBuildContract({ ...buildEnv(), GA_TAGMANAGER_ID: "" })
-  ).toThrow("GA_TAGMANAGER_ID must be the public production GTM");
+  ).toThrow("GA_TAGMANAGER_ID must equal GTM-57RZPNN");
   expect(() =>
     requireBuildContract({ ...buildEnv(), GA_TAGMANAGER_ID: "G-NOT-GTM" })
-  ).toThrow("GA_TAGMANAGER_ID must be the public production GTM");
+  ).toThrow("GA_TAGMANAGER_ID must equal GTM-57RZPNN");
+  // Valid GTM syntax but not the approved production container.
+  expect(() =>
+    requireBuildContract({ ...buildEnv(), GA_TAGMANAGER_ID: "GTM-AAAA" })
+  ).toThrow("GA_TAGMANAGER_ID must equal GTM-57RZPNN");
 });
 
 test("parseJsonOutput treats empty get-bucket-versioning stdout as unversioned {}", () => {
