@@ -10,6 +10,8 @@ const aliases = (process.env.CLOUDFRONT_ALIASES || "")
   .filter(Boolean)
   .sort();
 const expectedAliases = ["hecmedia.org", "www.hecmedia.org"];
+const expectedGtmContainerId = "GTM-57RZPNN";
+const youtubeRoute = "/posts/hec-on-youtube";
 const routes = [
   "/",
   "/events",
@@ -23,6 +25,65 @@ const routes = [
 
 function fail(message) {
   throw new Error(message);
+}
+
+function occurrences(body, value) {
+  return String(body || "").split(value).length - 1;
+}
+
+function titleFromHtml(body) {
+  return (String(body || "").match(/<title>(.*?)<\/title>/i) || [])[1] || "";
+}
+
+function assertRenderedSiteIdentity(body, route) {
+  if (/>404 not found\.</i.test(body)) {
+    fail(`${route} rendered a 404 page`);
+  }
+  const title = titleFromHtml(body);
+  if (!title || /undefined/i.test(title)) {
+    fail(`${route} rendered an invalid title`);
+  }
+  if (route === youtubeRoute) {
+    if (title.trim() !== "HEC on YouTube") {
+      fail(`${route} did not render the HEC on YouTube identity`);
+    }
+    return title;
+  }
+  if (!/^HEC-TV(?:\s*\||$)/.test(title.trim())) {
+    fail(`${route} did not render the HEC-TV identity`);
+  }
+  return title;
+}
+
+function assertOnlyApprovedGtmIds(body, route) {
+  const html = String(body || "");
+  if (/GTM-(?:undefined|null)/i.test(html)) {
+    fail(`${route} rendered an undefined GTM container`);
+  }
+  const ids = html.match(/GTM-[A-Za-z0-9-]+/g) || [];
+  if (
+    ids.length === 0 ||
+    ids.some(containerId => containerId !== expectedGtmContainerId)
+  ) {
+    fail(`${route} rendered a missing or unapproved GTM container`);
+  }
+  return ids;
+}
+
+function assertLiveGtmMarkup(body, route) {
+  const html = String(body || "");
+  const ids = assertOnlyApprovedGtmIds(html, route);
+  if (ids.length !== 1) {
+    fail(
+      `${route} must render exactly one approved ${expectedGtmContainerId} bootstrap reference`
+    );
+  }
+  if (occurrences(html, "googletagmanager.com/gtm.js?id=") !== 1) {
+    fail(`${route} did not render exactly one GTM loader bootstrap`);
+  }
+  if (occurrences(html, "event:'gtm.js'") !== 1) {
+    fail(`${route} did not render exactly one GTM dataLayer bootstrap`);
+  }
 }
 
 function assertTarget() {
@@ -99,7 +160,8 @@ async function requestWithRetries(route, options = {}, attempts = 5) {
 function assertPage(result) {
   const { route, statusCode, body } = result;
   if (statusCode !== 200) fail(`${route} returned HTTP ${statusCode}`);
-  if (!/HEC-TV/.test(body)) fail(`${route} did not render the HEC-TV identity`);
+  assertRenderedSiteIdentity(body, route);
+  assertLiveGtmMarkup(body, route);
   if (route === "/" && !/Trending Now/.test(body)) {
     fail("/ did not render Trending Now");
   }
@@ -108,10 +170,6 @@ function assertPage(result) {
   }
   if (!body.includes('name="hecmedia-forms-mode" content="false"')) {
     fail(`${route} is not in send-enabled production forms mode`);
-  }
-  const title = (body.match(/<title>(.*?)<\/title>/i) || [])[1] || "";
-  if (!title || /undefined/i.test(title)) {
-    fail(`${route} rendered an invalid title`);
   }
 }
 
@@ -179,7 +237,18 @@ async function main() {
   );
 }
 
-main().catch(error => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch(error => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  assertLiveGtmMarkup,
+  assertOnlyApprovedGtmIds,
+  assertPage,
+  assertRenderedSiteIdentity,
+  expectedGtmContainerId,
+  titleFromHtml
+};

@@ -9,8 +9,10 @@ The current GTM restoration release is governed by the
 [2026-08-10 GTM production deployment playbook](docs/operations/gtm-production-deployment-playbook-2026-08-10.md).
 Its [living deployment log](docs/operations/gtm-production-deployment-log-2026-08-10.md) records
 the exact gate and execution receipts.
-That playbook is NO-GO until all B1–B10 prerequisites and its execution-authority gate are cleared;
-its approval alone is not permission to dispatch production.
+For this release, the owner narrowed execution to the merged media and GTM changes plus the
+route-verifier, immutable-tag, and live browser acceptance corrections described below. The
+larger proposed external recovery/preimage architecture remains deferred and must not be inferred
+from this release. The protected environment and exact green workflow remain mandatory.
 
 > **NEXT 12 DEPLOYMENT BOUNDARY — PRODUCTION WORKFLOW ONLY**
 >
@@ -69,7 +71,10 @@ The workflow packages before receiving AWS credentials. Its OIDC role can update
 `x2l4ew-k0m7umi`, Lambda functions `x2l4ew-l5vb7pd` and `x2l4ew-api`, and CloudFront distribution
 `E2QXRSF2W55RTS`. It cannot create infrastructure, modify IAM or Route 53, read Secrets Manager,
 or delete S3 objects. A successful release receives an immutable
-`hecmedia-production-<12-character-sha>` tag and uploads release evidence.
+`hecmedia-production-<12-character-sha>` annotated tag, written with the deterministic
+`yt-agent-tom-grok` automation identity and verified through its exact remote tag object and peeled
+40-character release SHA. An exact existing tag is accepted idempotently; lightweight, wrong-SHA,
+wrong-message, or wrong-identity tags fail closed. The workflow also uploads release evidence.
 
 For a deploy action, the protected-environment approval prompt appears only after a separate
 no-credential media preflight resolves the candidate's live Spotlight and representative category
@@ -78,22 +83,35 @@ receives AWS credentials or mutates production. After cutover, hydrated content 
 managed upload media, all rendered remote `src` and `srcset` candidates must return images, and
 utility routes may record an empty media inventory.
 
+Post-cutover acceptance also launches the pinned real Chrome binary through Playwright on the
+homepage, `/posts/hec-on-youtube`, and `/newsletter`. It requires hydrated route-appropriate
+identity, primary navigation, representative content/media, the HEC on YouTube link, and exactly
+one visible newsletter form with a visible/editable email input plus visible/enabled consent and
+submit controls, without submitting the form. On every representative route
+it requires exactly one request for
+`https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN`, requires that exact resource to return
+HTTP 200, and requires exactly one `window.dataLayer` `gtm.js` bootstrap with a numeric `gtm.start`.
+It permits no other/undefined GTM ID and no console, CSP, or runtime error. The verifier permits the
+exact GTM loader plus reviewed first-party, media, stylesheet, and
+reCAPTCHA resources; it aborts and records every other third-party request so acceptance does not
+manufacture analytics, advertising, popup, or social-pixel events. Expected blocked-resource
+messages are recorded separately and do not mask CSP, console, or runtime errors. Raw HTTP/HTML
+checks remain supporting fail-closed evidence, not a substitute for the browser result. The browser
+evidence is uploaded as
+`.production-release/browser-acceptance.json`.
+
 Manual rollback uses the same workflow with `action=rollback` and the literal confirmation
 `ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the immutable checksum of version `150`, moves all
 four owned SSR associations to that version, removes the newsletter API behavior, waits for
 CloudFront and invalidation completion, and verifies the public homepage. Never infer a rollback
 target as version N-1.
 
-**S3 rollback warning:** the current automatic rollback restores Lambda/CloudFront but does not
-restore objects overwritten by the preceding `aws s3 sync`. The deploy role cannot list or read a
-noncurrent S3 VersionId. The next release is NO-GO until the linked GTM playbook's B8 control lands:
-copy current colliding/mutable objects to a task-scoped preimage prefix before sync, then restore
-their bytes and metadata with the existing `GetObject`/`PutObject` authority into a new current
-version. The manifest must be checksum-bound to the original deploy task/run and supplied
-explicitly to a later manual rollback—never inferred as “latest.” Restore S3 before the final
-invalidation (or issue a second invalidation afterward), wait for that invalidation, and only then
-run normal/cache-busted recovery checks. Direct workstation or improvised VersionId recovery is not
-supported.
+**Accepted S3 rollback limitation for this release:** the current automatic rollback restores
+Lambda/CloudFront but does not restore objects overwritten by the preceding `aws s3 sync`. The
+owner explicitly accepted that existing governed rollback for this narrowly scoped GTM/media
+release; this is not approval of the deferred S3 preimage or external recovery design. Preserve the
+captured baseline and release artifacts, stop on any gate failure, and do not improvise workstation
+or inferred-VersionId recovery.
 
 ## Staging publishing retired
 

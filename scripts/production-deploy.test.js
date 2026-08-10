@@ -6,6 +6,7 @@ const {
   SANITIZED_ROLLBACK_ARN,
   SANITIZED_ROLLBACK_CODE_SHA256,
   assertDistributionContract,
+  assertBrowserAcceptanceEvidence,
   assertFunctionContract,
   assertGovernedDeployContext,
   assertHydratedImageSources,
@@ -14,6 +15,7 @@ const {
   configureProductionDistribution,
   configureSanitizedRollback,
   extractRemoteImageUrls,
+  isApprovedBrowserRequest,
   parseJsonOutput,
   publishedVersionFromArn,
   requireBuildContract
@@ -161,6 +163,118 @@ test("production verification requires hydrated primary navigation items", () =>
       "/"
     )
   ).toThrow("has no primary navigation items");
+});
+
+test("hydrated verifier uses the route-appropriate YouTube identity contract", () => {
+  const script = realFs.readFileSync(
+    path.join(__dirname, "production-deploy.js"),
+    "utf8"
+  );
+  expect(script).toContain("assertRenderedSiteIdentity(dom, route)");
+  expect(script).not.toContain('!dom.includes("HEC-TV")');
+});
+
+test("browser acceptance requires one exact GTM loader and dataLayer bootstrap", () => {
+  const exactEvidence = {
+    consoleErrors: [],
+    dataLayer: { gtmJsEvents: 1, gtmStartEvents: 1 },
+    gtmLoaderResponses: [
+      {
+        status: 200,
+        url: "https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN"
+      }
+    ],
+    gtmLoaderUrls: ["https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN"],
+    hasHecYoutubeLink: true,
+    newsletterForm: {
+      consentCount: 1,
+      consentEnabled: true,
+      consentVisible: true,
+      emailCount: 1,
+      emailEditable: true,
+      emailVisible: true,
+      formCount: 1,
+      formVisible: true,
+      submitCount: 1,
+      submitEnabled: true,
+      submitVisible: true
+    },
+    pageErrors: [],
+    route: "/newsletter",
+    statusCode: 200
+  };
+  expect(() => assertBrowserAcceptanceEvidence(exactEvidence)).not.toThrow();
+  expect(() =>
+    assertBrowserAcceptanceEvidence({
+      ...exactEvidence,
+      gtmLoaderUrls: ["https://www.googletagmanager.com/gtm.js?id=GTM-WRONG"]
+    })
+  ).toThrow("exactly one approved GTM loader");
+  expect(() =>
+    assertBrowserAcceptanceEvidence({
+      ...exactEvidence,
+      gtmLoaderResponses: [
+        {
+          status: 503,
+          url: "https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN"
+        }
+      ]
+    })
+  ).toThrow("HTTP 200");
+  expect(() =>
+    assertBrowserAcceptanceEvidence({
+      ...exactEvidence,
+      dataLayer: { gtmJsEvents: 2, gtmStartEvents: 2 }
+    })
+  ).toThrow("window.dataLayer exactly once");
+  expect(() =>
+    assertBrowserAcceptanceEvidence({
+      ...exactEvidence,
+      consoleErrors: ["Refused to load script due to CSP"]
+    })
+  ).toThrow("console, CSP, or runtime error");
+  expect(() =>
+    assertBrowserAcceptanceEvidence({
+      ...exactEvidence,
+      newsletterForm: {
+        ...exactEvidence.newsletterForm,
+        formVisible: false
+      }
+    })
+  ).toThrow("visible, send-enabled form controls");
+  expect(() =>
+    assertBrowserAcceptanceEvidence({
+      ...exactEvidence,
+      newsletterForm: {
+        ...exactEvidence.newsletterForm,
+        emailEditable: false,
+        submitEnabled: false
+      }
+    })
+  ).toThrow("visible, send-enabled form controls");
+});
+
+test("browser acceptance permits only reviewed production, GTM, and form resources", () => {
+  expect(
+    isApprovedBrowserRequest(
+      "https://www.google-analytics.com/g/collect?v=2&tid=G-TEST"
+    )
+  ).toBe(false);
+  expect(
+    isApprovedBrowserRequest(
+      "https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN"
+    )
+  ).toBe(true);
+  expect(
+    isApprovedBrowserRequest(
+      "https://www.googletagmanager.com/gtm.js?id=GTM-WRONG"
+    )
+  ).toBe(false);
+  expect(
+    isApprovedBrowserRequest(
+      "https://www.google.com/recaptcha/api2/anchor?ar=1"
+    )
+  ).toBe(true);
 });
 
 test("production verification inventories src and srcset candidates", () => {
@@ -469,6 +583,8 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   expect(workflow).toContain(
     ["BROWSER_BIN: $", "{{ steps.setup-chrome.outputs.chrome-path }}"].join("")
   );
+  expect(workflow).toContain("node scripts/production-release-tag.js");
+  expect(workflow).toContain(".production-release/browser-acceptance.json");
   const mediaPreflight = workflow.indexOf("  media-preflight:");
   const protectedEnvironment = workflow.indexOf("      name: production");
   expect(mediaPreflight).toBeGreaterThan(-1);

@@ -238,16 +238,7 @@ jobs:
         if: success() && inputs.action == 'deploy'
         env:
           RELEASE_SHA: ${{ inputs.release_sha }}
-        run: |
-          set -euo pipefail
-          tag="hecmedia-production-${RELEASE_SHA:0:12}"
-          remote_sha="$(git ls-remote --tags origin "refs/tags/$tag^{}" | awk '{print $1}')"
-          if [ -n "$remote_sha" ]; then
-            test "$remote_sha" = "$RELEASE_SHA"
-            exit 0
-          fi
-          git tag -a "$tag" "$RELEASE_SHA" -m "HEC Media production frontend $RELEASE_SHA"
-          git push origin "refs/tags/$tag"
+        run: node scripts/production-release-tag.js
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -263,5 +254,6 @@ jobs:
             .production-release/homepage-before.html
             .production-release/rollback-home.html
             .production-release/hydrated-*.html
+            .production-release/browser-acceptance.json
             .production-release/hydrated-media.json
             .production-release/browser-*.log
