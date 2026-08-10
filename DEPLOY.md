@@ -5,6 +5,13 @@ Before the next HEC Media production release, review and approve the
 and its [incident report/RCA](docs/incidents/2026-08-06-production-deployment.md). The playbook's
 cross-repository compatibility gates and stop conditions supplement this workflow reference.
 
+The current GTM restoration release is governed by the
+[2026-08-10 GTM production deployment playbook](docs/operations/gtm-production-deployment-playbook-2026-08-10.md).
+Its [living deployment log](docs/operations/gtm-production-deployment-log-2026-08-10.md) records
+the exact gate and execution receipts.
+That playbook is NO-GO until all B1–B10 prerequisites and its execution-authority gate are cleared;
+its approval alone is not permission to dispatch production.
+
 > **NEXT 12 DEPLOYMENT BOUNDARY — PRODUCTION WORKFLOW ONLY**
 >
 > The `upgrade/next16` compatibility checkpoint upgrades the application runtime to
@@ -76,6 +83,17 @@ Manual rollback uses the same workflow with `action=rollback` and the literal co
 four owned SSR associations to that version, removes the newsletter API behavior, waits for
 CloudFront and invalidation completion, and verifies the public homepage. Never infer a rollback
 target as version N-1.
+
+**S3 rollback warning:** the current automatic rollback restores Lambda/CloudFront but does not
+restore objects overwritten by the preceding `aws s3 sync`. The deploy role cannot list or read a
+noncurrent S3 VersionId. The next release is NO-GO until the linked GTM playbook's B8 control lands:
+copy current colliding/mutable objects to a task-scoped preimage prefix before sync, then restore
+their bytes and metadata with the existing `GetObject`/`PutObject` authority into a new current
+version. The manifest must be checksum-bound to the original deploy task/run and supplied
+explicitly to a later manual rollback—never inferred as “latest.” Restore S3 before the final
+invalidation (or issue a second invalidation afterward), wait for that invalidation, and only then
+run normal/cache-busted recovery checks. Direct workstation or improvised VersionId recovery is not
+supported.
 
 ## Staging publishing retired
 
