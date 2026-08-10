@@ -151,6 +151,8 @@ jobs:
       PRODUCTION_ACTION: ${{ inputs.action }}
       PRODUCTION_CONFIRMATION: ${{ inputs.confirmation }}
       RE_CAPTCHA_SITE_KEY: ${{ secrets.HECMEDIA_PRODUCTION_RECAPTCHA_SITE_KEY }}
+      # Public GTM container (visible in page source). Build-time inline for TagManager.
+      GA_TAGMANAGER_ID: GTM-57RZPNN
     steps:
       # Production action dependencies are immutable commit references.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -173,6 +175,7 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$RE_CAPTCHA_SITE_KEY"
+          test "$GA_TAGMANAGER_ID" = GTM-57RZPNN
           test "$APOLLO_CLIENT_URI" = https://prod-wp.hectv.org/graphql
           test "$WP_HOST" = https://prod-wp.hectv.org
           test "$SITE_HOST" = https://hecmedia.org

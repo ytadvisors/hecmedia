@@ -44,7 +44,11 @@ const config = {
     HECMEDIA_NEWSLETTER_LOCAL_TEST: process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST,
     HECMEDIA_MODERN_WPGRAPHQL: process.env.HECMEDIA_MODERN_WPGRAPHQL,
     HECMEDIA_TOPBAR_CTAS_JSON: process.env.HECMEDIA_TOPBAR_CTAS_JSON,
-    RE_CAPTCHA_SITE_KEY: process.env.RE_CAPTCHA_SITE_KEY
+    RE_CAPTCHA_SITE_KEY: process.env.RE_CAPTCHA_SITE_KEY,
+    // Public GTM container id (appears in page source). Must be present at
+    // build time so TagManager inlines the snippet; runtime-only Lambda env
+    // is not enough for the client bundle.
+    GA_TAGMANAGER_ID: process.env.GA_TAGMANAGER_ID
   }
 };
 
