@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { execFileSync, spawnSync } = require("child_process");
-const { build: buildDefaultEdgePackage } = require("./staging-deploy");
+const { build: buildDefaultEdgePackage } = require("./edge-package-build");
 
 const REGION = "us-east-1";
 const ACCOUNT_ID = "850335719356";

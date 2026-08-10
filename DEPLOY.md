@@ -5,7 +5,7 @@ Before the next HEC Media production release, review and approve the
 and its [incident report/RCA](docs/incidents/2026-08-06-production-deployment.md). The playbook's
 cross-repository compatibility gates and stop conditions supplement this workflow reference.
 
-> **NEXT 12 DEPLOYMENT BOUNDARY — GOVERNED WORKFLOWS ONLY**
+> **NEXT 12 DEPLOYMENT BOUNDARY — PRODUCTION WORKFLOW ONLY**
 >
 > The `upgrade/next16` compatibility checkpoint upgrades the application runtime to
 > Next.js 12, but this repository still packages Lambda@Edge with the Next-9-era
@@ -13,15 +13,11 @@ cross-repository compatibility gates and stop conditions supplement this workflo
 > `@sls-next/lambda-at-edge@1.4.1-alpha.2` stack. Do not run `yarn deploy`,
 > `serverless`, or any full-stack production deployment from that checkpoint.
 >
-> The approved staging path is a `workflow_dispatch` of
-> `.github/workflows/staging-deploy.yml` for an exact merged commit and a positive HEC
-> Media queue-task receipt. That workflow builds on Node 24, disables staging form
-> sends and the unused image optimizer, verifies the expected Lambda package contract,
-> refuses extra Lambda bundles, updates only the three existing staging resources,
-> waits for CloudFront propagation, and verifies rendered and hydrated routes. The
-> deploy script rejects mutation outside that governed workflow before its first AWS
-> write. Direct workstation use of `node scripts/staging-deploy.js deploy` is not an
-> approved workaround.
+> Frontend staging publishing is retired. This repository has no staging deploy
+> workflow, deployment script, or rollback entrypoint, and those paths must not be
+> recreated. Existing staging cloud resources remain live until the separately
+> approved Phase 2 teardown is executed and verified; their continued existence is
+> not permission to publish to them.
 >
 > Production uses `.github/workflows/production-deploy.yml` from the exact protected
 > `master` tip. GitHub's `production` environment requires an independent owner
@@ -45,8 +41,8 @@ yarn deploy   # BLOCKED at the Next 12 checkpoint
 
 This builds the Next.js app and pushes Lambda@Edge functions + a CloudFront distribution + S3
 static assets, driven by env vars `APOLLO_CLIENT_URI`, `SUBDOMAIN`, `DOMAIN` (see `serverless.yml`).
-It is not approved while the checkpoint above remains active. Staging and production publishes
-use only their governed, existing-resource workflows.
+It is not approved while the checkpoint above remains active. Production publishes
+only through its governed existing-resource workflow; staging has no repository deploy path.
 
 **Important distinction:** Serverless Components does not use CloudFormation stacks. There is
 **no `serverless rollback -t <timestamp>` command** for `@sls-next` deployments — that command only
@@ -81,16 +77,13 @@ four owned SSR associations to that version, removes the newsletter API behavior
 CloudFront and invalidation completion, and verifies the public homepage. Never infer a rollback
 target as version N-1.
 
-## Governed staging publish and rollback
+## Staging publishing retired
 
-Dispatch `.github/workflows/staging-deploy.yml` from an approved publisher. A deploy requires
-`action=deploy`, the exact merged commit SHA in `ref`, and the positive HEC Media queue task ID
-that records the staging authorization. The workflow records deploy evidence and moves
-`staging-last-known-good` only after verification succeeds.
-
-Rollback uses the same workflow with `action=rollback` and a positive authorization task ID.
-The workflow ignores `ref`, deploys `staging-last-known-good`, and runs the same verification
-before recording a new outcome. Do not move the tag or invoke the deploy script directly.
+There is no supported dispatch, script, release tag, or rollback action for frontend staging.
+Do not restore the former staging workflow, invoke the legacy full-stack deployment, or infer
+that a live staging resource is an approved release target. Any temporary recovery or evidence
+capture must be explicitly authorized by the Phase 2 execution playbook and must not recreate a
+general-purpose staging publisher.
 
 ## Legacy full-stack rollback (blocked)
 
