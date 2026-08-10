@@ -723,7 +723,13 @@ const HYDRATED_MEDIA_REQUIREMENTS = {
 
 function extractRemoteImageUrls(dom) {
   const urls = [];
-  const content = String(dom || "");
+  // Chrome's --dump-dom output retains <noscript> fallback markup even though
+  // that markup is not rendered when JavaScript is enabled. Only inventory
+  // images from the hydrated document that the production verifier exercises.
+  const content = String(dom || "").replace(
+    /<noscript\b[^>]*>[\s\S]*?<\/noscript\s*>/gi,
+    ""
+  );
   const imagePattern = /<img\b[^>]*>/gi;
   let image = imagePattern.exec(content);
 
