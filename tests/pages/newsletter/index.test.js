@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { useQuery } from "@apollo/react-hooks";
 import NewsletterPage from "../../../pages/newsletter/index";
 
@@ -34,6 +34,7 @@ jest.mock("../../../components/NewsletterSignupForm", () => {
 
 describe("Newsletter signup page (pages/newsletter/index.js)", () => {
   const originalNoSend = process.env.HECMEDIA_NO_SEND_FORMS;
+  const originalNewsletterMode = process.env.HECMEDIA_NEWSLETTER_MODE;
   const originalSiteKey = process.env.RE_CAPTCHA_SITE_KEY;
   const originalLocalTest = process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST;
 
@@ -46,6 +47,9 @@ describe("Newsletter signup page (pages/newsletter/index.js)", () => {
   afterEach(() => {
     if (originalNoSend === undefined) delete process.env.HECMEDIA_NO_SEND_FORMS;
     else process.env.HECMEDIA_NO_SEND_FORMS = originalNoSend;
+    if (originalNewsletterMode === undefined)
+      delete process.env.HECMEDIA_NEWSLETTER_MODE;
+    else process.env.HECMEDIA_NEWSLETTER_MODE = originalNewsletterMode;
     if (originalSiteKey === undefined) delete process.env.RE_CAPTCHA_SITE_KEY;
     else process.env.RE_CAPTCHA_SITE_KEY = originalSiteKey;
     if (originalLocalTest === undefined)
@@ -53,20 +57,17 @@ describe("Newsletter signup page (pages/newsletter/index.js)", () => {
     else process.env.HECMEDIA_NEWSLETTER_LOCAL_TEST = originalLocalTest;
   });
 
-  it("keeps the browser submission seam available in no-send mode", async () => {
-    process.env.HECMEDIA_NO_SEND_FORMS = "true";
+  it("fails closed without rendering a submission form in newsletter omit mode", () => {
+    process.env.HECMEDIA_NO_SEND_FORMS = "false";
+    process.env.HECMEDIA_NEWSLETTER_MODE = "omit";
     process.env.RE_CAPTCHA_SITE_KEY = "staging-site-key";
-    const originalFetch = global.fetch;
-    global.fetch = jest.fn().mockResolvedValue({
-      json: jest.fn().mockResolvedValue({ ok: true })
-    });
     render(<NewsletterPage />);
 
     expect(screen.getByTestId("layout")).toBeInTheDocument();
-    expect(screen.getByTestId("newsletter-signup-form")).toBeInTheDocument();
     expect(
-      screen.queryByTestId("newsletter-unavailable")
+      screen.queryByTestId("newsletter-signup-form")
     ).not.toBeInTheDocument();
+    expect(screen.getByTestId("newsletter-unavailable")).toBeInTheDocument();
     expect(screen.getByText("Stay Connected")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Subscribe to HEC Media" })
@@ -74,17 +75,11 @@ describe("Newsletter signup page (pages/newsletter/index.js)", () => {
     expect(screen.getByText("Arts & Culture")).toBeInTheDocument();
     expect(screen.getByText("Education")).toBeInTheDocument();
     expect(screen.getByText("St. Louis Stories")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Submit test signup" }));
-    expect(global.fetch).toHaveBeenCalledWith("/api/newsletter/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "test@example.invalid" })
-    });
-    global.fetch = originalFetch;
   });
 
   it("renders the form only when CAPTCHA is configured outside no-send mode", () => {
     process.env.HECMEDIA_NO_SEND_FORMS = "false";
+    process.env.HECMEDIA_NEWSLETTER_MODE = "active";
     process.env.RE_CAPTCHA_SITE_KEY = "site-key";
     render(<NewsletterPage />);
     expect(screen.getByTestId("newsletter-signup-form")).toBeInTheDocument();

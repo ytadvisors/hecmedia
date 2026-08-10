@@ -22,6 +22,7 @@ async function subscribe(values) {
 
 export default () => {
   const localTestMode = isNewsletterLocalTestMode();
+  const newsletterOmitted = process.env.HECMEDIA_NEWSLETTER_MODE === "omit";
   const { data: newsletterSettingsData } = useQuery(GET_NEWSLETTER_SETTINGS, {
     errorPolicy: "all",
     skip: localTestMode
@@ -34,7 +35,8 @@ export default () => {
       !newsletterSettingsData.newsletterSettings ||
       newsletterSettingsData.newsletterSettings.captchaEnabled !== false);
   const signupAvailable =
-    !captchaRequired || Boolean(process.env.RE_CAPTCHA_SITE_KEY);
+    !newsletterOmitted &&
+    (!captchaRequired || Boolean(process.env.RE_CAPTCHA_SITE_KEY));
 
   return (
     <>

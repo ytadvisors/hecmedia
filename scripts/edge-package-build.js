@@ -37,6 +37,31 @@ const NEXT_SERVER_CHUNKS_PATH = path.join(
   "chunks"
 );
 const LAMBDA_CHUNKS_PATH = path.join(DEFAULT_LAMBDA_DIR, "chunks");
+const NEWSLETTER_API_SOURCE_FILES = ["newsletter/subscribe.js"];
+
+function relativeFiles(directory, root = directory) {
+  if (!fs.existsSync(directory)) return [];
+  return fs
+    .readdirSync(directory, { withFileTypes: true })
+    .flatMap(entry => {
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) return relativeFiles(entryPath, root);
+      if (entry.isFile()) return [path.relative(root, entryPath)];
+      throw new Error(`Unsupported API source entry ${entryPath}.`);
+    })
+    .sort();
+}
+
+function assertNewsletterOnlyApiSource(directory = API_PAGES_DIR) {
+  const actual = relativeFiles(directory);
+  if (JSON.stringify(actual) !== JSON.stringify(NEWSLETTER_API_SOURCE_FILES)) {
+    throw new Error(
+      `Newsletter omit mode expected exactly ${NEWSLETTER_API_SOURCE_FILES.join(
+        ", "
+      )}; found ${actual.join(", ") || "no API source files"}.`
+    );
+  }
+}
 
 function directoryHasFiles(directory) {
   if (!fs.existsSync(directory)) return false;
@@ -210,19 +235,22 @@ async function build() {
   });
 
   // A no-send diagnostic build may omit stock API routes. The governed
-  // production build may also omit them when HECMEDIA_EDGE_API=true because
-  // the reviewed Lambda@Edge handler owns that exact API path. Always restore
-  // the source tree, including after a failed build. Other send-enabled builds
-  // retain the API routes and fail closed if they try to omit them.
+  // production build uses targeted newsletter omit mode: it verifies that the
+  // source tree contains only the reviewed newsletter handler before moving the
+  // API directory out of the legacy edge packager. Always restore the source
+  // tree, including after a failed build. Other send-enabled builds retain API
+  // routes and fail closed if they try to omit them.
   let apiPagesMoved = false;
   if (fs.existsSync(API_PAGES_DIR)) {
     const noSendBuild = process.env.HECMEDIA_NO_SEND_FORMS === "true";
     const governedEdgeApi = process.env.HECMEDIA_EDGE_API === "true";
-    if (!noSendBuild && !governedEdgeApi) {
+    const newsletterOmitted = process.env.HECMEDIA_NEWSLETTER_MODE === "omit";
+    if (!noSendBuild && !governedEdgeApi && !newsletterOmitted) {
       throw new Error(
-        "Refusing to omit Next API routes unless HECMEDIA_NO_SEND_FORMS=true or HECMEDIA_EDGE_API=true."
+        "Refusing to omit Next API routes without an approved omission mode."
       );
     }
+    if (newsletterOmitted) assertNewsletterOnlyApiSource();
     if (fs.existsSync(OMITTED_API_PAGES_DIR)) {
       throw new Error(
         `${OMITTED_API_PAGES_DIR} already exists; refusing to overwrite it.`
@@ -265,6 +293,7 @@ async function build() {
 }
 
 module.exports = {
+  assertNewsletterOnlyApiSource,
   build,
   discardEmptyApiLambdaBundle,
   discardUnusedImageLambdaBundle,

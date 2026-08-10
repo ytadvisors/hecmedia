@@ -1,0 +1,62 @@
+{
+  "schema": "hecmedia-gtm-owner-approval-v1",
+  "status": "PENDING",
+  "analyticsOwner": null,
+  "approvedAt": null,
+  "containerId": "GTM-57RZPNN",
+  "publicResource": {
+    "version": "21",
+    "canonicalization": "canonical-resource-v1",
+    "canonicalSha256": "c3ab2446ed4ff8b9f4c0c8264b537d0c63fa4a209af365dde8270b205e172c0c",
+    "counts": "22/34/31/18",
+    "inventorySchema": "gtm-normalized-inventory-v1",
+    "inventorySha256": "dac02aa2664beebf11ff639df635a63f2fc739a5db57153da931c6b2dce301e0"
+  },
+  "publishedExport": {
+    "artifactPath": null,
+    "sha256": null,
+    "exportFormatVersion": null,
+    "containerPublicId": null,
+    "containerVersionId": null
+  },
+  "publishFreeze": {
+    "owner": null,
+    "status": "PENDING",
+    "startedAt": null
+  },
+  "decisions": [
+    {
+      "surface": "GA4 G-7HGHHBRHPT",
+      "decision": "PENDING"
+    },
+    {
+      "surface": "Universal Analytics UA-13018774-2 and Optimize GTM-KXDQM43",
+      "decision": "PENDING"
+    },
+    {
+      "surface": "Google Ads AW-866730806 and configured conversion labels",
+      "decision": "PENDING"
+    },
+    {
+      "surface": "placeholder-looking Google Ads AW-123456789",
+      "decision": "PENDING"
+    },
+    {
+      "surface": "Facebook Pixel 420290078314527 immediate all-page PageView",
+      "decision": "PENDING"
+    },
+    {
+      "surface": "Mailchimp popup and Vimeo tracking custom HTML",
+      "decision": "PENDING"
+    },
+    {
+      "surface": "click, form, scroll, history, link, and YouTube listeners",
+      "decision": "PENDING"
+    },
+    {
+      "surface": "consent defaults, PII handling, and outbound form/conversion policy",
+      "decision": "PENDING"
+    }
+  ],
+  "notes": "GO requires a named analytics owner, a reviewed published-container export, an active publish freeze, and APPROVED on every listed surface. If a surface is removed, publish and semantically recapture a new exact resource before changing this record to GO."
+}

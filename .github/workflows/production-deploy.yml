@@ -28,6 +28,30 @@ on:
         description: Exact live newsletter Lambda@Edge version ARN, or none when absent.
         required: true
         type: string
+      expected_gtm_resource_version:
+        description: Deploy only — analytics-owner-approved published GTM resource version.
+        required: false
+        type: string
+      expected_gtm_canonical_sha256:
+        description: Deploy only — canonical-resource-v1 SHA-256 for the approved GTM resource.
+        required: false
+        type: string
+      expected_gtm_counts:
+        description: Deploy only — approved macros/tags/predicates/rules counts.
+        required: false
+        type: string
+      expected_gtm_inventory_sha256:
+        description: Deploy only — approved normalized GTM inventory SHA-256.
+        required: false
+        type: string
+      gtm_owner_approval_sha256:
+        description: Deploy only — SHA-256 of the reviewed in-repo analytics-owner approval record.
+        required: false
+        type: string
+      decommission_closeout_sha256:
+        description: Deploy only — SHA-256 of the reviewed staging-decommission observation closeout.
+        required: false
+        type: string
       request_task_id:
         description: Positive HEC Media queue-task receipt for this production action.
         required: true
@@ -36,10 +60,41 @@ on:
         description: Type the action-specific production confirmation phrase.
         required: true
         type: string
+      source_deploy_task_id:
+        description: Rollback only — exact task ID from the original deploy.
+        required: false
+        type: string
+      source_deploy_run_id:
+        description: Rollback only — exact GitHub run ID from the original deploy.
+        required: false
+        type: string
+      source_deploy_run_attempt:
+        description: Rollback only — exact GitHub run attempt from the original deploy.
+        required: false
+        type: string
+      source_deploy_release_sha:
+        description: Rollback only — exact release SHA from the original deploy.
+        required: false
+        type: string
+      source_deploy_baseline_etag:
+        description: Rollback only — exact pre-deploy CloudFront ETag.
+        required: false
+        type: string
+      source_deploy_baseline_release_sha:
+        description: Rollback only — exact public release SHA before the original deploy.
+        required: false
+        type: string
+      preimage_manifest_key:
+        description: Rollback only — exact S3 preimage manifest key from the original deploy.
+        required: false
+        type: string
+      preimage_manifest_sha256:
+        description: Rollback only — exact SHA-256 of the original preimage manifest.
+        required: false
+        type: string
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: hecmedia-production-deployment
@@ -54,12 +109,26 @@ jobs:
           ACTION: ${{ inputs.action }}
           CONFIRMATION: ${{ inputs.confirmation }}
           DISPATCH_ACTOR: ${{ github.actor }}
+          DECOMMISSION_CLOSEOUT_SHA256: ${{ inputs.decommission_closeout_sha256 }}
           EXPECTED_API_ARN: ${{ inputs.expected_api_lambda_version_arn }}
           EXPECTED_CODE_SHA: ${{ inputs.expected_default_lambda_code_sha256 }}
           EXPECTED_DEFAULT_ARN: ${{ inputs.expected_default_lambda_version_arn }}
           EXPECTED_ETAG: ${{ inputs.expected_cloudfront_etag }}
+          EXPECTED_GTM_CANONICAL_SHA256: ${{ inputs.expected_gtm_canonical_sha256 }}
+          EXPECTED_GTM_COUNTS: ${{ inputs.expected_gtm_counts }}
+          EXPECTED_GTM_INVENTORY_SHA256: ${{ inputs.expected_gtm_inventory_sha256 }}
+          EXPECTED_GTM_RESOURCE_VERSION: ${{ inputs.expected_gtm_resource_version }}
+          GTM_OWNER_APPROVAL_SHA256: ${{ inputs.gtm_owner_approval_sha256 }}
           RELEASE_SHA: ${{ inputs.release_sha }}
           REQUEST_TASK_ID: ${{ inputs.request_task_id }}
+          SOURCE_DEPLOY_BASELINE_ETAG: ${{ inputs.source_deploy_baseline_etag }}
+          SOURCE_DEPLOY_BASELINE_RELEASE_SHA: ${{ inputs.source_deploy_baseline_release_sha }}
+          SOURCE_DEPLOY_RELEASE_SHA: ${{ inputs.source_deploy_release_sha }}
+          SOURCE_DEPLOY_RUN_ID: ${{ inputs.source_deploy_run_id }}
+          SOURCE_DEPLOY_RUN_ATTEMPT: ${{ inputs.source_deploy_run_attempt }}
+          SOURCE_DEPLOY_TASK_ID: ${{ inputs.source_deploy_task_id }}
+          PREIMAGE_MANIFEST_KEY: ${{ inputs.preimage_manifest_key }}
+          PREIMAGE_MANIFEST_SHA256: ${{ inputs.preimage_manifest_sha256 }}
           WORKFLOW_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
@@ -70,16 +139,29 @@ jobs:
           [[ "$REQUEST_TASK_ID" =~ ^[1-9][0-9]*$ ]] || { echo "::error title=Missing authorization receipt::A positive HEC Media queue-task ID is required."; exit 1; }
           [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error title=Invalid release::release_sha must be an exact commit SHA."; exit 1; }
           test "$RELEASE_SHA" = "$WORKFLOW_SHA" || { echo "::error title=Stale release::release_sha must equal the protected workflow revision."; exit 1; }
+          [[ "$EXPECTED_ETAG" =~ ^[A-Z0-9]+$ ]] || { echo "Invalid CloudFront ETag." >&2; exit 1; }
+          [[ "$EXPECTED_DEFAULT_ARN" =~ ^arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:[1-9][0-9]*$ ]] || { echo "Invalid default Lambda ARN." >&2; exit 1; }
+          [[ "$EXPECTED_CODE_SHA" =~ ^[-A-Za-z0-9+/]{20,}={0,2}$ ]] || { echo "Invalid Lambda checksum." >&2; exit 1; }
+          test "$EXPECTED_API_ARN" = none || { echo "::error title=Newsletter API scope mismatch::This action must preserve the absent newsletter API behavior."; exit 1; }
           if [ "$ACTION" = deploy ]; then
             test "$CONFIRMATION" = "DEPLOY HEC FRONTEND PRODUCTION" || { echo "::error title=Confirmation mismatch::Use the exact frontend deploy phrase."; exit 1; }
-            [[ "$EXPECTED_ETAG" =~ ^[A-Z0-9]+$ ]] || { echo "Invalid CloudFront ETag." >&2; exit 1; }
-            [[ "$EXPECTED_DEFAULT_ARN" =~ ^arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:[1-9][0-9]*$ ]] || { echo "Invalid default Lambda ARN." >&2; exit 1; }
-            [[ "$EXPECTED_CODE_SHA" =~ ^[-A-Za-z0-9+/]{20,}={0,2}$ ]] || { echo "Invalid Lambda checksum." >&2; exit 1; }
-            if [ "$EXPECTED_API_ARN" != none ]; then
-              [[ "$EXPECTED_API_ARN" =~ ^arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:[1-9][0-9]*$ ]] || { echo "Invalid API Lambda ARN." >&2; exit 1; }
-            fi
+            [[ "$EXPECTED_GTM_RESOURCE_VERSION" =~ ^[1-9][0-9]*$ ]] || { echo "Invalid approved GTM resource version." >&2; exit 1; }
+            [[ "$EXPECTED_GTM_CANONICAL_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "Invalid approved GTM canonical SHA-256." >&2; exit 1; }
+            [[ "$EXPECTED_GTM_COUNTS" =~ ^[0-9]+/[0-9]+/[0-9]+/[0-9]+$ ]] || { echo "Invalid approved GTM counts." >&2; exit 1; }
+            [[ "$EXPECTED_GTM_INVENTORY_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "Invalid approved GTM inventory SHA-256." >&2; exit 1; }
+            [[ "$GTM_OWNER_APPROVAL_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "Invalid GTM owner-approval SHA-256." >&2; exit 1; }
+            [[ "$DECOMMISSION_CLOSEOUT_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "Invalid decommission closeout SHA-256." >&2; exit 1; }
+            test -z "$SOURCE_DEPLOY_TASK_ID$SOURCE_DEPLOY_RUN_ID$SOURCE_DEPLOY_RUN_ATTEMPT$SOURCE_DEPLOY_RELEASE_SHA$SOURCE_DEPLOY_BASELINE_ETAG$SOURCE_DEPLOY_BASELINE_RELEASE_SHA$PREIMAGE_MANIFEST_KEY$PREIMAGE_MANIFEST_SHA256" || { echo "Rollback selectors are forbidden for deploy." >&2; exit 1; }
           else
             test "$CONFIRMATION" = "ROLLBACK HEC FRONTEND PRODUCTION" || { echo "::error title=Confirmation mismatch::Use the exact frontend rollback phrase."; exit 1; }
+            [[ "$SOURCE_DEPLOY_TASK_ID" =~ ^[1-9][0-9]*$ ]]
+            [[ "$SOURCE_DEPLOY_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+            [[ "$SOURCE_DEPLOY_RUN_ATTEMPT" =~ ^[1-9][0-9]*$ ]]
+            [[ "$SOURCE_DEPLOY_RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+            [[ "$SOURCE_DEPLOY_BASELINE_ETAG" =~ ^[A-Z0-9]+$ ]]
+            [[ "$SOURCE_DEPLOY_BASELINE_RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+            test "$PREIMAGE_MANIFEST_KEY" = "_deployment-evidence/$SOURCE_DEPLOY_TASK_ID/$SOURCE_DEPLOY_RUN_ID/$SOURCE_DEPLOY_RUN_ATTEMPT/$SOURCE_DEPLOY_RELEASE_SHA/s3-preimage-manifest.json"
+            [[ "$PREIMAGE_MANIFEST_SHA256" =~ ^[0-9a-f]{64}$ ]]
           fi
 
   media-preflight:
@@ -100,6 +182,7 @@ jobs:
         with:
           ref: ${{ inputs.release_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - name: Verify exact protected revision before media checks
         if: inputs.action == 'deploy'
         run: |
@@ -107,6 +190,31 @@ jobs:
           test "$(git rev-parse HEAD)" = "$DEPLOY_SHA"
           git fetch --no-tags origin master
           test "$(git rev-parse origin/master)" = "$DEPLOY_SHA"
+      - name: Verify reviewed decommission observation closeout
+        if: inputs.action == 'deploy'
+        env:
+          CLOSEOUT_SHA256: ${{ inputs.decommission_closeout_sha256 }}
+        run: |
+          set -euo pipefail
+          closeout=docs/operations/hecmedia-staging-decommission-closeout-2026-08-11.md
+          test -f "$closeout"
+          echo "$CLOSEOUT_SHA256  $closeout" | sha256sum --check --strict
+          grep -Fx 'Status: GO' "$closeout"
+          grep -Fx 'Production HEC TV backend: UNCHANGED_AND_HEALTHY' "$closeout"
+      - name: Verify analytics-owner approval and GTM publish freeze
+        if: inputs.action == 'deploy'
+        env:
+          APPROVAL_SHA256: ${{ inputs.gtm_owner_approval_sha256 }}
+          EXPECTED_GTM_CANONICAL_SHA256: ${{ inputs.expected_gtm_canonical_sha256 }}
+          EXPECTED_GTM_COUNTS: ${{ inputs.expected_gtm_counts }}
+          EXPECTED_GTM_INVENTORY_SHA256: ${{ inputs.expected_gtm_inventory_sha256 }}
+          EXPECTED_GTM_RESOURCE_VERSION: ${{ inputs.expected_gtm_resource_version }}
+        run: |
+          set -euo pipefail
+          approval=docs/operations/gtm-owner-approval-2026-08-10.json
+          test -f "$approval"
+          echo "$APPROVAL_SHA256  $approval" | sha256sum --check --strict
+          node scripts/verify-gtm-resource.js --owner-approval "$approval"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: inputs.action == 'deploy'
         with:
@@ -127,10 +235,105 @@ jobs:
           yarn test:e2e --runInBand
           tests/e2e/graphql/media-assets.e2e.test.js
 
-  deploy-or-rollback:
+  candidate-build:
+    name: Build and verify the credential-free production candidate
+    if: inputs.action == 'deploy'
     needs: [authorize, media-preflight]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      APOLLO_CLIENT_URI: https://prod-wp.hectv.org/graphql
+      WP_HOST: https://prod-wp.hectv.org
+      SITE_HOST: https://hecmedia.org
+      HECMEDIA_NO_SEND_FORMS: "false"
+      HECMEDIA_EDGE_API: "false"
+      HECMEDIA_NEWSLETTER_MODE: omit
+      HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true"
+      HECMEDIA_MODERN_WPGRAPHQL: "true"
+      DEPLOY_SHA: ${{ inputs.release_sha }}
+      EXPECTED_GTM_CANONICAL_SHA256: ${{ inputs.expected_gtm_canonical_sha256 }}
+      EXPECTED_GTM_COUNTS: ${{ inputs.expected_gtm_counts }}
+      EXPECTED_GTM_INVENTORY_SHA256: ${{ inputs.expected_gtm_inventory_sha256 }}
+      EXPECTED_GTM_RESOURCE_VERSION: ${{ inputs.expected_gtm_resource_version }}
+      GA_TAGMANAGER_ID: GTM-57RZPNN
+      # This public site key is already emitted in the browser bundle. Pinning
+      # it lets candidate checks finish before protected-environment approval.
+      RE_CAPTCHA_SITE_KEY: 6Lf8RFAUAAAAAPArR_euM1R2KgaGujAOUAofjdZo
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.release_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact protected candidate revision
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$DEPLOY_SHA"
+          git fetch --no-tags origin master
+          test "$(git rev-parse origin/master)" = "$DEPLOY_SHA"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+          cache: yarn
+      - name: Install exact dependencies without cloud credentials
+        run: yarn install --frozen-lockfile
+      - name: Lint and run Jest coverage without cloud credentials
+        run: yarn lint && yarn test
+      - name: Verify read-only production content contracts without cloud credentials
+        env:
+          GATSBY_WP_HOST: https://prod-wp.hectv.org
+          HECMEDIA_E2E_MODERN_WPGRAPHQL: "true"
+          HECMEDIA_E2E_MEDIA_ASSETS: "true"
+          E2E_ALLOW_WRITES: "0"
+        run: yarn test:e2e
+      - name: Package the exact reviewed Lambda@Edge candidate
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
+        run: node scripts/production-deploy.js build
+      - name: Exercise the packaged SSR candidate against read-only production CMS
+        run: node scripts/verify-packaged-candidate.js
+      - name: Install pinned Chrome for non-polluting verification
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd # v2
+        with:
+          chrome-version: "151.0.7922.76"
+      - name: Prove the HTTP and WebSocket firewall and package its runtime
+        env:
+          BROWSER_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          set -euo pipefail
+          test -x "$BROWSER_BIN"
+          "$BROWSER_BIN" --version
+          node scripts/production-browser-verifier.js --self-test "$BROWSER_BIN"
+          mkdir -p .production-browser
+          cp -RL "$(dirname "$BROWSER_BIN")" .production-browser/chrome
+          printf '.production-browser/chrome/%s\n' "$(basename "$BROWSER_BIN")" > .production-browser/browser-bin-relative.txt
+          tar -czf .production-release/browser-runtime.tar.gz .production-browser node_modules/@playwright node_modules/playwright node_modules/playwright-core
+      - name: Freeze approved public GTM semantics without cloud credentials
+        env:
+          GTM_EVIDENCE_DIR: .production-release
+        run: node scripts/verify-gtm-resource.js pre-credential
+      - name: Upload immutable candidate and verification runtime
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hecmedia-production-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 1
+          path: |
+            .serverless_nextjs/assets/**
+            .production-release/**
+
+  deploy-or-rollback:
+    if: always() && needs.authorize.result == 'success' && needs.media-preflight.result == 'success' && (inputs.action == 'rollback' || needs.candidate-build.result == 'success')
+    needs: [authorize, media-preflight, candidate-build]
+    runs-on: ubuntu-latest
     timeout-minutes: 90
+    permissions:
+      contents: write
+      id-token: write
     environment:
       name: production
       url: https://hecmedia.org
@@ -139,7 +342,8 @@ jobs:
       WP_HOST: https://prod-wp.hectv.org
       SITE_HOST: https://hecmedia.org
       HECMEDIA_NO_SEND_FORMS: "false"
-      HECMEDIA_EDGE_API: "true"
+      HECMEDIA_EDGE_API: "false"
+      HECMEDIA_NEWSLETTER_MODE: omit
       HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true"
       HECMEDIA_MODERN_WPGRAPHQL: "true"
       DEPLOY_SHA: ${{ inputs.release_sha }}
@@ -147,10 +351,22 @@ jobs:
       EXPECTED_DEFAULT_LAMBDA_VERSION_ARN: ${{ inputs.expected_default_lambda_version_arn }}
       EXPECTED_DEFAULT_LAMBDA_CODE_SHA256: ${{ inputs.expected_default_lambda_code_sha256 }}
       EXPECTED_API_LAMBDA_VERSION_ARN: ${{ inputs.expected_api_lambda_version_arn }}
+      EXPECTED_GTM_CANONICAL_SHA256: ${{ inputs.expected_gtm_canonical_sha256 }}
+      EXPECTED_GTM_COUNTS: ${{ inputs.expected_gtm_counts }}
+      EXPECTED_GTM_INVENTORY_SHA256: ${{ inputs.expected_gtm_inventory_sha256 }}
+      EXPECTED_GTM_RESOURCE_VERSION: ${{ inputs.expected_gtm_resource_version }}
       HECMEDIA_PRODUCTION_REQUEST_TASK_ID: ${{ inputs.request_task_id }}
       PRODUCTION_ACTION: ${{ inputs.action }}
       PRODUCTION_CONFIRMATION: ${{ inputs.confirmation }}
-      RE_CAPTCHA_SITE_KEY: ${{ secrets.HECMEDIA_PRODUCTION_RECAPTCHA_SITE_KEY }}
+      SOURCE_DEPLOY_BASELINE_ETAG: ${{ inputs.source_deploy_baseline_etag }}
+      SOURCE_DEPLOY_BASELINE_RELEASE_SHA: ${{ inputs.source_deploy_baseline_release_sha }}
+      SOURCE_DEPLOY_RELEASE_SHA: ${{ inputs.source_deploy_release_sha }}
+      SOURCE_DEPLOY_RUN_ID: ${{ inputs.source_deploy_run_id }}
+      SOURCE_DEPLOY_RUN_ATTEMPT: ${{ inputs.source_deploy_run_attempt }}
+      SOURCE_DEPLOY_TASK_ID: ${{ inputs.source_deploy_task_id }}
+      PREIMAGE_MANIFEST_KEY: ${{ inputs.preimage_manifest_key }}
+      PREIMAGE_MANIFEST_SHA256: ${{ inputs.preimage_manifest_sha256 }}
+      RE_CAPTCHA_SITE_KEY: 6Lf8RFAUAAAAAPArR_euM1R2KgaGujAOUAofjdZo
       # Public GTM container (visible in page source). Build-time inline for TagManager.
       GA_TAGMANAGER_ID: GTM-57RZPNN
     steps:
@@ -159,6 +375,7 @@ jobs:
         with:
           ref: ${{ inputs.release_sha }}
           fetch-depth: 0
+          persist-credentials: false
       - name: Verify exact protected revision
         run: |
           set -euo pipefail
@@ -166,56 +383,37 @@ jobs:
           git fetch --no-tags origin master
           test "$(git rev-parse origin/master)" = "$DEPLOY_SHA"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        if: inputs.action == 'deploy'
         with:
           node-version: "24"
-          cache: yarn
-      - name: Validate production build contract by name
+      - name: Download the exact credential-free candidate
         if: inputs.action == 'deploy'
-        run: |
-          set -euo pipefail
-          test -n "$RE_CAPTCHA_SITE_KEY"
-          test "$GA_TAGMANAGER_ID" = GTM-57RZPNN
-          test "$APOLLO_CLIENT_URI" = https://prod-wp.hectv.org/graphql
-          test "$WP_HOST" = https://prod-wp.hectv.org
-          test "$SITE_HOST" = https://hecmedia.org
-          test "$HECMEDIA_NO_SEND_FORMS" = false
-          test "$HECMEDIA_EDGE_API" = true
-          test "$HECMEDIA_DISABLE_IMAGE_OPTIMIZER" = true
-          test "$HECMEDIA_MODERN_WPGRAPHQL" = true
-      - name: Install exact dependencies
-        if: inputs.action == 'deploy'
-        run: yarn install --frozen-lockfile
-      - name: Lint and run Jest coverage
-        if: inputs.action == 'deploy'
-        run: yarn lint && yarn test
-      - name: Verify read-only production content contracts
-        if: inputs.action == 'deploy'
-        env:
-          GATSBY_WP_HOST: https://prod-wp.hectv.org
-          HECMEDIA_E2E_MODERN_WPGRAPHQL: "true"
-          HECMEDIA_E2E_MEDIA_ASSETS: "true"
-          E2E_ALLOW_WRITES: "0"
-        run: yarn test:e2e
-      - name: Package reviewed Lambda@Edge artifacts without AWS credentials
-        if: inputs.action == 'deploy'
-        env:
-          NODE_OPTIONS: --openssl-legacy-provider
-        run: node scripts/production-deploy.js build
-      - name: Install pinned Chrome for hydrated production verification
-        id: setup-chrome
-        if: inputs.action == 'deploy'
-        uses: browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd # v2
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          chrome-version: "151.0.7922.76"
-      - name: Verify Chrome before production credentials
+          name: hecmedia-production-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .
+      - name: Restore and re-prove the exact browser runtime
         if: inputs.action == 'deploy'
-        env:
-          BROWSER_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           set -euo pipefail
+          tar -xzf .production-release/browser-runtime.tar.gz
+          BROWSER_BIN="$(cat .production-browser/browser-bin-relative.txt)"
           test -x "$BROWSER_BIN"
           "$BROWSER_BIN" --version
+          node scripts/production-browser-verifier.js --self-test "$BROWSER_BIN"
+      - name: Revalidate the downloaded build and public GTM contract
+        if: inputs.action == 'deploy'
+        env:
+          GTM_EVIDENCE_DIR: .production-release
+        run: |
+          set -euo pipefail
+          node scripts/verify-gtm-resource.js pre-mutation-runner
+          node -e 'const fs=require("fs"); for (const p of [".production-release/default-lambda.zip",".production-release/build-metadata.json",".production-release/gtm-artifact.json",".serverless_nextjs/assets/BUILD_ID"]) if (!fs.existsSync(p)) throw new Error(`Missing candidate artifact ${p}`);'
+      - name: Preflight immutable release tag before production credentials
+        if: inputs.action == 'deploy'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: node scripts/production-release-tag.js preflight
       - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: arn:aws:iam::850335719356:role/hecmedia-production-deploy
@@ -226,42 +424,57 @@ jobs:
           set -euo pipefail
           test "$(aws sts get-caller-identity --query Account --output text)" = 850335719356
       - name: Apply the approved production action and verify public recovery
-        env:
-          BROWSER_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           set -euo pipefail
           if [ "$PRODUCTION_ACTION" = deploy ]; then
+            BROWSER_BIN="$(cat .production-browser/browser-bin-relative.txt)"
+            export BROWSER_BIN
             test -x "$BROWSER_BIN"
           fi
           node scripts/production-deploy.js "$PRODUCTION_ACTION"
-      - name: Record immutable successful frontend release tag
+      - name: Upload verified pre-tag production evidence
         if: success() && inputs.action == 'deploy'
-        env:
-          RELEASE_SHA: ${{ inputs.release_sha }}
-        run: |
-          set -euo pipefail
-          tag="hecmedia-production-${RELEASE_SHA:0:12}"
-          remote_sha="$(git ls-remote --tags origin "refs/tags/$tag^{}" | awk '{print $1}')"
-          if [ -n "$remote_sha" ]; then
-            test "$remote_sha" = "$RELEASE_SHA"
-            exit 0
-          fi
-          git tag -a "$tag" "$RELEASE_SHA" -m "HEC Media production frontend $RELEASE_SHA"
-          git push origin "refs/tags/$tag"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: hecmedia-production-evidence-${{ github.run_id }}
-          if-no-files-found: warn
+          name: hecmedia-production-pre-tag-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          include-hidden-files: true
           path: |
             production-deploy-evidence.json
-            .production-release/build-metadata.json
-            .production-release/cloudfront-before.json
-            .production-release/cloudfront-release.json
-            .production-release/cloudfront-sanitized-rollback.json
-            .production-release/s3-build-id-before.txt
-            .production-release/homepage-before.html
-            .production-release/rollback-home.html
-            .production-release/hydrated-*.html
-            .production-release/hydrated-media.json
-            .production-release/browser-*.log
+            .production-release/**
+      - name: Record immutable successful frontend release tag as the terminal release operation
+        if: success() && inputs.action == 'deploy'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: node scripts/production-release-tag.js create
+      - name: Upload verified rollback evidence as the terminal rollback operation
+        if: success() && inputs.action == 'rollback'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hecmedia-production-rollback-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          include-hidden-files: true
+          path: |
+            production-deploy-evidence.json
+            .production-release/**
+      - name: Recover the exact deploy attempt after any post-write failure
+        id: emergency-recovery
+        if: failure() && inputs.action == 'deploy'
+        run: node scripts/production-deploy.js recover
+      - name: Remove a same-run release tag after successful emergency recovery
+        if: failure() && inputs.action == 'deploy' && steps.emergency-recovery.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: node scripts/production-release-tag.js cleanup
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        continue-on-error: true
+        with:
+          name: hecmedia-production-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          include-hidden-files: true
+          path: |
+            production-deploy-evidence.json
+            .production-release/**

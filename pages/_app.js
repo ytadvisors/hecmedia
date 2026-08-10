@@ -32,6 +32,10 @@ class MyApp extends App {
               name="hecmedia-forms-mode"
               content={process.env.HECMEDIA_NO_SEND_FORMS || "send"}
             />
+            <meta
+              name="hecmedia-newsletter-mode"
+              content={process.env.HECMEDIA_NEWSLETTER_MODE || "active"}
+            />
           </Head>
           <Component {...pageProps} />
         </ApolloProvider>

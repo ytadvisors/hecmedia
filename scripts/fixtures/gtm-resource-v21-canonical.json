@@ -1,0 +1,646 @@
+{
+  "macros": [
+    {
+      "function": "__u",
+      "vtp_component": "PATH",
+      "vtp_enableIgnoreEmptyQueryParam": false,
+      "vtp_enableMultiQueryKeys": false
+    },
+    { "function": "__e" },
+    {
+      "function": "__u",
+      "vtp_enableIgnoreEmptyQueryParam": false,
+      "vtp_enableMultiQueryKeys": false
+    },
+    { "function": "__dbg" },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 2,
+      "vtp_name": "attributes.videoAction",
+      "vtp_setDefaultValue": false
+    },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 2,
+      "vtp_name": "attributes.videoName",
+      "vtp_setDefaultValue": false
+    },
+    { "function": "__aev", "vtp_varType": "TEXT" },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 2,
+      "vtp_name": "pageCategory",
+      "vtp_setDefaultValue": false
+    },
+    {
+      "function": "__gas",
+      "vtp_cookieDomain": "auto",
+      "vtp_decorateFormsAutoLink": false,
+      "vtp_dimension": [
+        "list",
+        ["map", "index", "1", "dimension", ["macro", 7]]
+      ],
+      "vtp_doubleClick": false,
+      "vtp_enableEcommerce": false,
+      "vtp_enableLinkId": false,
+      "vtp_enableRecaptchaOption": false,
+      "vtp_enableUaRlsa": false,
+      "vtp_enableUseInternalVersion": false,
+      "vtp_setTrackerName": false,
+      "vtp_trackingId": "UA-13018774-2",
+      "vtp_useDebugVersion": false,
+      "vtp_useHashAutoLink": false
+    },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 2,
+      "vtp_defaultValue": "",
+      "vtp_name": "gtm.triggers",
+      "vtp_setDefaultValue": true
+    },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 1,
+      "vtp_name": "gtm.scrollThreshold"
+    },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 1,
+      "vtp_name": "gtm.elementUrl"
+    },
+    {
+      "function": "__u",
+      "vtp_component": "URL",
+      "vtp_enableIgnoreEmptyQueryParam": false,
+      "vtp_enableMultiQueryKeys": false
+    },
+    {
+      "function": "__u",
+      "vtp_component": "HOST",
+      "vtp_enableIgnoreEmptyQueryParam": false,
+      "vtp_enableMultiQueryKeys": false
+    },
+    { "function": "__f", "vtp_component": "URL" },
+    { "function": "__e" },
+    { "function": "__v", "vtp_dataLayerVersion": 1, "vtp_name": "gtm.element" },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 1,
+      "vtp_name": "gtm.elementClasses"
+    },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 1,
+      "vtp_name": "gtm.elementId"
+    },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 1,
+      "vtp_name": "gtm.elementTarget"
+    },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 1,
+      "vtp_name": "gtm.scrollUnits"
+    },
+    {
+      "function": "__v",
+      "vtp_dataLayerVersion": 1,
+      "vtp_name": "gtm.scrollDirection"
+    }
+  ],
+  "predicates": [
+    { "arg0": ["macro", 0], "arg1": "/category/arts/", "function": "_eq" },
+    { "arg0": ["macro", 1], "arg1": "gtm.js", "function": "_eq" },
+    { "arg0": ["macro", 1], "arg1": "vimeoTrack", "function": "_eq" },
+    { "arg0": ["macro", 6], "arg1": "SUBSCRIBE", "function": "_cn" },
+    { "arg0": ["macro", 1], "arg1": "gtm.click", "function": "_eq" },
+    { "arg0": ["macro", 1], "arg1": "gtm.scrollDepth", "function": "_eq" },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_23($|,)))",
+      "function": "_re"
+    },
+    { "arg0": ["macro", 1], "arg1": "postCategory", "function": "_eq" },
+    { "arg0": ["macro", 1], "arg1": "gtm.historyChange", "function": "_eq" },
+    { "arg0": ["macro", 1], "arg1": "gtm.init", "function": "_eq" },
+    { "arg0": ["macro", 11], "arg1": "facebook", "function": "_cn" },
+    { "arg0": ["macro", 1], "arg1": "gtm.linkClick", "function": "_eq" },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_35($|,)))",
+      "function": "_re"
+    },
+    { "arg0": ["macro", 11], "arg1": "youtube", "function": "_cn" },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_39($|,)))",
+      "function": "_re"
+    },
+    { "arg0": ["macro", 11], "arg1": "paypal", "function": "_cn" },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_41($|,)))",
+      "function": "_re"
+    },
+    { "arg0": ["macro", 11], "arg1": "instagram", "function": "_cn" },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_43($|,)))",
+      "function": "_re"
+    },
+    { "arg0": ["macro", 11], "arg1": "twitter.com", "function": "_cn" },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_45($|,)))",
+      "function": "_re"
+    },
+    {
+      "arg0": ["macro", 12],
+      "arg1": "https://hecmedia.org/",
+      "function": "_cn"
+    },
+    { "arg0": ["macro", 1], "arg1": "gtm.formSubmit", "function": "_eq" },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_47($|,)))",
+      "function": "_re"
+    },
+    {
+      "arg0": ["macro", 12],
+      "arg1": "https://hecmedia.org/contact-us",
+      "function": "_cn"
+    },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_49($|,)))",
+      "function": "_re"
+    },
+    { "arg0": ["macro", 1], "arg1": "gtm.video", "function": "_eq" },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_51($|,)))",
+      "function": "_re"
+    },
+    { "arg0": ["macro", 11], "arg1": "hec", "function": "_cn" },
+    {
+      "arg0": ["macro", 9],
+      "arg1": "(^$|((^|,)9519736_53($|,)))",
+      "function": "_re"
+    },
+    { "arg0": ["macro", 1], "arg1": "gtm.dom", "function": "_eq" }
+  ],
+  "rules": [
+    [["if", 0, 1], ["add", 0]],
+    [["if", 2], ["add", 1]],
+    [["if", 3, 4], ["add", 2]],
+    [["if", 5, 6], ["add", 3]],
+    [["if", 7], ["add", 4]],
+    [
+      ["if", 1],
+      ["add", 5, 6, 30, 31, 32, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29]
+    ],
+    [["if", 8], ["add", 6]],
+    [["if", 9], ["add", 7, 9]],
+    [["if", 10, 11, 12], ["add", 8]],
+    [["if", 11, 13, 14], ["add", 10]],
+    [["if", 11, 15, 16], ["add", 11]],
+    [["if", 11, 17, 18], ["add", 12]],
+    [["if", 11, 19, 20], ["add", 13]],
+    [["if", 21, 22, 23], ["add", 14]],
+    [["if", 22, 24, 25], ["add", 15]],
+    [["if", 26, 27], ["add", 16]],
+    [["if", 11, 29], ["unless", 28], ["add", 17]],
+    [["if", 30], ["add", 28]]
+  ],
+  "tags": [
+    {
+      "function": "__awct",
+      "once_per_event": true,
+      "tag_id": 3,
+      "vtp_conversionCookiePrefix": "_gcl",
+      "vtp_conversionId": "795405937",
+      "vtp_conversionLabel": "AHIkCNj1_osBEPHco_sC",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_url": ["macro", 2]
+    },
+    {
+      "function": "__ua",
+      "once_per_event": true,
+      "tag_id": 5,
+      "vtp_doubleClick": false,
+      "vtp_enableEcommerce": false,
+      "vtp_enableFirebaseCampaignData": true,
+      "vtp_enableLinkId": false,
+      "vtp_enableRecaptchaOption": false,
+      "vtp_enableUaRlsa": false,
+      "vtp_enableUseInternalVersion": false,
+      "vtp_eventAction": ["macro", 4],
+      "vtp_eventCategory": "Videos",
+      "vtp_eventLabel": ["macro", 5],
+      "vtp_fieldsToSet": [
+        "list",
+        ["map", "fieldName", "cookieDomain", "value", "auto"]
+      ],
+      "vtp_nonInteraction": false,
+      "vtp_overrideGaSettings": true,
+      "vtp_setTrackerName": false,
+      "vtp_trackType": "TRACK_EVENT",
+      "vtp_trackTypeIsEvent": true,
+      "vtp_trackingId": "UA-13018774-2",
+      "vtp_useDebugVersion": ["macro", 3]
+    },
+    {
+      "function": "__ua",
+      "once_per_event": true,
+      "tag_id": 6,
+      "vtp_enableFirebaseCampaignData": true,
+      "vtp_enableRecaptchaOption": false,
+      "vtp_enableUaRlsa": false,
+      "vtp_enableUseInternalVersion": false,
+      "vtp_eventAction": "Click",
+      "vtp_eventCategory": "Subscribe Button",
+      "vtp_eventLabel": ["macro", 6],
+      "vtp_gaSettings": ["macro", 8],
+      "vtp_nonInteraction": false,
+      "vtp_overrideGaSettings": false,
+      "vtp_trackType": "TRACK_EVENT",
+      "vtp_trackTypeIsEvent": true
+    },
+    {
+      "function": "__ua",
+      "once_per_event": true,
+      "tag_id": 8,
+      "vtp_enableFirebaseCampaignData": true,
+      "vtp_enableRecaptchaOption": false,
+      "vtp_enableUaRlsa": false,
+      "vtp_enableUseInternalVersion": false,
+      "vtp_eventAction": ["macro", 10],
+      "vtp_eventCategory": "Scroll",
+      "vtp_gaSettings": ["macro", 8],
+      "vtp_nonInteraction": true,
+      "vtp_overrideGaSettings": false,
+      "vtp_trackType": "TRACK_EVENT",
+      "vtp_trackTypeIsEvent": true
+    },
+    {
+      "function": "__ua",
+      "once_per_event": true,
+      "tag_id": 10,
+      "vtp_enableFirebaseCampaignData": true,
+      "vtp_enableRecaptchaOption": false,
+      "vtp_enableUaRlsa": false,
+      "vtp_enableUseInternalVersion": false,
+      "vtp_eventAction": "Post Category",
+      "vtp_eventCategory": "Post",
+      "vtp_eventLabel": ["macro", 7],
+      "vtp_gaSettings": ["macro", 8],
+      "vtp_nonInteraction": true,
+      "vtp_overrideGaSettings": false,
+      "vtp_trackType": "TRACK_EVENT",
+      "vtp_trackTypeIsEvent": true
+    },
+    {
+      "function": "__opt",
+      "once_per_load": true,
+      "setup_tags": ["list", ["tag", 33, 0]],
+      "tag_id": 13,
+      "vtp_optimizeContainerId": "GTM-KXDQM43"
+    },
+    {
+      "function": "__googtag",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 34,
+      "vtp_tagId": "G-7HGHHBRHPT"
+    },
+    {
+      "function": "__googtag",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 36,
+      "vtp_tagId": "AW-123456789"
+    },
+    {
+      "function": "__awct",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 37,
+      "vtp_conversionId": "866730806",
+      "vtp_conversionLabel": "fT6eCKKD540bELaGpZ0D",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReporting": false,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReporting": false,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableShippingData": false,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_rdp": false,
+      "vtp_url": ["macro", 2]
+    },
+    {
+      "function": "__googtag",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 38,
+      "vtp_tagId": "AW-866730806"
+    },
+    {
+      "function": "__awct",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 40,
+      "vtp_conversionId": "866730806",
+      "vtp_conversionLabel": "UbEDCKyWiJQbELaGpZ0D",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReporting": false,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReporting": false,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableShippingData": false,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_rdp": false,
+      "vtp_url": ["macro", 2]
+    },
+    {
+      "function": "__awct",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 42,
+      "vtp_conversionId": "866730806",
+      "vtp_conversionLabel": "9gJUCMqSm5QbELaGpZ0D",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReporting": false,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReporting": false,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableShippingData": false,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_rdp": false,
+      "vtp_url": ["macro", 2]
+    },
+    {
+      "function": "__awct",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 44,
+      "vtp_conversionId": "866730806",
+      "vtp_conversionLabel": "lgD7CMr4jpQbELaGpZ0D",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReporting": false,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReporting": false,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableShippingData": false,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_rdp": false,
+      "vtp_url": ["macro", 2]
+    },
+    {
+      "function": "__awct",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 46,
+      "vtp_conversionId": "866730806",
+      "vtp_conversionLabel": "KdrNCNnQkJQbELaGpZ0D",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReporting": false,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReporting": false,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableShippingData": false,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_rdp": false,
+      "vtp_url": ["macro", 2]
+    },
+    {
+      "function": "__awct",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 48,
+      "vtp_conversionId": "866730806",
+      "vtp_conversionLabel": "OThdCOmuhpgbELaGpZ0D",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReporting": false,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReporting": false,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableShippingData": false,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_rdp": false,
+      "vtp_url": ["macro", 2]
+    },
+    {
+      "function": "__awct",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 50,
+      "vtp_conversionId": "866730806",
+      "vtp_conversionLabel": "hf4UCKLHgpgbELaGpZ0D",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReporting": false,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReporting": false,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableShippingData": false,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_rdp": false,
+      "vtp_url": ["macro", 2]
+    },
+    {
+      "function": "__awct",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 52,
+      "vtp_conversionId": "866730806",
+      "vtp_conversionLabel": "wmvBCK_u28IbELaGpZ0D",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReporting": false,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReporting": false,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableShippingData": false,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_rdp": false,
+      "vtp_url": ["macro", 2]
+    },
+    {
+      "function": "__awct",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 54,
+      "vtp_conversionId": "866730806",
+      "vtp_conversionLabel": "RV8JCOHz6-UbELaGpZ0D",
+      "vtp_enableConversionLinker": true,
+      "vtp_enableCustomParams": false,
+      "vtp_enableEnhancedConversionsCheckbox": false,
+      "vtp_enableEventParameters": true,
+      "vtp_enableNewCustomerReporting": false,
+      "vtp_enableNewCustomerReportingCheckbox": true,
+      "vtp_enableProductReporting": false,
+      "vtp_enableProductReportingCheckbox": true,
+      "vtp_enableRdpCheckbox": true,
+      "vtp_enableShippingData": false,
+      "vtp_enableSmartDestinationId": true,
+      "vtp_enableTransportUrl": false,
+      "vtp_rdp": false,
+      "vtp_url": ["macro", 2]
+    },
+    { "function": "__hl", "tag_id": 55 },
+    { "function": "__cl", "tag_id": 56 },
+    {
+      "function": "__sdl",
+      "tag_id": 57,
+      "vtp_enableTriggerStartOption": true,
+      "vtp_horizontalThresholdOn": false,
+      "vtp_uniqueTriggerId": "9519736_23",
+      "vtp_verticalThresholdOn": true,
+      "vtp_verticalThresholdUnits": "PERCENT",
+      "vtp_verticalThresholdsPercent": "25,50,75,100"
+    },
+    {
+      "function": "__lcl",
+      "tag_id": 58,
+      "vtp_checkValidation": false,
+      "vtp_uniqueTriggerId": "9519736_35",
+      "vtp_waitForTags": false
+    },
+    {
+      "function": "__lcl",
+      "tag_id": 59,
+      "vtp_checkValidation": false,
+      "vtp_uniqueTriggerId": "9519736_39",
+      "vtp_waitForTags": false
+    },
+    {
+      "function": "__lcl",
+      "tag_id": 60,
+      "vtp_checkValidation": false,
+      "vtp_uniqueTriggerId": "9519736_41",
+      "vtp_waitForTags": false
+    },
+    {
+      "function": "__lcl",
+      "tag_id": 61,
+      "vtp_checkValidation": false,
+      "vtp_uniqueTriggerId": "9519736_43",
+      "vtp_waitForTags": false
+    },
+    {
+      "function": "__lcl",
+      "tag_id": 62,
+      "vtp_checkValidation": false,
+      "vtp_uniqueTriggerId": "9519736_45",
+      "vtp_waitForTags": false
+    },
+    { "function": "__fsl", "tag_id": 63, "vtp_uniqueTriggerId": "9519736_47" },
+    { "function": "__fsl", "tag_id": 64, "vtp_uniqueTriggerId": "9519736_49" },
+    {
+      "function": "__ytl",
+      "tag_id": 65,
+      "vtp_captureComplete": false,
+      "vtp_capturePause": false,
+      "vtp_captureProgress": false,
+      "vtp_captureStart": true,
+      "vtp_enableTriggerStartOption": true,
+      "vtp_fixMissingApi": false,
+      "vtp_triggerStartOption": "DOM_READY",
+      "vtp_uniqueTriggerId": "9519736_51"
+    },
+    {
+      "function": "__lcl",
+      "tag_id": 66,
+      "vtp_checkValidation": false,
+      "vtp_uniqueTriggerId": "9519736_53",
+      "vtp_waitForTags": false
+    },
+    {
+      "function": "__html",
+      "once_per_event": true,
+      "tag_id": 4,
+      "vtp_enableEditJsMacroBehavior": false,
+      "vtp_enableIframeMode": false,
+      "vtp_html": "<script type=\"text/gtmscript\" id=\"gtm-vimeo-tracking\">(function(g,d,k){function m(){var a=n(r(\"iframe\"),t);a.length&&u(function(){h(a,v)})}function t(a){return-1<a.src.indexOf(\"player.vimeo.com/video/\")}function u(a){l(d.Vimeo)?w(\"https://player.vimeo.com/api/player.js\",a):a()}function v(a){if(!a.__vimeoTracked){a.__vimeoTracked=!0;var c=new Vimeo.Player(a),b=k._track.percentages,e={Play:\"play\",Pause:\"pause\",\"Watch to End\":\"ended\"},f={};c.getVideoTitle().then(function(a){h([\"Play\",\"Pause\",\"Watch to End\"],function(b){if(k.events[b])c.on(e[b],function(){p(b,\na)})});if(b)c.on(\"timeupdate\",function(e){e=e.percent;for(var c in b)e>=b[c]&&!f[c]&&(f[c]=!0,p(c,a))})})}}function x(a){a=y({},{events:{Play:!0,Pause:!0,\"Watch to End\":!0},percentages:{each:[],every:[]}},a);h([\"each\",\"every\"],function(b){var c=a.percentages[b];q(c)||(c=[c]);c&&(a.percentages[b]=z(c,Number))});var c=[].concat(a.percentages.each);a.percentages.every&&h(a.percentages.every,function(a){var b=100/a,e=[],d;for(d=1;d<b;d++)e.push(a*d);c=c.concat(n(e,function(a){return 0<a&&100>a}))});var b=\nA(c,function(a,b){a[b+\"%\"]=b/100;return a},{});a._track={percentages:b};return a}function B(a){a=a||{};var c=a.name||\"dataLayer\",b=a.name||d.GoogleAnalyticsObject||\"ga\",e=\"_gaq\",f={gtm:function(a,b){g.push({event:\"vimeoTrack\",attributes:{videoAction:a,videoName:b}})},cl:function(a,b){d[e].push([\"_trackEvent\",\"Videos\",a,b])},ua:function(a,c){d[b](\"send\",\"event\",\"Videos\",a,c)}};switch(a.type){case \"gtm\":var g=d[c]=d[c]||[];break;case \"ua\":d[b]=d[b]||function(){(d[b].q=d[b].q||[]).push(arguments)};d[b].l=\n+new Date;break;case \"cl\":d[e]=d[e]||[];break;default:l(d[c])?b&&!l(d[b])?a.type=\"ua\":l(d[e])||l(d[e].push)||(a.type=\"cl\"):(a.type=\"gtm\",g=d[c]=d[c]||[])}return f[a.type]}function y(){var a=[].slice.call(arguments),c=a.shift(),b,e;for(e=0;e<a.length;e++){var d=a[e];for(b in d)c[b]=d[b]}return c}function q(a){return Array.isArray_?Array.isArray_(a):\"[object Array]\"===Object.prototype.toString.call(a)}function h(a,c){if(Array.prototype.forEach_)return a.forEach.call(a,c);var b;for(b=0;b<a.length;b++)c.call(d,\na[b],b,a)}function z(a,c){if(Array.prototype.map_)return a.map.call(a,c);var b=[];h(a,function(a,f,g){b.push(c.call(d,a,f,g))});return b}function n(a,c){if(Array.prototype.filter)return a.filter.call(a,c);var b=[];h(a,function(a,f,g){c.call(d,a,f,g)&&b.push(a)});return b}function A(a,c,b){if(Array.prototype.reduce)return a.reduce.call(a,c,b);var e;for(e=0;e<a.length;e++){var f=a[e];b=c.call(d,b,f,a,e)}return b}function l(a){return\"undefined\"===typeof a}function r(a){q(a)||(a=[a]);return[].slice.call(g.querySelectorAll(a.join()))}\nfunction w(a,c){function b(){c&&(c(),f.onload=null)}var d=g.getElementsByTagName(\"script\")[0];var f=g.createElement(\"script\");f.onload=b;f.src=a;f.async=!0;d.parentNode.insertBefore(f,d)}if(!navigator.userAgent.match(/MSIE [678]\\./gi)){k=x(k);var p=B(k.syntax);\"loading\"!==g.readyState?m():g.addEventListener(\"DOMContentLoaded\",m);g.addEventListener(\"load\",m,!0)}})(document,window,{events:{Play:!0,Pause:!0,\"Watch to End\":!0},percentages:{every:25,each:[10,90]}});</script>",
+      "vtp_supportDocumentWrite": false
+    },
+    {
+      "function": "__html",
+      "once_per_event": true,
+      "tag_id": 7,
+      "vtp_enableEditJsMacroBehavior": false,
+      "vtp_enableIframeMode": false,
+      "vtp_html": "<script type=\"text/gtmscript\" data-gtmsrc=\"//downloads.mailchimp.com/js/signup-forms/popup/unique-methods/embed.js\" data-dojo-config=\"usePlainJson: true, isDebug: false\"></script><script type=\"text/gtmscript\">window.dojoRequire([\"mojo/signup-forms/Loader\"],function(a){a.start({baseUrl:\"mc.us17.list-manage.com\",uuid:\"3ba5cb3441b0c6df467d5c65b\",lid:\"c4ddedb2ea\",uniqueMethods:!0})});</script>",
+      "vtp_supportDocumentWrite": false
+    },
+    {
+      "function": "__html",
+      "tag_id": 11,
+      "vtp_enableEditJsMacroBehavior": false,
+      "vtp_enableIframeMode": false,
+      "vtp_html": "\n<script type=\"text/gtmscript\">!function(b,e,f,g,a,c,d){b.fbq||(a=b.fbq=function(){a.callMethod?a.callMethod.apply(a,arguments):a.queue.push(arguments)},b._fbq||(b._fbq=a),a.push=a,a.loaded=!0,a.version=\"2.0\",a.queue=[],c=e.createElement(f),c.async=!0,c.src=g,d=e.getElementsByTagName(f)[0],d.parentNode.insertBefore(c,d))}(window,document,\"script\",\"https://connect.facebook.net/en_US/fbevents.js\");fbq(\"init\",\"420290078314527\");fbq(\"set\",\"agent\",\"tmgoogletagmanager\",\"420290078314527\");fbq(\"track\",\"PageView\");</script>\n<noscript><img height=\"1\" width=\"1\" style=\"display:none\" src=\"https://www.facebook.com/tr?id=420290078314527&amp;ev=PageView&amp;noscript=1\"></noscript>\n",
+      "vtp_supportDocumentWrite": false
+    },
+    {
+      "function": "__ua",
+      "metadata": ["map"],
+      "once_per_event": true,
+      "tag_id": 2,
+      "vtp_enableFirebaseCampaignData": true,
+      "vtp_enableRecaptchaOption": false,
+      "vtp_enableUaRlsa": false,
+      "vtp_enableUseInternalVersion": false,
+      "vtp_gaSettings": ["macro", 8],
+      "vtp_overrideGaSettings": false,
+      "vtp_trackType": "TRACK_PAGEVIEW"
+    }
+  ],
+  "version": "21"
+}

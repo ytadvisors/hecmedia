@@ -13,6 +13,7 @@ jest.mock("@sls-next/lambda-at-edge", () => ({
 
 const fs = require("fs");
 const {
+  assertNewsletterOnlyApiSource,
   build,
   discardEmptyApiLambdaBundle,
   discardUnusedImageLambdaBundle,
@@ -226,18 +227,42 @@ test("omits API routes only for a no-send diagnostic build and restores them", a
   expect(fs.mkdirSync).toHaveBeenCalled();
 });
 
-test("omits stock API routes for the governed edge-API production package", async () => {
+test("omits only the reviewed newsletter API in targeted production mode", async () => {
   const originalNoSend = process.env.HECMEDIA_NO_SEND_FORMS;
   const originalEdgeApi = process.env.HECMEDIA_EDGE_API;
+  const originalNewsletterMode = process.env.HECMEDIA_NEWSLETTER_MODE;
   process.env.HECMEDIA_NO_SEND_FORMS = "false";
-  process.env.HECMEDIA_EDGE_API = "true";
+  process.env.HECMEDIA_EDGE_API = "false";
+  process.env.HECMEDIA_NEWSLETTER_MODE = "omit";
   fs.existsSync.mockImplementation(file => {
-    if (file.endsWith("pages/api")) return true;
+    if (file.endsWith("pages/api") || file.endsWith("pages/api/newsletter"))
+      return true;
     if (file.endsWith(".edge-build-omitted-pages-api")) return false;
     if (file.endsWith("default-lambda") || file.endsWith("assets")) return true;
     if (file.endsWith(".next/serverless/webpack-runtime.js")) return true;
     if (file.endsWith(".next/serverless/chunks")) return true;
     return false;
+  });
+  fs.readdirSync.mockImplementation(file => {
+    if (file.endsWith("pages/api")) {
+      return [
+        {
+          name: "newsletter",
+          isDirectory: () => true,
+          isFile: () => false
+        }
+      ];
+    }
+    if (file.endsWith("pages/api/newsletter")) {
+      return [
+        {
+          name: "subscribe.js",
+          isDirectory: () => false,
+          isFile: () => true
+        }
+      ];
+    }
+    return [];
   });
 
   try {
@@ -247,6 +272,9 @@ test("omits stock API routes for the governed edge-API production package", asyn
     else process.env.HECMEDIA_NO_SEND_FORMS = originalNoSend;
     if (originalEdgeApi === undefined) delete process.env.HECMEDIA_EDGE_API;
     else process.env.HECMEDIA_EDGE_API = originalEdgeApi;
+    if (originalNewsletterMode === undefined)
+      delete process.env.HECMEDIA_NEWSLETTER_MODE;
+    else process.env.HECMEDIA_NEWSLETTER_MODE = originalNewsletterMode;
   }
 
   expect(fs.renameSync.mock.calls).toEqual([
@@ -259,4 +287,15 @@ test("omits stock API routes for the governed edge-API production package", asyn
       expect.stringMatching(/pages\/api$/)
     ]
   ]);
+});
+
+test("targeted newsletter omission rejects any unexpected API source", () => {
+  fs.existsSync.mockReturnValue(true);
+  fs.readdirSync.mockReturnValue([
+    { name: "unexpected.js", isDirectory: () => false, isFile: () => true }
+  ]);
+
+  expect(() => assertNewsletterOnlyApiSource("/repo/pages/api")).toThrow(
+    "found unexpected.js"
+  );
 });

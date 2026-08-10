@@ -2,7 +2,7 @@
 
 ## Status
 
-**NO-GO — planning and team review only. No production dispatch has occurred.**
+**NO-GO — remediation implementation and team review in progress. No production dispatch has occurred.**
 
 This is the in-repository living log for the deployment governed by
 [`gtm-production-deployment-playbook-2026-08-10.md`](gtm-production-deployment-playbook-2026-08-10.md).
@@ -11,61 +11,113 @@ playbook. An entry records evidence; it does not grant authority.
 
 ## Attempt identity
 
-| Field | Value |
-| --- | --- |
-| Attempt ID | Pending |
-| Planning anchor | `81d0a59a60f38be55df353c0b98f59bc375bf4f9` |
-| Final release SHA | Pending after prerequisite merges |
-| Live source before release | `76ff06f609dd…` |
-| Queue task receipt | Pending |
-| Workflow run | Pending |
-| Original deploy task/run binding | Pending |
-| S3 preimage manifest key / SHA-256 | Pending |
-| Commander | Pending |
-| Eligible provider panel | Pending Gate 0 health/flag snapshot |
-| Analytics owner / GTM export | Pending |
-| Newsletter API decision | Pending |
-| Outcome | `no_go` |
+| Field                                    | Value                                                                                                                                   |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Attempt ID                               | Pending                                                                                                                                 |
+| Planning anchor                          | Plan PR #272 merged as `d5431eeff9c98530a7414bc39eb63b590693627a`                                                                       |
+| Remediation branch                       | `agent/tom-gpt/gtm-deploy-repairs-20260810`; PR pending                                                                                 |
+| Final release SHA                        | Pending after prerequisite merges                                                                                                       |
+| Live source before release               | `76ff06f609ddf55ccb1f85379ceac89848bc7223`                                                                                              |
+| Queue task receipt                       | Pending                                                                                                                                 |
+| Workflow run                             | Pending                                                                                                                                 |
+| Original deploy task/run/attempt binding | Pending                                                                                                                                 |
+| S3 preimage manifest key / SHA-256       | Pending                                                                                                                                 |
+| Commander                                | Pending                                                                                                                                 |
+| Eligible provider panel                  | Pending Gate 0 health/flag snapshot                                                                                                     |
+| Analytics owner / GTM export             | [`gtm-owner-approval-2026-08-10.json`](gtm-owner-approval-2026-08-10.json) is `PENDING`; semantic implementation capture recorded below |
+| Newsletter API decision                  | Omit: keep API behavior absent; general forms remain send-enabled                                                                       |
+| Decommission closeout                    | Pending observation deadline, traffic classification, reviewed in-repo closeout, and SHA binding                                        |
+| Durable evidence path                    | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/gtm-production-deployment-plan-2026-08-10/`                              |
+| Outcome                                  | `no_go`                                                                                                                                 |
 
 ## Gate ledger
 
-| Gate | Evidence | Decision |
-| --- | --- | --- |
-| Playbook exact-head review | Pending | NO-GO |
-| B1–B10 prerequisite closure | Pending | NO-GO |
-| Final SHA and complete change inventory | Pending | NO-GO |
-| CI, package, local SSR, media, and GTM preflight | Pending | NO-GO |
-| GTM owner approval and publish freeze | Pending | NO-GO |
-| S3 collision manifest and recovery proof | Pending | NO-GO |
-| AWS budget precheck | Planning snapshot below threshold; fresh execution snapshot pending | NO-GO |
-| HEC TV backend and decommission interlock | Pending | NO-GO |
-| Fresh AWS/GitHub inputs and rollback pin | Pending | NO-GO |
-| Complete provider-panel GO | Pending | NO-GO |
-| Yomi environment approval | Pending | NO-GO |
-| Cutover, acceptance, soak, and tag | Not started | NO-GO |
+| Gate                                             | Evidence                                                                                                                                                                                                                                                                                                                                        | Decision         |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Playbook exact-head review                       | PR #272, xAI exact-head APPROVED, mixed-jury rerun green, merged `d5431ee…`                                                                                                                                                                                                                                                                     | GO for plan only |
+| B1–B11 prerequisite closure                      | Implementation branch in progress; owner and closeout records remain Pending                                                                                                                                                                                                                                                                    | NO-GO            |
+| Final SHA and complete change inventory          | Pending                                                                                                                                                                                                                                                                                                                                         | NO-GO            |
+| CI, package, local SSR, media, and GTM preflight | Local implementation validation: lint 0 errors; focused deployment suite 90/90; full Jest 78 suites/505 tests; read-only production-CMS e2e 9 suites/37 passed/1 known skipped; production package, four-route packaged SSR smoke, browser HTTP/WebSocket firewall self-test, and semantic GTM capture passed. Exact-commit CI remains pending. | NO-GO            |
+| GTM owner approval and publish freeze            | Pending                                                                                                                                                                                                                                                                                                                                         | NO-GO            |
+| S3 collision manifest and recovery proof         | Pending                                                                                                                                                                                                                                                                                                                                         | NO-GO            |
+| AWS budget precheck                              | Planning snapshot below threshold; fresh execution snapshot pending                                                                                                                                                                                                                                                                             | NO-GO            |
+| HEC TV backend and decommission interlock        | Pending                                                                                                                                                                                                                                                                                                                                         | NO-GO            |
+| Fresh AWS/GitHub inputs and rollback pin         | Pending                                                                                                                                                                                                                                                                                                                                         | NO-GO            |
+| Complete provider-panel GO                       | Pending                                                                                                                                                                                                                                                                                                                                         | NO-GO            |
+| Yomi environment approval                        | Pending                                                                                                                                                                                                                                                                                                                                         | NO-GO            |
+| Cutover, acceptance, soak, and tag               | Not started                                                                                                                                                                                                                                                                                                                                     | NO-GO            |
 
 ## Timeline
 
-| UTC | Actor | Action / evidence | Decision |
-| --- | --- | --- | --- |
-| 2026-08-10T05:03Z | Fleet baseline reviewers | Confirmed production serves Lambda@Edge `:150` / source `76ff06f…`, no live GTM, CloudFront deployed, and current `master` planning anchor `81d0a59…` | NO-GO pending prerequisite repairs |
-| 2026-08-10T05:15Z | Fleet plan reviewers | Identified deterministic route-verifier and release-tag failures, disabled CI, GTM egress risk, dormant newsletter API conflict, S3 rollback gap, mutable GTM control plane, and decommission observation interlock | REQUEST-CHANGES |
-| 2026-08-10T05:28Z | xAI Grok independent plan reviewer | Found B1's fixed send-enabled forms wording inconsistent with the two B5 newsletter paths | REQUEST-CHANGES; deployment remained NO-GO |
-| 2026-08-10T05:31Z | Fleet risk/inventory reviewers | Proved direct S3 VersionId recovery exceeds the governed role and found a pre-/post-cutover fresh-origin sequencing error | REQUEST-CHANGES; require current-IAM preimage recovery and corrected sequence |
-| 2026-08-10T05:35Z | GPT plan author | Reconciled B1/B5, changed S3 recovery to governed preimage copies with metadata/checksum restore, corrected candidate/live host sequencing, and added the warning to `DEPLOY.md` | Revised bundle pending exact-hash re-review |
-| 2026-08-10T05:38Z | Fleet risk/inventory reviewers | Found that manual rollback lacked an immutable original deploy→preimage selector and that S3 restore/invalidation ordering could expose candidate bytes | REQUEST-CHANGES |
-| 2026-08-10T05:39Z | GPT plan author | Added original task/run/manifest-key/SHA binding, rollback-only selector inputs, fail-closed key classes, and S3 restore before final invalidation for automatic/manual paths | Revised bundle pending exact-hash re-review |
+| UTC                  | Actor                              | Action / evidence                                                                                                                                                                                                                                                                                                                                                                                       | Decision                                                                                                             |
+| -------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-10T05:03Z    | Fleet baseline reviewers           | Confirmed production serves Lambda@Edge `:150` / source `76ff06f…`, no live GTM, CloudFront deployed, and current `master` planning anchor `81d0a59…`                                                                                                                                                                                                                                                   | NO-GO pending prerequisite repairs                                                                                   |
+| 2026-08-10T05:15Z    | Fleet plan reviewers               | Identified deterministic route-verifier and release-tag failures, disabled CI, GTM egress risk, dormant newsletter API conflict, S3 rollback gap, mutable GTM control plane, and decommission observation interlock                                                                                                                                                                                     | REQUEST-CHANGES                                                                                                      |
+| 2026-08-10T05:28Z    | xAI Grok independent plan reviewer | Found B1's fixed send-enabled forms wording inconsistent with the two B5 newsletter paths                                                                                                                                                                                                                                                                                                               | REQUEST-CHANGES; deployment remained NO-GO                                                                           |
+| 2026-08-10T05:31Z    | Fleet risk/inventory reviewers     | Proved direct S3 VersionId recovery exceeds the governed role and found a pre-/post-cutover fresh-origin sequencing error                                                                                                                                                                                                                                                                               | REQUEST-CHANGES; require current-IAM preimage recovery and corrected sequence                                        |
+| 2026-08-10T05:35Z    | GPT plan author                    | Reconciled B1/B5, changed S3 recovery to governed preimage copies with metadata/checksum restore, corrected candidate/live host sequencing, and added the warning to `DEPLOY.md`                                                                                                                                                                                                                        | Revised bundle pending exact-hash re-review                                                                          |
+| 2026-08-10T05:38Z    | Fleet risk/inventory reviewers     | Found that manual rollback lacked an immutable original deploy→preimage selector and that S3 restore/invalidation ordering could expose candidate bytes                                                                                                                                                                                                                                                 | REQUEST-CHANGES                                                                                                      |
+| 2026-08-10T05:39Z    | GPT plan author                    | Added original task/run/manifest-key/SHA binding, rollback-only selector inputs, fail-closed key classes, and S3 restore before final invalidation for automatic/manual paths                                                                                                                                                                                                                           | Revised bundle pending exact-hash re-review                                                                          |
+| 2026-08-10T06:06Z    | xAI Grok reviewer                  | Formally approved plan PR #272 on exact head `b1a8101ea6e5990fec7d957fc8235030f8f8f7f8`; refreshed mixed-jury and refresh-jury checks passed                                                                                                                                                                                                                                                            | Plan approved; deployment still NO-GO                                                                                |
+| 2026-08-10T06:09:14Z | GitHub merge automation            | Merged docs-only plan PR #272 as `d5431eeff9c98530a7414bc39eb63b590693627a` after conditional owner approval and foreign-family review                                                                                                                                                                                                                                                                  | Remediation implementation authorized; no dispatch                                                                   |
+| 2026-08-10T06:38Z    | GPT implementer                    | Captured public GTM resource v21 using `canonical-resource-v1`: 19,588 canonical bytes, SHA `c3ab2446…`, counts 22/34/31/18; recorded raw loader hash as secondary non-gate evidence                                                                                                                                                                                                                    | Semantic capture succeeded; owner disposition remains NO-GO                                                          |
+| 2026-08-10T06:52Z    | GPT implementer                    | Focused remediation suite passed 64/64 tests: verifier, browser interception, semantic GTM, S3 recovery, packaging, newsletter targeting, Next config, and workflow contracts                                                                                                                                                                                                                           | Implementation evidence only; independent review pending                                                             |
+| 2026-08-10T07:05Z    | Fleet implementation reviewers     | Found run-attempt collisions, stale manual rollback authority, partial-restore invalidation, tag/evidence failures outside recovery, broad browser egress, GTM loader TOCTOU, incomplete inventory mapping, and credential-bound build work                                                                                                                                                             | REQUEST-CHANGES; production stayed untouched                                                                         |
+| 2026-08-10T07:41Z    | GPT implementer                    | Bound S3 evidence to task/run/attempt/release and baseline SHA; added remote pre-sync plus post-sync byte proof, aggregate recovery with invalidation suppression, fresh manual rollback applicability, semantic fulfillment of Chrome's exact loader, HTTP/WebSocket firewall proof, terminal tag recovery, and a no-environment/no-OIDC candidate-build job using the exact public reCAPTCHA site key | Revised implementation; exact-hash re-review pending                                                                 |
+| 2026-08-10T07:41:02Z | GPT implementer                    | Refreshed non-executing public GTM capture with corrected complete inventory algorithm; canonical resource remained `c3ab2446…`, inventory became `dac02aa…`, and raw transport hash changed without semantic drift                                                                                                                                                                                     | Semantic gate stable; raw remains secondary only                                                                     |
+| 2026-08-10T08:10:27Z | GPT implementer                    | Built the production package locally with the exact production contract and no AWS credentials: 92 candidate asset keys, asset-tree SHA `fe40169b…`, default Lambda CodeSha256 `0AwwBWzj…`, GTM artifact SHA `56915fe4…`, newsletter API omitted                                                                                                                                                        | Local implementation proof only; build used planning anchor `d5431ee…`, so exact-commit CI evidence remains required |
+| 2026-08-10T08:13:05Z | GPT implementer                    | Executed the packaged Lambda GET-only SSR smoke against the read-only production CMS for `/`, `/category/films`, `/posts/hec-on-youtube`, and `/newsletter`; every route returned 200 and met the release/GTM/forms/newsletter contract                                                                                                                                                                 | Local package proof passed; no AWS, form, analytics, or conversion mutation                                          |
+| 2026-08-10T08:23:57Z | GPT implementer                    | Re-ran lint with zero errors, the focused release suite with 90/90 passing, and the complete repository suite with 78 suites/505 tests passing, including an executable five-test release-tag controller suite that binds cleanup to the exact annotated object created by the same run                                                                                                                 | Implementation locally green; final exact-head re-run/review pending                                                 |
+
+## GTM semantic freeze
+
+| Field                                 | Implementation-audit capture                                                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Capture UTC                           | `2026-08-10T07:41:02.540Z`                                                                                                      |
+| Request                               | `GET https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN`; fixed audit headers; no loader execution                          |
+| Canonicalization                      | `canonical-resource-v1`                                                                                                         |
+| Resource version                      | `21`                                                                                                                            |
+| Macro / tag / predicate / rule counts | `22 / 34 / 31 / 18`                                                                                                             |
+| Canonical resource SHA-256            | `c3ab2446ed4ff8b9f4c0c8264b537d0c63fa4a209af365dde8270b205e172c0c`                                                              |
+| Normalized inventory schema / SHA-256 | `gtm-normalized-inventory-v1` / `dac02aa2664beebf11ff639df635a63f2fc739a5db57153da931c6b2dce301e0`                              |
+| Raw transport evidence                | 501,018 bytes; SHA `4dd45e09011a12a36a17eb6efc119c581cc6af6d88351ae6ce3660a5a5af2adb`; `secondary_non_gate`                     |
+| Inventory artifact SHA-256            | `4536185e796054faece72b0d5f2fc0aeca2cbe1fff0e6be0b3c2c78f17f74289`                                                              |
+| Summary artifact SHA-256              | `7a06a57fb9814ef10f0938c6118a9678e7699e00252bc316f0f76135b3d580bf`                                                              |
+| Artifact directory                    | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/gtm-production-deployment-plan-2026-08-10/gtm-semantic-capture/` |
+| Owner decision                        | Pending: full tag/destination export approval, `AW-123456789` disposition, consent/PII decision, publish freeze                 |
+
+Raw loader bytes are not equality gates because identical fixed requests returned byte-distinct
+runtime bodies while the canonical resource stayed identical. The deploy gate is resource version,
+canonical semantic SHA-256, counts, and normalized inventory. The full rationale and repeatable
+procedure are preserved in
+[`gtm-production-deployment-audit-2026-08-10.md`](gtm-production-deployment-audit-2026-08-10.md).
+
+## Remediation implementation ledger
+
+| Control                                | Current implementation state                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Route-specific plain/hydrated identity | Implemented and focused-test green; review pending                                                                                                                                                                                                                                                                                                                                                       |
+| Annotated deterministic release tag    | A dedicated tested controller preflights an absent or exact annotated tag, persists the exact immutable tag object plus run/attempt before ref creation, verifies the peeled SHA, and makes ref creation/verification the terminal release operation. Recovery may delete only a ref still pointing to that exact run-created object; a concurrent object is preserved and fails closed. Review pending. |
+| Targeted newsletter/API omission       | Implemented; general forms stay enabled; packaging rejects unexpected API routes                                                                                                                                                                                                                                                                                                                         |
+| GTM semantic pre-/post-gates           | Version, canonical SHA, counts, and complete inventory SHA are gated before credentials, pre-mutation, in Chrome's exact loader response, and post-cutover; committed v21 fixture added; review pending                                                                                                                                                                                                  |
+| Non-polluting browser verifier         | GET/HEAD/path-restricted deny-by-default firewall is installed before navigation; local HTTP/WebSocket zero-hit integration self-test and evidence-before-assert behavior implemented                                                                                                                                                                                                                    |
+| Credential separation                  | Dependencies/tests/build/Chrome run in a contents-read candidate job with no protected environment, secret, OIDC, or write authority; its already-public reCAPTCHA key is exact-value pinned, and the mutator downloads the sealed asset/browser artifact without package install                                                                                                                        |
+| S3 preimage/recovery                   | Task/run/attempt/baseline bound; unsupported entries rejected; local and remote state revalidated; uploaded bytes proven; all collisions attempted; final invalidation suppressed on any incomplete restore                                                                                                                                                                                              |
+| Manual rollback applicability          | Fresh current ETag/default ARN/checksum/API/public candidate SHA plus candidate S3 bytes must all match before first mutation                                                                                                                                                                                                                                                                            |
+| GTM owner record                       | SHA-bound JSON record added in `PENDING`; workflow requires named owner, a checksum-bound regular GTM export-format-v2 artifact for exact container/version, active publish freeze, exact semantic fields, and all eight fixed decisions `APPROVED`                                                                                                                                                      |
+| Decommission interlock                 | Workflow requires exact SHA of reviewed closeout file; closeout does not yet exist and deploy remains blocked                                                                                                                                                                                                                                                                                            |
+| Independent implementation review      | Requested from fleet baseline, GTM inventory, and deployment risk reviewers; pending                                                                                                                                                                                                                                                                                                                     |
 
 ## Closeout
 
-| Item | Record |
-| --- | --- |
-| Terminal outcome | Pending: `deployed`, `rolled_back`, or `no_go` |
-| Final public release SHA | Pending |
-| Final CloudFront/Lambda/API state | Pending |
-| GTM version and acceptance | Pending |
-| HEC TV backend/decommission equivalence | Pending |
-| S3 recovery disposition | Pending |
-| Release tag | Pending |
-| Provider-panel closeout approvals | Pending |
-| Yomi closeout acknowledgement | Pending |
+| Item                                    | Record                                         |
+| --------------------------------------- | ---------------------------------------------- |
+| Terminal outcome                        | Pending: `deployed`, `rolled_back`, or `no_go` |
+| Final public release SHA                | Pending                                        |
+| Final CloudFront/Lambda/API state       | Pending                                        |
+| GTM version and acceptance              | Pending                                        |
+| HEC TV backend/decommission equivalence | Pending                                        |
+| S3 recovery disposition                 | Pending                                        |
+| Release tag                             | Pending                                        |
+| Provider-panel closeout approvals       | Pending                                        |
+| Yomi closeout acknowledgement           | Pending                                        |

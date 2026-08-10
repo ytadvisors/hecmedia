@@ -13,6 +13,7 @@ const configuredEnvironment = [
   "HECMEDIA_TOPBAR_CTAS_JSON",
   "HECMEDIA_DISABLE_IMAGE_OPTIMIZER",
   "HECMEDIA_NEWSLETTER_EXPORT",
+  "HECMEDIA_NEWSLETTER_MODE",
   "RE_CAPTCHA_SECRET_KEY",
   "RE_CAPTCHA_SITE_KEY",
   "GA_TAGMANAGER_ID"
@@ -67,6 +68,14 @@ test("inlines the public GTM container id for TagManager", () => {
   const config = require("./next.config");
 
   expect(config.env.GA_TAGMANAGER_ID).toBe("GTM-57RZPNN");
+});
+
+test("inlines the targeted newsletter release mode", () => {
+  process.env.HECMEDIA_NEWSLETTER_MODE = "omit";
+
+  const config = require("./next.config");
+
+  expect(config.env.HECMEDIA_NEWSLETTER_MODE).toBe("omit");
 });
 
 test("never inlines newsletter or CAPTCHA server credentials", () => {

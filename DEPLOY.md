@@ -9,7 +9,10 @@ The current GTM restoration release is governed by the
 [2026-08-10 GTM production deployment playbook](docs/operations/gtm-production-deployment-playbook-2026-08-10.md).
 Its [living deployment log](docs/operations/gtm-production-deployment-log-2026-08-10.md) records
 the exact gate and execution receipts.
-That playbook is NO-GO until all B1–B10 prerequisites and its execution-authority gate are cleared;
+The [2026-08-10 deployment audit](docs/operations/gtm-production-deployment-audit-2026-08-10.md)
+preserves the investigation, control rationale, GTM semantic freeze, and repeatable evidence
+procedure so those findings do not have to be reconstructed from chat or old workflow logs.
+That playbook is NO-GO until all B1–B11 prerequisites and its execution-authority gate are cleared;
 its approval alone is not permission to dispatch production.
 
 > **NEXT 12 DEPLOYMENT BOUNDARY — PRODUCTION WORKFLOW ONLY**
@@ -30,10 +33,11 @@ its approval alone is not permission to dispatch production.
 > `master` tip. GitHub's `production` environment requires an independent owner
 > approval, prevents self-review, and permits only `master`. The workflow compares the
 > authorized CloudFront ETag, versioned Lambda ARN, and Lambda checksum before any
-> public cutover; scans the uncompressed package for AWS access keys; enables S3
+> public cutover; scans the uncompressed package for AWS access keys; requires S3
 > versioning; updates only existing production resources; verifies rendered and
 > hydrated routes; and automatically restores the immutable sanitized Lambda version
-> `150` if post-cutover verification fails. Direct workstation production mutation is
+> `150` plus bound mutable-S3 preimages if any failure occurs after the write fence. Direct
+> workstation production mutation is
 > not an approved workaround. A green build or test alone is not permission to ship.
 
 ## Legacy full-stack deployment (blocked)
@@ -62,38 +66,50 @@ sanitized Lambda version; the historical Serverless path has no supported rollba
 Dispatch `.github/workflows/production-deploy.yml` only from `master`. A deploy requires the
 exact `master` SHA, the CloudFront ETag captured immediately before approval, the exact live
 default Lambda@Edge version ARN and `CodeSha256`, the exact live newsletter API version ARN (or
-`none` when the behavior is absent), a positive HEC Media queue-task receipt, and the literal
-confirmation `DEPLOY HEC FRONTEND PRODUCTION`.
+`none` when the behavior is absent), the analytics-owner-approved GTM resource version and
+`canonical-resource-v1` SHA-256, exact resource counts and normalized-inventory SHA-256, the
+SHA-256 of the reviewed in-repo GTM owner/export/freeze record, a reviewed
+decommission-observation closeout SHA-256, a positive
+HEC Media queue-task receipt, and the literal confirmation `DEPLOY HEC FRONTEND PRODUCTION`.
 
-The workflow packages before receiving AWS credentials. Its OIDC role can update only S3 bucket
+Dependency installation, tests, packaging, pinned Chrome setup, firewall integration proof, and
+the first semantic GTM capture run in a separate contents-read job with no OIDC or write
+permission. The mutator downloads and revalidates the sealed asset/browser artifact and performs
+no package installation. Its OIDC role can update only S3 bucket
 `x2l4ew-k0m7umi`, Lambda functions `x2l4ew-l5vb7pd` and `x2l4ew-api`, and CloudFront distribution
-`E2QXRSF2W55RTS`. It cannot create infrastructure, modify IAM or Route 53, read Secrets Manager,
-or delete S3 objects. A successful release receives an immutable
-`hecmedia-production-<12-character-sha>` tag and uploads release evidence.
+`E2QXRSF2W55RTS`. This release publishes only the frontend Lambda and keeps the newsletter API
+behavior absent. The role cannot create infrastructure, modify IAM or Route 53, read Secrets
+Manager, list/read noncurrent S3 versions, or delete S3 objects. A successful release uploads
+required pre-tag evidence and then creates/verifies the immutable annotated
+`hecmedia-production-<12-character-sha>` tag as the terminal operation. Any failure after the S3
+write fence invokes same-attempt recovery; a same-run tag is removed only after recovery.
 
-For a deploy action, the protected-environment approval prompt appears only after a separate
-no-credential media preflight resolves the candidate's live Spotlight and representative category
-image URLs and confirms that they return images. The protected job reruns the full tests before it
-receives AWS credentials or mutates production. After cutover, hydrated content routes must contain
+For a deploy action, a no-credential media preflight resolves the candidate's live Spotlight and
+representative category image URLs and confirms that they return images. The credential-free
+candidate-build job runs the full checks with no protected environment, secrets, OIDC, or write
+authority; its reCAPTCHA site key is public, already shipped in the client bundle, and exact-value
+pinned. The later protected mutator consumes its sealed artifact. After cutover, hydrated content routes must contain
 managed upload media, all rendered remote `src` and `srcset` candidates must return images, and
 utility routes may record an empty media inventory.
 
 Manual rollback uses the same workflow with `action=rollback` and the literal confirmation
 `ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the immutable checksum of version `150`, moves all
 four owned SSR associations to that version, removes the newsletter API behavior, waits for
-CloudFront and invalidation completion, and verifies the public homepage. Never infer a rollback
-target as version N-1.
+complete S3 preimage restoration before issuing the final invalidation, and verifies both aliases
+with normal and fresh-query responses for the baseline release SHA, GTM absence, and newsletter
+API absence. Never infer a rollback target as version N-1.
 
-**S3 rollback warning:** the current automatic rollback restores Lambda/CloudFront but does not
-restore objects overwritten by the preceding `aws s3 sync`. The deploy role cannot list or read a
-noncurrent S3 VersionId. The next release is NO-GO until the linked GTM playbook's B8 control lands:
-copy current colliding/mutable objects to a task-scoped preimage prefix before sync, then restore
-their bytes and metadata with the existing `GetObject`/`PutObject` authority into a new current
-version. The manifest must be checksum-bound to the original deploy task/run and supplied
-explicitly to a later manual rollback—never inferred as “latest.” Restore S3 before the final
-invalidation (or issue a second invalidation afterward), wait for that invalidation, and only then
-run normal/cache-busted recovery checks. Direct workstation or improvised VersionId recovery is not
-supported.
+**S3 rollback warning:** the deploy role cannot list or read a noncurrent S3 VersionId. Before sync,
+the governed workflow must copy every current colliding/mutable object to its exact
+task/run/attempt/release-scoped preimage, download and verify matching bytes/metadata, and bind the
+uploaded manifest to the original task, run, attempt, release SHA, baseline public SHA/ETag,
+manifest key, and manifest SHA-256.
+Automatic and manual rollback restore those verified preimages as new current versions before the
+final invalidation. New mutable/unapproved keys are NO-GO because the role cannot delete them.
+Manual rollback must also prove fresh current ETag/default ARN/checksum/API state, the affected
+public candidate SHA, and candidate S3 bytes before mutation. It must supply the original immutable
+selector; never infer “latest.” Direct
+workstation or improvised VersionId recovery is not supported.
 
 ## Staging publishing retired
 

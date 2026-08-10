@@ -1,19 +1,24 @@
 const path = require("path");
+const os = require("os");
 
 const realFs = jest.requireActual("fs");
 const {
   API_PATH,
   SANITIZED_ROLLBACK_ARN,
   SANITIZED_ROLLBACK_CODE_SHA256,
+  applySanitizedRollback,
+  assertBuiltGtmContract,
   assertDistributionContract,
   assertFunctionContract,
   assertGovernedDeployContext,
   assertHydratedImageSources,
   assertHydratedNavigation,
+  assertHydratedSiteIdentity,
   assertRemoteImageResponse,
   configureProductionDistribution,
   configureSanitizedRollback,
   extractRemoteImageUrls,
+  isApprovedRemoteImageUrl,
   parseJsonOutput,
   publishedVersionFromArn,
   requireBuildContract
@@ -21,7 +26,6 @@ const {
 
 const defaultBase =
   "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd";
-const apiBase = "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api";
 const baselineDefault = `${defaultBase}:146`;
 
 function associations(version) {
@@ -56,6 +60,7 @@ function distribution() {
     },
     DefaultCacheBehavior: {
       TargetOriginId: "x2l4ew-k0m7umi",
+      ForwardedValues: { QueryString: true },
       ViewerProtocolPolicy: "redirect-to-https",
       AllowedMethods: {
         Quantity: 2,
@@ -88,22 +93,29 @@ function buildEnv() {
     WP_HOST: "https://prod-wp.hectv.org",
     SITE_HOST: "https://hecmedia.org",
     HECMEDIA_NO_SEND_FORMS: "false",
-    HECMEDIA_EDGE_API: "true",
+    HECMEDIA_EDGE_API: "false",
+    HECMEDIA_NEWSLETTER_MODE: "omit",
     HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true",
     HECMEDIA_MODERN_WPGRAPHQL: "true",
     DEPLOY_SHA: "a".repeat(40),
-    RE_CAPTCHA_SITE_KEY: `6L${"a".repeat(38)}`,
-    GA_TAGMANAGER_ID: "GTM-57RZPNN"
+    RE_CAPTCHA_SITE_KEY: "6Lf8RFAUAAAAAPArR_euM1R2KgaGujAOUAofjdZo",
+    GA_TAGMANAGER_ID: "GTM-57RZPNN",
+    EXPECTED_GTM_RESOURCE_VERSION: "21",
+    EXPECTED_GTM_CANONICAL_SHA256: "c".repeat(64),
+    EXPECTED_GTM_COUNTS: "22/34/31/18",
+    EXPECTED_GTM_INVENTORY_SHA256: "d".repeat(64)
   };
 }
 
 function governedEnv(action = "deploy") {
-  return {
+  const env = {
     GITHUB_ACTIONS: "true",
     GITHUB_EVENT_NAME: "workflow_dispatch",
     GITHUB_WORKFLOW_REF:
       "ytadvisors/hecmedia/.github/workflows/production-deploy.yml@refs/heads/master",
     GITHUB_ACTOR: "yt-agent-tom-gpt",
+    GITHUB_RUN_ID: "31360000000",
+    GITHUB_RUN_ATTEMPT: "1",
     HECMEDIA_PRODUCTION_REQUEST_TASK_ID: "86634",
     DEPLOY_SHA: "a".repeat(40),
     PRODUCTION_CONFIRMATION:
@@ -111,13 +123,36 @@ function governedEnv(action = "deploy") {
         ? "ROLLBACK HEC FRONTEND PRODUCTION"
         : "DEPLOY HEC FRONTEND PRODUCTION"
   };
+  if (action === "rollback") {
+    env.SOURCE_DEPLOY_TASK_ID = "86633";
+    env.SOURCE_DEPLOY_RUN_ID = "31350000000";
+    env.SOURCE_DEPLOY_RUN_ATTEMPT = "2";
+    env.SOURCE_DEPLOY_RELEASE_SHA = "b".repeat(40);
+    env.SOURCE_DEPLOY_BASELINE_ETAG = "EBASELINE123";
+    env.SOURCE_DEPLOY_BASELINE_RELEASE_SHA = "d".repeat(40);
+    env.PREIMAGE_MANIFEST_KEY = `_deployment-evidence/${env.SOURCE_DEPLOY_TASK_ID}/${env.SOURCE_DEPLOY_RUN_ID}/${env.SOURCE_DEPLOY_RUN_ATTEMPT}/${env.SOURCE_DEPLOY_RELEASE_SHA}/s3-preimage-manifest.json`;
+    env.PREIMAGE_MANIFEST_SHA256 = "c".repeat(64);
+  }
+  return env;
 }
 
-test("requires the exact send-enabled production build contract", () => {
+test("requires send-enabled general forms and an omitted newsletter API", () => {
   expect(() => requireBuildContract(buildEnv())).not.toThrow();
   expect(() =>
     requireBuildContract({ ...buildEnv(), HECMEDIA_NO_SEND_FORMS: "true" })
   ).toThrow("HECMEDIA_NO_SEND_FORMS must equal false");
+  expect(() =>
+    requireBuildContract({ ...buildEnv(), HECMEDIA_EDGE_API: "true" })
+  ).toThrow("HECMEDIA_EDGE_API must equal false");
+  expect(() =>
+    requireBuildContract({ ...buildEnv(), HECMEDIA_NEWSLETTER_MODE: "active" })
+  ).toThrow("HECMEDIA_NEWSLETTER_MODE must equal omit");
+  expect(() =>
+    requireBuildContract({
+      ...buildEnv(),
+      RE_CAPTCHA_SITE_KEY: `6L${"a".repeat(38)}`
+    })
+  ).toThrow("RE_CAPTCHA_SITE_KEY must equal");
   expect(() =>
     requireBuildContract({
       ...buildEnv(),
@@ -134,6 +169,18 @@ test("requires the exact send-enabled production build contract", () => {
   expect(() =>
     requireBuildContract({ ...buildEnv(), GA_TAGMANAGER_ID: "GTM-AAAA" })
   ).toThrow("GA_TAGMANAGER_ID must equal GTM-57RZPNN");
+  expect(() =>
+    requireBuildContract({ ...buildEnv(), EXPECTED_GTM_RESOURCE_VERSION: "" })
+  ).toThrow("EXPECTED_GTM_RESOURCE_VERSION");
+  expect(() =>
+    requireBuildContract({ ...buildEnv(), EXPECTED_GTM_CANONICAL_SHA256: "" })
+  ).toThrow("EXPECTED_GTM_CANONICAL_SHA256");
+  expect(() =>
+    requireBuildContract({ ...buildEnv(), EXPECTED_GTM_COUNTS: "22,34,31,18" })
+  ).toThrow("EXPECTED_GTM_COUNTS");
+  expect(() =>
+    requireBuildContract({ ...buildEnv(), EXPECTED_GTM_INVENTORY_SHA256: "" })
+  ).toThrow("EXPECTED_GTM_INVENTORY_SHA256");
 });
 
 test("parseJsonOutput treats empty get-bucket-versioning stdout as unversioned {}", () => {
@@ -146,6 +193,28 @@ test("parseJsonOutput treats empty get-bucket-versioning stdout as unversioned {
   expect(parseJsonOutput(null, { allowEmptyObject: true })).toEqual({});
   expect(() => parseJsonOutput("")).toThrow(/empty stdout/);
   expect(() => parseJsonOutput("not-json")).toThrow(/parse failed/);
+});
+
+test("built artifacts contain only the approved GTM container and loader", () => {
+  const directory = realFs.mkdtempSync(path.join(os.tmpdir(), "hec-gtm-"));
+  try {
+    realFs.writeFileSync(
+      path.join(directory, "candidate.js"),
+      "dataLayer;event:'gtm.js';www.googletagmanager.com/gtm.js?id=;GTM-57RZPNN"
+    );
+    expect(assertBuiltGtmContract([directory])).toMatchObject({
+      container_id: "GTM-57RZPNN"
+    });
+    realFs.writeFileSync(
+      path.join(directory, "wrong.js"),
+      "www.googletagmanager.com/gtm.js?id=;GTM-WRONG"
+    );
+    expect(() => assertBuiltGtmContract([directory])).toThrow(
+      "Built candidate GTM contract failed"
+    );
+  } finally {
+    realFs.rmSync(directory, { force: true, recursive: true });
+  }
 });
 
 test("production verification requires hydrated primary navigation items", () => {
@@ -161,6 +230,42 @@ test("production verification requires hydrated primary navigation items", () =>
       "/"
     )
   ).toThrow("has no primary navigation items");
+});
+
+test("hydrated identity is route-specific and rejects error documents", () => {
+  expect(() =>
+    assertHydratedSiteIdentity(
+      '<title>HEC on YouTube</title><article data-media-verification="article-content">Video</article>',
+      "/posts/hec-on-youtube"
+    )
+  ).not.toThrow();
+  expect(() =>
+    assertHydratedSiteIdentity(
+      '<title>404</title><article data-media-verification="article-content">404 not found.</article>',
+      "/posts/hec-on-youtube"
+    )
+  ).toThrow("invalid/error document");
+  expect(() =>
+    assertHydratedSiteIdentity("<title>HEC-TV | Home</title>HEC-TV", "/")
+  ).not.toThrow();
+  expect(() =>
+    assertHydratedSiteIdentity(
+      '<title>HEC-TV | Films</title><main data-media-verification="post-list">Films</main>',
+      "/category/films"
+    )
+  ).not.toThrow();
+  expect(() =>
+    assertHydratedSiteIdentity(
+      '<title>HEC-TV | Newsletter Signup</title><main class="newsletter-unavailable">Unavailable</main>',
+      "/newsletter"
+    )
+  ).not.toThrow();
+  expect(() =>
+    assertHydratedSiteIdentity(
+      "<title>HEC-TV | About Us</title><main>Wrong page</main>",
+      "/newsletter"
+    )
+  ).toThrow("unexpected identity");
 });
 
 test("production verification inventories src and srcset candidates", () => {
@@ -240,27 +345,37 @@ test("production verification allows utility routes with no remote images", () =
 });
 
 test("production verification requires an image response from rendered URLs", () => {
+  const approvedImage =
+    "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/story.jpg";
   expect(() =>
-    assertRemoteImageResponse("https://media.example.com/story.jpg", "/", {
+    assertRemoteImageResponse(approvedImage, "/", {
       status: 0,
       stdout: "206\timage/jpeg",
       stderr: ""
     })
   ).not.toThrow();
   expect(() =>
-    assertRemoteImageResponse("https://media.example.com/story.jpg", "/", {
+    assertRemoteImageResponse(approvedImage, "/", {
       status: 0,
       stdout: "200\ttext/html",
       stderr: ""
     })
   ).toThrow("returned non-image content type text/html");
   expect(() =>
-    assertRemoteImageResponse("https://media.example.com/missing.jpg", "/", {
+    assertRemoteImageResponse(approvedImage, "/", {
       status: 22,
       stdout: "404\ttext/html",
       stderr: "curl: (22) The requested URL returned error: 404"
     })
   ).toThrow("has a broken image");
+  expect(
+    isApprovedRemoteImageUrl(
+      "https://asset.ytadvisors.com/client-documents/hecmedia/media-library/education.jpg"
+    )
+  ).toBe(true);
+  expect(
+    isApprovedRemoteImageUrl("https://analytics.example.com/pixel.gif")
+  ).toBe(false);
 });
 
 test("allows production mutation only from the governed workflow", () => {
@@ -289,6 +404,12 @@ test("requires a distinct explicit confirmation for rollback", () => {
   expect(() => assertGovernedDeployContext(governedEnv(), "rollback")).toThrow(
     "confirmation phrase"
   );
+  expect(() =>
+    assertGovernedDeployContext(
+      { ...governedEnv("rollback"), SOURCE_DEPLOY_RUN_ATTEMPT: "" },
+      "rollback"
+    )
+  ).toThrow("original deploy run attempt");
 });
 
 test("pins the existing Lambda runtime contract before code mutation", () => {
@@ -314,15 +435,13 @@ test("pins the existing Lambda runtime contract before code mutation", () => {
   ).toThrow("Lambda runtime contract drifted");
 });
 
-test("atomically replaces four SSR associations and adds the exact API behavior", () => {
+test("atomically replaces four SSR associations and keeps the API absent", () => {
   const nextDefault = `${defaultBase}:149`;
-  const nextApi = `${apiBase}:4`;
   const configured = configureProductionDistribution(
     distribution(),
     baselineDefault,
     "none",
-    nextDefault,
-    nextApi
+    nextDefault
   );
 
   const owned = [
@@ -336,49 +455,28 @@ test("atomically replaces four SSR associations and adds the exact API behavior"
     true
   );
 
-  const api = configured.CacheBehaviors.Items.find(
-    behavior => behavior.PathPattern === API_PATH
-  );
-  expect(api.LambdaFunctionAssociations).toEqual({
-    Quantity: 1,
-    Items: [
-      {
-        LambdaFunctionARN: nextApi,
-        EventType: "origin-request",
-        IncludeBody: true
-      }
-    ]
-  });
-  expect(api.DefaultTTL).toBe(0);
-  expect(api.MaxTTL).toBe(0);
+  expect(
+    configured.CacheBehaviors.Items.some(
+      behavior => behavior.PathPattern === API_PATH
+    )
+  ).toBe(false);
 });
 
-test("supports a subsequent release only from the exact API baseline", () => {
-  const firstDefault = `${defaultBase}:149`;
-  const firstApi = `${apiBase}:4`;
-  const first = configureProductionDistribution(
-    distribution(),
-    baselineDefault,
-    "none",
-    firstDefault,
-    firstApi
-  );
+test("refuses to reactivate or inherit a newsletter API behavior", () => {
+  const withApi = distribution();
+  withApi.CacheBehaviors.Items.push({ PathPattern: API_PATH });
+  withApi.CacheBehaviors.Quantity = withApi.CacheBehaviors.Items.length;
   expect(() =>
-    assertDistributionContract(first, firstDefault, firstApi)
-  ).not.toThrow();
-  expect(() => assertDistributionContract(first, firstDefault, "none")).toThrow(
-    "authorized baseline says none"
-  );
-
+    assertDistributionContract(withApi, baselineDefault, "none")
+  ).toThrow("authorized baseline says none");
   expect(() =>
     configureProductionDistribution(
-      first,
-      firstDefault,
-      `${apiBase}:3`,
-      `${defaultBase}:150`,
-      `${apiBase}:5`
+      distribution(),
+      baselineDefault,
+      "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:6",
+      `${defaultBase}:150`
     )
-  ).toThrow("API baseline drifted");
+  ).toThrow("outside the approved GTM release path");
 });
 
 test("refuses alias, origin, or Lambda baseline drift", () => {
@@ -399,6 +497,29 @@ test("refuses alias, origin, or Lambda baseline drift", () => {
   expect(() =>
     assertDistributionContract(wrongVersion, baselineDefault)
   ).toThrow("Lambda version drifted");
+
+  const foreignAssociation = distribution();
+  foreignAssociation.CacheBehaviors.Items[1].LambdaFunctionAssociations = {
+    Items: [
+      {
+        EventType: "viewer-request",
+        IncludeBody: false,
+        LambdaFunctionARN:
+          "arn:aws:lambda:us-east-1:850335719356:function:unexpected:1"
+      }
+    ],
+    Quantity: 1
+  };
+  expect(() =>
+    assertDistributionContract(foreignAssociation, baselineDefault)
+  ).toThrow("exactly four owned");
+
+  const wrongEventShape = distribution();
+  wrongEventShape.DefaultCacheBehavior.LambdaFunctionAssociations.Items[0].EventType =
+    "viewer-request";
+  expect(() =>
+    assertDistributionContract(wrongEventShape, baselineDefault)
+  ).toThrow("association shape drifted");
 });
 
 test("rollback always restores sanitized version 150 and removes the API behavior", () => {
@@ -406,9 +527,10 @@ test("rollback always restores sanitized version 150 and removes the API behavio
     distribution(),
     baselineDefault,
     "none",
-    `${defaultBase}:149`,
-    `${apiBase}:4`
+    `${defaultBase}:149`
   );
+  released.CacheBehaviors.Items.push({ PathPattern: API_PATH });
+  released.CacheBehaviors.Quantity = released.CacheBehaviors.Items.length;
   const rolledBack = configureSanitizedRollback(released);
   const allAssociations = [
     ...rolledBack.DefaultCacheBehavior.LambdaFunctionAssociations.Items,
@@ -436,6 +558,30 @@ test("rollback always restores sanitized version 150 and removes the API behavio
   expect(() => publishedVersionFromArn(`${defaultBase}:$LATEST`)).toThrow(
     "Invalid published Lambda@Edge ARN"
   );
+});
+
+test("rollback never invalidates or reports success after a partial S3 restore", () => {
+  const invalidateCache = jest.fn();
+  const partial = new Error("second collision failed");
+  partial.restoreResult = {
+    failures: [{ key: "BUILD_ID", message: "checksum mismatch" }],
+    restored: [{ key: "_next/data/old.json" }]
+  };
+  expect(() =>
+    applySanitizedRollback(
+      { outcome: "failed" },
+      {
+        invalidateCache,
+        persistState: jest.fn(),
+        restoreDistribution: false,
+        restoreS3: () => {
+          throw partial;
+        },
+        s3Manifest: { schema: "test" }
+      }
+    )
+  ).toThrow("Rollback had 1 failure");
+  expect(invalidateCache).not.toHaveBeenCalled();
 });
 
 test("production workflow is protected, OIDC-only, pinned, and never uses legacy deploy", () => {
@@ -467,6 +613,24 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   );
   expect(workflow).toContain('chrome-version: "151.0.7922.76"');
   expect(workflow).toContain(
+    "node scripts/production-browser-verifier.js --self-test"
+  );
+  expect(workflow).toContain(
+    "node scripts/verify-gtm-resource.js pre-credential"
+  );
+  expect(workflow).toContain(
+    "node scripts/production-release-tag.js preflight"
+  );
+  expect(workflow).toContain("node scripts/production-release-tag.js create");
+  expect(workflow).toContain("node scripts/production-release-tag.js cleanup");
+  expect(workflow).toContain("node scripts/production-deploy.js recover");
+  expect(workflow).toContain("persist-credentials: false");
+  expect(workflow).toContain("source_deploy_release_sha:");
+  expect(workflow).toContain("source_deploy_run_attempt:");
+  expect(workflow).toContain("source_deploy_baseline_release_sha:");
+  expect(workflow).toContain("preimage_manifest_sha256:");
+  expect(workflow).toContain("expected_gtm_inventory_sha256:");
+  expect(workflow).toContain(
     ["BROWSER_BIN: $", "{{ steps.setup-chrome.outputs.chrome-path }}"].join("")
   );
   const mediaPreflight = workflow.indexOf("  media-preflight:");
@@ -478,17 +642,28 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   expect(script).toContain('"/posts/hec-on-youtube"');
   expect(protectedEnvironment).toBeGreaterThan(mediaPreflight);
   const browserPreflight = workflow.indexOf(
-    "Verify Chrome before production credentials"
+    "Prove the HTTP and WebSocket firewall and package its runtime"
   );
   const awsCredentials = workflow.indexOf(
     "aws-actions/configure-aws-credentials@"
   );
   expect(browserPreflight).toBeGreaterThan(-1);
   expect(awsCredentials).toBeGreaterThan(browserPreflight);
+  const candidateJob = workflow.slice(
+    workflow.indexOf("  candidate-build:"),
+    workflow.indexOf("  deploy-or-rollback:")
+  );
+  expect(candidateJob).toContain("contents: read");
+  expect(candidateJob).not.toContain("environment:");
+  expect(candidateJob).not.toContain("secrets.");
+  expect(candidateJob).not.toContain("id-token: write");
+  expect(candidateJob).not.toContain("contents: write");
   expect(workflow).not.toContain("AWS_ACCESS_KEY_ID");
   expect(workflow).not.toContain("AWS_SECRET_ACCESS_KEY");
   expect(workflow).not.toContain("yarn deploy");
-  expect(workflow).not.toContain("serverless");
+  expect(workflow).not.toContain("serverless deploy");
+  expect(workflow).not.toContain("yarn serverless");
+  expect(script).toContain('"--no-follow-symlinks"');
   expect(ciWorkflow).not.toContain("AWS_ACCESS_KEY_ID");
   expect(ciWorkflow).not.toContain("AWS_SECRET_ACCESS_KEY");
   expect(ciWorkflow).not.toContain("yarn deploy");
@@ -499,7 +674,24 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
     'assertGovernedDeployContext(process.env, "deploy")',
     deployStart
   );
-  const firstMutation = script.indexOf('"put-bucket-versioning"', deployStart);
+  const preimages = script.indexOf("preparePreimages({", deployStart);
+  const firstMutation = script.indexOf("syncAssets();", deployStart);
   expect(guard).toBeGreaterThan(deployStart);
+  expect(preimages).toBeGreaterThan(guard);
   expect(firstMutation).toBeGreaterThan(guard);
+  expect(firstMutation).toBeGreaterThan(preimages);
+  expect(script).not.toContain('"put-bucket-versioning"');
+
+  const preTagUpload = workflow.indexOf(
+    "Upload verified pre-tag production evidence"
+  );
+  const releaseTag = workflow.indexOf(
+    "Record immutable successful frontend release tag as the terminal release operation"
+  );
+  const emergencyRecovery = workflow.indexOf(
+    "Recover the exact deploy attempt after any post-write failure"
+  );
+  expect(preTagUpload).toBeGreaterThan(awsCredentials);
+  expect(releaseTag).toBeGreaterThan(preTagUpload);
+  expect(emergencyRecovery).toBeGreaterThan(releaseTag);
 });
