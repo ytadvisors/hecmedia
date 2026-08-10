@@ -58,23 +58,20 @@ jobs:
           fi
           yarn test:e2e
 
-  # Preserve the historical check name without granting pull requests a deploy
-  # path. Staging publishes are explicit workflow_dispatch runs of the governed
-  # staging workflow after review; CI only verifies that entrypoint is present.
+  # Preserve the historical check name for branch-protection compatibility.
+  # The job now fails closed if a staging deployment entrypoint is reintroduced.
   preview-deploy:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
     needs: [test, e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: "yarn"
-      - run: yarn install --frozen-lockfile
-      - name: Verify preview publishing remains governed
+      - name: Verify staging publishing remains retired
         run: |
           set -euo pipefail
-          test -f .github/workflows/staging-deploy.yml
-          grep -q 'workflow_dispatch:' .github/workflows/staging-deploy.yml
-          echo "Preview publish is manual through the governed staging workflow."
+          test ! -e .github/workflows/staging-deploy.yml
+          test ! -e scripts/staging-deploy.js
+          test ! -e scripts/verify-staging.js
+          test -f scripts/edge-package-build.js
+          grep -q 'require("./edge-package-build")' scripts/production-deploy.js
+          echo "Staging publishing remains retired; production uses the build-only helper."
