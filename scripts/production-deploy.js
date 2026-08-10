@@ -204,6 +204,13 @@ function requireBuildContract(env = process.env) {
       "RE_CAPTCHA_SITE_KEY must be the public production site key."
     );
   }
+  // GTM container ids are public (emitted in HTML). Fail closed so production
+  // never ships a silent TagManager no-op again (zero GA traffic).
+  if (!/^GTM-[A-Z0-9]+$/.test(env.GA_TAGMANAGER_ID || "")) {
+    throw new Error(
+      "GA_TAGMANAGER_ID must be the public production GTM container id (GTM-…)."
+    );
+  }
 }
 
 function assertGovernedDeployContext(env = process.env, action = "deploy") {

@@ -14,7 +14,8 @@ const configuredEnvironment = [
   "HECMEDIA_DISABLE_IMAGE_OPTIMIZER",
   "HECMEDIA_NEWSLETTER_EXPORT",
   "RE_CAPTCHA_SECRET_KEY",
-  "RE_CAPTCHA_SITE_KEY"
+  "RE_CAPTCHA_SITE_KEY",
+  "GA_TAGMANAGER_ID"
 ];
 const savedEnvironment = {};
 
@@ -58,6 +59,14 @@ test("inlines the staging reCAPTCHA site key for the newsletter preview", () => 
   const config = require("./next.config");
 
   expect(config.env.RE_CAPTCHA_SITE_KEY).toBe("staging-site-key");
+});
+
+test("inlines the public GTM container id for TagManager", () => {
+  process.env.GA_TAGMANAGER_ID = "GTM-57RZPNN";
+
+  const config = require("./next.config");
+
+  expect(config.env.GA_TAGMANAGER_ID).toBe("GTM-57RZPNN");
 });
 
 test("never inlines newsletter or CAPTCHA server credentials", () => {

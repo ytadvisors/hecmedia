@@ -92,7 +92,8 @@ function buildEnv() {
     HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true",
     HECMEDIA_MODERN_WPGRAPHQL: "true",
     DEPLOY_SHA: "a".repeat(40),
-    RE_CAPTCHA_SITE_KEY: `6L${"a".repeat(38)}`
+    RE_CAPTCHA_SITE_KEY: `6L${"a".repeat(38)}`,
+    GA_TAGMANAGER_ID: "GTM-57RZPNN"
   };
 }
 
@@ -123,6 +124,12 @@ test("requires the exact send-enabled production build contract", () => {
       APOLLO_CLIENT_URI: "https://example.org"
     })
   ).toThrow("APOLLO_CLIENT_URI must equal");
+  expect(() =>
+    requireBuildContract({ ...buildEnv(), GA_TAGMANAGER_ID: "" })
+  ).toThrow("GA_TAGMANAGER_ID must be the public production GTM");
+  expect(() =>
+    requireBuildContract({ ...buildEnv(), GA_TAGMANAGER_ID: "G-NOT-GTM" })
+  ).toThrow("GA_TAGMANAGER_ID must be the public production GTM");
 });
 
 test("parseJsonOutput treats empty get-bucket-versioning stdout as unversioned {}", () => {
