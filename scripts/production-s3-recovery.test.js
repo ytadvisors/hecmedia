@@ -11,6 +11,7 @@ const {
   manifestKey,
   preparePreimages,
   restorePreimages,
+  uploadCandidates,
   validateManifest
 } = require("./production-s3-recovery");
 
@@ -42,9 +43,22 @@ function metadata(body, versionId = "v1") {
 function fakeS3(initial = {}) {
   const objects = new Map(Object.entries(initial));
   return {
-    copy(source, destination) {
+    copy(source, destination, conditions = {}) {
       const value = objects.get(source);
       if (!value) throw new Error(`missing source ${source}`);
+      const current = objects.get(destination);
+      if (conditions.sourceIfMatch && value.ETag !== conditions.sourceIfMatch) {
+        throw new Error("412 source precondition failed");
+      }
+      if (conditions.destinationIfNoneMatch === "*" && current) {
+        throw new Error("412 destination must be absent");
+      }
+      if (
+        conditions.destinationIfMatch &&
+        (!current || current.ETag !== conditions.destinationIfMatch)
+      ) {
+        throw new Error("412 destination precondition failed");
+      }
       objects.set(destination, { ...value, VersionId: `copy-${destination}` });
     },
     getFile(key, destination) {
@@ -56,7 +70,30 @@ function fakeS3(initial = {}) {
       return objects.get(key) || null;
     },
     objects,
-    putFile(key, source, customMetadata) {
+    putCandidate(key, source, options = {}) {
+      const current = objects.get(key);
+      if (options.destinationIfNoneMatch === "*" && current) {
+        throw new Error("412 candidate destination must be absent");
+      }
+      if (
+        options.destinationIfMatch &&
+        (!current || current.ETag !== options.destinationIfMatch)
+      ) {
+        throw new Error("412 candidate destination changed");
+      }
+      const body = fs.readFileSync(source, "utf8");
+      const uploaded = {
+        ...metadata(body, `candidate-${key}`),
+        ContentType: options.contentType,
+        Metadata: {}
+      };
+      objects.set(key, uploaded);
+      return { ETag: uploaded.ETag, VersionId: uploaded.VersionId };
+    },
+    putFile(key, source, customMetadata, conditions = {}) {
+      if (conditions.destinationIfNoneMatch === "*" && objects.has(key)) {
+        throw new Error("412 manifest destination must be absent");
+      }
       const body = fs.readFileSync(source, "utf8");
       objects.set(key, {
         ...metadata(body, `manifest-${key}`),
@@ -99,11 +136,7 @@ test("copies collisions and permits only approved additive prefixes", () => {
         })
       ])
     );
-    s3.objects.set("BUILD_ID", metadata("candidate", "v2"));
-    s3.objects.set(
-      "_next/static/candidate/new.js",
-      metadata("new", "candidate-static")
-    );
+    expect(uploadCandidates(prepared.manifest, assets, s3)).toHaveLength(2);
     expect(
       assertUploadedCandidates(prepared.manifest, s3, output)
     ).toHaveLength(2);
@@ -148,7 +181,11 @@ test("manual rollback loads only the exact task/run/key/checksum binding", () =>
         additivePolicy: "content-addressed-build-output",
         buildId: "candidate",
         key: "_next/static/candidate/new.js",
-        local: { sha256: "b".repeat(64), size: 1 }
+        local: {
+          contentType: "application/javascript",
+          sha256: "b".repeat(64),
+          size: 1
+        }
       }
     ],
     manifestKey: selectedKey,
@@ -261,9 +298,8 @@ test("attempts every collision and reports partial restore evidence", () => {
     const collisions = prepared.manifest.entries.filter(
       entry => entry.classification === "existing-collision"
     );
+    uploadCandidates(prepared.manifest, assets, s3);
     s3.objects.delete(collisions[0].preimageKey);
-    s3.objects.set("BUILD_ID", metadata("candidate-id"));
-    s3.objects.set("build-manifest.json", metadata("candidate-manifest"));
     let failure;
     try {
       restorePreimages(prepared.manifest, s3, output);
@@ -275,6 +311,111 @@ test("attempts every collision and reports partial restore evidence", () => {
     expect(s3.objects.get(failure.restoreResult.restored[0].key).body).toMatch(
       /^baseline-/
     );
+  } finally {
+    fs.rmSync(root, { force: true, recursive: true });
+  }
+});
+
+test("conditional candidate uploads preserve concurrent collision and additive writes", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hec-s3-upload-race-"));
+  const assets = path.join(root, "assets");
+  const output = path.join(root, "output");
+  fs.mkdirSync(path.join(assets, "_next/static/candidate"), {
+    recursive: true
+  });
+  fs.writeFileSync(path.join(assets, "BUILD_ID"), "candidate");
+  fs.writeFileSync(path.join(assets, "_next/static/candidate/new.js"), "new");
+  const s3 = fakeS3({ BUILD_ID: metadata("baseline") });
+  try {
+    const prepared = preparePreimages({
+      assetsDir: assets,
+      binding: { ...binding, runAttempt: "4" },
+      bucket: "bucket",
+      outputDir: output,
+      s3
+    });
+    s3.objects.set("BUILD_ID", metadata("concurrent", "concurrent-v1"));
+    expect(() => uploadCandidates(prepared.manifest, assets, s3)).toThrow(
+      "candidate destination changed"
+    );
+    expect(s3.objects.get("BUILD_ID").body).toBe("concurrent");
+
+    const collision = prepared.manifest.entries.find(
+      entry => entry.key === "BUILD_ID"
+    );
+    s3.objects.set("BUILD_ID", {
+      ...s3.objects.get(collision.preimageKey),
+      VersionId: "reset-baseline"
+    });
+    s3.objects.set(
+      "_next/static/candidate/new.js",
+      metadata("concurrent-additive", "concurrent-v2")
+    );
+    expect(() => uploadCandidates(prepared.manifest, assets, s3)).toThrow(
+      "candidate destination must be absent"
+    );
+    expect(s3.objects.get("_next/static/candidate/new.js").body).toBe(
+      "concurrent-additive"
+    );
+  } finally {
+    fs.rmSync(root, { force: true, recursive: true });
+  }
+});
+
+test("preimage and manifest evidence writes refuse existing destinations", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hec-s3-evidence-race-"));
+  const assets = path.join(root, "assets");
+  fs.mkdirSync(assets, { recursive: true });
+  fs.writeFileSync(path.join(assets, "BUILD_ID"), "candidate");
+  const raceBinding = { ...binding, runAttempt: "5" };
+  const preimageKey = `${evidencePrefix(raceBinding)}/preimages/BUILD_ID`;
+  const s3 = fakeS3({
+    BUILD_ID: metadata("baseline"),
+    [preimageKey]: metadata("concurrent-evidence")
+  });
+  try {
+    expect(() =>
+      preparePreimages({
+        assetsDir: assets,
+        binding: raceBinding,
+        bucket: "bucket",
+        outputDir: path.join(root, "output"),
+        s3
+      })
+    ).toThrow("already exists");
+    expect(s3.objects.get(preimageKey).body).toBe("concurrent-evidence");
+  } finally {
+    fs.rmSync(root, { force: true, recursive: true });
+  }
+});
+
+test("conditional restore refuses drift introduced after rollback inspection", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hec-s3-restore-race-"));
+  const assets = path.join(root, "assets");
+  const output = path.join(root, "output");
+  fs.mkdirSync(assets, { recursive: true });
+  fs.writeFileSync(path.join(assets, "BUILD_ID"), "candidate");
+  const s3 = fakeS3({ BUILD_ID: metadata("baseline") });
+  try {
+    const prepared = preparePreimages({
+      assetsDir: assets,
+      binding: { ...binding, runAttempt: "6" },
+      bucket: "bucket",
+      outputDir: output,
+      s3
+    });
+    uploadCandidates(prepared.manifest, assets, s3);
+    const copy = s3.copy.bind(s3);
+    s3.copy = (source, destination, conditions = {}) => {
+      if (conditions.destinationIfMatch) {
+        s3.objects.set(destination, metadata("concurrent", "concurrent-v3"));
+      }
+      return copy(source, destination, conditions);
+    };
+    expect(() => restorePreimages(prepared.manifest, s3, output)).toThrow(
+      "destination precondition failed"
+    );
+    expect(s3.objects.get("BUILD_ID").body).toBe("concurrent");
   } finally {
     fs.rmSync(root, { force: true, recursive: true });
   }

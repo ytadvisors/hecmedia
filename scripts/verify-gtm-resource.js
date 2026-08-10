@@ -33,6 +33,30 @@ function sha256(value) {
     .digest("hex");
 }
 
+function assertRegularFileWithoutSymlinks(root, target) {
+  const relative = path.relative(root, target);
+  if (
+    !relative ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
+  ) {
+    throw new Error("Reviewed GTM export artifact escaped its evidence root.");
+  }
+  let current = root;
+  ["", ...relative.split(path.sep)].forEach((part, index, components) => {
+    if (part) current = path.join(current, part);
+    const stats = fs.lstatSync(current);
+    if (stats.isSymbolicLink()) {
+      throw new Error(
+        "Reviewed GTM export artifact contains a symlink component."
+      );
+    }
+    if (index < components.length - 1 && !stats.isDirectory()) {
+      throw new Error("Reviewed GTM export evidence path is not a directory.");
+    }
+  });
+}
+
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === "object") {
@@ -513,27 +537,47 @@ function verifyOwnerApproval(approvalPath, env = process.env, options = {}) {
     throw new Error("Reviewed GTM export evidence is missing or unsafe.");
   }
   const absoluteExportPath = path.resolve(repoRoot, exportPath);
-  const evidenceRoot = `${path.resolve(repoRoot, "docs/operations/evidence")}${
-    path.sep
-  }`;
-  let exportStats = null;
-  if (fs.existsSync(absoluteExportPath)) {
-    exportStats = fs.lstatSync(absoluteExportPath);
+  const evidenceRoot = path.resolve(repoRoot, "docs/operations/evidence");
+  let exportBuffer;
+  try {
+    assertRegularFileWithoutSymlinks(evidenceRoot, absoluteExportPath);
+    const physicalEvidenceRoot = fs.realpathSync(evidenceRoot);
+    const physicalExportPath = fs.realpathSync(absoluteExportPath);
+    const physicalRelative = path.relative(
+      physicalEvidenceRoot,
+      physicalExportPath
+    );
+    if (
+      !physicalRelative ||
+      physicalRelative.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(physicalRelative)
+    ) {
+      throw new Error("physical export path escaped its evidence root");
+    }
+    // O_NOFOLLOW makes the final open fail closed if the file is swapped to a
+    // symlink after the component walk and realpath checks.
+    const openFlags =
+      // eslint-disable-next-line no-bitwise
+      fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW;
+    const descriptor = fs.openSync(physicalExportPath, openFlags);
+    try {
+      const exportStats = fs.fstatSync(descriptor);
+      if (!exportStats.isFile() || exportStats.size > 10 * 1024 * 1024) {
+        throw new Error("export is not a bounded regular file");
+      }
+      exportBuffer = fs.readFileSync(descriptor);
+    } finally {
+      fs.closeSync(descriptor);
+    }
+  } catch (error) {
+    throw new Error(`Reviewed GTM export artifact is unsafe: ${error.message}`);
   }
-  if (
-    !absoluteExportPath.startsWith(evidenceRoot) ||
-    !exportStats ||
-    !exportStats.isFile() ||
-    exportStats.isSymbolicLink() ||
-    exportStats.size > 10 * 1024 * 1024 ||
-    sha256(fs.readFileSync(absoluteExportPath)) !==
-      approval.publishedExport.sha256
-  ) {
+  if (sha256(exportBuffer) !== approval.publishedExport.sha256) {
     throw new Error("Reviewed GTM export artifact checksum mismatch.");
   }
   let publishedExport;
   try {
-    publishedExport = JSON.parse(fs.readFileSync(absoluteExportPath, "utf8"));
+    publishedExport = JSON.parse(exportBuffer.toString("utf8"));
   } catch (error) {
     throw new Error(`Reviewed GTM export JSON is invalid: ${error.message}`);
   }

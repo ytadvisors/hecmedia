@@ -119,9 +119,10 @@ deterministic identity.
 
 Before release, merge a reviewed workflow fix that preflights tag absence/exactness before AWS,
 creates an annotated object through the GitHub tag/ref API only after required evidence upload,
-verifies the peeled commit, and makes it the terminal release operation. A tag/evidence failure
-after the write fence must invoke the same-attempt recovery and remove only a tag proven absent at
-preflight and created for that exact release.
+verifies the peeled commit, and makes it the terminal release operation in a no-AWS job. A
+tag/evidence failure after the write fence must invoke independent recovery. Do not automatically
+delete a tag: GitHub ref deletion has no compare-and-swap precondition. Preserve ambiguity for
+reviewed resolution, and treat only the exact annotated release tag as terminal success.
 
 ### B3 — the workflow does not yet prove GTM safely
 
@@ -208,7 +209,7 @@ Any unexplained production-backend or decommission-state drift is NO-GO.
 
 ### B8 — current automatic rollback does not restore S3
 
-The deploy uploads assets with `aws s3 sync` before CloudFront cutover. The automatic rollback
+The planning-anchor deploy uploads assets with `aws s3 sync` before CloudFront cutover. Its rollback
 restores Lambda/CloudFront only; it does not restore overwritten S3 objects. The currently mixed
 `BUILD_ID`/live-Lambda state demonstrates why a green Lambda reassociation alone is not complete
 rollback proof.
@@ -219,21 +220,22 @@ executable and is not an approved fallback. Before release, merge a tested gover
 control that stays within the current role by:
 
 - producing the exact candidate upload-key manifest before mutation;
-- server-side copying each current colliding/mutable object to a task-scoped preimage/evidence
-  prefix before sync;
+- conditionally copying each current colliding/mutable object to a task-scoped preimage/evidence
+  prefix with a source-ETag and destination-absence precondition before any candidate upload;
 - recording the source VersionId as evidence plus the preimage key, ETag/checksum, size,
   Content-Type, Cache-Control, Content-Encoding, and custom metadata;
 - classifying every candidate key as exactly one of: an existing collision with verified preimage,
   a content-addressed additive key, or a separately owner-approved additive exception; any new
   mutable/unapproved key is NO-GO because the role has no `DeleteObject` recovery;
-- restoring each preimage's bytes and metadata to its original key with ordinary
-  `GetObject`/`PutObject`, thereby creating and checksum-verifying a new current version; and
+- replacing unconditional sync with per-manifest conditional uploads (`If-Match` for collisions,
+  `If-None-Match: *` for additive keys), then restoring each preimage only while the destination is
+  still the exact candidate, with source/destination ETag preconditions; and
 - leaving unrelated and evidence objects untouched.
 
 Bind every preimage set immutably to the exact deploy `request_task_id`, GitHub run ID, GitHub run
 attempt, release SHA, pre-cutover public release SHA/ETag, manifest S3 key, and manifest SHA-256.
-The automatic failure path must use the
-in-memory/bound manifest from that same run. A manual rollback must provide and verify the original
+The automatic failure path and independent watchdog must use the immutable controller/manifest
+from that same run. A manual rollback must provide and verify the original
 deploy task ID, deploy run ID, deploy run attempt, baseline public release SHA/ETag, manifest key,
 and manifest checksum through reviewed rollback-only workflow inputs. Never infer a manifest from
 “latest,” release SHA alone, or the rollback task ID.
@@ -249,9 +251,10 @@ sanitized Lambda/CloudFront state, restore all mutable S3 preimages, then issue 
 invalidation. If an implementation invalidates earlier, it must issue and await a second final
 invalidation after the S3 restore.
 
-After the first candidate S3 write, any later failure—including one before CloudFront cutover—must
-invoke preimage recovery. Restore Lambda/CloudFront only if those surfaces changed, but always
-restore S3 when a candidate write may have occurred.
+The independent watchdog must arm before the first candidate S3 write. Any later non-success
+terminal path—including cancellation, timeout, mutating-runner loss, or failure before CloudFront
+cutover—must invoke preimage recovery. Restore Lambda/CloudFront only if those surfaces changed,
+but always restore S3 when a candidate write may have occurred.
 
 ### B9 — the GTM container is mutable and not yet owner-approved
 
@@ -361,7 +364,9 @@ as the workflow. Record full output or links.
 - [ ] GTM semantic fixtures prove transport-byte/whitespace variants with identical
       `data.resource` hash equally, while tag, predicate, rule, destination, or array-order changes fail
 - [ ] Governed hydrated verifier permits the exact GTM loader and approved first-party/media
-      origins while deny-by-default blocking and recording every other GTM-caused third-party request
+      origins while deny-by-default blocking and recording every other GTM-caused third-party request;
+      its two-server redirect fixture proves `maxRedirects: 0`, exact HTTP 200/final-URL equality,
+      and zero redirect-destination hits
 - [ ] Production package builds through `scripts/production-deploy.js build`
 - [ ] Packaged-Lambda/local SSR smoke against the read-only production CMS passes with writes
       disabled
@@ -437,18 +442,22 @@ Then:
 1. Record the run URL and immutable run ID immediately.
 2. Require `authorize`, the no-credential `media-preflight`, and the contents-read/no-OIDC
    `candidate-build` job to pass before protected-environment approval. That job has no environment
-   secrets; its public reCAPTCHA site key is exact-value pinned. The AWS-mutating job must download
-   the sealed asset/browser artifact and must not install dependencies or run third-party build
-   tooling.
+   secrets; its public reCAPTCHA site key is exact-value pinned. The AWS-mutating job downloads only
+   the sealed candidate and executes no browser or package installation. Public Chrome verification
+   runs afterward without OIDC, and terminal tagging runs in a GitHub-write-only/no-AWS job.
 3. Before environment approval, every required provider-panel representative independently
    verifies the run's SHA, captured inputs, effective branch protection, candidate checks, GTM
    export/freeze, backend/decommission interlock, S3 recovery, rollback checksum, and lack of
    concurrent runs.
 4. Each required representative records GO or NO-GO with evidence; silence is NO-GO.
 5. Yomi approves the protected `production` environment only after the complete panel GO.
-6. Before `s3 sync`, require the workflow to create and checksum the immutable preimage manifest
-   bound to this deploy task/run/attempt/SHA/baseline and record the manifest key/hash in evidence.
-7. Monitor every workflow phase. Do not dispatch a replacement while the current run is active.
+6. Require source/destination-conditional preimage and manifest creation. The independent recovery
+   watchdog must validate the immutable controller and write its exact ready marker before the
+   candidate-write fence. Candidate collisions use `If-Match`; additive keys use
+   `If-None-Match: *`; unconditional `s3 sync` is forbidden.
+7. Monitor mutation, credential-free public verification, evidence upload, and the terminal tag.
+   The independent `always()` watchdog must recover the bound baseline for failure, cancellation,
+   timeout, or mutating-runner loss. Do not dispatch a replacement while the run or watchdog is active.
 
 ## Phase 6 — cutover acceptance
 
@@ -471,7 +480,8 @@ a successful release.
 - [ ] Raw homepage and representative SEO/content HTML contain exactly `GTM-57RZPNN`.
 - [ ] No raw page or built asset contains another `GTM-*` container or an `undefined` ID.
 - [ ] Browser network loads
-      `https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN` successfully once.
+      `https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN` exactly once with HTTP 200, zero
+      redirects, unchanged final URL, and zero redirect-destination hits.
 - [ ] `window.dataLayer` exists and contains the initial `gtm.js` event once.
 - [ ] No GTM-related CSP or JavaScript console error occurs.
 - [ ] The post-cutover GTM resource version, `canonical-resource-v1` SHA-256, counts, and normalized
@@ -520,7 +530,7 @@ Stop before cutover, or invoke the governed rollback after cutover, for any of t
 - any lint, unit, e2e, package, media, verifier, or tag test failure;
 - missing, wrong, duplicate, or `undefined` GTM ID;
 - GTM script/CSP failure or unintended analytics destination;
-- unblocked GTM-caused third-party egress or an unresolved newsletter API ownership decision;
+- unblocked GTM-caused/redirected third-party egress or an unresolved newsletter API ownership decision;
 - HTTP 4xx/5xx, invalid release metadata, broken media/navigation/forms, or SSR error;
 - unexpected AWS resource creation/deletion, any backend health/config drift, or any
   decommission mutation;
@@ -528,11 +538,13 @@ Stop before cutover, or invoke the governed rollback after cutover, for any of t
 - a missing provider-panel seat or disagreement among the commander and required panel. Dissent is
   NO-GO until revised and re-reviewed.
 
-The deploy script restores the pinned sanitized Lambda/CloudFront version and exact current-IAM S3
-preimages when a failure occurs after the write fence. It must suppress the final invalidation if
-any required restore is incomplete, preserve aggregate failure evidence, and prove both aliases,
-the baseline release SHA, GTM absence, and newsletter API absence after a complete restore. Never
-assume recovery completed because the workflow stopped.
+The deploy controller and independently running AWS watchdog restore the pinned sanitized
+Lambda/CloudFront version and exact current-IAM S3 preimages when any non-success path occurs after
+the write fence, including cancellation, job timeout, or mutating-runner loss. Every restore uses
+source/destination ETag preconditions and fails closed on unknown drift. They must suppress the final
+invalidation if any required restore is incomplete, preserve aggregate evidence, and prove both
+aliases, the baseline release SHA, GTM absence, and newsletter API absence. Never assume recovery
+completed because the workflow stopped.
 
 ## Governed rollback
 
@@ -556,8 +568,8 @@ The reviewed rollback target is only:
 - `CodeSha256=InGBmR1WRmFN+iojEtw/HdYER96Dlge410JFw3THEag=`
 
 The rollback must place all four owned SSR associations on version `150`, remove the newsletter API
-behavior, and copy each exact-manifest preimage's bytes and metadata back to its original mutable S3
-key with the governed role, creating a new current version. Verify every checksum/metadata record,
+behavior, and conditionally copy each exact-manifest preimage's bytes and metadata back only when
+the destination is still the exact candidate, creating a new current version. Verify every checksum/metadata record,
 leave additive content-addressed/evidence objects intact, then issue and await the final `/*`
 invalidation. Only after that invalidation, verify normal-key and cache-busted public recovery.
 Confirm that the pre-release public release SHA and GTM-absent behavior are restored and that the

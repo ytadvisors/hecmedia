@@ -389,3 +389,32 @@ test("fails closed when the owner record omits a required decision or export bin
     )
   ).toThrow("does not bind the approved public container/version");
 });
+
+test("rejects an owner export reached through an intermediate symlink", () => {
+  const fixture = writeOwnerFixture(ownerApprovalFixture());
+  const evidenceDirectory = path.join(
+    fixture.repoRoot,
+    "docs/operations/evidence"
+  );
+  const originalExport = path.join(evidenceDirectory, "gtm-published-v21.json");
+  const outsideDirectory = path.join(fixture.repoRoot, "outside-evidence");
+  fs.mkdirSync(outsideDirectory);
+  fs.renameSync(
+    originalExport,
+    path.join(outsideDirectory, "gtm-published-v21.json")
+  );
+  fs.symlinkSync(outsideDirectory, path.join(evidenceDirectory, "linked"));
+  const approval = JSON.parse(fs.readFileSync(fixture.approvalPath, "utf8"));
+  approval.publishedExport.artifactPath =
+    "docs/operations/evidence/linked/gtm-published-v21.json";
+  fs.writeFileSync(
+    fixture.approvalPath,
+    `${JSON.stringify(approval, null, 2)}\n`
+  );
+
+  expect(() =>
+    verifyOwnerApproval(fixture.approvalPath, expectedOwnerEnvironment(), {
+      repoRoot: fixture.repoRoot
+    })
+  ).toThrow("symlink component");
+});

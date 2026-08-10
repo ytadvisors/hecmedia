@@ -593,6 +593,10 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
     path.join(__dirname, "production-deploy.js"),
     "utf8"
   );
+  const s3Script = realFs.readFileSync(
+    path.join(__dirname, "production-s3-recovery.js"),
+    "utf8"
+  );
   const ciWorkflow = realFs.readFileSync(
     path.join(__dirname, "../.github/workflows/ci.yml"),
     "utf8"
@@ -622,8 +626,11 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
     "node scripts/production-release-tag.js preflight"
   );
   expect(workflow).toContain("node scripts/production-release-tag.js create");
-  expect(workflow).toContain("node scripts/production-release-tag.js cleanup");
-  expect(workflow).toContain("node scripts/production-deploy.js recover");
+  expect(workflow).not.toContain(
+    "node scripts/production-release-tag.js cleanup"
+  );
+  expect(workflow).toContain("node scripts/production-recovery-watchdog.js");
+  expect(workflow).toContain("node scripts/production-deploy.js verify-live");
   expect(workflow).toContain("persist-credentials: false");
   expect(workflow).toContain("source_deploy_release_sha:");
   expect(workflow).toContain("source_deploy_run_attempt:");
@@ -651,7 +658,7 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   expect(awsCredentials).toBeGreaterThan(browserPreflight);
   const candidateJob = workflow.slice(
     workflow.indexOf("  candidate-build:"),
-    workflow.indexOf("  deploy-or-rollback:")
+    workflow.indexOf("  production-mutation:")
   );
   expect(candidateJob).toContain("contents: read");
   expect(candidateJob).not.toContain("environment:");
@@ -663,7 +670,9 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   expect(workflow).not.toContain("yarn deploy");
   expect(workflow).not.toContain("serverless deploy");
   expect(workflow).not.toContain("yarn serverless");
-  expect(script).toContain('"--no-follow-symlinks"');
+  expect(script).not.toContain('"s3", "sync"');
+  expect(s3Script).toContain("destinationIfMatch");
+  expect(s3Script).toContain("destinationIfNoneMatch");
   expect(ciWorkflow).not.toContain("AWS_ACCESS_KEY_ID");
   expect(ciWorkflow).not.toContain("AWS_SECRET_ACCESS_KEY");
   expect(ciWorkflow).not.toContain("yarn deploy");
@@ -675,23 +684,48 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
     deployStart
   );
   const preimages = script.indexOf("preparePreimages({", deployStart);
-  const firstMutation = script.indexOf("syncAssets();", deployStart);
+  const watchdog = script.indexOf("waitForRecoveryWatchdog(", deployStart);
+  const writeFence = script.indexOf('"write-fence"', deployStart);
+  const firstMutation = script.indexOf("uploadCandidates(", deployStart);
   expect(guard).toBeGreaterThan(deployStart);
   expect(preimages).toBeGreaterThan(guard);
   expect(firstMutation).toBeGreaterThan(guard);
   expect(firstMutation).toBeGreaterThan(preimages);
+  expect(watchdog).toBeGreaterThan(preimages);
+  expect(writeFence).toBeGreaterThan(watchdog);
+  expect(firstMutation).toBeGreaterThan(writeFence);
   expect(script).not.toContain('"put-bucket-versioning"');
 
-  const preTagUpload = workflow.indexOf(
-    "Upload verified pre-tag production evidence"
+  const mutationJob = workflow.slice(
+    workflow.indexOf("  production-mutation:"),
+    workflow.indexOf("  recovery-watchdog:")
   );
-  const releaseTag = workflow.indexOf(
-    "Record immutable successful frontend release tag as the terminal release operation"
+  const watchdogJob = workflow.slice(
+    workflow.indexOf("  recovery-watchdog:"),
+    workflow.indexOf("  public-verification:")
   );
-  const emergencyRecovery = workflow.indexOf(
-    "Recover the exact deploy attempt after any post-write failure"
+  const publicJob = workflow.slice(
+    workflow.indexOf("  public-verification:"),
+    workflow.indexOf("  release-tag:")
   );
-  expect(preTagUpload).toBeGreaterThan(awsCredentials);
-  expect(releaseTag).toBeGreaterThan(preTagUpload);
-  expect(emergencyRecovery).toBeGreaterThan(releaseTag);
+  const tagJob = workflow.slice(workflow.indexOf("  release-tag:"));
+  expect(mutationJob).toContain("contents: read");
+  expect(mutationJob).toContain("id-token: write");
+  expect(mutationJob).not.toContain("contents: write");
+  expect(mutationJob).not.toContain("BROWSER_BIN");
+  expect(mutationJob).not.toContain("GH_TOKEN");
+  expect(watchdogJob).toContain("if: always()");
+  expect(watchdogJob).toContain("actions: read");
+  expect(watchdogJob).toContain("id-token: write");
+  expect(watchdogJob).not.toContain("contents: write");
+  expect(publicJob).toContain("contents: read");
+  expect(publicJob).not.toContain("id-token: write");
+  expect(publicJob).not.toContain("configure-aws-credentials");
+  expect(publicJob).not.toContain("contents: write");
+  expect(tagJob).toContain("contents: write");
+  expect(tagJob).not.toContain("id-token: write");
+  expect(tagJob).not.toContain("configure-aws-credentials");
+  expect(
+    tagJob.trim().endsWith("run: node scripts/production-release-tag.js create")
+  ).toBe(true);
 });

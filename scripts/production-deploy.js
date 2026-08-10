@@ -15,9 +15,11 @@ const {
   assertRemoteBaseline,
   assertUploadedCandidates,
   candidateTree,
+  evidencePrefix,
   loadBoundManifest,
   preparePreimages,
   restorePreimages,
+  uploadCandidates,
   validateManifest
 } = require("./production-s3-recovery");
 
@@ -34,6 +36,7 @@ const EDGE_EXECUTION_ROLE = "arn:aws:iam::850335719356:role/x2l4ew-0kb1zus";
 const SANITIZED_ROLLBACK_ARN = `${DEFAULT_FUNCTION_ARN}:150`;
 const SANITIZED_ROLLBACK_CODE_SHA256 =
   "InGBmR1WRmFN+iojEtw/HdYER96Dlge410JFw3THEag=";
+const RECOVERY_CONTROLLER_SCHEMA = "hecmedia-production-recovery-controller-v1";
 // reCAPTCHA site keys are intentionally public and already ship in the client
 // bundle. Pin the exact production key so the credential-free candidate job
 // does not need protected-environment access merely to build the assets.
@@ -719,30 +722,14 @@ function invalidate(paths = ["/*"]) {
   return id;
 }
 
-function syncAssets() {
-  run(
-    "aws",
-    [
-      "s3",
-      "sync",
-      ASSETS_DIR,
-      `s3://${BUCKET_NAME}`,
-      "--region",
-      REGION,
-      "--no-follow-symlinks"
-    ],
-    { inherit: true }
-  );
-}
-
 function encodeCopySource(key) {
   return `${BUCKET_NAME}/${encodeURIComponent(key).replace(/%2F/g, "/")}`;
 }
 
 function createS3RecoveryAdapter() {
   return {
-    copy(sourceKey, destinationKey) {
-      return runJson("aws", [
+    copy(sourceKey, destinationKey, conditions = {}) {
+      const args = [
         "s3api",
         "copy-object",
         "--bucket",
@@ -753,7 +740,17 @@ function createS3RecoveryAdapter() {
         destinationKey,
         "--metadata-directive",
         "COPY"
-      ]);
+      ];
+      if (conditions.sourceIfMatch) {
+        args.push("--copy-source-if-match", conditions.sourceIfMatch);
+      }
+      if (conditions.destinationIfMatch) {
+        args.push("--if-match", conditions.destinationIfMatch);
+      }
+      if (conditions.destinationIfNoneMatch) {
+        args.push("--if-none-match", conditions.destinationIfNoneMatch);
+      }
+      return runJson("aws", args);
     },
     getFile(key, destination) {
       if (fs.existsSync(destination)) fs.unlinkSync(destination);
@@ -789,12 +786,33 @@ function createS3RecoveryAdapter() {
         `S3 head-object failed for ${key}: ${detail.trim().slice(0, 500)}`
       );
     },
-    putFile(key, source, metadata) {
+    putCandidate(key, source, options = {}) {
+      const args = [
+        "s3api",
+        "put-object",
+        "--bucket",
+        BUCKET_NAME,
+        "--key",
+        key,
+        "--body",
+        source,
+        "--content-type",
+        options.contentType
+      ];
+      if (options.destinationIfMatch) {
+        args.push("--if-match", options.destinationIfMatch);
+      }
+      if (options.destinationIfNoneMatch) {
+        args.push("--if-none-match", options.destinationIfNoneMatch);
+      }
+      return runJson("aws", args);
+    },
+    putFile(key, source, metadata, conditions = {}) {
       const metadataArg = Object.keys(metadata)
         .sort()
         .map(name => `${name}=${metadata[name]}`)
         .join(",");
-      return runJson("aws", [
+      const args = [
         "s3api",
         "put-object",
         "--bucket",
@@ -807,7 +825,11 @@ function createS3RecoveryAdapter() {
         "application/json",
         "--metadata",
         metadataArg
-      ]);
+      ];
+      if (conditions.destinationIfNoneMatch) {
+        args.push("--if-none-match", conditions.destinationIfNoneMatch);
+      }
+      return runJson("aws", args);
     }
   };
 }
@@ -1228,6 +1250,94 @@ function writeEvidence(state) {
   fs.writeFileSync(EVIDENCE_PATH, JSON.stringify(state, null, 2));
 }
 
+function recoveryKeys(binding) {
+  const prefix = evidencePrefix(binding);
+  return {
+    candidateDistribution: `${prefix}/candidate-distribution.json`,
+    controller: `${prefix}/recovery-controller.json`,
+    mutationComplete: `${prefix}/mutation-complete.json`,
+    watchdogReady: `${prefix}/watchdog-ready.json`,
+    writeFence: `${prefix}/write-fence.json`
+  };
+}
+
+function writeImmutableRecoveryObject(s3, key, value, label) {
+  const localPath = path.join(
+    RELEASE_DIR,
+    `${label}-${crypto
+      .createHash("sha256")
+      .update(key)
+      .digest("hex")}.json`
+  );
+  fs.writeFileSync(localPath, `${JSON.stringify(value, null, 2)}\n`, {
+    flag: "wx"
+  });
+  const sha256 = fileSha256(localPath);
+  s3.putFile(
+    key,
+    localPath,
+    {
+      evidence_sha256: sha256,
+      evidence_type: label,
+      release_sha: process.env.DEPLOY_SHA,
+      run_attempt: process.env.GITHUB_RUN_ATTEMPT,
+      run_id: process.env.GITHUB_RUN_ID,
+      task_id: process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID
+    },
+    { destinationIfNoneMatch: "*" }
+  );
+  const uploadedPath = `${localPath}.uploaded`;
+  s3.getFile(key, uploadedPath);
+  if (fileSha256(uploadedPath) !== sha256) {
+    throw new Error(`Uploaded ${label} recovery evidence checksum mismatch.`);
+  }
+  return { key, localPath, sha256 };
+}
+
+function readRecoveryObject(s3, key, label) {
+  const localPath = path.join(
+    RELEASE_DIR,
+    `${label}-${crypto
+      .createHash("sha256")
+      .update(key)
+      .digest("hex")}.read.json`
+  );
+  s3.getFile(key, localPath);
+  return JSON.parse(fs.readFileSync(localPath, "utf8"));
+}
+
+function delay(milliseconds) {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
+async function waitForRecoveryWatchdog(s3, key, controllerSha256) {
+  const deadline = Date.now() + 15 * 60 * 1000;
+  async function poll() {
+    if (Date.now() >= deadline) {
+      throw new Error(
+        "Independent recovery watchdog did not arm before the production write fence."
+      );
+    }
+    if (s3.head(key)) {
+      const ready = readRecoveryObject(s3, key, "watchdog-ready");
+      if (
+        ready.schema !== "hecmedia-production-recovery-watchdog-ready-v1" ||
+        ready.controllerSha256 !== controllerSha256 ||
+        ready.runId !== process.env.GITHUB_RUN_ID ||
+        ready.runAttempt !== process.env.GITHUB_RUN_ATTEMPT ||
+        ready.releaseSha !== process.env.DEPLOY_SHA ||
+        ready.taskId !== process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID
+      ) {
+        throw new Error("Recovery watchdog ready marker is stale or invalid.");
+      }
+      return ready;
+    }
+    await delay(5000);
+    return poll();
+  }
+  return poll();
+}
+
 function sameDistributionConfig(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
@@ -1478,6 +1588,14 @@ async function deploy() {
     process.env.EXPECTED_DEFAULT_LAMBDA_CODE_SHA256 || "";
   const expectedApiArn = process.env.EXPECTED_API_LAMBDA_VERSION_ARN || "";
   assertVersionArn(expectedDefaultArn, DEFAULT_FUNCTION_ARN);
+  if (
+    expectedDefaultArn !== SANITIZED_ROLLBACK_ARN ||
+    expectedDefaultCodeSha !== SANITIZED_ROLLBACK_CODE_SHA256
+  ) {
+    throw new Error(
+      "This one-shot GTM release requires the exact pinned sanitized :150 baseline and checksum."
+    );
+  }
   if (expectedApiArn !== "none") {
     throw new Error(
       "EXPECTED_API_LAMBDA_VERSION_ARN must equal none; newsletter API reactivation is outside this release."
@@ -1569,6 +1687,15 @@ async function deploy() {
   writeEvidence(state);
 
   const s3 = createS3RecoveryAdapter();
+  const binding = {
+    baselineEtag: baseline.ETag,
+    baselineReleaseSha: baselineHomepage.releaseSha,
+    releaseSha: process.env.DEPLOY_SHA,
+    runId: process.env.GITHUB_RUN_ID,
+    runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+    taskId: process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID
+  };
+  const boundRecoveryKeys = recoveryKeys(binding);
   let s3Recovery = null;
   let candidateS3WriteMayHaveOccurred = false;
   let cloudFrontUpdateStarted = false;
@@ -1592,14 +1719,7 @@ async function deploy() {
 
     s3Recovery = preparePreimages({
       assetsDir: ASSETS_DIR,
-      binding: {
-        baselineEtag: baseline.ETag,
-        baselineReleaseSha: baselineHomepage.releaseSha,
-        releaseSha: process.env.DEPLOY_SHA,
-        runId: process.env.GITHUB_RUN_ID,
-        runAttempt: process.env.GITHUB_RUN_ATTEMPT,
-        taskId: process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID
-      },
+      binding,
       bucket: BUCKET_NAME,
       outputDir: RELEASE_DIR,
       s3
@@ -1607,6 +1727,29 @@ async function deploy() {
     state.s3_preimage_manifest_key = s3Recovery.manifest.manifestKey;
     state.s3_preimage_manifest_sha256 = s3Recovery.manifestSha256;
     state.s3_candidate_key_count = s3Recovery.manifest.entries.length;
+    const controller = {
+      baselineDistribution: baseline,
+      baselineHomepage,
+      baselineDefaultLambdaArn: expectedDefaultArn,
+      baselineDefaultLambdaCodeSha256: expectedDefaultCodeSha,
+      baselineApiLambdaArn: expectedApiArn,
+      binding,
+      bucket: BUCKET_NAME,
+      createdAt: new Date().toISOString(),
+      manifestKey: s3Recovery.manifest.manifestKey,
+      manifestSha256: s3Recovery.manifestSha256,
+      sanitizedRollbackArn: SANITIZED_ROLLBACK_ARN,
+      sanitizedRollbackCodeSha256: SANITIZED_ROLLBACK_CODE_SHA256,
+      schema: RECOVERY_CONTROLLER_SCHEMA
+    };
+    const controllerEvidence = writeImmutableRecoveryObject(
+      s3,
+      boundRecoveryKeys.controller,
+      controller,
+      "recovery-controller"
+    );
+    state.recovery_controller_key = controllerEvidence.key;
+    state.recovery_controller_sha256 = controllerEvidence.sha256;
     writeEvidence(state);
 
     assertCandidateTree(s3Recovery.manifest, ASSETS_DIR);
@@ -1616,10 +1759,36 @@ async function deploy() {
       RELEASE_DIR
     );
     writeEvidence(state);
+    state.recovery_watchdog_ready = await waitForRecoveryWatchdog(
+      s3,
+      boundRecoveryKeys.watchdogReady,
+      controllerEvidence.sha256
+    );
+    const writeFenceCrossedAt = new Date().toISOString();
+    const writeFenceEvidence = writeImmutableRecoveryObject(
+      s3,
+      boundRecoveryKeys.writeFence,
+      {
+        armedWatchdogJobId: state.recovery_watchdog_ready.jobId,
+        controllerSha256: controllerEvidence.sha256,
+        crossedAt: writeFenceCrossedAt,
+        releaseSha: process.env.DEPLOY_SHA,
+        runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+        runId: process.env.GITHUB_RUN_ID,
+        schema: "hecmedia-production-write-fence-v1",
+        taskId: process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID
+      },
+      "write-fence"
+    );
     candidateS3WriteMayHaveOccurred = true;
-    state.s3_write_fence_crossed_at = new Date().toISOString();
+    state.s3_write_fence_crossed_at = writeFenceCrossedAt;
+    state.s3_write_fence_key = writeFenceEvidence.key;
     writeEvidence(state);
-    syncAssets();
+    state.s3_conditional_uploads = uploadCandidates(
+      s3Recovery.manifest,
+      ASSETS_DIR,
+      s3
+    );
     state.s3_candidate_upload_verified = assertUploadedCandidates(
       s3Recovery.manifest,
       s3,
@@ -1651,12 +1820,27 @@ async function deploy() {
       expectedApiArn,
       defaultPublished.arn
     );
+    const candidateDistributionEvidence = writeImmutableRecoveryObject(
+      s3,
+      boundRecoveryKeys.candidateDistribution,
+      {
+        config: candidateDistributionConfig,
+        createdAt: new Date().toISOString(),
+        releaseSha: process.env.DEPLOY_SHA,
+        runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+        runId: process.env.GITHUB_RUN_ID,
+        schema: "hecmedia-production-candidate-distribution-v1",
+        taskId: process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID
+      },
+      "candidate-distribution"
+    );
     cloudFrontUpdateStarted = true;
     state.cloudfront_update_started_at = new Date().toISOString();
     state.candidate_cloudfront_config_sha256 = crypto
       .createHash("sha256")
       .update(JSON.stringify(candidateDistributionConfig))
       .digest("hex");
+    state.candidate_cloudfront_evidence_key = candidateDistributionEvidence.key;
     writeEvidence(state);
     updateDistribution(
       candidateDistributionConfig,
@@ -1665,28 +1849,6 @@ async function deploy() {
     );
     state.invalidation_id = invalidate(["/*"]);
 
-    run("node", [path.join(REPO_ROOT, "scripts", "verify-production.js")], {
-      env: {
-        ...process.env,
-        PRODUCTION_SITE_URL: "https://hecmedia.org",
-        CLOUDFRONT_ALIASES: "hecmedia.org,www.hecmedia.org"
-      }
-    });
-    state.gtm_post_cutover = await verifyPublicResource({
-      expectedCanonicalSha256: process.env.EXPECTED_GTM_CANONICAL_SHA256,
-      expectedCounts: parseExpectedCounts(process.env.EXPECTED_GTM_COUNTS),
-      expectedInventorySha256: process.env.EXPECTED_GTM_INVENTORY_SHA256,
-      expectedResourceVersion: process.env.EXPECTED_GTM_RESOURCE_VERSION,
-      outputDir: RELEASE_DIR,
-      phase: "post-cutover"
-    });
-    await verifyHydratedRoutes(process.env.BROWSER_BIN, {
-      canonicalSha256: process.env.EXPECTED_GTM_CANONICAL_SHA256,
-      counts: parseExpectedCounts(process.env.EXPECTED_GTM_COUNTS),
-      inventorySha256: process.env.EXPECTED_GTM_INVENTORY_SHA256,
-      resourceVersion: process.env.EXPECTED_GTM_RESOURCE_VERSION
-    });
-
     const live = getDistributionConfig();
     assertDistributionContractWithRelease(
       live.DistributionConfig,
@@ -1694,11 +1856,27 @@ async function deploy() {
       "none"
     );
     state.live_cloudfront_etag = live.ETag;
-    state.outcome = "verified_pending_release_tag";
+    const mutationCompleteEvidence = writeImmutableRecoveryObject(
+      s3,
+      boundRecoveryKeys.mutationComplete,
+      {
+        completedAt: new Date().toISOString(),
+        liveCloudFrontEtag: live.ETag,
+        newDefaultLambda: defaultPublished,
+        releaseSha: process.env.DEPLOY_SHA,
+        runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+        runId: process.env.GITHUB_RUN_ID,
+        schema: "hecmedia-production-mutation-complete-v1",
+        taskId: process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID
+      },
+      "mutation-complete"
+    );
+    state.mutation_complete_key = mutationCompleteEvidence.key;
+    state.outcome = "candidate_live_pending_credential_free_verification";
     state.completed_at = new Date().toISOString();
     writeEvidence(state);
     console.log(
-      `HEC frontend production release verified: ${defaultPublished.arn}; newsletter API omitted`
+      `HEC frontend production AWS mutation complete: ${defaultPublished.arn}; credential-free verification remains pending`
     );
   } catch (error) {
     state.outcome = "failed";
@@ -1738,6 +1916,64 @@ async function deploy() {
     writeEvidence(state);
     throw error;
   }
+}
+
+async function verifyLiveCandidate() {
+  assertGovernedDeployContext(process.env, "deploy");
+  requireBuildContract();
+  ensureBuildArtifacts();
+  if (!process.env.BROWSER_BIN || !fs.existsSync(process.env.BROWSER_BIN)) {
+    throw new Error(
+      "Credential-free public verification requires the pinned browser runtime."
+    );
+  }
+  if (!fs.existsSync(EVIDENCE_PATH)) {
+    throw new Error(
+      "AWS mutation evidence is missing from public verification."
+    );
+  }
+  const state = JSON.parse(fs.readFileSync(EVIDENCE_PATH, "utf8"));
+  if (
+    state.outcome !== "candidate_live_pending_credential_free_verification" ||
+    state.release_sha !== process.env.DEPLOY_SHA ||
+    String(state.request_task_id) !==
+      String(process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID) ||
+    String(state.github_run_id) !== String(process.env.GITHUB_RUN_ID) ||
+    String(state.github_run_attempt) !==
+      String(process.env.GITHUB_RUN_ATTEMPT) ||
+    !state.s3_write_fence_key ||
+    !state.mutation_complete_key ||
+    !state.new_default_lambda
+  ) {
+    throw new Error(
+      "Public verification evidence is not bound to this exact completed AWS mutation."
+    );
+  }
+  run("node", [path.join(REPO_ROOT, "scripts", "verify-production.js")], {
+    env: {
+      ...process.env,
+      PRODUCTION_SITE_URL: "https://hecmedia.org",
+      CLOUDFRONT_ALIASES: "hecmedia.org,www.hecmedia.org"
+    }
+  });
+  state.gtm_post_cutover = await verifyPublicResource({
+    expectedCanonicalSha256: process.env.EXPECTED_GTM_CANONICAL_SHA256,
+    expectedCounts: parseExpectedCounts(process.env.EXPECTED_GTM_COUNTS),
+    expectedInventorySha256: process.env.EXPECTED_GTM_INVENTORY_SHA256,
+    expectedResourceVersion: process.env.EXPECTED_GTM_RESOURCE_VERSION,
+    outputDir: RELEASE_DIR,
+    phase: "post-cutover"
+  });
+  await verifyHydratedRoutes(process.env.BROWSER_BIN, {
+    canonicalSha256: process.env.EXPECTED_GTM_CANONICAL_SHA256,
+    counts: parseExpectedCounts(process.env.EXPECTED_GTM_COUNTS),
+    inventorySha256: process.env.EXPECTED_GTM_INVENTORY_SHA256,
+    resourceVersion: process.env.EXPECTED_GTM_RESOURCE_VERSION
+  });
+  state.outcome = "verified_pending_terminal_release_tag";
+  state.credential_free_verification_completed_at = new Date().toISOString();
+  writeEvidence(state);
+  return state;
 }
 
 function recoverSameAttempt() {
@@ -1899,10 +2135,11 @@ async function main() {
   const command = process.argv[2];
   if (command === "build") return build();
   if (command === "deploy") return deploy();
+  if (command === "verify-live") return verifyLiveCandidate();
   if (command === "recover") return recoverSameAttempt();
   if (command === "rollback") return rollback();
   throw new Error(
-    `Unknown command "${command}". Use build, deploy, recover, or rollback.`
+    `Unknown command "${command}". Use build, deploy, verify-live, recover, or rollback.`
   );
 }
 
@@ -1915,6 +2152,8 @@ if (require.main === module) {
 
 module.exports = {
   API_PATH,
+  BUCKET_NAME,
+  RECOVERY_CONTROLLER_SCHEMA,
   SANITIZED_ROLLBACK_ARN,
   SANITIZED_ROLLBACK_CODE_SHA256,
   applySanitizedRollback,
@@ -1928,9 +2167,12 @@ module.exports = {
   assertRemoteImageResponse,
   configureProductionDistribution,
   configureSanitizedRollback,
+  createS3RecoveryAdapter,
   extractRemoteImageUrls,
   isApprovedRemoteImageUrl,
   parseJsonOutput,
   publishedVersionFromArn,
+  recoveryKeys,
+  verifySanitizedRollbackVersion,
   requireBuildContract
 };

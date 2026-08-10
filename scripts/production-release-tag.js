@@ -71,12 +71,6 @@ function createGhAdapter(options = {}) {
         { input: { message, object: releaseSha, tag, type: "commit" } }
       );
     },
-    deleteRef(tag) {
-      return request(
-        ["--method", "DELETE", `repos/${repository}/git/refs/tags/${tag}`],
-        { parse: false }
-      );
-    },
     getRef(tag) {
       return request([`repos/${repository}/git/ref/tags/${tag}`], {
         allowNotFound: true
@@ -236,8 +230,9 @@ function create(options = {}) {
     tag: state.tag,
     tagObject
   };
-  // Persist the exact immutable object before the ref mutation. Recovery may
-  // delete only a ref that still points to this run-created object.
+  // Persist the exact immutable object before the ref mutation so a failed or
+  // ambiguous terminal step has durable evidence. Automatic ref deletion is
+  // intentionally forbidden below because the API offers no CAS delete.
   writeJson(createdPath, created);
   const ref = adapter.createRef(state.tag, tagObject);
   return {
@@ -251,42 +246,32 @@ function create(options = {}) {
 }
 
 function cleanup(options = {}) {
+  const releaseSha = options.releaseSha || process.env.RELEASE_SHA;
+  throw new Error(
+    `Automatic deletion of ${releaseTag(
+      releaseSha
+    )} is forbidden because GitHub's ref deletion API has no compare-and-swap precondition. Preserve and investigate any ambiguous terminal tag.`
+  );
+}
+
+function inspect(options = {}) {
   const {
     adapter = createGhAdapter(options),
-    createdPath = CREATED_PATH,
-    releaseSha = process.env.RELEASE_SHA,
-    runAttempt = process.env.GITHUB_RUN_ATTEMPT,
-    runId = process.env.GITHUB_RUN_ID,
-    statePath = STATE_PATH
+    releaseSha = process.env.RELEASE_SHA
   } = options;
-  assertReleaseSha(releaseSha);
-  const state = assertState(
-    readJson(statePath, "Release-tag preflight state"),
-    releaseSha
-  );
-  if (state.state === "preexisting" || !fs.existsSync(createdPath)) {
-    return { state: "not-created-by-this-run", tag: state.tag };
+  const tag = releaseTag(releaseSha);
+  const ref = adapter.getRef(tag);
+  if (!ref || !ref.object || ref.object.type !== "tag") {
+    return { releaseSha, state: "absent-or-not-annotated", tag };
   }
-  const created = readJson(createdPath, "Run-created release-tag marker");
-  if (
-    created.schema !== STATE_SCHEMA ||
-    created.releaseSha !== releaseSha ||
-    created.tag !== state.tag ||
-    created.runId !== runId ||
-    created.runAttempt !== runAttempt ||
-    !/^[0-9a-f]{40}$/.test(created.tagObject || "")
-  ) {
-    throw new Error("Run-created release-tag marker is invalid or stale.");
-  }
-  const ref = adapter.getRef(state.tag);
-  if (!ref) return { state: "already-absent", tag: state.tag };
-  const verified = assertAnnotatedTag(
-    ref,
-    adapter.getTagObject(ref.object && ref.object.sha),
-    created
-  );
-  adapter.deleteRef(state.tag);
-  return { state: "removed-run-created-tag", ...verified };
+  return {
+    state: "exact-annotated-release",
+    ...assertAnnotatedTag(ref, adapter.getTagObject(ref.object.sha), {
+      releaseSha,
+      tag,
+      tagObject: ref.object.sha
+    })
+  };
 }
 
 if (require.main === module) {
@@ -295,8 +280,9 @@ if (require.main === module) {
     let result;
     if (command === "preflight") result = preflight();
     else if (command === "create") result = create();
+    else if (command === "inspect") result = inspect();
     else if (command === "cleanup") result = cleanup();
-    else throw new Error("Use preflight, create, or cleanup.");
+    else throw new Error("Use preflight, create, inspect, or cleanup.");
     console.log(JSON.stringify(result));
   } catch (error) {
     console.error(error && error.stack ? error.stack : error);
@@ -311,6 +297,7 @@ module.exports = {
   assertAnnotatedTag,
   cleanup,
   create,
+  inspect,
   preflight,
   releaseTag
 };

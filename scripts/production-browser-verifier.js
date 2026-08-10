@@ -140,9 +140,13 @@ function assertBrowserGtmEvidence(evidence, gtmId = EXACT_GTM_ID) {
   if (
     evidence.gtmLoaderRequests.length !== 1 ||
     !isExactGtmLoader(evidence.gtmLoaderRequests[0].url, gtmId) ||
-    evidence.gtmLoaderRequests[0].status < 200 ||
-    evidence.gtmLoaderRequests[0].status >= 300 ||
+    evidence.gtmLoaderRequests[0].status !== 200 ||
     evidence.gtmSemanticCaptures.length !== 1 ||
+    evidence.gtmSemanticCaptures[0].status !== 200 ||
+    evidence.gtmSemanticCaptures[0].fetchedUrl !==
+      evidence.gtmLoaderRequests[0].url ||
+    evidence.gtmSemanticCaptures[0].redirectDisposition !==
+      "disabled-zero-followed" ||
     evidence.gtmSemanticErrors.length !== 0
   ) {
     throw new Error(
@@ -195,23 +199,46 @@ function closeServer(server) {
   });
 }
 
+function fetchWithoutRedirects(intercepted) {
+  return intercepted.fetch({ maxRedirects: 0 });
+}
+
 async function selfTestBrowser(browserPath) {
   if (!browserPath || !fs.existsSync(browserPath)) {
     throw new Error(
       "BROWSER_BIN must name an installed Chrome or Chromium binary."
     );
   }
-  const serverHits = { http: 0, websocket: 0 };
+  const serverHits = {
+    forbiddenHttp: 0,
+    forbiddenWebsocket: 0,
+    redirectDestination: 0,
+    redirectSource: 0
+  };
   const server = http.createServer((request, response) => {
-    serverHits.http += 1;
+    serverHits.forbiddenHttp += 1;
     response.writeHead(204);
     response.end();
   });
   server.on("upgrade", (request, socket) => {
-    serverHits.websocket += 1;
+    serverHits.forbiddenWebsocket += 1;
     socket.destroy();
   });
   const address = await listen(server);
+  const redirectDestination = http.createServer((request, response) => {
+    serverHits.redirectDestination += 1;
+    response.writeHead(200, { "Content-Type": "application/javascript" });
+    response.end("redirect destination must never be fetched");
+  });
+  const redirectDestinationAddress = await listen(redirectDestination);
+  const redirectSource = http.createServer((request, response) => {
+    serverHits.redirectSource += 1;
+    response.writeHead(302, {
+      Location: `http://127.0.0.1:${redirectDestinationAddress.port}/escaped`
+    });
+    response.end();
+  });
+  const redirectSourceAddress = await listen(redirectSource);
   const chromium = playwrightChromium();
   const browser = await chromium.launch({
     executablePath: browserPath,
@@ -219,13 +246,38 @@ async function selfTestBrowser(browserPath) {
     args: ["--no-sandbox", "--disable-gpu"]
   });
   const intercepted = { http: 0, websocket: 0 };
+  const redirectProbe = {
+    aborted: false,
+    fetchedUrl: null,
+    semanticCaptures: 0,
+    semanticErrors: [],
+    status: 0
+  };
+  const redirectSourceUrl = `http://127.0.0.1:${redirectSourceAddress.port}/loader`;
   try {
     const context = await browser.newContext({ serviceWorkers: "block" });
-    await context.route("**/*", route => {
+    await context.route("**/*", async route => {
       if (String(route.request().url()).startsWith("data:")) {
         return route.continue();
       }
       intercepted.http += 1;
+      if (route.request().url() === redirectSourceUrl) {
+        try {
+          const fetched = await fetchWithoutRedirects(route);
+          redirectProbe.fetchedUrl = fetched.url();
+          redirectProbe.status = fetched.status();
+          if (fetched.status() !== 200) {
+            throw new Error(
+              `Redirect regression was refused at HTTP ${fetched.status()}.`
+            );
+          }
+          redirectProbe.semanticCaptures += 1;
+        } catch (error) {
+          redirectProbe.semanticErrors.push(error.message || String(error));
+        }
+        redirectProbe.aborted = true;
+        return route.abort("blockedbyclient");
+      }
       return route.abort("blockedbyclient");
     });
     await context.routeWebSocket(/.*/, socket => {
@@ -240,6 +292,7 @@ async function selfTestBrowser(browserPath) {
     await page.evaluate(
       async urls => {
         await fetch(urls.http).catch(() => null);
+        await fetch(urls.redirect).catch(() => null);
         await new Promise(resolve => {
           const socket = new window.WebSocket(urls.websocket);
           socket.addEventListener("open", () => socket.close());
@@ -250,6 +303,7 @@ async function selfTestBrowser(browserPath) {
       },
       {
         http: `http://127.0.0.1:${address.port}/forbidden-http`,
+        redirect: redirectSourceUrl,
         websocket: `ws://127.0.0.1:${address.port}/forbidden-websocket`
       }
     );
@@ -257,14 +311,22 @@ async function selfTestBrowser(browserPath) {
     await context.close();
     if (
       title !== "HEC verifier self-test" ||
-      intercepted.http < 1 ||
+      intercepted.http < 2 ||
       intercepted.websocket < 1 ||
-      serverHits.http !== 0 ||
-      serverHits.websocket !== 0
+      serverHits.forbiddenHttp !== 0 ||
+      serverHits.forbiddenWebsocket !== 0 ||
+      serverHits.redirectSource !== 1 ||
+      serverHits.redirectDestination !== 0 ||
+      redirectProbe.status !== 302 ||
+      redirectProbe.fetchedUrl !== redirectSourceUrl ||
+      !redirectProbe.aborted ||
+      redirectProbe.semanticCaptures !== 0 ||
+      redirectProbe.semanticErrors.length !== 1
     ) {
       throw new Error(
         `Browser firewall self-test failed: ${JSON.stringify({
           intercepted,
+          redirectProbe,
           serverHits,
           title
         })}`
@@ -273,12 +335,17 @@ async function selfTestBrowser(browserPath) {
     return {
       browserVersion: browser.version(),
       intercepted,
+      redirectProbe,
       serverHits,
       title
     };
   } finally {
     await browser.close();
-    await closeServer(server);
+    await Promise.all([
+      closeServer(server),
+      closeServer(redirectSource),
+      closeServer(redirectDestination)
+    ]);
   }
 }
 
@@ -424,26 +491,30 @@ async function captureOneRoute(options) {
       if (decision.category === "exact-gtm-loader") {
         routeEvidence.allowedRequests.push(record);
         try {
-          const fetched = await intercepted.fetch();
+          const fetched = await fetchWithoutRedirects(intercepted);
           const body = await fetched.body();
           const headers = fetched.headers();
+          const fetchedUrl = fetched.url();
           if (
-            fetched.status() < 200 ||
-            fetched.status() >= 300 ||
+            fetched.status() !== 200 ||
+            fetchedUrl !== request.url() ||
+            !isExactGtmLoader(fetchedUrl, gtmId) ||
             !String(headers["content-type"] || "").includes(
               "application/javascript"
             )
           ) {
             throw new Error(
-              `Exact GTM loader returned an invalid response: HTTP ${fetched.status()} ${headers[
-                "content-type"
-              ] || "missing content type"}.`
+              `Exact GTM loader returned an invalid response: HTTP ${fetched.status()}, fetched URL ${fetchedUrl ||
+                "missing"}, content type ${headers["content-type"] ||
+                "missing"}. Redirects are forbidden.`
             );
           }
           const analysis = analyzeSource(body.toString("utf8"));
           assertExpectedResource(analysis, expectedGtm);
           routeEvidence.gtmSemanticCaptures.push({
             ...semanticEvidence(analysis, body, headers),
+            fetchedUrl,
+            redirectDisposition: "disabled-zero-followed",
             status: fetched.status(),
             url: request.url()
           });
@@ -645,6 +716,7 @@ module.exports = {
   assertBrowserGtmEvidence,
   captureHydratedRoutes,
   classifyBrowserRequest,
+  fetchWithoutRedirects,
   isExactGtmLoader,
   selfTestBrowser
 };

@@ -73,7 +73,10 @@ function evidence(overrides = {}) {
     gtmSemanticCaptures: [
       {
         canonicalSha256: "c".repeat(64),
+        fetchedUrl: exactLoader,
         inventorySha256: "d".repeat(64),
+        redirectDisposition: "disabled-zero-followed",
+        status: 200,
         resourceVersion: "21"
       }
     ],
@@ -98,6 +101,19 @@ test("requires one successful loader and one dataLayer bootstrap", () => {
       })
     )
   ).toThrow("bootstrap dataLayer exactly once");
+  expect(() =>
+    assertBrowserGtmEvidence(
+      evidence({
+        gtmSemanticCaptures: [
+          {
+            fetchedUrl: "https://redirected.invalid/gtm.js",
+            redirectDisposition: "followed",
+            status: 200
+          }
+        ]
+      })
+    )
+  ).toThrow("semantically approved GTM loader");
 });
 
 test("fails on successful non-allowlisted traffic or browser errors", () => {
@@ -129,8 +145,11 @@ test("installs a context-level WebSocket firewall before navigation", () => {
   expect(source).not.toContain("connectToServer(");
   expect(source).toContain("forbidden-http");
   expect(source).toContain("forbidden-websocket");
-  expect(source).toContain("serverHits.http !== 0");
-  expect(source).toContain("serverHits.websocket !== 0");
+  expect(source).toContain("serverHits.forbiddenHttp !== 0");
+  expect(source).toContain("serverHits.forbiddenWebsocket !== 0");
+  expect(source).toContain("maxRedirects: 0");
+  expect(source).toContain("serverHits.redirectDestination !== 0");
+  expect(source).toContain("redirectProbe.semanticCaptures !== 0");
 });
 
 test("requires the exact production route and cache-bust query for documents", () => {

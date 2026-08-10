@@ -35,8 +35,9 @@ its approval alone is not permission to dispatch production.
 > authorized CloudFront ETag, versioned Lambda ARN, and Lambda checksum before any
 > public cutover; scans the uncompressed package for AWS access keys; requires S3
 > versioning; updates only existing production resources; verifies rendered and
-> hydrated routes; and automatically restores the immutable sanitized Lambda version
-> `150` plus bound mutable-S3 preimages if any failure occurs after the write fence. Direct
+> hydrated routes; arms an independent recovery watchdog before any candidate write; and
+> automatically restores immutable sanitized Lambda version `150` plus bound mutable-S3 preimages
+> for failure, cancellation, timeout, or mutating-runner loss after the write fence. Direct
 > workstation production mutation is
 > not an approved workaround. A green build or test alone is not permission to ship.
 
@@ -73,16 +74,21 @@ decommission-observation closeout SHA-256, a positive
 HEC Media queue-task receipt, and the literal confirmation `DEPLOY HEC FRONTEND PRODUCTION`.
 
 Dependency installation, tests, packaging, pinned Chrome setup, firewall integration proof, and
-the first semantic GTM capture run in a separate contents-read job with no OIDC or write
-permission. The mutator downloads and revalidates the sealed asset/browser artifact and performs
-no package installation. Its OIDC role can update only S3 bucket
+the first semantic GTM capture run in a contents-read job with no OIDC or write permission. The
+AWS mutator downloads and revalidates the sealed candidate but performs no package installation or
+browser execution. Public Chrome verification runs without OIDC; terminal tagging has GitHub write
+authority but no AWS authority. An independent `always()` AWS watchdog validates an immutable
+controller/ready/fence handshake before any candidate write and covers cancellation, timeout, and
+mutating-runner loss. The OIDC role can update only S3 bucket
 `x2l4ew-k0m7umi`, Lambda functions `x2l4ew-l5vb7pd` and `x2l4ew-api`, and CloudFront distribution
 `E2QXRSF2W55RTS`. This release publishes only the frontend Lambda and keeps the newsletter API
 behavior absent. The role cannot create infrastructure, modify IAM or Route 53, read Secrets
 Manager, list/read noncurrent S3 versions, or delete S3 objects. A successful release uploads
 required pre-tag evidence and then creates/verifies the immutable annotated
-`hecmedia-production-<12-character-sha>` tag as the terminal operation. Any failure after the S3
-write fence invokes same-attempt recovery; a same-run tag is removed only after recovery.
+`hecmedia-production-<12-character-sha>` tag as the terminal operation. Automatic tag deletion is
+forbidden because GitHub ref deletion has no compare-and-swap precondition; an exact terminal tag
+is accepted only when the terminal tag job itself is green. Any non-success tag job restores
+production and preserves an exact or ambiguous tag for reviewed resolution.
 
 For a deploy action, a no-credential media preflight resolves the candidate's live Spotlight and
 representative category image URLs and confirms that they return images. The credential-free
@@ -99,13 +105,15 @@ complete S3 preimage restoration before issuing the final invalidation, and veri
 with normal and fresh-query responses for the baseline release SHA, GTM absence, and newsletter
 API absence. Never infer a rollback target as version N-1.
 
-**S3 rollback warning:** the deploy role cannot list or read a noncurrent S3 VersionId. Before sync,
-the governed workflow must copy every current colliding/mutable object to its exact
+**S3 rollback warning:** the deploy role cannot list or read a noncurrent S3 VersionId. Before any
+candidate upload, the governed workflow must conditionally copy every current colliding/mutable object to its exact
 task/run/attempt/release-scoped preimage, download and verify matching bytes/metadata, and bind the
 uploaded manifest to the original task, run, attempt, release SHA, baseline public SHA/ETag,
-manifest key, and manifest SHA-256.
-Automatic and manual rollback restore those verified preimages as new current versions before the
-final invalidation. New mutable/unapproved keys are NO-GO because the role cannot delete them.
+manifest key, and manifest SHA-256. Preimage/manifest destinations require absence; candidate
+collisions require the captured ETag and additive keys require absence. Automatic and manual
+rollback restore those verified preimages as new current versions only while destinations remain
+the exact candidate, before the final invalidation. Unknown drift fails closed and suppresses
+invalidation. New mutable/unapproved keys are NO-GO because the role cannot delete them.
 Manual rollback must also prove fresh current ETag/default ARN/checksum/API state, the affected
 public candidate SHA, and candidate S3 bytes before mutation. It must supply the original immutable
 selector; never infer “latest.” Direct

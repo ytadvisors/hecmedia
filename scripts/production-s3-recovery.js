@@ -2,7 +2,39 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
-const MANIFEST_SCHEMA = "hecmedia-production-s3-preimage-v3";
+const MANIFEST_SCHEMA = "hecmedia-production-s3-preimage-v4";
+
+const CONTENT_TYPES = new Map([
+  [".css", "text/css"],
+  [".eot", "application/vnd.ms-fontobject"],
+  [".gif", "image/gif"],
+  [".html", "text/html"],
+  [".ico", "image/x-icon"],
+  [".jpeg", "image/jpeg"],
+  [".jpg", "image/jpeg"],
+  [".js", "application/javascript"],
+  [".json", "application/json"],
+  [".map", "application/json"],
+  [".otf", "font/otf"],
+  [".png", "image/png"],
+  [".scss", "text/x-scss"],
+  [".svg", "image/svg+xml"],
+  [".ttf", "font/ttf"],
+  [".txt", "text/plain"],
+  [".webmanifest", "application/manifest+json"],
+  [".webp", "image/webp"],
+  [".woff", "font/woff"],
+  [".woff2", "font/woff2"],
+  [".xml", "application/xml"]
+]);
+
+function contentTypeForKey(key) {
+  if (key === "BUILD_ID") return "text/plain";
+  return (
+    CONTENT_TYPES.get(path.extname(key).toLowerCase()) ||
+    "application/octet-stream"
+  );
+}
 
 function sha256File(filePath) {
   return crypto
@@ -214,6 +246,16 @@ function validateManifest(manifest, expected = {}) {
       throw new Error("S3 preimage manifest contains a missing/duplicate key.");
     }
     keys.add(entry.key);
+    if (
+      !entry.local ||
+      !/^[0-9a-f]{64}$/.test(entry.local.sha256 || "") ||
+      !Number.isSafeInteger(entry.local.size) ||
+      entry.local.size < 0 ||
+      typeof entry.local.contentType !== "string" ||
+      !entry.local.contentType
+    ) {
+      throw new Error(`S3 candidate ${entry.key} has invalid local metadata.`);
+    }
     if (entry.classification === "existing-collision") {
       const expectedPreimageKey = `${evidencePrefix(
         manifest.binding
@@ -274,6 +316,7 @@ function preparePreimages(options) {
   }
   const entries = listCandidateFiles(assetsDir).map(candidate => {
     const local = {
+      contentType: contentTypeForKey(candidate.key),
       sha256: sha256File(candidate.absolute),
       size: fs.statSync(candidate.absolute).size
     };
@@ -298,7 +341,10 @@ function preparePreimages(options) {
       ...metadataRecord(sourceHead),
       sha256: downloadDigest(s3, candidate.key, outputDir, "source").sha256
     };
-    s3.copy(candidate.key, preimageKey);
+    s3.copy(candidate.key, preimageKey, {
+      destinationIfNoneMatch: "*",
+      sourceIfMatch: source.eTag
+    });
     const preimageHead = s3.head(preimageKey);
     if (!preimageHead) {
       throw new Error(`S3 preimage copy is missing for ${candidate.key}.`);
@@ -333,13 +379,18 @@ function preparePreimages(options) {
   const localManifestPath = path.join(outputDir, "s3-preimage-manifest.json");
   fs.writeFileSync(localManifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const manifestSha256 = sha256File(localManifestPath);
-  s3.putFile(manifest.manifestKey, localManifestPath, {
-    manifest_sha256: manifestSha256,
-    release_sha: binding.releaseSha,
-    run_attempt: String(binding.runAttempt),
-    run_id: String(binding.runId),
-    task_id: String(binding.taskId)
-  });
+  s3.putFile(
+    manifest.manifestKey,
+    localManifestPath,
+    {
+      manifest_sha256: manifestSha256,
+      release_sha: binding.releaseSha,
+      run_attempt: String(binding.runAttempt),
+      run_id: String(binding.runId),
+      task_id: String(binding.taskId)
+    },
+    { destinationIfNoneMatch: "*" }
+  );
   const verificationPath = path.join(
     outputDir,
     "s3-preimage-manifest-uploaded.json"
@@ -418,6 +469,27 @@ function assertRemoteBaseline(manifest, s3, outputDir) {
   return checked;
 }
 
+function uploadCandidates(manifest, assetsDir, s3) {
+  validateManifest(manifest);
+  assertCandidateTree(manifest, assetsDir);
+  return manifest.entries.map(entry => {
+    const source = path.join(assetsDir, ...entry.key.split("/"));
+    const conditions =
+      entry.classification === "existing-collision"
+        ? { destinationIfMatch: entry.source.eTag }
+        : { destinationIfNoneMatch: "*" };
+    const uploaded = s3.putCandidate(entry.key, source, {
+      ...conditions,
+      contentType: entry.local.contentType
+    });
+    return {
+      eTag: (uploaded && uploaded.ETag) || null,
+      key: entry.key,
+      versionId: (uploaded && uploaded.VersionId) || null
+    };
+  });
+}
+
 function assertUploadedCandidates(manifest, s3, outputDir) {
   validateManifest(manifest);
   const checked = [];
@@ -436,7 +508,8 @@ function assertUploadedCandidates(manifest, s3, outputDir) {
     );
     if (
       uploaded.sha256 !== entry.local.sha256 ||
-      Number(uploadedHead.ContentLength) !== entry.local.size
+      Number(uploadedHead.ContentLength) !== entry.local.size ||
+      uploadedHead.ContentType !== entry.local.contentType
     ) {
       throw new Error(`S3 candidate object ${entry.key} differs after sync.`);
     }
@@ -471,7 +544,42 @@ function restorePreimages(manifest, s3, outputDir) {
           `S3 rollback preimage checksum drifted for ${entry.key}.`
         );
       }
-      s3.copy(entry.preimageKey, entry.key);
+      const currentHead = s3.head(entry.key);
+      if (!currentHead) {
+        throw new Error(
+          `S3 rollback destination disappeared for ${entry.key}.`
+        );
+      }
+      const current = {
+        ...metadataRecord(currentHead),
+        sha256: downloadDigest(s3, entry.key, outputDir, "rollback-current")
+          .sha256
+      };
+      const isExactBaseline =
+        current.sha256 === entry.source.sha256 &&
+        JSON.stringify(comparableMetadata(current)) ===
+          JSON.stringify(comparableMetadata(entry.source));
+      if (isExactBaseline) {
+        restored.push({
+          key: entry.key,
+          restored: current,
+          state: "already-exact-baseline"
+        });
+        return;
+      }
+      const isExactCandidate =
+        current.sha256 === entry.local.sha256 &&
+        current.contentLength === entry.local.size &&
+        current.contentType === entry.local.contentType;
+      if (!isExactCandidate) {
+        throw new Error(
+          `S3 rollback destination drifted outside the exact candidate/baseline states for ${entry.key}.`
+        );
+      }
+      s3.copy(entry.preimageKey, entry.key, {
+        destinationIfMatch: current.eTag,
+        sourceIfMatch: entry.preimage.eTag
+      });
       const restoredHead = s3.head(entry.key);
       if (!restoredHead) {
         throw new Error(`Restored S3 object is missing for ${entry.key}.`);
@@ -485,7 +593,11 @@ function restorePreimages(manifest, s3, outputDir) {
       if (restoredMetadata.sha256 !== entry.preimage.sha256) {
         throw new Error(`Restored S3 byte checksum mismatch for ${entry.key}.`);
       }
-      restored.push({ key: entry.key, restored: restoredMetadata });
+      restored.push({
+        key: entry.key,
+        restored: restoredMetadata,
+        state: "conditionally-restored-from-candidate"
+      });
     } catch (error) {
       failures.push({
         key: entry.key,
@@ -545,6 +657,7 @@ module.exports = {
   assertBinding,
   assertRemoteBaseline,
   assertUploadedCandidates,
+  contentTypeForKey,
   candidateTree,
   classifyAbsentKey,
   evidencePrefix,
@@ -553,6 +666,7 @@ module.exports = {
   metadataRecord,
   preparePreimages,
   restorePreimages,
+  uploadCandidates,
   sha256File,
   isContentAddressedAdditive,
   validateManifest

@@ -4,6 +4,7 @@ const path = require("path");
 const {
   cleanup,
   create,
+  inspect,
   preflight,
   releaseTag
 } = require("./production-release-tag");
@@ -100,55 +101,16 @@ test("accepts only a preexisting annotated tag that peels to the exact release",
   expect(adapter.createRef).not.toHaveBeenCalled();
 });
 
-test("cleanup deletes only the exact immutable tag object created by this run", () => {
+test("automatic cleanup is forbidden even for an exact run-created tag", () => {
   const tagObject = "b".repeat(40);
   const adapter = {
     createRef: jest.fn(() => ({ object: { sha: tagObject, type: "tag" } })),
     createTagObject: jest.fn(() => annotated(tagObject)),
-    deleteRef: jest.fn(),
     getRef: jest
       .fn()
       .mockReturnValueOnce(null)
       .mockReturnValueOnce({ object: { sha: tagObject, type: "tag" } }),
     getTagObject: jest.fn(() => annotated(tagObject))
-  };
-  const filePaths = paths();
-  preflight({ adapter, releaseSha, statePath: filePaths.statePath });
-  create({
-    adapter,
-    ...filePaths,
-    releaseSha,
-    runAttempt,
-    runId
-  });
-  expect(
-    cleanup({
-      adapter,
-      ...filePaths,
-      releaseSha,
-      runAttempt,
-      runId
-    })
-  ).toMatchObject({ state: "removed-run-created-tag", tagObject });
-  expect(adapter.deleteRef).toHaveBeenCalledWith(tag);
-});
-
-test("cleanup refuses a concurrent tag object and preserves its ref", () => {
-  const createdTagObject = "b".repeat(40);
-  const concurrentTagObject = "c".repeat(40);
-  const adapter = {
-    createRef: jest.fn(() => ({
-      object: { sha: createdTagObject, type: "tag" }
-    })),
-    createTagObject: jest.fn(() => annotated(createdTagObject)),
-    deleteRef: jest.fn(),
-    getRef: jest
-      .fn()
-      .mockReturnValueOnce(null)
-      .mockReturnValueOnce({
-        object: { sha: concurrentTagObject, type: "tag" }
-      }),
-    getTagObject: jest.fn(() => annotated(concurrentTagObject))
   };
   const filePaths = paths();
   preflight({ adapter, releaseSha, statePath: filePaths.statePath });
@@ -167,27 +129,28 @@ test("cleanup refuses a concurrent tag object and preserves its ref", () => {
       runAttempt,
       runId
     })
-  ).toThrow("expected annotated object");
-  expect(adapter.deleteRef).not.toHaveBeenCalled();
+  ).toThrow("Automatic deletion");
 });
 
-test("cleanup never removes a tag that predated this run", () => {
+test("inspect recognizes only an exact annotated release tag", () => {
   const tagObject = "b".repeat(40);
   const adapter = {
-    deleteRef: jest.fn(),
     getRef: jest.fn(() => ({ object: { sha: tagObject, type: "tag" } })),
     getTagObject: jest.fn(() => annotated(tagObject))
   };
-  const filePaths = paths();
-  preflight({ adapter, releaseSha, statePath: filePaths.statePath });
-  expect(
-    cleanup({
-      adapter,
-      ...filePaths,
-      releaseSha,
-      runAttempt,
-      runId
-    })
-  ).toMatchObject({ state: "not-created-by-this-run" });
-  expect(adapter.deleteRef).not.toHaveBeenCalled();
+  expect(inspect({ adapter, releaseSha })).toMatchObject({
+    releaseSha,
+    state: "exact-annotated-release",
+    tag,
+    tagObject
+  });
+});
+
+test("inspect reports an absent or lightweight tag without mutation", () => {
+  const adapter = { getRef: jest.fn(() => null), getTagObject: jest.fn() };
+  expect(inspect({ adapter, releaseSha })).toMatchObject({
+    state: "absent-or-not-annotated",
+    tag
+  });
+  expect(adapter.getTagObject).not.toHaveBeenCalled();
 });
