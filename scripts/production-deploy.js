@@ -5,6 +5,11 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync, spawnSync } = require("child_process");
 const { build: buildDefaultEdgePackage } = require("./edge-package-build");
+const {
+  assertOnlyApprovedGtmIds,
+  assertRenderedSiteIdentity,
+  expectedGtmContainerId
+} = require("./verify-production");
 
 const REGION = "us-east-1";
 const ACCOUNT_ID = "850335719356";
@@ -861,6 +866,120 @@ function verifyRemoteImage(url, route) {
   assertRemoteImageResponse(url, route, result);
 }
 
+function isApprovedBrowserRequest(rawUrl) {
+  let target;
+  try {
+    target = new URL(rawUrl);
+  } catch (error) {
+    return false;
+  }
+  if (target.protocol === "data:" || target.protocol === "blob:") return true;
+  if (target.protocol !== "https:") return false;
+  const hostname = target.hostname.toLowerCase();
+  if (
+    hostname === "hecmedia.org" ||
+    hostname === "www.hecmedia.org" ||
+    PRODUCTION_MEDIA_HOSTS.has(hostname)
+  ) {
+    return true;
+  }
+  if (hostname === "asset.ytadvisors.com") {
+    return target.pathname.startsWith(
+      "/client-documents/hecmedia/media-library/"
+    );
+  }
+  if (hostname === "maxcdn.bootstrapcdn.com") {
+    return target.pathname.startsWith("/bootstrap/3.3.7/");
+  }
+  if (hostname === "cdnjs.cloudflare.com") {
+    return target.pathname.startsWith("/ajax/libs/slick-carousel/1.8.1/");
+  }
+  if (hostname === "www.google.com" || hostname === "www.gstatic.com") {
+    return target.pathname.startsWith("/recaptcha/");
+  }
+  if (hostname !== "www.googletagmanager.com") return false;
+  if (target.pathname === "/gtm.js") {
+    return (
+      target.search === `?id=${expectedGtmContainerId}` &&
+      [...target.searchParams.keys()].length === 1
+    );
+  }
+  return (
+    target.pathname === "/ns.html" &&
+    target.search === `?id=${expectedGtmContainerId}` &&
+    [...target.searchParams.keys()].length === 1
+  );
+}
+
+function browserEvidenceUrl(rawUrl) {
+  try {
+    const target = new URL(rawUrl);
+    return `${target.origin}${target.pathname}`;
+  } catch (error) {
+    return "invalid-url";
+  }
+}
+
+function assertBrowserAcceptanceEvidence(evidence) {
+  if (!evidence || !evidence.route) {
+    throw new Error("Browser acceptance evidence is missing its route.");
+  }
+  const { route } = evidence;
+  if (evidence.statusCode !== 200) {
+    throw new Error(
+      `Browser production route ${route} returned HTTP ${evidence.statusCode}.`
+    );
+  }
+  if (
+    !Array.isArray(evidence.gtmLoaderUrls) ||
+    evidence.gtmLoaderUrls.length !== 1 ||
+    evidence.gtmLoaderUrls[0] !==
+      `https://www.googletagmanager.com/gtm.js?id=${expectedGtmContainerId}`
+  ) {
+    throw new Error(
+      `Browser production route ${route} did not request exactly one approved GTM loader.`
+    );
+  }
+  if (
+    !Array.isArray(evidence.gtmLoaderResponses) ||
+    evidence.gtmLoaderResponses.length !== 1 ||
+    evidence.gtmLoaderResponses[0].url !==
+      `https://www.googletagmanager.com/gtm.js?id=${expectedGtmContainerId}` ||
+    evidence.gtmLoaderResponses[0].status !== 200
+  ) {
+    throw new Error(
+      `Browser production route ${route} did not load the exact approved GTM resource with HTTP 200.`
+    );
+  }
+  if (
+    !evidence.dataLayer ||
+    evidence.dataLayer.gtmJsEvents !== 1 ||
+    evidence.dataLayer.gtmStartEvents !== 1
+  ) {
+    throw new Error(
+      `Browser production route ${route} did not bootstrap window.dataLayer exactly once.`
+    );
+  }
+  if (!evidence.hasHecYoutubeLink) {
+    throw new Error(
+      `Browser production route ${route} lost the HEC on YouTube navigation link.`
+    );
+  }
+  if (route === "/newsletter" && !evidence.hasNewsletterForm) {
+    throw new Error(
+      "Browser production newsletter route did not render the send-enabled form controls."
+    );
+  }
+  if (
+    (evidence.consoleErrors && evidence.consoleErrors.length > 0) ||
+    (evidence.pageErrors && evidence.pageErrors.length > 0)
+  ) {
+    throw new Error(
+      `Browser production route ${route} emitted a console, CSP, or runtime error.`
+    );
+  }
+}
+
 function verifyHydratedRoutes(browserPath) {
   if (!browserPath || !fs.existsSync(browserPath)) {
     throw new Error(
@@ -904,11 +1023,7 @@ function verifyHydratedRoutes(browserPath) {
     }
     const dom = result.stdout || "";
     const logs = result.stderr || "";
-    if (!dom.includes("HEC-TV") || />404 not found\.</i.test(dom)) {
-      throw new Error(
-        `Hydrated production route ${route} did not render the HEC site.`
-      );
-    }
+    assertRenderedSiteIdentity(dom, route);
     assertHydratedNavigation(dom, route);
     const routeMediaEvidence = assertHydratedImageSources(dom, route);
     routeMediaEvidence.imageUrls.forEach(url => {
@@ -945,6 +1060,164 @@ function verifyHydratedRoutes(browserPath) {
       2
     )
   );
+}
+
+async function verifyBrowserAcceptance(browserPath) {
+  if (!browserPath || !fs.existsSync(browserPath)) {
+    throw new Error(
+      "BROWSER_BIN must name an installed Chrome or Chromium binary."
+    );
+  }
+  // Required by the production workflow after an exact frozen install. Keeping
+  // this lazy lets pure deploy-contract tests run without launching a browser.
+  // eslint-disable-next-line import/no-extraneous-dependencies
+  const { chromium } = require("@playwright/test");
+  const browser = await chromium.launch({ executablePath: browserPath });
+  const context = await browser.newContext();
+  const evidence = [];
+  const browserRoutes = ["/", "/posts/hec-on-youtube", "/newsletter"];
+  try {
+    await browserRoutes.reduce(
+      (pendingRoute, route) =>
+        pendingRoute.then(async () => {
+          const page = await context.newPage();
+          const gtmLoaderUrls = [];
+          const gtmLoaderResponses = [];
+          const blockedThirdPartyRequests = [];
+          const blockedResourceErrors = [];
+          const consoleErrors = [];
+          const pageErrors = [];
+          await page.route("**/*", async intercepted => {
+            const requestUrl = intercepted.request().url();
+            if (!isApprovedBrowserRequest(requestUrl)) {
+              blockedThirdPartyRequests.push(browserEvidenceUrl(requestUrl));
+              await intercepted.abort("blockedbyclient");
+              return;
+            }
+            await intercepted.continue();
+          });
+          page.on("request", request => {
+            let target;
+            try {
+              target = new URL(request.url());
+            } catch (error) {
+              return;
+            }
+            if (
+              target.hostname === "www.googletagmanager.com" &&
+              target.pathname === "/gtm.js"
+            ) {
+              gtmLoaderUrls.push(target.href);
+            }
+          });
+          page.on("response", response => {
+            let target;
+            try {
+              target = new URL(response.url());
+            } catch (error) {
+              return;
+            }
+            if (
+              target.hostname === "www.googletagmanager.com" &&
+              target.pathname === "/gtm.js"
+            ) {
+              gtmLoaderResponses.push({
+                status: response.status(),
+                url: target.href
+              });
+            }
+          });
+          page.on("console", message => {
+            if (message.type() !== "error") return;
+            if (/net::ERR_BLOCKED_BY_CLIENT/.test(message.text())) {
+              blockedResourceErrors.push(message.text());
+              return;
+            }
+            consoleErrors.push(message.text());
+          });
+          page.on("pageerror", error => pageErrors.push(error.message));
+
+          const response = await page.goto(`https://hecmedia.org${route}`, {
+            timeout: 60000,
+            waitUntil: "domcontentloaded"
+          });
+          await page.waitForFunction(
+            () =>
+              Array.isArray(window.dataLayer) &&
+              window.dataLayer.some(entry => entry && entry.event === "gtm.js"),
+            null,
+            { timeout: 15000 }
+          );
+          await page.waitForTimeout(2000);
+          const dom = await page.content();
+          assertRenderedSiteIdentity(dom, route);
+          assertOnlyApprovedGtmIds(dom, route);
+          assertHydratedNavigation(dom, route);
+          if (
+            Object.prototype.hasOwnProperty.call(
+              HYDRATED_MEDIA_REQUIREMENTS,
+              route
+            )
+          ) {
+            assertHydratedImageSources(dom, route);
+          }
+          const routeEvidence = {
+            blockedResourceErrors,
+            blockedThirdPartyRequests,
+            consoleErrors,
+            dataLayer: await page.evaluate(() => {
+              const entries = Array.isArray(window.dataLayer)
+                ? window.dataLayer
+                : [];
+              const gtmEvents = entries.filter(
+                entry => entry && entry.event === "gtm.js"
+              );
+              return {
+                entryCount: entries.length,
+                gtmJsEvents: gtmEvents.length,
+                gtmStartEvents: gtmEvents.filter(entry =>
+                  Number.isFinite(entry["gtm.start"])
+                ).length
+              };
+            }),
+            gtmLoaderResponses,
+            gtmLoaderUrls,
+            hasHecYoutubeLink:
+              (await page.locator('a[href="/posts/hec-on-youtube"]').count()) >
+              0,
+            hasNewsletterForm:
+              route !== "/newsletter" ||
+              ((await page.locator("form.newsletter-signup-form").count()) ===
+                1 &&
+                (await page.locator("#newsletter-email").count()) === 1 &&
+                (await page.locator("#newsletter-consent").count()) === 1 &&
+                (await page.locator('button[type="submit"]').count()) === 1),
+            pageErrors,
+            route,
+            statusCode: response ? response.status() : 0
+          };
+          assertBrowserAcceptanceEvidence(routeEvidence);
+          evidence.push(routeEvidence);
+          await page.close();
+        }),
+      Promise.resolve()
+    );
+  } finally {
+    await context.close();
+    await browser.close();
+  }
+  fs.writeFileSync(
+    path.join(RELEASE_DIR, "browser-acceptance.json"),
+    JSON.stringify(
+      {
+        checkedAt: new Date().toISOString(),
+        routes: evidence
+      },
+      null,
+      2
+    )
+  );
+  return evidence;
 }
 
 function writeEvidence(state) {
@@ -1012,7 +1285,7 @@ function assertDistributionContractWithRelease(
   assertDistributionContract(config, defaultVersionArn, apiVersionArn);
 }
 
-function deploy() {
+async function deploy() {
   assertGovernedDeployContext(process.env, "deploy");
   requireBuildContract();
   const metadata = ensureBuildArtifacts();
@@ -1171,6 +1444,7 @@ function deploy() {
       }
     });
     verifyHydratedRoutes(process.env.BROWSER_BIN);
+    await verifyBrowserAcceptance(process.env.BROWSER_BIN);
 
     const live = getDistributionConfig();
     assertDistributionContractWithRelease(
@@ -1244,13 +1518,16 @@ module.exports = {
   assertDistributionContract,
   assertFunctionContract,
   assertGovernedDeployContext,
+  assertBrowserAcceptanceEvidence,
   assertHydratedImageSources,
   assertHydratedNavigation,
   assertRemoteImageResponse,
   configureProductionDistribution,
   configureSanitizedRollback,
   extractRemoteImageUrls,
+  isApprovedBrowserRequest,
   parseJsonOutput,
   publishedVersionFromArn,
-  requireBuildContract
+  requireBuildContract,
+  verifyBrowserAcceptance
 };
