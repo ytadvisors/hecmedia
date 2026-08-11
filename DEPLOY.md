@@ -35,8 +35,10 @@ from this release. The protected environment and exact green workflow remain man
 > public cutover; scans the uncompressed package for AWS access keys; enables S3
 > versioning; updates only existing production resources; verifies rendered and
 > hydrated routes; and automatically restores the immutable sanitized Lambda version
-> `150` if post-cutover verification fails. Direct workstation production mutation is
-> not an approved workaround. A green build or test alone is not permission to ship.
+> `153` if post-cutover verification fails. Version `153` is the verified
+> `18207acfa56e` release from governed run `31397184126`. Direct workstation
+> production mutation is not an approved workaround. A green build or test alone is
+> not permission to ship.
 
 ## Legacy full-stack deployment (blocked)
 
@@ -101,7 +103,7 @@ evidence is uploaded as
 `.production-release/browser-acceptance.json`.
 
 Manual rollback uses the same workflow with `action=rollback` and the literal confirmation
-`ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the immutable checksum of version `150`, moves all
+`ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the immutable checksum of version `153`, moves all
 four owned SSR associations to that version, removes the newsletter API behavior, waits for
 CloudFront and invalidation completion, and verifies the public homepage. Never infer a rollback
 target as version N-1.
