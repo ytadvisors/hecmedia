@@ -24,6 +24,8 @@ const disableImageOptimizer =
   process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER === "true";
 const newsletterOnlyExport = process.env.HECMEDIA_NEWSLETTER_EXPORT === "true";
 
+const { postSlugRedirectRules } = require("./lib/post-slug-redirects");
+
 const config = {
   ...(disableImageOptimizer ? { images: { loader: "akamai", path: "" } } : {}),
   ...(newsletterOnlyExport
@@ -34,6 +36,10 @@ const config = {
         })
       }
     : {}),
+  // Permanent post slug renames (editor changed WP slug; keep bookmarks/search).
+  async redirects() {
+    return postSlugRedirectRules();
+  },
   env: {
     ...clientLocalEnv,
     DEPLOY_SHA: process.env.DEPLOY_SHA,

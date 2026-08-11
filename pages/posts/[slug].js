@@ -8,6 +8,7 @@ import SinglePost from "../../components/SinglePost";
 import ListOfPosts from "../../components/ListOfPosts";
 import { getPostPageImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { GET_PAGE_INFO, GET_PAGE_CATEGORY } from "../../lib/graphql";
+import { resolvePostSlugRedirect } from "../../lib/post-slug-redirects";
 
 const Posts = props => {
   const { playingLive } = props;
@@ -132,4 +133,21 @@ const mapStateToProps = state => ({
   playingLive: state.postReducers.playingLive
 });
 
-export default connect(mapStateToProps)(Posts);
+const ConnectedPosts = connect(mapStateToProps)(Posts);
+
+/**
+ * SSR belt-and-suspenders for permanent slug renames. next.config.js also
+ * emits these as redirects(); this covers Lambda@Edge SSR entry when the
+ * config map is not applied by the packaging path.
+ */
+ConnectedPosts.getInitialProps = async ctx => {
+  const dest = resolvePostSlugRedirect(ctx?.query?.slug);
+  if (!dest) return {};
+  if (ctx.res) {
+    ctx.res.writeHead(301, { Location: dest });
+    ctx.res.end();
+  }
+  return {};
+};
+
+export default ConnectedPosts;
