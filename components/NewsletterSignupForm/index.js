@@ -1,7 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import validator from "validator";
 import Recaptcha from "react-recaptcha";
+import { loadRecaptchaScript } from "../../lib/loadRecaptcha";
 
 const STATUS = {
   IDLE: "idle",
@@ -46,6 +47,10 @@ export default function NewsletterSignupForm({
   const captchaRef = useRef(null);
 
   const captchaAvailable = Boolean(captchaSiteKey);
+
+  useEffect(() => {
+    if (captchaRequired && captchaAvailable) loadRecaptchaScript();
+  }, [captchaRequired, captchaAvailable]);
 
   const resetCaptcha = () => {
     setCaptchaToken(null);

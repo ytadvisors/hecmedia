@@ -106,7 +106,13 @@ export default props => {
         <div className="row">
           <div className="col-xs-3 no-mobile">
             <div className="logo">
-              <img src={logo} className="img-responsive" alt="logo" />
+              <img
+                src={logo}
+                className="img-responsive"
+                alt="logo"
+                width={160}
+                height={48}
+              />
             </div>
             <div className="">
               <div className="social-container">

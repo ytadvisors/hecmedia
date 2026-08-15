@@ -57,6 +57,8 @@ export const SideNavigation = ({ children, railPromo }) => {
             fallbackSrc={getWordPressMediaFallbackUrl(publicSource)}
             finalSrc={DEFAULT_RAIL_PROMO.image.sourceUrl}
             alt={railPromo.alt || image.altText || "For Educators"}
+            width={320}
+            height={180}
           />
         </a>
       )}

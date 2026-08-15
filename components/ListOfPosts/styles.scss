@@ -35,6 +35,8 @@
       position: relative;
       display: block;
       height: inherit;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
       .play-icon {
         position: absolute;
         top: 50%;
@@ -94,10 +96,20 @@
           background: #4ea2ea;
         }
       }
+      @media (max-width: 500px) {
+        .main-table,
+        .main-table tbody,
+        .main-table tr,
+        .main-table td {
+          display: block;
+          width: 100%;
+        }
+      }
       .wallpaper {
         background-repeat: no-repeat;
         background-size: cover;
         height: 220px;
+        aspect-ratio: 16 / 9;
         cursor: pointer;
         background-position: center;
         position: relative;

@@ -10,6 +10,8 @@ const MediaImage = ({
   finalSrc,
   alt = "",
   onError,
+  width = 768,
+  height = 430,
   ...imageProps
 }) => {
   const candidates = React.useMemo(
@@ -43,6 +45,12 @@ const MediaImage = ({
       {...imageProps}
       src={candidates[candidateIndex]}
       alt={alt}
+      width={width}
+      height={height}
+      style={{
+        aspectRatio: `${width} / ${height}`,
+        ...(imageProps.style || {})
+      }}
       data-media-candidate-index={candidateIndex}
       onError={handleError}
     />

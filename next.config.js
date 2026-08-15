@@ -40,6 +40,19 @@ const config = {
   async redirects() {
     return postSlugRedirectRules();
   },
+  async headers() {
+    return [
+      {
+        source: "/",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=300, stale-while-revalidate=600"
+          }
+        ]
+      }
+    ];
+  },
   env: {
     ...clientLocalEnv,
     DEPLOY_SHA: process.env.DEPLOY_SHA,

@@ -3,9 +3,13 @@ import _ from "lodash";
 import { Button } from "react-bootstrap";
 import { MdLocationOn } from "react-icons/md";
 import { IoIosCalendar } from "react-icons/io";
-import LazyLoad from "react-lazyload";
 import NewsLetterContainer from "../../containers/NewsLetterContainer";
-import { getEventDate, getPostImgSrc } from "../../lib/getFunctions";
+import {
+  getEventDate,
+  getPostImgSrc,
+  getPostImgSrcSet,
+  getPostImgSizes
+} from "../../lib/getFunctions";
 import { getWordPressMediaFallbackUrl } from "../../lib/mediaUrl";
 import MediaImage from "../MediaImage";
 
@@ -53,20 +57,36 @@ export default class ListOfPosts extends Component {
       ? `${excerpt.substr(0, truncateLength)}&hellip;`
       : excerpt;
 
-  getThumbNail = (thumbnail, isVideo = false, link) => (
-    <a href={link} className="thumbnail-link">
-      {isVideo && <img src={playButton} className="play-icon" alt="play" />}
-      <LazyLoad height={200}>
+  getThumbNail = (thumbnail, isVideo = false, link, media = {}) => {
+    const isLcp = this.consumeLcpSlot;
+    this.consumeLcpSlot = false;
+    return (
+      <a href={link} className="thumbnail-link">
+        {isVideo && (
+          <img
+            src={playButton}
+            className="play-icon"
+            alt=""
+            width={48}
+            height={48}
+          />
+        )}
         <MediaImage
           src={thumbnail || defaultImage}
+          srcSet={media.srcSet}
+          sizes={media.sizes || getPostImgSizes("Featured")}
           fallbackSrc={getWordPressMediaFallbackUrl(thumbnail)}
           finalSrc={defaultImage}
           className="img-responsive full-width thumbnail-img"
           alt=""
+          width={768}
+          height={430}
+          loading={isLcp ? "eager" : "lazy"}
+          fetchPriority={isLcp ? "high" : undefined}
         />
-      </LazyLoad>
-    </a>
-  );
+      </a>
+    );
+  };
 
   getLink = post => {
     const { link: { page } = {} } = this.props;
@@ -239,7 +259,11 @@ export default class ListOfPosts extends Component {
               {this.getThumbNail(
                 getPostImgSrc(post, "small"),
                 isVideo,
-                this.getLink(post)
+                this.getLink(post),
+                {
+                  srcSet: getPostImgSrcSet(post),
+                  sizes: getPostImgSizes("Single Column")
+                }
               )}
             </td>
           </tr>
@@ -293,31 +317,23 @@ export default class ListOfPosts extends Component {
 
     const isVideo = postDetails && postDetails.isVideo;
 
-    const { isMobile } = this.state;
-
     return (
       <div className="featured-block">
-        {this.getThumbNail(
-          getPostImgSrc(post, isMobile ? "small" : ""),
-          isVideo,
-          this.getLink(post)
-        )}
+        {this.getThumbNail(getPostImgSrc(post), isVideo, this.getLink(post), {
+          srcSet: getPostImgSrcSet(post),
+          sizes: getPostImgSizes("Featured")
+        })}
         {content}
       </div>
     );
   };
 
-  getFeaturedWallpaper = (post, content) => {
-    const { isMobile } = this.state;
-
-    return (
+  getFeaturedWallpaper = (post, content) => (
       <div className="featured-block">
         <div
           className="wallpaper"
           style={{
-            backgroundImage: getWallpaperBackgroundImage(
-              getPostImgSrc(post, !isMobile ? "small" : "")
-            )
+            backgroundImage: getWallpaperBackgroundImage(getPostImgSrc(post))
           }}
         >
           <a href={this.getLink(post)}>
@@ -330,7 +346,6 @@ export default class ListOfPosts extends Component {
         </div>
       </div>
     );
-  };
 
   getPost = (layout, post, content) => {
     const { postDetails } = post;
@@ -340,7 +355,10 @@ export default class ListOfPosts extends Component {
     return (
       <div>
         <div className={`thumbnail-${layout.replace(" ", "-").toLowerCase()}`}>
-          {this.getThumbNail(getPostImgSrc(post), isVideo, this.getLink(post))}
+          {this.getThumbNail(getPostImgSrc(post), isVideo, this.getLink(post), {
+            srcSet: getPostImgSrcSet(post),
+            sizes: getPostImgSizes(layout)
+          })}
         </div>
         {content}
       </div>
@@ -461,6 +479,7 @@ export default class ListOfPosts extends Component {
       addNewsLetter
     } = this.props;
     const { isMobile } = this.state;
+    this.consumeLcpSlot = true;
     if (posts.length > 0) {
       const postsClone = [...posts.filter(n => n)];
       let pageDesign = { newRowLayout: [] };
@@ -486,7 +505,7 @@ export default class ListOfPosts extends Component {
         rowLayout &&
         rowLayout.map(rowInfo => {
           const layout = rowInfo.obj;
-          const currentLayout = isMobile ? "Featured" : layout.rowLayout;
+          const currentLayout = layout.rowLayout;
           const currentDisplay = layout.displayType;
           numColumns = this.getNumColumns(currentLayout);
           const row = _.slice(postsClone, 0, numColumns);
@@ -513,7 +532,7 @@ export default class ListOfPosts extends Component {
         });
 
       if (postsClone.length > 0) {
-        const currentLayout = isMobile ? "Featured" : defaultLayout;
+        const currentLayout = defaultLayout;
         const currentDisplay = displayType;
         const remainingRows = _.chunk(
           postsClone,

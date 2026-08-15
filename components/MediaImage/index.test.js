@@ -15,6 +15,8 @@ describe("MediaImage", () => {
     const image = getByAltText("Story");
 
     expect(image).toHaveAttribute("src", "https://media.example.com/story.jpg");
+    expect(image).toHaveAttribute("width", "768");
+    expect(image).toHaveAttribute("height", "430");
     fireEvent.error(image);
     expect(image).toHaveAttribute(
       "src",
