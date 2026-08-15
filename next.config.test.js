@@ -114,6 +114,22 @@ test("disables the unused image optimizer only for the staging build", () => {
   expect(config.images).toEqual({ loader: "akamai", path: "" });
 });
 
+test("advertises anonymous homepage edge cache headers", async () => {
+  const config = require("./next.config");
+  const rules = await config.headers();
+  expect(rules).toEqual([
+    {
+      source: "/",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "public, s-maxage=300, stale-while-revalidate=600"
+        }
+      ]
+    }
+  ]);
+});
+
 test("keeps the default image loader outside the staging build", () => {
   delete process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
 

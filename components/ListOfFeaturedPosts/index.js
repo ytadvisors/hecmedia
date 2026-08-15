@@ -39,6 +39,8 @@ export default props => {
                       className="img-responsive"
                       alt="cover"
                       loading="lazy"
+                      width={320}
+                      height={180}
                     />
                   </div>
                   <div

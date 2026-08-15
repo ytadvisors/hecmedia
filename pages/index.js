@@ -5,7 +5,12 @@ import Layout from "../containers/Layout";
 import ListOfPosts from "../components/ListOfPosts";
 import SEO from "../components/SEO";
 import { removeDuplicates } from "../lib/updateFunctions";
-import { getPostImgSrc, getExcerpt } from "../lib/getFunctions";
+import {
+  getPostImgSrc,
+  getPostImgSrcSet,
+  getPostImgSizes,
+  getExcerpt
+} from "../lib/getFunctions";
 import {
   fetchPageAcfLayout,
   hasFeedRowLayout,
@@ -14,8 +19,7 @@ import {
 
 export default () => {
   const { data } = useQuery(GET_HOME_PAGE, {
-    variables: { uri: "home" },
-    notifyOnNetworkStatusChange: true
+    variables: { uri: "home" }
   });
   const { pageData, postData } = data || {};
   const {
@@ -26,9 +30,10 @@ export default () => {
     feedDesign: graphqlFeedDesign
   } = pageData || {};
 
-  // When GraphQL Page.feedDesign.newRowLayout is empty (staging resolver bug
-  // reading the wrong meta key), hydrate layout rows from public REST ACF so
-  // ListOfPosts can render Featured / 3 Columns / Wallpaper blocks.
+  // Staging GraphQL historically returns empty newRowLayout (wrong meta key).
+  // Prefer GraphQL rows; when empty, hydrate from public REST ACF so Featured /
+  // 3 Columns / Wallpaper sections match the approved CMS layout. Until REST
+  // resolves, resolveFeedDesign still uses classic multi-row defaults (SSR-stable).
   const [restLayout, setRestLayout] = useState(null);
   useEffect(() => {
     if (hasFeedRowLayout(graphqlFeedDesign)) return undefined;
@@ -70,7 +75,10 @@ export default () => {
           description: getExcerpt(description, 320),
           url: process.env.SITE_HOST,
           fbAppId: process.env.FACEBOOK_APP_ID,
-          pathname: link && link.replace(/https?:\/\/[^/]+/, "")
+          pathname: link && link.replace(/https?:\/\/[^/]+/, ""),
+          preloadImage: image,
+          preloadImageSrcSet: pagePosts[0] && getPostImgSrcSet(pagePosts[0]),
+          preloadImageSizes: getPostImgSizes("Featured")
         }}
       />
       <Layout showBottomNav>

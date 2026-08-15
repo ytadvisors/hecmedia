@@ -15,6 +15,8 @@ describe("MediaImage", () => {
     const image = getByAltText("Story");
 
     expect(image).toHaveAttribute("src", "https://media.example.com/story.jpg");
+    expect(image).toHaveAttribute("width", "768");
+    expect(image).toHaveAttribute("height", "430");
     fireEvent.error(image);
     expect(image).toHaveAttribute(
       "src",
@@ -100,5 +102,44 @@ describe("MediaImage", () => {
       "https://wordpress.example.com/new.jpg"
     );
     expect(image).toHaveAttribute("data-media-candidate-index", "1");
+  });
+
+  it("clears srcSet and sizes after the primary responsive image fails", () => {
+    const { getByAltText } = render(
+      <MediaImage
+        src="https://media.example.com/story.jpg"
+        srcSet="https://media.example.com/story-400.jpg 400w, https://media.example.com/story-800.jpg 800w"
+        sizes="(max-width: 768px) 100vw, 768px"
+        fallbackSrc="https://wordpress.example.com/story.jpg"
+        finalSrc="/static/assets/nothumbnail.png"
+        alt="Responsive story"
+      />
+    );
+    const image = getByAltText("Responsive story");
+
+    expect(image).toHaveAttribute("src", "https://media.example.com/story.jpg");
+    expect(image).toHaveAttribute(
+      "srcSet",
+      "https://media.example.com/story-400.jpg 400w, https://media.example.com/story-800.jpg 800w"
+    );
+    expect(image).toHaveAttribute("sizes", "(max-width: 768px) 100vw, 768px");
+    expect(image).toHaveAttribute("data-media-candidate-index", "0");
+
+    fireEvent.error(image);
+
+    expect(image).toHaveAttribute(
+      "src",
+      "https://wordpress.example.com/story.jpg"
+    );
+    expect(image).not.toHaveAttribute("srcSet");
+    expect(image).not.toHaveAttribute("sizes");
+    expect(image).toHaveAttribute("data-media-candidate-index", "1");
+
+    fireEvent.error(image);
+
+    expect(image).toHaveAttribute("src", "/static/assets/nothumbnail.png");
+    expect(image).not.toHaveAttribute("srcSet");
+    expect(image).not.toHaveAttribute("sizes");
+    expect(image).toHaveAttribute("data-media-candidate-index", "2");
   });
 });

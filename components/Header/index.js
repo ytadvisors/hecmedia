@@ -304,7 +304,7 @@ export default class Header extends Component {
       );
     }
     return (
-      <Link href={actualLink} as={cleanUrl}>
+      <Link href={actualLink} as={cleanUrl} prefetch={false}>
         <a>
           <div
             onKeyPress={() => {}}
@@ -454,8 +454,13 @@ export default class Header extends Component {
               <div className="top-logo">
                 <Navbar.Brand className="navbar-brand-class">
                   <div className="navbar-brand-class navbar-brand">
-                    <Link as="/" href="/">
-                      <img src={logo} alt="HECTV logo" />
+                    <Link as="/" href="/" prefetch={false}>
+                      <img
+                        src={logo}
+                        alt="HECTV logo"
+                        width={180}
+                        height={48}
+                      />
                     </Link>
                   </div>
                 </Navbar.Brand>

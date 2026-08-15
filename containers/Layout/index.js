@@ -173,7 +173,8 @@ export const Layout = props => {
 
   const { data: videos } = useQuery(GET_LIVE_VIDEOS, {
     variables: { keyStart, keyEnd, compareStart, compareEnd },
-    notifyOnNetworkStatusChange: true
+    fetchPolicy: "cache-first",
+    nextFetchPolicy: "cache-first"
   });
 
   const { spotLight: { nodes: spotLightPosts = [] } = {} } = data || {};
