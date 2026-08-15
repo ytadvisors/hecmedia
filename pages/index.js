@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@apollo/react-hooks";
 import { GET_HOME_PAGE } from "../lib/graphql";
 import Layout from "../containers/Layout";
@@ -11,7 +11,11 @@ import {
   getPostImgSizes,
   getExcerpt
 } from "../lib/getFunctions";
-import { resolveFeedDesign } from "../lib/homeFeedDesign";
+import {
+  fetchPageAcfLayout,
+  hasFeedRowLayout,
+  resolveFeedDesign
+} from "../lib/homeFeedDesign";
 
 export default () => {
   const { data } = useQuery(GET_HOME_PAGE, {
@@ -26,7 +30,26 @@ export default () => {
     feedDesign: graphqlFeedDesign
   } = pageData || {};
 
-  const feedDesign = resolveFeedDesign(graphqlFeedDesign);
+  // Staging GraphQL historically returns empty newRowLayout (wrong meta key).
+  // Prefer GraphQL rows; when empty, hydrate from public REST ACF so Featured /
+  // 3 Columns / Wallpaper sections match the approved CMS layout. Until REST
+  // resolves, resolveFeedDesign still uses classic multi-row defaults (SSR-stable).
+  const [restLayout, setRestLayout] = useState(null);
+  useEffect(() => {
+    if (hasFeedRowLayout(graphqlFeedDesign)) return undefined;
+    let cancelled = false;
+    fetchPageAcfLayout("home").then(result => {
+      if (!cancelled && result) setRestLayout(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [graphqlFeedDesign]);
+
+  const feedDesign = resolveFeedDesign(
+    graphqlFeedDesign,
+    restLayout && restLayout.feedDesign
+  );
 
   const description =
     content || "On Demand Arts, Culture & Education Programming";

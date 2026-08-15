@@ -1,7 +1,8 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, wait } from "@testing-library/react";
 import { useQuery } from "@apollo/react-hooks";
 import HomePage from "../../pages/index";
+import { fetchPageAcfLayout } from "../../lib/homeFeedDesign";
 
 jest.mock("@apollo/react-hooks", () => ({
   useQuery: jest.fn()
@@ -41,6 +42,7 @@ jest.mock("../../components/ListOfPosts", () => {
 describe("Homepage (pages/index.js)", () => {
   afterEach(() => {
     jest.clearAllMocks();
+    fetchPageAcfLayout.mockResolvedValue(null);
   });
 
   it("renders the page title and post feed once GET_HOME_PAGE resolves", () => {
@@ -103,6 +105,81 @@ describe("Homepage (pages/index.js)", () => {
     expect(
       Number(screen.getByTestId("list-of-posts").getAttribute("data-row-count"))
     ).toBeGreaterThan(1);
+  });
+
+  it("hydrates CMS feed layout from REST when GraphQL newRowLayout is empty", async () => {
+    fetchPageAcfLayout.mockResolvedValue({
+      feedDesign: {
+        newRowLayout: [
+          { rowLayout: "Featured", displayType: "Post" },
+          { rowLayout: "3 Columns", displayType: "Wallpaper" },
+          { rowLayout: "Single Column", displayType: "Post" }
+        ],
+        defaultDisplayType: "Post",
+        defaultRowLayout: "Single Column"
+      },
+      requiredPostIds: []
+    });
+
+    useQuery.mockReturnValue({
+      data: {
+        pageData: {
+          title: "Home",
+          requiredPosts: { postList: [] },
+          feedDesign: {
+            newRowLayout: [],
+            defaultDisplayType: "Post",
+            defaultRowLayout: "Single Column"
+          }
+        },
+        postData: {
+          edges: [{ node: { postId: 1, title: "Post One" } }]
+        }
+      }
+    });
+
+    render(<HomePage />);
+
+    await wait(() => {
+      expect(fetchPageAcfLayout).toHaveBeenCalledWith("home");
+      expect(screen.getByTestId("list-of-posts")).toHaveAttribute(
+        "data-row-count",
+        "3"
+      );
+    });
+  });
+
+  it("does not call REST fallback when GraphQL already has feed rows", async () => {
+    useQuery.mockReturnValue({
+      data: {
+        pageData: {
+          title: "Home",
+          requiredPosts: { postList: [] },
+          feedDesign: {
+            newRowLayout: [
+              { rowLayout: "Featured", displayType: "Post" },
+              { rowLayout: "3 Columns", displayType: "Post" }
+            ],
+            defaultDisplayType: "Post",
+            defaultRowLayout: "Single Column"
+          }
+        },
+        postData: {
+          edges: [{ node: { postId: 1, title: "Post One" } }]
+        }
+      }
+    });
+
+    render(<HomePage />);
+
+    expect(screen.getByTestId("list-of-posts")).toHaveAttribute(
+      "data-row-count",
+      "2"
+    );
+    // Allow the effect to run; GraphQL rows present → REST must not fire.
+    await wait(() => {
+      expect(fetchPageAcfLayout).not.toHaveBeenCalled();
+    });
   });
 
   it("renders without crashing before GraphQL data has loaded", () => {
