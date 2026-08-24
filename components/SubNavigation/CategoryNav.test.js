@@ -1,7 +1,10 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { useQuery } from "@apollo/react-hooks";
-import CategoryNav, { normalizeCategoryLink } from "./CategoryNav";
+import CategoryNav, {
+  getCategoryUri,
+  normalizeCategoryLink
+} from "./CategoryNav";
 import {
   GET_CATEGORY_NAV_CHILDREN,
   GET_CATEGORY_NAV_NODE
@@ -53,6 +56,12 @@ describe("CategoryNav", () => {
     expect(normalizeCategoryLink("https://hecmedia.org/category/arts/")).toBe(
       "/category/arts"
     );
+    expect(getCategoryUri("https://hecmedia.org/category/arts")).toBe(
+      "/category/arts/"
+    );
+    expect(getCategoryUri("/category/arts/?source=menu#genres")).toBe(
+      "/category/arts/"
+    );
   });
 
   it("loads subgenres with the parent-filtered taxonomy connection", () => {
@@ -61,7 +70,7 @@ describe("CategoryNav", () => {
     expect(useQuery).toHaveBeenNthCalledWith(
       1,
       GET_CATEGORY_NAV_NODE,
-      expect.objectContaining({ variables: { id: "/category/arts" } })
+      expect.objectContaining({ variables: { id: "/category/arts/" } })
     );
     expect(useQuery).toHaveBeenNthCalledWith(
       2,

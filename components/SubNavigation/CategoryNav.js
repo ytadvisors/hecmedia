@@ -13,10 +13,19 @@ export const normalizeCategoryLink = value => {
   return href === "/" ? href : href.replace(/\/+$/, "");
 };
 
+// WPGraphQL's URI resolver uses the canonical WordPress URI, including its
+// terminal slash. Keep that lookup value separate from the normalized route
+// comparison used to identify the active child.
+export const getCategoryUri = value => {
+  const href = toSiteRelativeUrl(value || "/").replace(/[?#].*$/, "");
+  if (href === "/") return href;
+  return `${href.replace(/\/+$/, "")}/`;
+};
+
 const CategoryNav = ({ link }) => {
   const cleanLink = normalizeCategoryLink(link);
   const { data: categoryData } = useQuery(GET_CATEGORY_NAV_NODE, {
-    variables: { id: cleanLink }
+    variables: { id: getCategoryUri(link) }
   });
 
   const category = categoryData && categoryData.category;
