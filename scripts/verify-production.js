@@ -2,6 +2,7 @@
 
 const https = require("https");
 const { URL } = require("url");
+const { PRODUCTION_ROUTES } = require("./production-route-contract");
 
 const siteUrl = process.env.PRODUCTION_SITE_URL;
 const expectedSha = process.env.DEPLOY_SHA;
@@ -12,16 +13,7 @@ const aliases = (process.env.CLOUDFRONT_ALIASES || "")
 const expectedAliases = ["hecmedia.org", "www.hecmedia.org"];
 const expectedGtmContainerId = "GTM-57RZPNN";
 const youtubeRoute = "/posts/hec-on-youtube";
-const routes = [
-  "/",
-  "/events",
-  "/about-us",
-  "/newsletter",
-  "/newsletter/thank-you",
-  "/category/films",
-  "/category/arts/two_on_the_aisle",
-  "/posts/hec-on-youtube"
-];
+const routes = PRODUCTION_ROUTES;
 
 function fail(message) {
   throw new Error(message);
