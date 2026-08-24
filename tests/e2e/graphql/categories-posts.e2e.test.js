@@ -1,5 +1,6 @@
 import {
-  GET_ALL_PAGE_CATEGORY,
+  GET_CATEGORY_NAV_CHILDREN,
+  GET_CATEGORY_NAV_NODE,
   GET_ARTICLES,
   GET_PAGE_INFO,
   GET_PAGE_CATEGORY,
@@ -17,19 +18,27 @@ function assertArticleNodeShape(node) {
   expect(Array.isArray(node.categories.edges)).toBe(true);
 }
 
-describe("AllCategories (components/SubNavigation/CategoryNav.js)", () => {
-  it("returns a paginated category tree", async () => {
-    const result = await executeQuery(GET_ALL_PAGE_CATEGORY, { cursor: "" });
+describe("Category navigation (components/SubNavigation/CategoryNav.js)", () => {
+  it("resolves the current category and its direct children", async () => {
+    const result = await executeQuery(GET_CATEGORY_NAV_NODE, {
+      id: "/category/arts/"
+    });
 
     expect(result.errors).toBeUndefined();
-    const { categories } = result.data;
+    const { category } = result.data;
+    expect(typeof category.databaseId).toBe("number");
+    expect(category.name).toBe("Arts");
+    expect(typeof category.link).toBe("string");
 
+    const childrenResult = await executeQuery(GET_CATEGORY_NAV_CHILDREN, {
+      parent: category.databaseId
+    });
+    expect(childrenResult.errors).toBeUndefined();
+    const { categories } = childrenResult.data;
     expect(Array.isArray(categories.nodes)).toBe(true);
-    expect(typeof categories.pageInfo.hasNextPage).toBe("boolean");
     categories.nodes.forEach(node => {
       expect(typeof node.name).toBe("string");
       expect(typeof node.link).toBe("string");
-      expect(Array.isArray(node.children.nodes)).toBe(true);
     });
   });
 });

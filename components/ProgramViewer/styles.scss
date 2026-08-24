@@ -1,4 +1,7 @@
 .program-viewer {
+  --rail-thumbnail-height: 64px;
+  --rail-thumbnail-width: 96px;
+
   .program-viewer-trending,
   .program-viewer-spotlight {
     border-top: 1px solid #0065bc;
@@ -16,6 +19,13 @@
         width: 80px;
       }
     }
+  }
+}
+
+@media (max-width: 769px) {
+  .program-viewer {
+    --rail-thumbnail-height: 72px;
+    --rail-thumbnail-width: 112px;
   }
 }
 

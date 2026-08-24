@@ -3,7 +3,7 @@ import { getPostImgSrc } from "../../lib/getFunctions";
 import { getWordPressMediaFallbackUrl } from "../../lib/mediaUrl";
 import MediaImage from "../MediaImage";
 
-const fallbackThumbnail = "/static/assets/nothumbnail.png";
+const fallbackThumbnail = "/static/assets/spotlight-img.jpg";
 
 export default props => {
   const {
@@ -23,8 +23,10 @@ export default props => {
       <ul className="magazine-list">
         {entries.map(entry => {
           const { title: entryTitle, link } = entry;
-          const img = getPostImgSrc(entry);
-          const source = img && img.replace(/^https?:\/\//, "https://");
+          // getPostImgSrc already normalizes production WordPress upload URLs
+          // to the public archive. Preserve the remaining URL scheme so local
+          // and other explicitly configured HTTP origins continue to work.
+          const source = getPostImgSrc(entry);
           const url = link.replace(/https?:\/\/[^/]+/, "");
 
           return (

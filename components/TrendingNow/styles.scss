@@ -49,10 +49,10 @@
       text-transform: uppercase;
 
       img {
-        flex: 0 0 96px;
-        height: 64px;
+        flex: 0 0 var(--rail-thumbnail-width, 96px);
+        height: var(--rail-thumbnail-height, 64px);
         object-fit: cover;
-        width: 96px;
+        width: var(--rail-thumbnail-width, 96px);
       }
 
       span {
@@ -63,13 +63,5 @@
     a:hover {
       color: #0065bc;
     }
-  }
-}
-
-@media (max-width: 767px) {
-  .trending-now .trending-list a img {
-    flex-basis: 112px;
-    height: 72px;
-    width: 112px;
   }
 }
