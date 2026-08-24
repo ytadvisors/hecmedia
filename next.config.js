@@ -25,6 +25,7 @@ const disableImageOptimizer =
 const newsletterOnlyExport = process.env.HECMEDIA_NEWSLETTER_EXPORT === "true";
 
 const { postSlugRedirectRules } = require("./lib/post-slug-redirects");
+const { ANONYMOUS_HTML_CACHE_CONTROL } = require("./lib/cachePolicy");
 
 const config = {
   ...(disableImageOptimizer ? { images: { loader: "akamai", path: "" } } : {}),
@@ -47,7 +48,7 @@ const config = {
         headers: [
           {
             key: "Cache-Control",
-            value: "public, s-maxage=300, stale-while-revalidate=600"
+            value: ANONYMOUS_HTML_CACHE_CONTROL
           }
         ]
       }

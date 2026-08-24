@@ -115,6 +115,7 @@ test("disables the unused image optimizer only for the staging build", () => {
 });
 
 test("advertises anonymous homepage edge cache headers", async () => {
+  const { ANONYMOUS_HTML_CACHE_CONTROL } = require("./lib/cachePolicy");
   const config = require("./next.config");
   const rules = await config.headers();
   expect(rules).toEqual([
@@ -123,11 +124,14 @@ test("advertises anonymous homepage edge cache headers", async () => {
       headers: [
         {
           key: "Cache-Control",
-          value: "public, s-maxage=300, stale-while-revalidate=600"
+          value: ANONYMOUS_HTML_CACHE_CONTROL
         }
       ]
     }
   ]);
+  expect(ANONYMOUS_HTML_CACHE_CONTROL).toBe(
+    "public, max-age=0, s-maxage=5, must-revalidate"
+  );
 });
 
 test("keeps the default image loader outside the staging build", () => {

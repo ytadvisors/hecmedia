@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
@@ -9,64 +9,38 @@ import ListOfPosts from "../../components/ListOfPosts";
 import { getPostPageImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { GET_PAGE_INFO, GET_PAGE_CATEGORY } from "../../lib/graphql";
 import { resolvePostSlugRedirect } from "../../lib/post-slug-redirects";
+import selectRelatedPosts from "../../lib/relatedPosts";
+import postDetailQueryOptions from "../../lib/postDetailQueryOptions";
 
 const Posts = props => {
   const { playingLive } = props;
-  const [count, setCount] = useState(0);
-  const [details, setDetails] = useState({});
   const router = useRouter();
   const {
     query: { slug }
   } = router;
 
-  const variables = { slug };
-  const { data, fetchMore } = useQuery(GET_PAGE_INFO, {
-    variables,
-    notifyOnNetworkStatusChange: true
-  });
+  const { data } = useQuery(GET_PAGE_INFO, postDetailQueryOptions(slug));
 
   const { post, podcasts } = data || {};
   const { categories, postDetails, title, excerpt, content, link } = post || {};
-  const { relatedPosts } = postDetails || {};
-  let result = { ...data };
-  let currentPosts = [];
-  if (postDetails) {
-    if (categories && categories.edges) {
-      const categoryList = categories.edges.map(obj => obj.node.categoryId);
-      if (!relatedPosts || relatedPosts.length < 3) {
-        fetchMore({
-          query: GET_PAGE_CATEGORY,
-          variables: { categories: categoryList },
-          updateQuery: (prev, { fetchMoreResult }) => {
-            result = prev;
-            if (prev && fetchMoreResult) {
-              if (!result.post.postDetails.relatedPosts)
-                result.post.postDetails.relatedPosts = [];
-
-              const { categoryPosts } = fetchMoreResult;
-              currentPosts = result.post.postDetails.relatedPosts;
-              if (categoryPosts && categoryPosts.edges) {
-                currentPosts = [...currentPosts, ...categoryPosts.edges];
-                result.post.postDetails.relatedPosts = currentPosts;
-              }
-            }
-            setCount(count + 1);
-            return result;
-          }
-        });
-      }
-
-      if (result.post.postDetails.relatedPosts) {
-        result.post.postDetails.relatedPosts = result.post.postDetails.relatedPosts.filter(
-          n => (n.relatedPost ? n : null)
-        );
-      }
-    }
-  }
-
-  useEffect(() => {
-    setDetails(result.post ? result.post.postDetails : {});
-  }, result);
+  const categoryList =
+    (categories && categories.edges.map(obj => obj.node.categoryId)) || [];
+  const { data: categoryData } = useQuery(GET_PAGE_CATEGORY, {
+    variables: { categories: categoryList },
+    skip: !post || categoryList.length === 0,
+    notifyOnNetworkStatusChange: true
+  });
+  const categoryFallback =
+    (categoryData &&
+      categoryData.categoryPosts &&
+      categoryData.categoryPosts.edges) ||
+    [];
+  const relatedPostNodes = selectRelatedPosts({
+    currentPost: post,
+    categoryIds: categoryList,
+    editorial: (postDetails && postDetails.relatedPosts) || [],
+    fallback: categoryFallback
+  });
 
   const description =
     excerpt || content || "On Demand Arts, Culture & Education Programming";
@@ -78,7 +52,7 @@ const Posts = props => {
       <SEO
         {...{
           title,
-          image: getPostPageImgSrc(result.post),
+          image: getPostPageImgSrc(post),
           description: getExcerpt(description, 320),
           url: process.env.SITE_HOST,
           fbAppId: process.env.FACEBOOK_APP_ID,
@@ -88,26 +62,20 @@ const Posts = props => {
       />
       <Layout>
         <div className="col-md-12" style={{ background: "#eee" }}>
-          {result.post && (
+          {post && (
             <SinglePost
               {...{
-                post: result.post,
+                post,
                 showShareIcons: true,
                 podcasts,
                 playingLive
               }}
             />
           )}
-          {result.post && details.relatedPosts && (
+          {post && relatedPostNodes.length > 0 && (
             <ListOfPosts
               title="Related Posts"
-              posts={
-                (details.relatedPosts &&
-                  details.relatedPosts
-                    .map(obj => obj && obj.relatedPost)
-                    .slice(0, 3)) ||
-                []
-              }
+              posts={relatedPostNodes}
               link={{ page: "posts" }}
               numResults={0}
               style={{
