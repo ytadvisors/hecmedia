@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import ListOfFeaturedPosts from "./index";
 
 describe("ListOfFeaturedPosts", () => {
@@ -33,5 +33,33 @@ describe("ListOfFeaturedPosts", () => {
     expect(screen.queryByRole("link", { name: "HEC-TV SPOTLIGHT" })).toBeNull();
     expect(document.querySelectorAll(".magazine-list > li")).toHaveLength(5);
     expect(document.querySelectorAll(".magazine-list img")).toHaveLength(5);
+  });
+
+  it("preserves configured HTTP media origins and uses an existing fallback", () => {
+    render(
+      <ListOfFeaturedPosts
+        spotLightPosts={[
+          {
+            title: "Local Spotlight",
+            link: "http://localhost:28093/local-spotlight/",
+            postDetails: {
+              postHeader: {
+                large: "http://localhost:28093/wp-content/uploads/local.png"
+              }
+            }
+          }
+        ]}
+      />
+    );
+
+    const image = screen.getByRole("img", { name: "cover" });
+    expect(image).toHaveAttribute(
+      "src",
+      "http://localhost:28093/wp-content/uploads/local.png"
+    );
+    expect(image).toHaveAttribute("data-media-candidate-index", "0");
+
+    fireEvent.error(image);
+    expect(image).toHaveAttribute("src", "/static/assets/spotlight-img.jpg");
   });
 });

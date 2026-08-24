@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 import { useQuery } from "@apollo/react-hooks";
 import SinglePost, { resolveHeaderImageSize } from "./index";
 import { GET_POST_HEADER_IMAGE_SIZE } from "../../lib/graphql";
+import VideoPlayer from "../VideoPlayer/index";
 
 jest.mock("@apollo/react-hooks", () => ({
   useQuery: jest.fn()
@@ -16,6 +17,8 @@ jest.mock("jquery", () => () => ({
 }));
 
 jest.mock("slick-carousel/slick/slick", () => ({}));
+
+jest.mock("../VideoPlayer/index", () => jest.fn(() => null));
 
 const post = {
   slug: "header-image-size-small",
@@ -119,6 +122,22 @@ describe("article header image sizing (component)", () => {
     expect(image).toHaveAttribute(
       "srcset",
       "https://prd-hectv-wp-media.s3.us-east-2.amazonaws.com/wp-content/uploads/2025/07/Spotlight-STL-Banner-300x50.png 300w"
+    );
+  });
+
+  it("prefers YouTube when a post intentionally has both provider IDs", () => {
+    renderPost(
+      { data: undefined },
+      {
+        postDetails: {
+          youtubeId: "FrqO3IUehCM",
+          vimeoId: "1051642735"
+        }
+      }
+    );
+
+    expect(VideoPlayer.mock.calls[0][0].url).toBe(
+      "https://youtu.be/FrqO3IUehCM"
     );
   });
 });

@@ -150,14 +150,15 @@ Deploy-related commands are described in **`DEPLOY.md`**. Treat production deplo
 
 ## Documentation in this repo
 
-| Doc                                              | Purpose                                                                |
-| ------------------------------------------------ | ---------------------------------------------------------------------- |
-| [`DEPLOY.md`](DEPLOY.md)                         | Deploy, rollback-by-redeploy, Next/serverless compatibility checkpoint |
-| [`docs/operations/production-release-playbook-2026-08-06.md`](docs/operations/production-release-playbook-2026-08-06.md) | Reviewed cross-repository production release sequence and gates |
-| [`docs/incidents/2026-08-06-production-deployment.md`](docs/incidents/2026-08-06-production-deployment.md) | Production incident report, RCA, findings, and corrective actions |
-| [`.env.local.example`](.env.local.example)       | Local CMS pointer template (no secrets)                                |
-| [`NEWSLETTER-ADAPTER.md`](NEWSLETTER-ADAPTER.md) | Newsletter integration notes                                           |
-| [`MIXED_JURY.md`](MIXED_JURY.md) / jury scripts  | Review diversity process helpers                                       |
+| Doc                                                                                                                      | Purpose                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| [`DEPLOY.md`](DEPLOY.md)                                                                                                 | Deploy, rollback-by-redeploy, Next/serverless compatibility checkpoint    |
+| [`docs/CODING-EXCELLENCE.md`](docs/CODING-EXCELLENCE.md)                                                                 | Required implementation, review, responsive, and MBA Docker quality gates |
+| [`docs/operations/production-release-playbook-2026-08-06.md`](docs/operations/production-release-playbook-2026-08-06.md) | Reviewed cross-repository production release sequence and gates           |
+| [`docs/incidents/2026-08-06-production-deployment.md`](docs/incidents/2026-08-06-production-deployment.md)               | Production incident report, RCA, findings, and corrective actions         |
+| [`.env.local.example`](.env.local.example)                                                                               | Local CMS pointer template (no secrets)                                   |
+| [`NEWSLETTER-ADAPTER.md`](NEWSLETTER-ADAPTER.md)                                                                         | Newsletter integration notes                                              |
+| [`MIXED_JURY.md`](MIXED_JURY.md) / jury scripts                                                                          | Review diversity process helpers                                          |
 
 ---
 

@@ -11,6 +11,7 @@ import {
   getPostImgSizes
 } from "../../lib/getFunctions";
 import { getWordPressMediaFallbackUrl } from "../../lib/mediaUrl";
+import { isHomeFeedMobileWidth } from "../../lib/homeFeedResponsive";
 import MediaImage from "../MediaImage";
 
 const defaultImage = "/static/assets/nothumbnail.png";
@@ -38,7 +39,6 @@ export default class ListOfPosts extends Component {
     this.mounted = true;
     this.resize();
     window.addEventListener("resize", this.resize);
-    this.setState({ isMobile: window.innerWidth <= 500 });
   }
 
   componentWillUnmount() {
@@ -48,7 +48,7 @@ export default class ListOfPosts extends Component {
 
   resize = () => {
     if (this.mounted) {
-      this.setState({ isMobile: window.innerWidth <= 500 });
+      this.setState({ isMobile: isHomeFeedMobileWidth(window.innerWidth) });
     }
   };
 
@@ -329,23 +329,23 @@ export default class ListOfPosts extends Component {
   };
 
   getFeaturedWallpaper = (post, content) => (
-      <div className="featured-block">
-        <div
-          className="wallpaper"
-          style={{
-            backgroundImage: getWallpaperBackgroundImage(getPostImgSrc(post))
-          }}
-        >
-          <a href={this.getLink(post)}>
-            <span>
-              <div className="gradient" />
-              <div className="texture" />
-              <div className="content">{content}</div>
-            </span>
-          </a>
-        </div>
+    <div className="featured-block">
+      <div
+        className="wallpaper"
+        style={{
+          backgroundImage: getWallpaperBackgroundImage(getPostImgSrc(post))
+        }}
+      >
+        <a href={this.getLink(post)}>
+          <span>
+            <div className="gradient" />
+            <div className="texture" />
+            <div className="content">{content}</div>
+          </span>
+        </a>
       </div>
-    );
+    </div>
+  );
 
   getPost = (layout, post, content) => {
     const { postDetails } = post;

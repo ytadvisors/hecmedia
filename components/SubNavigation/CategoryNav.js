@@ -1,70 +1,43 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { useQuery } from "@apollo/react-hooks";
-import { GET_ALL_PAGE_CATEGORY } from "../../lib/graphql";
+import {
+  GET_CATEGORY_NAV_CHILDREN,
+  GET_CATEGORY_NAV_NODE
+} from "../../lib/graphql";
 import { getHref } from "../../lib/getFunctions";
-import { cleanUrl, getQueryUpdate } from "../../lib/updateFunctions";
+import { toSiteRelativeUrl } from "../../lib/navUrl";
 
-export const findCategoryForLink = (menus, cleanLink) =>
-  (menus || []).reduce((result, menu) => {
-    const { link: menuLink, children: { nodes: menuList = [] } = {} } =
-      menu || {};
-    if (menuLink && menuLink.replace(/\/$/g, "") === cleanLink) return menu;
-    return menuList.some(
-      childMenu => childMenu && childMenu.link.replace(/\/$/g, "") === cleanLink
-    )
-      ? menu
-      : result;
-  }, []);
+export const normalizeCategoryLink = value => {
+  const href = toSiteRelativeUrl(value || "/").replace(/[?#].*$/, "");
+  return href === "/" ? href : href.replace(/\/+$/, "");
+};
 
 const CategoryNav = ({ link }) => {
-  const [currentCursor, setCursor] = useState("");
-  const [currentName, setName] = useState("");
-  const [currentLink, setCategoryLink] = useState("");
-  const [subcategories, setCategories] = useState([]);
-
-  const cleanLink = link.replace(/\/$/g, "");
-  const { data, fetchMore } = useQuery(GET_ALL_PAGE_CATEGORY, {
-    variables: { cursor: "" }
+  const cleanLink = normalizeCategoryLink(link);
+  const { data: categoryData } = useQuery(GET_CATEGORY_NAV_NODE, {
+    variables: { id: cleanLink }
   });
 
-  const { categories } = data || {};
-  const { nodes: menus, pageInfo: { endCursor, hasNextPage = false } = {} } =
-    categories || {};
+  const category = categoryData && categoryData.category;
+  const parent = category && category.parent && category.parent.node;
+  const currentCategory = parent || category;
+  const parentId = currentCategory ? currentCategory.databaseId : 0;
+  const { data: childrenData } = useQuery(GET_CATEGORY_NAV_CHILDREN, {
+    variables: { parent: parentId },
+    skip: !parentId
+  });
 
-  useEffect(() => {
-    if (!menus) return;
-
-    const categoryList = findCategoryForLink(menus, cleanLink);
-    const {
-      name,
-      link: categoryLink,
-      children: { nodes: subcategoryList = [] } = {}
-    } = categoryList;
-
-    if (name) {
-      setCategories(subcategoryList);
-      setCategoryLink(categoryLink);
-      setName(name);
-      return;
-    }
-
-    // Some nested category URLs are not present in the first ten roots. Fetch
-    // each cursor once from an effect, and stop when WPGraphQL says there is no
-    // next page. Calling fetchMore during render previously created an endless
-    // request/render loop on routes such as /category/arts/two_on_the_aisle.
-    if (hasNextPage && endCursor && currentCursor !== endCursor && fetchMore) {
-      setCursor(endCursor);
-      fetchMore({
-        variables: { cursor: endCursor },
-        updateQuery: (prev, fetchData) =>
-          getQueryUpdate(prev, fetchData, "categories")
-      });
-    }
-  }, [cleanLink, currentCursor, endCursor, fetchMore, hasNextPage, menus]);
+  const currentName = currentCategory ? currentCategory.name : "";
+  const currentLink = currentCategory ? currentCategory.link : "";
+  const subcategories =
+    (childrenData &&
+      childrenData.categories &&
+      childrenData.categories.nodes) ||
+    [];
 
   if (currentName) {
-    const url = cleanUrl(currentLink);
+    const url = toSiteRelativeUrl(currentLink);
     return (
       <section className="sub-navigation">
         <div className="row heading">
@@ -88,10 +61,10 @@ const CategoryNav = ({ link }) => {
           {subcategories.map(
             ({ link: subcategoryLink, name: subcategoryName }) => {
               const isActive =
-                cleanLink === subcategoryLink.replace(/\/$/g, "")
+                cleanLink === normalizeCategoryLink(subcategoryLink)
                   ? "active"
                   : "";
-              const subUrl = cleanUrl(subcategoryLink);
+              const subUrl = toSiteRelativeUrl(subcategoryLink);
               const actualSubLink = getHref(subUrl);
               return (
                 <li key={subcategoryLink}>

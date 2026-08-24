@@ -1,88 +1,126 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { useQuery } from "@apollo/react-hooks";
-import CategoryNav, { findCategoryForLink } from "./CategoryNav";
+import CategoryNav, { normalizeCategoryLink } from "./CategoryNav";
+import {
+  GET_CATEGORY_NAV_CHILDREN,
+  GET_CATEGORY_NAV_NODE
+} from "../../lib/graphql";
 
 jest.mock("@apollo/react-hooks", () => ({
   useQuery: jest.fn()
 }));
 
-describe("findCategoryForLink", () => {
-  const child = { name: "Films", link: "https://hectv.org/category/films/" };
+jest.mock("next/link", () => {
+  const ReactModule = require("react");
+  return ({ as, children, href }) =>
+    ReactModule.cloneElement(ReactModule.Children.only(children), {
+      href: as || href
+    });
+});
+
+describe("CategoryNav", () => {
+  const child = {
+    name: "Music",
+    link: "https://prod-wp.hectv.org/category/arts/music/"
+  };
   const parent = {
-    name: "Category",
-    link: "https://hectv.org/category/",
-    children: { nodes: [child] }
+    databaseId: 3,
+    name: "Arts",
+    link: "https://prod-wp.hectv.org/category/arts/"
   };
 
-  it("returns the parent for a child match so sibling navigation remains available", () => {
+  beforeEach(() => {
+    useQuery.mockReset();
+    useQuery.mockImplementation(document => {
+      if (document === GET_CATEGORY_NAV_NODE) {
+        return { data: { category: parent } };
+      }
+      if (document === GET_CATEGORY_NAV_CHILDREN) {
+        return { data: { categories: { nodes: [child] } } };
+      }
+      throw new Error("Unexpected query");
+    });
+  });
+
+  it("normalizes legacy, WordPress, and public category hosts to one route", () => {
+    expect(normalizeCategoryLink("https://hectv.org/category/arts/")).toBe(
+      "/category/arts"
+    );
     expect(
-      findCategoryForLink([parent], "https://hectv.org/category/films")
-    ).toBe(parent);
-  });
-
-  it("still returns an exact parent match", () => {
-    expect(findCategoryForLink([parent], "https://hectv.org/category")).toBe(
-      parent
+      normalizeCategoryLink("https://prod-wp.hectv.org/category/arts")
+    ).toBe("/category/arts");
+    expect(normalizeCategoryLink("https://hecmedia.org/category/arts/")).toBe(
+      "/category/arts"
     );
   });
 
-  it("renders a child category without requiring children on the matched leaf", () => {
-    useQuery.mockReturnValue({
-      data: {
-        categories: { nodes: [parent], pageInfo: { endCursor: "" } }
-      },
-      fetchMore: jest.fn()
-    });
+  it("loads subgenres with the parent-filtered taxonomy connection", () => {
+    render(<CategoryNav link="https://hecmedia.org/category/arts/" />);
 
-    render(<CategoryNav link="https://hectv.org/category/films/" />);
-
-    expect(screen.getByText("Films")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Category" })).toHaveAttribute(
+    expect(useQuery).toHaveBeenNthCalledWith(
+      1,
+      GET_CATEGORY_NAV_NODE,
+      expect.objectContaining({ variables: { id: "/category/arts" } })
+    );
+    expect(useQuery).toHaveBeenNthCalledWith(
+      2,
+      GET_CATEGORY_NAV_CHILDREN,
+      expect.objectContaining({ variables: { parent: 3 }, skip: false })
+    );
+    expect(screen.getByRole("link", { name: "Arts" })).toHaveAttribute(
       "href",
-      "/category/"
+      "/category/arts/"
+    );
+    expect(screen.getByRole("link", { name: "Music" })).toHaveAttribute(
+      "href",
+      "/category/arts/music/"
     );
   });
 
-  it("fetches each missing category cursor once and stops at the last page", () => {
-    const fetchMore = jest.fn();
-    useQuery.mockReturnValue({
-      data: {
-        categories: {
-          nodes: [],
-          pageInfo: { endCursor: "cursor-1", hasNextPage: true }
-        }
-      },
-      fetchMore
+  it("uses the parent returned for a child route and marks that child active", () => {
+    useQuery.mockImplementation(document => {
+      if (document === GET_CATEGORY_NAV_NODE) {
+        return {
+          data: {
+            category: {
+              ...child,
+              databaseId: 18,
+              parent: { node: parent }
+            }
+          }
+        };
+      }
+      if (document === GET_CATEGORY_NAV_CHILDREN) {
+        return { data: { categories: { nodes: [child] } } };
+      }
+      throw new Error("Unexpected query");
     });
 
-    const { rerender } = render(
-      <CategoryNav link="https://hectv.org/category/arts/two_on_the_aisle" />
-    );
+    render(<CategoryNav link="https://hecmedia.org/category/arts/music/" />);
 
-    expect(fetchMore).toHaveBeenCalledTimes(1);
-    expect(fetchMore).toHaveBeenCalledWith(
-      expect.objectContaining({ variables: { cursor: "cursor-1" } })
+    expect(screen.getByText("Music").tagName).toBe("DIV");
+    expect(screen.queryByRole("link", { name: "Music" })).toBeNull();
+    expect(useQuery).toHaveBeenNthCalledWith(
+      2,
+      GET_CATEGORY_NAV_CHILDREN,
+      expect.objectContaining({ variables: { parent: 3 }, skip: false })
     );
+  });
 
-    rerender(
-      <CategoryNav link="https://hectv.org/category/arts/two_on_the_aisle" />
-    );
-    expect(fetchMore).toHaveBeenCalledTimes(1);
-
-    useQuery.mockReturnValue({
-      data: {
-        categories: {
-          nodes: [],
-          pageInfo: { endCursor: "cursor-2", hasNextPage: false }
-        }
-      },
-      fetchMore
+  it("does not request children before the current category resolves", () => {
+    useQuery.mockImplementation(document => {
+      if (document === GET_CATEGORY_NAV_NODE) return { data: undefined };
+      if (document === GET_CATEGORY_NAV_CHILDREN) return { data: undefined };
+      throw new Error("Unexpected query");
     });
-    rerender(
-      <CategoryNav link="https://hectv.org/category/arts/two_on_the_aisle" />
-    );
 
-    expect(fetchMore).toHaveBeenCalledTimes(1);
+    render(<CategoryNav link="https://hecmedia.org/category/arts/" />);
+
+    expect(useQuery).toHaveBeenNthCalledWith(
+      2,
+      GET_CATEGORY_NAV_CHILDREN,
+      expect.objectContaining({ variables: { parent: 0 }, skip: true })
+    );
   });
 });
