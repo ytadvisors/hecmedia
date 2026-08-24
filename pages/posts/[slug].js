@@ -10,6 +10,7 @@ import { getPostPageImgSrc, getExcerpt } from "../../lib/getFunctions";
 import { GET_PAGE_INFO, GET_PAGE_CATEGORY } from "../../lib/graphql";
 import { resolvePostSlugRedirect } from "../../lib/post-slug-redirects";
 import selectRelatedPosts from "../../lib/relatedPosts";
+import postDetailQueryOptions from "../../lib/postDetailQueryOptions";
 
 const Posts = props => {
   const { playingLive } = props;
@@ -18,11 +19,7 @@ const Posts = props => {
     query: { slug }
   } = router;
 
-  const variables = { slug };
-  const { data } = useQuery(GET_PAGE_INFO, {
-    variables,
-    notifyOnNetworkStatusChange: true
-  });
+  const { data } = useQuery(GET_PAGE_INFO, postDetailQueryOptions(slug));
 
   const { post, podcasts } = data || {};
   const { categories, postDetails, title, excerpt, content, link } = post || {};
