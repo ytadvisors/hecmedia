@@ -343,7 +343,7 @@ Evidence from one pairing may not be reused as proof of another.
    - deploy the exact merged frontend candidate to `development.hecmedia.org` through the governed
      staging workflow;
    - verify server-rendered and hydrated routes: `/`, `/events`, `/about-us`, `/newsletter`,
-     `/newsletter/thank-you`, `/category/films`, and `/category/arts/two_on_the_aisle`;
+     `/newsletter/thank-you`, `/category/films`, and `/category/arts/two-on-the-aisle`;
    - run 20 unique cache-busting homepage requests sequentially and require 20/20 HTTP 200, valid
      `HEC-TV` titles without `undefined`, non-empty bodies, and exact candidate SHA metadata.
 

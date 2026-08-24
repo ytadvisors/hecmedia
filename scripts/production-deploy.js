@@ -10,6 +10,7 @@ const {
   assertRenderedSiteIdentity,
   expectedGtmContainerId
 } = require("./verify-production");
+const { HYDRATED_MEDIA_REQUIREMENTS } = require("./production-route-contract");
 
 const REGION = "us-east-1";
 const ACCOUNT_ID = "850335719356";
@@ -708,20 +709,6 @@ const PRODUCTION_MEDIA_HOSTS = new Set([
   "prod-wp.hectv.org",
   "prod-wp-ecs.hectv.org"
 ]);
-const HYDRATED_MEDIA_REQUIREMENTS = {
-  "/": { minimum: 1, surface: "post-list" },
-  "/category/films": { minimum: 1, surface: "post-list" },
-  "/category/arts/two_on_the_aisle": {
-    minimum: 1,
-    surface: "post-list"
-  },
-  "/posts/hec-on-youtube": {
-    minimum: 1,
-    surface: "article-content"
-  },
-  "/newsletter": { minimum: 0 }
-};
-
 function extractRemoteImageUrls(dom) {
   const urls = [];
   // Chrome's --dump-dom output retains <noscript> fallback markup even though

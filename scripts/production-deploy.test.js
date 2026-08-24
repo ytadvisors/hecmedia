@@ -20,6 +20,11 @@ const {
   publishedVersionFromArn,
   requireBuildContract
 } = require("./production-deploy");
+const {
+  CANONICAL_ARTS_PROGRAM_ROUTE,
+  HYDRATED_MEDIA_REQUIREMENTS,
+  PRODUCTION_ROUTES
+} = require("./production-route-contract");
 
 const defaultBase =
   "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd";
@@ -172,6 +177,20 @@ test("hydrated verifier uses the route-appropriate YouTube identity contract", (
   );
   expect(script).toContain("assertRenderedSiteIdentity(dom, route)");
   expect(script).not.toContain('!dom.includes("HEC-TV")');
+});
+
+test("production verifiers share the populated canonical Arts program route", () => {
+  expect(CANONICAL_ARTS_PROGRAM_ROUTE).toBe(
+    "/category/arts/two-on-the-aisle"
+  );
+  expect(PRODUCTION_ROUTES).toContain(CANONICAL_ARTS_PROGRAM_ROUTE);
+  expect(HYDRATED_MEDIA_REQUIREMENTS[CANONICAL_ARTS_PROGRAM_ROUTE]).toEqual({
+    minimum: 1,
+    surface: "post-list"
+  });
+  expect(PRODUCTION_ROUTES).not.toContain(
+    "/category/arts/two_on_the_aisle"
+  );
 });
 
 test("browser acceptance requires one exact GTM loader and dataLayer bootstrap", () => {
