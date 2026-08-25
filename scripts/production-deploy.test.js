@@ -180,17 +180,13 @@ test("hydrated verifier uses the route-appropriate YouTube identity contract", (
 });
 
 test("production verifiers share the populated canonical Arts program route", () => {
-  expect(CANONICAL_ARTS_PROGRAM_ROUTE).toBe(
-    "/category/arts/two-on-the-aisle"
-  );
+  expect(CANONICAL_ARTS_PROGRAM_ROUTE).toBe("/category/arts/two-on-the-aisle");
   expect(PRODUCTION_ROUTES).toContain(CANONICAL_ARTS_PROGRAM_ROUTE);
   expect(HYDRATED_MEDIA_REQUIREMENTS[CANONICAL_ARTS_PROGRAM_ROUTE]).toEqual({
     minimum: 1,
     surface: "post-list"
   });
-  expect(PRODUCTION_ROUTES).not.toContain(
-    "/category/arts/two_on_the_aisle"
-  );
+  expect(PRODUCTION_ROUTES).not.toContain("/category/arts/two_on_the_aisle");
 });
 
 test("browser acceptance requires one exact GTM loader and dataLayer bootstrap", () => {
@@ -557,7 +553,7 @@ test("refuses alias, origin, or Lambda baseline drift", () => {
   ).toThrow("Lambda version drifted");
 });
 
-test("rollback always restores sanitized version 153 and removes the API behavior", () => {
+test("rollback always restores sanitized version 157 and removes the API behavior", () => {
   const released = configureProductionDistribution(
     distribution(),
     baselineDefault,
@@ -584,11 +580,11 @@ test("rollback always restores sanitized version 153 and removes the API behavio
       behavior => behavior.PathPattern === API_PATH
     )
   ).toBe(false);
-  expect(SANITIZED_ROLLBACK_ARN).toBe(`${defaultBase}:153`);
+  expect(SANITIZED_ROLLBACK_ARN).toBe(`${defaultBase}:157`);
   expect(SANITIZED_ROLLBACK_CODE_SHA256).toBe(
-    "2hQ5vnW6lrjFC3nA0RAdI9OvBzQ2Pe1isxeZXpi2VwI="
+    "TuesTYKCS8dEgZwzbU3fWw5KT/4UckttFd7FbR7L3vM="
   );
-  expect(publishedVersionFromArn(SANITIZED_ROLLBACK_ARN)).toBe("153");
+  expect(publishedVersionFromArn(SANITIZED_ROLLBACK_ARN)).toBe("157");
   expect(() => publishedVersionFromArn(`${defaultBase}:$LATEST`)).toThrow(
     "Invalid published Lambda@Edge ARN"
   );

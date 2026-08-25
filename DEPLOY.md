@@ -35,8 +35,8 @@ from this release. The protected environment and exact green workflow remain man
 > public cutover; scans the uncompressed package for AWS access keys; enables S3
 > versioning; updates only existing production resources; verifies rendered and
 > hydrated routes; and automatically restores the immutable sanitized Lambda version
-> `153` if post-cutover verification fails. Version `153` is the verified
-> `18207acfa56e` release from governed run `31397184126`. Direct workstation
+> `157` if post-cutover verification fails. Version `157` is the verified
+> `eb3714d80f12` release from governed run `32730847923`. Direct workstation
 > production mutation is not an approved workaround. A green build or test alone is
 > not permission to ship.
 
