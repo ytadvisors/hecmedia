@@ -22,12 +22,6 @@ const API_FUNCTION_NAME = "x2l4ew-api";
 const DEFAULT_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${DEFAULT_FUNCTION_NAME}`;
 const API_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${API_FUNCTION_NAME}`;
 const EDGE_EXECUTION_ROLE = "arn:aws:iam::850335719356:role/x2l4ew-0kb1zus";
-// Immutable rollback retained outside the normal release lane. Version 157 is
-// the verified eb3714d production release from governed run 32730847923.
-// Do not delete this published version while it is pinned here and in DEPLOY.md.
-const SANITIZED_ROLLBACK_ARN = `${DEFAULT_FUNCTION_ARN}:157`;
-const SANITIZED_ROLLBACK_CODE_SHA256 =
-  "TuesTYKCS8dEgZwzbU3fWw5KT/4UckttFd7FbR7L3vM=";
 const API_PATH = "api/newsletter/subscribe";
 const REPO_ROOT = path.join(__dirname, "..");
 const BUILD_DIR = path.join(REPO_ROOT, ".serverless_nextjs");
@@ -447,9 +441,10 @@ function configureProductionDistribution(
   return next;
 }
 
-function configureSanitizedRollback(config) {
+function configureSanitizedRollback(config, rollbackVersionArn) {
+  assertVersionArn(rollbackVersionArn, DEFAULT_FUNCTION_ARN);
   const next = clone(config);
-  const replaced = replaceDefaultAssociations(next, SANITIZED_ROLLBACK_ARN);
+  const replaced = replaceDefaultAssociations(next, rollbackVersionArn);
   if (replaced !== 4) {
     throw new Error(
       `Sanitized rollback expected four SSR associations, found ${replaced}.`
@@ -1264,26 +1259,13 @@ function writeEvidence(state) {
   fs.writeFileSync(EVIDENCE_PATH, JSON.stringify(state, null, 2));
 }
 
-function verifySanitizedRollbackVersion() {
-  const config = functionConfiguration(
-    DEFAULT_FUNCTION_NAME,
-    publishedVersionFromArn(SANITIZED_ROLLBACK_ARN)
-  );
-  assertFunctionContract(config, SANITIZED_ROLLBACK_ARN, 3000);
-  if (
-    config.FunctionArn !== SANITIZED_ROLLBACK_ARN ||
-    config.CodeSha256 !== SANITIZED_ROLLBACK_CODE_SHA256
-  ) {
-    throw new Error(
-      "Pinned sanitized rollback Lambda no longer matches its immutable checksum."
-    );
-  }
-}
-
-function applySanitizedRollback(state) {
+function applySanitizedRollback(state, rollbackVersionArn) {
   const nextState = { ...state };
   const current = getDistributionConfig();
-  const rollbackConfig = configureSanitizedRollback(current.DistributionConfig);
+  const rollbackConfig = configureSanitizedRollback(
+    current.DistributionConfig,
+    rollbackVersionArn
+  );
   const rollbackPath = path.join(
     RELEASE_DIR,
     "cloudfront-sanitized-rollback.json"
@@ -1292,7 +1274,7 @@ function applySanitizedRollback(state) {
   nextState.rollback_invalidation_id = invalidate(["/*"]);
   const rollbackHome = path.join(RELEASE_DIR, "rollback-home.html");
   nextState.rollback_home = captureHomepage(rollbackHome);
-  nextState.rollback_outcome = "sanitized-version-157-restored";
+  nextState.rollback_outcome = "sanitized-authorized-baseline-restored";
   writeEvidence(nextState);
   return nextState;
 }
@@ -1376,8 +1358,6 @@ async function deploy() {
     API_FUNCTION_ARN,
     1024
   );
-  verifySanitizedRollbackVersion();
-
   const baselineConfigPath = path.join(RELEASE_DIR, "cloudfront-before.json");
   fs.writeFileSync(baselineConfigPath, JSON.stringify(baseline, null, 2));
   // Empty stdout = never-configured (not an error); Status absent → enable below.
@@ -1403,8 +1383,8 @@ async function deploy() {
     baseline_default_lambda_arn: expectedDefaultArn,
     baseline_default_lambda_code_sha256: expectedDefaultCodeSha,
     baseline_api_lambda_arn: expectedApiArn,
-    sanitized_rollback_lambda_arn: SANITIZED_ROLLBACK_ARN,
-    sanitized_rollback_code_sha256: SANITIZED_ROLLBACK_CODE_SHA256,
+    sanitized_rollback_lambda_arn: expectedDefaultArn,
+    sanitized_rollback_code_sha256: expectedDefaultCodeSha,
     baseline_bucket_versioning: bucketVersioning.Status || "Disabled",
     baseline_s3_build_id: baselineBuildId,
     baseline_homepage: baselineHomepage,
@@ -1504,7 +1484,7 @@ async function deploy() {
     state.error = error.message || String(error);
     if (cloudFrontMutationAttempted) {
       try {
-        state = applySanitizedRollback(state);
+        state = applySanitizedRollback(state, expectedDefaultArn);
       } catch (rollbackError) {
         state.rollback_outcome = "rollback-failed";
         state.rollback_error = rollbackError.message || String(rollbackError);
@@ -1520,7 +1500,23 @@ async function deploy() {
 
 function rollback() {
   assertGovernedDeployContext(process.env, "rollback");
-  verifySanitizedRollbackVersion();
+  const rollbackVersionArn =
+    process.env.EXPECTED_DEFAULT_LAMBDA_VERSION_ARN || "";
+  const rollbackCodeSha = process.env.EXPECTED_DEFAULT_LAMBDA_CODE_SHA256 || "";
+  assertVersionArn(rollbackVersionArn, DEFAULT_FUNCTION_ARN);
+  if (!/^[-A-Za-z0-9+/]{20,}={0,2}$/.test(rollbackCodeSha)) {
+    throw new Error("EXPECTED_DEFAULT_LAMBDA_CODE_SHA256 is invalid.");
+  }
+  const rollbackFunction = functionConfiguration(
+    DEFAULT_FUNCTION_NAME,
+    publishedVersionFromArn(rollbackVersionArn)
+  );
+  assertFunctionContract(rollbackFunction, rollbackVersionArn, 3000, {
+    allowedRuntimes: ["nodejs12.x", "nodejs24.x"]
+  });
+  if (rollbackFunction.CodeSha256 !== rollbackCodeSha) {
+    throw new Error("Authorized rollback Lambda checksum changed.");
+  }
   fs.mkdirSync(RELEASE_DIR, { recursive: true });
   let state = {};
   if (fs.existsSync(EVIDENCE_PATH)) {
@@ -1529,7 +1525,9 @@ function rollback() {
   state.outcome = "manual_rollback";
   state.release_sha = process.env.DEPLOY_SHA;
   state.request_task_id = process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID;
-  state = applySanitizedRollback(state);
+  state.sanitized_rollback_lambda_arn = rollbackVersionArn;
+  state.sanitized_rollback_code_sha256 = rollbackCodeSha;
+  state = applySanitizedRollback(state, rollbackVersionArn);
   return state;
 }
 
@@ -1552,8 +1550,6 @@ if (require.main === module) {
 
 module.exports = {
   API_PATH,
-  SANITIZED_ROLLBACK_ARN,
-  SANITIZED_ROLLBACK_CODE_SHA256,
   apiBehavior,
   assertDistributionContract,
   assertFunctionContract,

@@ -3,8 +3,6 @@ const path = require("path");
 const realFs = jest.requireActual("fs");
 const {
   API_PATH,
-  SANITIZED_ROLLBACK_ARN,
-  SANITIZED_ROLLBACK_CODE_SHA256,
   assertDistributionContract,
   assertBrowserAcceptanceEvidence,
   assertFunctionContract,
@@ -571,7 +569,7 @@ test("refuses alias, origin, or Lambda baseline drift", () => {
   ).toThrow("Lambda version drifted");
 });
 
-test("rollback always restores sanitized version 157 and removes the API behavior", () => {
+test("rollback restores the authorized baseline and removes the API behavior", () => {
   const released = configureProductionDistribution(
     distribution(),
     baselineDefault,
@@ -579,7 +577,7 @@ test("rollback always restores sanitized version 157 and removes the API behavio
     `${defaultBase}:149`,
     `${apiBase}:4`
   );
-  const rolledBack = configureSanitizedRollback(released);
+  const rolledBack = configureSanitizedRollback(released, baselineDefault);
   const allAssociations = [
     ...rolledBack.DefaultCacheBehavior.LambdaFunctionAssociations.Items,
     ...rolledBack.CacheBehaviors.Items.find(
@@ -589,20 +587,17 @@ test("rollback always restores sanitized version 157 and removes the API behavio
 
   expect(allAssociations).toHaveLength(4);
   expect(
-    allAssociations.every(
-      item => item.LambdaFunctionARN === SANITIZED_ROLLBACK_ARN
-    )
+    allAssociations.every(item => item.LambdaFunctionARN === baselineDefault)
   ).toBe(true);
   expect(
     rolledBack.CacheBehaviors.Items.some(
       behavior => behavior.PathPattern === API_PATH
     )
   ).toBe(false);
-  expect(SANITIZED_ROLLBACK_ARN).toBe(`${defaultBase}:157`);
-  expect(SANITIZED_ROLLBACK_CODE_SHA256).toBe(
-    "TuesTYKCS8dEgZwzbU3fWw5KT/4UckttFd7FbR7L3vM="
-  );
-  expect(publishedVersionFromArn(SANITIZED_ROLLBACK_ARN)).toBe("157");
+  expect(publishedVersionFromArn(baselineDefault)).toBe("146");
+  expect(() =>
+    configureSanitizedRollback(released, `${defaultBase}:$LATEST`)
+  ).toThrow("Expected a published version");
   expect(() => publishedVersionFromArn(`${defaultBase}:$LATEST`)).toThrow(
     "Invalid published Lambda@Edge ARN"
   );

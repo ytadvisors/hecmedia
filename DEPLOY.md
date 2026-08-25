@@ -58,8 +58,9 @@ only through its governed existing-resource workflow; staging has no repository 
 **Important distinction:** Serverless Components does not use CloudFormation stacks. There is
 **no `serverless rollback -t <timestamp>` command** for `@sls-next` deployments — that command only
 exists for the classic (v1/v2) Serverless Framework, which this repo does not use. The governed
-production rollback is an explicit CloudFront reassociation to a pinned, checksum-verified
-sanitized Lambda version; the historical Serverless path has no supported rollback operation.
+production rollback is an explicit CloudFront reassociation to the exact, checksum-verified
+Lambda version in the authorized pre-release baseline, with the newsletter API behavior removed;
+the historical Serverless path has no supported rollback operation.
 
 ## Governed production publish and rollback
 
@@ -103,10 +104,12 @@ evidence is uploaded as
 `.production-release/browser-acceptance.json`.
 
 Manual rollback uses the same workflow with `action=rollback` and the literal confirmation
-`ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the immutable checksum of version `153`, moves all
-four owned SSR associations to that version, removes the newsletter API behavior, waits for
-CloudFront and invalidation completion, and verifies the public homepage. Never infer a rollback
-target as version N-1.
+`ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the authorized pre-release default Lambda ARN and
+immutable checksum, moves all four owned SSR associations to that exact version, removes the
+newsletter API behavior, waits for CloudFront and invalidation completion, and verifies the public
+homepage. The rollback target is always the explicitly authorized live baseline; it is never
+inferred. Never infer a rollback target as version N-1 or pin it to an unassociated historic
+Lambda@Edge version that AWS may delete after replication cleanup.
 
 **Accepted S3 rollback limitation for this release:** the current automatic rollback restores
 Lambda/CloudFront but does not restore objects overwritten by the preceding `aws s3 sync`. The
