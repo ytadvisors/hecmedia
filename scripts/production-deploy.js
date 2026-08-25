@@ -22,12 +22,12 @@ const API_FUNCTION_NAME = "x2l4ew-api";
 const DEFAULT_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${DEFAULT_FUNCTION_NAME}`;
 const API_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${API_FUNCTION_NAME}`;
 const EDGE_EXECUTION_ROLE = "arn:aws:iam::850335719356:role/x2l4ew-0kb1zus";
-// Immutable rollback retained outside the normal release lane. Version 153 is
-// the verified 18207ac production release from governed run 31397184126.
+// Immutable rollback retained outside the normal release lane. Version 157 is
+// the verified eb3714d production release from governed run 32730847923.
 // Do not delete this published version while it is pinned here and in DEPLOY.md.
-const SANITIZED_ROLLBACK_ARN = `${DEFAULT_FUNCTION_ARN}:153`;
+const SANITIZED_ROLLBACK_ARN = `${DEFAULT_FUNCTION_ARN}:157`;
 const SANITIZED_ROLLBACK_CODE_SHA256 =
-  "2hQ5vnW6lrjFC3nA0RAdI9OvBzQ2Pe1isxeZXpi2VwI=";
+  "TuesTYKCS8dEgZwzbU3fWw5KT/4UckttFd7FbR7L3vM=";
 const API_PATH = "api/newsletter/subscribe";
 const REPO_ROOT = path.join(__dirname, "..");
 const BUILD_DIR = path.join(REPO_ROOT, ".serverless_nextjs");
@@ -1285,7 +1285,7 @@ function applySanitizedRollback(state) {
   nextState.rollback_invalidation_id = invalidate(["/*"]);
   const rollbackHome = path.join(RELEASE_DIR, "rollback-home.html");
   nextState.rollback_home = captureHomepage(rollbackHome);
-  nextState.rollback_outcome = "sanitized-version-153-restored";
+  nextState.rollback_outcome = "sanitized-version-157-restored";
   writeEvidence(nextState);
   return nextState;
 }
