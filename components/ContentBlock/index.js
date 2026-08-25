@@ -1,5 +1,5 @@
 import React from "react";
-import { rewritePublicMediaHtml } from "../../lib/mediaUrl";
+import ReviewedContent from "../ReviewedContent";
 
 export default ({
   header,
@@ -23,10 +23,7 @@ export default ({
         />
       </div>
       <div>{data}</div>
-      <div
-        className="content-body"
-        dangerouslySetInnerHTML={{ __html: rewritePublicMediaHtml(content) }}
-      />
+      <ReviewedContent as="div" className="content-body" content={content} />
       <div
         className="content-footer"
         dangerouslySetInnerHTML={{ __html: footer }}
