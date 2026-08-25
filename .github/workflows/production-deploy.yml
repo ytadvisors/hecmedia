@@ -244,6 +244,7 @@ jobs:
         with:
           name: hecmedia-production-evidence-${{ github.run_id }}
           if-no-files-found: warn
+          include-hidden-files: true
           path: |
             production-deploy-evidence.json
             .production-release/build-metadata.json
