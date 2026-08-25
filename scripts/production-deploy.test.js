@@ -290,6 +290,24 @@ test("browser acceptance permits only reviewed production, GTM, and form resourc
       "https://www.google.com/recaptcha/api2/anchor?ar=1"
     )
   ).toBe(true);
+  expect(
+    isApprovedBrowserRequest(
+      "https://www.paypalobjects.com/donate/sdk/donate-sdk.js"
+    )
+  ).toBe(true);
+  expect(
+    isApprovedBrowserRequest(
+      "https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
+    )
+  ).toBe(true);
+  expect(
+    isApprovedBrowserRequest(
+      "https://www.paypalobjects.com/donate/sdk/donate-sdk.js?unexpected=1"
+    )
+  ).toBe(false);
+  expect(
+    isApprovedBrowserRequest("https://www.paypalobjects.com/checkout.js")
+  ).toBe(false);
 });
 
 test("production verification inventories src and srcset candidates", () => {
@@ -623,6 +641,7 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   );
   expect(workflow).toContain("node scripts/production-release-tag.js");
   expect(workflow).toContain(".production-release/browser-acceptance.json");
+  expect(workflow).toContain("include-hidden-files: true");
   const mediaPreflight = workflow.indexOf("  media-preflight:");
   const protectedEnvironment = workflow.indexOf("      name: production");
   expect(mediaPreflight).toBeGreaterThan(-1);

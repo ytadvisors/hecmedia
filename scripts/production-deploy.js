@@ -891,6 +891,13 @@ function isApprovedBrowserRequest(rawUrl) {
   if (hostname === "www.google.com" || hostname === "www.gstatic.com") {
     return target.pathname.startsWith("/recaptcha/");
   }
+  if (hostname === "www.paypalobjects.com") {
+    return (
+      target.search === "" &&
+      (target.pathname === "/donate/sdk/donate-sdk.js" ||
+        target.pathname === "/en_US/i/btn/btn_donateCC_LG.gif")
+    );
+  }
   if (hostname !== "www.googletagmanager.com") return false;
   if (target.pathname === "/gtm.js") {
     return (
@@ -1229,27 +1236,27 @@ async function verifyBrowserAcceptance(browserPath) {
             route,
             statusCode: response ? response.status() : 0
           };
-          assertBrowserAcceptanceEvidence(routeEvidence);
           evidence.push(routeEvidence);
+          assertBrowserAcceptanceEvidence(routeEvidence);
           await page.close();
         }),
       Promise.resolve()
     );
   } finally {
+    fs.writeFileSync(
+      path.join(RELEASE_DIR, "browser-acceptance.json"),
+      JSON.stringify(
+        {
+          checkedAt: new Date().toISOString(),
+          routes: evidence
+        },
+        null,
+        2
+      )
+    );
     await context.close();
     await browser.close();
   }
-  fs.writeFileSync(
-    path.join(RELEASE_DIR, "browser-acceptance.json"),
-    JSON.stringify(
-      {
-        checkedAt: new Date().toISOString(),
-        routes: evidence
-      },
-      null,
-      2
-    )
-  );
   return evidence;
 }
 
