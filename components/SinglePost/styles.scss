@@ -63,6 +63,38 @@
   }
   .blog-content {
     padding-top: 1em;
+
+    // WordPress 5.9+ emits nested <figure class="wp-block-image"> children.
+    // The bundled legacy block stylesheet only sizes .blocks-gallery-item,
+    // which leaves modern galleries at zero width and prevents lazy images
+    // from ever loading.
+    .wp-block-gallery.has-nested-images {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 0 0 1em;
+      width: 100%;
+
+      > .wp-block-image {
+        flex: 1 1 calc(33.333333% - 11px);
+        margin: 0;
+        max-width: calc(33.333333% - 11px);
+        min-width: 0;
+
+        > a {
+          display: block;
+          width: 100%;
+        }
+
+        img {
+          aspect-ratio: 4 / 3;
+          display: block;
+          height: auto;
+          object-fit: cover;
+          width: 100%;
+        }
+      }
+    }
   }
   .article-header-image {
     &[data-header-image-size="small"] {
@@ -114,6 +146,10 @@
       img.blog-thumbnail {
         width: 100%;
       }
+    }
+    .blog-content .wp-block-gallery.has-nested-images > .wp-block-image {
+      flex-basis: 100%;
+      max-width: 100%;
     }
   }
 }
