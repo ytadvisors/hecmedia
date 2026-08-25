@@ -3,9 +3,11 @@ import React from "react";
 import { Provider } from "react-redux";
 import { ApolloProvider } from "@apollo/react-hooks";
 import Head from "next/head";
+import Router from "next/router";
 import "react-datepicker/dist/react-datepicker.css";
 import withApollo from "../lib/withApollo";
 import createStore from "../store";
+import { markClientNavigation } from "../lib/reviewedContentScripts";
 
 import "../lib/cssDependencies.scss";
 
@@ -16,6 +18,14 @@ class MyApp extends App {
       pageProps = await Component.getInitialProps({ ctx });
     }
     return { pageProps };
+  }
+
+  componentDidMount() {
+    Router.events.on("routeChangeStart", markClientNavigation);
+  }
+
+  componentWillUnmount() {
+    Router.events.off("routeChangeStart", markClientNavigation);
   }
 
   render() {

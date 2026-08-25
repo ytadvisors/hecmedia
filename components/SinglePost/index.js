@@ -12,7 +12,7 @@ import { isServer } from "../../lib/serverFunctions";
 import { GET_PAGE_INFO, GET_POST_HEADER_IMAGE_SIZE } from "../../lib/graphql";
 import PodcastLinks from "../PodcastLinks";
 import { modernWpGraphqlEnabled } from "../../lib/stagingCompatibility";
-import { rewritePublicMediaHtml } from "../../lib/mediaUrl";
+import ReviewedContent from "../ReviewedContent";
 
 const HEADER_IMAGE_SIZES = new Set(["small", "medium", "large", "full"]);
 
@@ -233,9 +233,7 @@ const SinglePost = props => {
         className={`blog-content ${(classes && classes.content) || ""}`}
         data-media-verification="article-content"
       >
-        <div
-          dangerouslySetInnerHTML={{ __html: rewritePublicMediaHtml(content) }}
-        />
+        <ReviewedContent as="div" content={content} />
       </div>
     </section>
   );
