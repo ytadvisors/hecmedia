@@ -737,7 +737,9 @@ NO-GO; update this amendment through a new reviewed commit rather than substitut
    `main` using the exact saved Terraform plan. The only acceptable plan is 7 additions, 0 changes,
    and 0 destroys. Start exactly one ingestion job with receipt `95042`; require `COMPLETE`, zero
    failed documents, non-empty vectors, and all five retrieval-parity queries at or above 0.30
-   source overlap.
+   source overlap. A real remote-state preflight from exact backend tip `16b20e8…` produced that
+   exact seven-create plan; its temporary plan file was deleted and must be regenerated after
+   approval so stale state cannot be applied.
 6. Preserve legacy knowledge base `ZKA5J7Y0WL`, its data source, and its OpenSearch Serverless
    collection. This attempt does not authorize a consumer switch or legacy deletion. Those actions
    require consumer discovery plus a separate reviewed rollback/decommission record.
@@ -760,6 +762,7 @@ deletion authority.
 | 2026-08-31 | Gate 0 inventory | xAI and OpenAI unflagged; Anthropic flagged and out of panel; no active production workflows observed |
 | 2026-08-31 | Authorization staged | Queue task `95042` created as approval-required; status `blocked`, `approved=false` |
 | 2026-08-31 | IAM preflight stop | Live task role lacks invalidation policy; targeted Terraform plan from backend `16b20e8…` is exactly 1 add / 0 change / 0 destroy; apply remains blocked pending this amendment |
+| 2026-08-31 | Knowledge-base preflight | Real remote-state plan from backend `16b20e8…` is exactly the seven reviewed creates / 0 change / 0 destroy; temporary plan deleted, no resources created |
 | *pending* | xAI commander GO | `yt-agent-tom-grok` must affirm this exact amendment and frozen inputs |
 | *pending* | OpenAI right-hand GO | `yt-agent-tom-gpt` must independently review this exact amendment and MBA evidence |
 | *pending* | Yomi durable approval | Approve queue task `95042` and this exact amendment PR/commit |
