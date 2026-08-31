@@ -130,7 +130,7 @@ test("advertises anonymous homepage edge cache headers", async () => {
     }
   ]);
   expect(ANONYMOUS_HTML_CACHE_CONTROL).toBe(
-    "public, max-age=0, s-maxage=5, must-revalidate"
+    "public, max-age=0, s-maxage=300, must-revalidate"
   );
 });
 

@@ -3,6 +3,8 @@ const path = require("path");
 const realFs = jest.requireActual("fs");
 const {
   API_PATH,
+  DEFAULT_FUNCTION_MEMORY_MB,
+  SSR_DEFAULT_TTL_SECONDS,
   assertDistributionContract,
   assertBrowserAcceptanceEvidence,
   assertFunctionContract,
@@ -67,7 +69,10 @@ function distribution() {
         Items: ["HEAD", "GET"],
         CachedMethods: { Quantity: 2, Items: ["HEAD", "GET"] }
       },
-      LambdaFunctionAssociations: associations(baselineDefault)
+      LambdaFunctionAssociations: associations(baselineDefault),
+      MinTTL: 0,
+      DefaultTTL: 60,
+      MaxTTL: 31536000
     },
     CacheBehaviors: {
       Quantity: 2,
@@ -75,7 +80,10 @@ function distribution() {
         {
           PathPattern: "_next/data/*",
           TargetOriginId: "x2l4ew-k0m7umi",
-          LambdaFunctionAssociations: associations(baselineDefault)
+          LambdaFunctionAssociations: associations(baselineDefault),
+          MinTTL: 0,
+          DefaultTTL: 0,
+          MaxTTL: 31536000
         },
         {
           PathPattern: "_next/static/*",
@@ -466,18 +474,28 @@ test("pins the existing Lambda runtime contract before code mutation", () => {
     Handler: "index.handler",
     Role: "arn:aws:iam::850335719356:role/x2l4ew-0kb1zus",
     Timeout: 30,
-    MemorySize: 3000,
+    MemorySize: DEFAULT_FUNCTION_MEMORY_MB,
     PackageType: "Zip",
     State: "Active",
     LastUpdateStatus: "Successful",
     Architectures: ["x86_64"]
   };
-  expect(() => assertFunctionContract(config, defaultBase, 3000)).not.toThrow();
+  expect(() =>
+    assertFunctionContract(config, defaultBase, DEFAULT_FUNCTION_MEMORY_MB)
+  ).not.toThrow();
+  expect(() =>
+    assertFunctionContract(
+      { ...config, MemorySize: 3000 },
+      defaultBase,
+      DEFAULT_FUNCTION_MEMORY_MB,
+      { allowedMemorySizes: [DEFAULT_FUNCTION_MEMORY_MB, 3000] }
+    )
+  ).not.toThrow();
   expect(() =>
     assertFunctionContract(
       { ...config, Runtime: "nodejs22.x" },
       defaultBase,
-      3000
+      DEFAULT_FUNCTION_MEMORY_MB
     )
   ).toThrow("Lambda runtime contract drifted");
 });
@@ -503,6 +521,14 @@ test("atomically replaces four SSR associations and adds the exact API behavior"
   expect(owned.every(item => item.LambdaFunctionARN === nextDefault)).toBe(
     true
   );
+  expect(configured.DefaultCacheBehavior.DefaultTTL).toBe(
+    SSR_DEFAULT_TTL_SECONDS
+  );
+  expect(
+    configured.CacheBehaviors.Items.find(
+      behavior => behavior.PathPattern === "_next/data/*"
+    ).DefaultTTL
+  ).toBe(SSR_DEFAULT_TTL_SECONDS);
 
   const api = configured.CacheBehaviors.Items.find(
     behavior => behavior.PathPattern === API_PATH
@@ -549,7 +575,7 @@ test("supports a subsequent release only from the exact API baseline", () => {
   ).toThrow("API baseline drifted");
 });
 
-test("refuses alias, origin, or Lambda baseline drift", () => {
+test("refuses alias, origin, Lambda, or cache TTL baseline drift", () => {
   const wrongAlias = distribution();
   wrongAlias.Aliases.Items = ["hecmedia.org"];
   expect(() => assertDistributionContract(wrongAlias, baselineDefault)).toThrow(
@@ -567,6 +593,12 @@ test("refuses alias, origin, or Lambda baseline drift", () => {
   expect(() =>
     assertDistributionContract(wrongVersion, baselineDefault)
   ).toThrow("Lambda version drifted");
+
+  const wrongTtl = distribution();
+  wrongTtl.DefaultCacheBehavior.DefaultTTL = 120;
+  expect(() => assertDistributionContract(wrongTtl, baselineDefault)).toThrow(
+    "cache TTL contract drifted"
+  );
 });
 
 test("rollback restores the authorized baseline and removes the API behavior", () => {
@@ -594,6 +626,12 @@ test("rollback restores the authorized baseline and removes the API behavior", (
       behavior => behavior.PathPattern === API_PATH
     )
   ).toBe(false);
+  expect(rolledBack.DefaultCacheBehavior.DefaultTTL).toBe(60);
+  expect(
+    rolledBack.CacheBehaviors.Items.find(
+      behavior => behavior.PathPattern === "_next/data/*"
+    ).DefaultTTL
+  ).toBe(0);
   expect(publishedVersionFromArn(baselineDefault)).toBe("146");
   expect(() =>
     configureSanitizedRollback(released, `${defaultBase}:$LATEST`)
@@ -615,6 +653,15 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   const ciWorkflow = realFs.readFileSync(
     path.join(__dirname, "../.github/workflows/ci.yml"),
     "utf8"
+  );
+  const deploymentPermissions = JSON.parse(
+    realFs.readFileSync(
+      path.join(
+        __dirname,
+        "../infra/github-production/permissions-policy.json"
+      ),
+      "utf8"
+    )
   );
 
   expect(workflow).toContain("name: production");
@@ -661,6 +708,11 @@ test("production workflow is protected, OIDC-only, pinned, and never uses legacy
   expect(ciWorkflow).not.toContain("AWS_SECRET_ACCESS_KEY");
   expect(ciWorkflow).not.toContain("yarn deploy");
   expect(script).not.toContain(`${defaultBase}:146`);
+  expect(
+    deploymentPermissions.Statement.find(
+      statement => statement.Sid === "PublishOnlyExistingProductionFunctions"
+    ).Action
+  ).toContain("lambda:UpdateFunctionConfiguration");
 
   const deployStart = script.indexOf("function deploy()");
   const guard = script.indexOf(

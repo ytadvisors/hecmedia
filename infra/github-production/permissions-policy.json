@@ -25,7 +25,8 @@
         "lambda:GetFunction",
         "lambda:GetFunctionConfiguration",
         "lambda:PublishVersion",
-        "lambda:UpdateFunctionCode"
+        "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration"
       ],
       "Resource": [
         "arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd",
