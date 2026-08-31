@@ -664,8 +664,8 @@ paths are listed.
 **Status: GATE 0 PENDING.** Yomi requested production deployment in the active operator
 session. That request establishes intent but is not being treated as the durable authorization
 for this attempt. No production workflow may be dispatched, and no knowledge-base resource may
-be created, until this exact amendment is merged with the signoffs below and authorization task
-`95042` is approved.
+be created or task-role policy applied, until this exact amendment is merged with the signoffs
+below and authorization task `95042` is approved.
 
 #### Action envelope
 
@@ -704,6 +704,7 @@ Evidence root:
 | Backend service | `hectv-wp-production`: 2 desired / 2 running / 0 pending; rollout `COMPLETED`; circuit breaker + rollback enabled |
 | Backend task definition | `arn:aws:ecs:us-east-2:850335719356:task-definition/hectv-wp-production-rollback-pr34-safe:17` |
 | Backend image | `sha256:b3708899e518cfe69c2743280ac36e21b2f7c9218047e0247d0aef20f8ff5269` |
+| Backend task-role IAM | `hectv-wp-production-task` has only inline policy `mount-production-uploads`; reviewed policy `invalidate-hecmedia-cloudfront` is absent |
 | CloudFront | Distribution `E2QXRSF2W55RTS`; ETag `E1CI41A2FQHFJ`; default TTL 60 seconds; `_next/data/*` TTL 0 |
 | Default edge Lambda | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:164`; code SHA `l5sQIU9UGYTiR5t5cZzFxmYRE+ONQzKCCV5y0pGnvgw=`; 3000 MB |
 | Newsletter API Lambda | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:19`; code SHA `FGHSbm6njd+UBZ4+0sthIaJIoQzYHixTBfQ3nKNF9RI=`; 1024 MB |
@@ -715,32 +716,41 @@ NO-GO; update this amendment through a new reviewed commit rather than substitut
 
 #### Ordered execution and stop gates
 
-1. Deploy backend `16b20e8…` through `hectv-wp/.github/workflows/production-deploy.yml`.
+1. From backend `16b20e8…`, regenerate a targeted saved Terraform plan for only
+   `aws_iam_role_policy.task_cloudfront_invalidation`. The pre-authorization plan was exactly
+   1 addition, 0 changes, and 0 destroys: inline policy `invalidate-hecmedia-cloudfront` on role
+   `hectv-wp-production-task`, allowing only `cloudfront:CreateInvalidation` on distribution
+   `E2QXRSF2W55RTS`. Apply only the newly generated saved plan after its JSON is rechecked for that
+   exact contract; then verify the live role policy byte-for-byte. Any extra action is a stop.
+2. Deploy backend `16b20e8…` through `hectv-wp/.github/workflows/production-deploy.yml`.
    Wait for Yomi's independent protected-environment approval, workflow success, ECS steady state,
    public WordPress probes, and artifact verification.
-2. Prove the production ECS task-role path can submit and complete one CloudFront wildcard
+3. Prove the production ECS task-role path can submit and complete one CloudFront wildcard
    invalidation with the reviewed `hectv-publish-` caller-reference prefix. Do not alter public
    content merely to generate this proof. A missing task-role permission or failed invalidation is
    a release stop.
-3. Only after steps 1–2 pass, deploy frontend `dac5897…` through
+4. Only after steps 1–3 pass, deploy frontend `dac5897…` through
    `hecmedia/.github/workflows/production-deploy.yml`. Wait for Yomi's separate environment
    approval and require workflow success, CloudFront deployment, 1536 MB default Lambda memory,
    the five-minute cache contract, fresh public probes, and cache-hit evidence.
-4. Only after edge verification, provision the additive S3 Vectors knowledge base from backend
+5. Only after edge verification, provision the additive S3 Vectors knowledge base from backend
    `main` using the exact saved Terraform plan. The only acceptable plan is 7 additions, 0 changes,
    and 0 destroys. Start exactly one ingestion job with receipt `95042`; require `COMPLETE`, zero
    failed documents, non-empty vectors, and all five retrieval-parity queries at or above 0.30
    source overlap.
-5. Preserve legacy knowledge base `ZKA5J7Y0WL`, its data source, and its OpenSearch Serverless
+6. Preserve legacy knowledge base `ZKA5J7Y0WL`, its data source, and its OpenSearch Serverless
    collection. This attempt does not authorize a consumer switch or legacy deletion. Those actions
    require consumer discovery plus a separate reviewed rollback/decommission record.
 
-Step 4 is a narrow amendment to the workflow-only rule in §2 for this attempt. The merged,
-service-specific runbook at `hectv-wp/infra/knowledge-base/README.md` defines a local Terraform
-apply with profile `hecadmin`; no knowledge-base GitHub workflow exists. The commander may execute
-only that additive saved plan in account `850335719356`, region `us-east-1`, followed by the
-repository's guarded ingestion and parity scripts. This exception grants no direct ECS,
-CloudFront, Lambda, consumer-switch, or deletion authority.
+Steps 1 and 5 are narrow amendments to the workflow-only rule in §2 for this attempt. The
+production workflow role intentionally cannot modify IAM, while `hectv-wp/infra/production`
+owns the task role and the merged invalidation policy. The commander may apply only the targeted,
+one-addition saved plan described in step 1. Separately, the merged service-specific runbook at
+`hectv-wp/infra/knowledge-base/README.md` defines a local Terraform apply with profile `hecadmin`;
+no knowledge-base GitHub workflow exists. The commander may apply only the seven-addition saved
+plan in account `850335719356`, region `us-east-1`, followed by the repository's guarded ingestion
+and parity scripts. These exceptions grant no direct ECS, CloudFront, Lambda, consumer-switch, or
+deletion authority.
 
 #### Signoff and receipt log
 
@@ -749,9 +759,11 @@ CloudFront, Lambda, consumer-switch, or deletion authority.
 | 2026-08-31 | User intent | Yomi requested deployment after the three implementation PRs merged |
 | 2026-08-31 | Gate 0 inventory | xAI and OpenAI unflagged; Anthropic flagged and out of panel; no active production workflows observed |
 | 2026-08-31 | Authorization staged | Queue task `95042` created as approval-required; status `blocked`, `approved=false` |
+| 2026-08-31 | IAM preflight stop | Live task role lacks invalidation policy; targeted Terraform plan from backend `16b20e8…` is exactly 1 add / 0 change / 0 destroy; apply remains blocked pending this amendment |
 | *pending* | xAI commander GO | `yt-agent-tom-grok` must affirm this exact amendment and frozen inputs |
 | *pending* | OpenAI right-hand GO | `yt-agent-tom-gpt` must independently review this exact amendment and MBA evidence |
 | *pending* | Yomi durable approval | Approve queue task `95042` and this exact amendment PR/commit |
+| *pending* | IAM receipt | Record saved-plan SHA-256, JSON contract, apply output, and live policy verification |
 | *pending* | Backend receipt | Record workflow URL, environment approval, result, new task definition/image, and probes |
 | *pending* | Invalidation proof | Record invalidation ID, caller reference, timestamps, and completion status |
 | *pending* | Frontend receipt | Record workflow URL, environment approval, result, new Lambda versions/checksums, ETag, and probes |
