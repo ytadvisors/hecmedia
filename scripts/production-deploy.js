@@ -23,6 +23,9 @@ const DEFAULT_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${
 const API_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${API_FUNCTION_NAME}`;
 const EDGE_EXECUTION_ROLE = "arn:aws:iam::850335719356:role/x2l4ew-0kb1zus";
 const API_PATH = "api/newsletter/subscribe";
+const DEFAULT_FUNCTION_MEMORY_MB = 1536;
+const LEGACY_DEFAULT_FUNCTION_MEMORY_MB = 3000;
+const SSR_DEFAULT_TTL_SECONDS = 300;
 const REPO_ROOT = path.join(__dirname, "..");
 const BUILD_DIR = path.join(REPO_ROOT, ".serverless_nextjs");
 const ASSETS_DIR = path.join(BUILD_DIR, "assets");
@@ -160,6 +163,7 @@ function assertFunctionContract(
   // historical :146 which was published on nodejs12.x; $LATEST and new
   // publishes must be nodejs24.x. Allow both for baseline version checks.
   const allowedRuntimes = options.allowedRuntimes || ["nodejs24.x"];
+  const allowedMemorySizes = options.allowedMemorySizes || [expectedMemory];
   if (
     !config ||
     config.FunctionArn !== expectedArn ||
@@ -167,7 +171,7 @@ function assertFunctionContract(
     config.Handler !== "index.handler" ||
     config.Role !== EDGE_EXECUTION_ROLE ||
     config.Timeout !== 30 ||
-    config.MemorySize !== expectedMemory ||
+    !allowedMemorySizes.includes(config.MemorySize) ||
     config.PackageType !== "Zip" ||
     config.State !== "Active" ||
     config.LastUpdateStatus !== "Successful" ||
@@ -177,7 +181,8 @@ function assertFunctionContract(
       `Lambda runtime contract drifted for ${expectedArn}` +
         ` (runtime=${config && config.Runtime}, allowed=${allowedRuntimes.join(
           ","
-        )}).`
+        )}, memory=${config &&
+          config.MemorySize}, allowedMemory=${allowedMemorySizes.join(",")}).`
     );
   }
 }
@@ -326,6 +331,19 @@ function assertDistributionContract(
     (config.CacheBehaviors && config.CacheBehaviors.Items) ||
     []
   ).find(behavior => behavior.PathPattern === API_PATH);
+  const nextDataBehavior = (
+    (config.CacheBehaviors && config.CacheBehaviors.Items) ||
+    []
+  ).find(behavior => behavior.PathPattern === "_next/data/*");
+  if (!nextDataBehavior) {
+    throw new Error("Production Next data cache behavior is missing.");
+  }
+  const ttlContract = `${config.DefaultCacheBehavior.DefaultTTL},${nextDataBehavior.DefaultTTL}`;
+  if (ttlContract !== "60,0" && ttlContract !== "300,300") {
+    throw new Error(
+      `Production SSR cache TTL contract drifted (${ttlContract}).`
+    );
+  }
   if (expectedApiVersionArn === "none") {
     if (liveApiBehavior) {
       throw new Error(
@@ -404,6 +422,26 @@ function replaceDefaultAssociations(config, replacementArn) {
   return replaced;
 }
 
+function configureSsrCacheTtl(config, defaultTtlSeconds) {
+  const next = clone(config);
+  const nextDataBehavior = (
+    (next.CacheBehaviors && next.CacheBehaviors.Items) ||
+    []
+  ).find(behavior => behavior.PathPattern === "_next/data/*");
+  if (!nextDataBehavior) {
+    throw new Error("Production Next data cache behavior is missing.");
+  }
+
+  [next.DefaultCacheBehavior, nextDataBehavior].forEach(behavior =>
+    Object.assign(behavior, {
+      MinTTL: 0,
+      DefaultTTL: defaultTtlSeconds,
+      MaxTTL: Math.max(Number(behavior.MaxTTL) || 0, defaultTtlSeconds)
+    })
+  );
+  return next;
+}
+
 function configureProductionDistribution(
   config,
   expectedDefaultVersionArn,
@@ -419,7 +457,7 @@ function configureProductionDistribution(
     expectedApiVersionArn
   );
 
-  const next = clone(config);
+  const next = configureSsrCacheTtl(config, SSR_DEFAULT_TTL_SECONDS);
   const replaced = replaceDefaultAssociations(next, newDefaultVersionArn);
   if (replaced !== 4) {
     throw new Error(
@@ -443,7 +481,11 @@ function configureProductionDistribution(
 
 function configureSanitizedRollback(config, rollbackVersionArn) {
   assertVersionArn(rollbackVersionArn, DEFAULT_FUNCTION_ARN);
-  const next = clone(config);
+  const next = configureSsrCacheTtl(config, 60);
+  const nextDataBehavior = next.CacheBehaviors.Items.find(
+    behavior => behavior.PathPattern === "_next/data/*"
+  );
+  nextDataBehavior.DefaultTTL = 0;
   const replaced = replaceDefaultAssociations(next, rollbackVersionArn);
   if (replaced !== 4) {
     throw new Error(
@@ -526,7 +568,42 @@ function functionConfiguration(functionName, qualifier) {
   ]);
 }
 
+function configureFunctionMemory(functionName, expectedMemory) {
+  const baseArn =
+    functionName === DEFAULT_FUNCTION_NAME
+      ? DEFAULT_FUNCTION_ARN
+      : API_FUNCTION_ARN;
+  const current = functionConfiguration(functionName);
+  if (current.MemorySize !== expectedMemory) {
+    run("aws", [
+      "lambda",
+      "update-function-configuration",
+      "--region",
+      REGION,
+      "--function-name",
+      functionName,
+      "--memory-size",
+      String(expectedMemory)
+    ]);
+    run("aws", [
+      "lambda",
+      "wait",
+      "function-updated",
+      "--region",
+      REGION,
+      "--function-name",
+      functionName
+    ]);
+  }
+  const configured = functionConfiguration(functionName);
+  assertFunctionContract(configured, baseArn, expectedMemory);
+  return configured;
+}
+
 function publishLambda(functionName, zipPath, description) {
+  const expectedMemory =
+    functionName === DEFAULT_FUNCTION_NAME ? DEFAULT_FUNCTION_MEMORY_MB : 1024;
+  configureFunctionMemory(functionName, expectedMemory);
   run("aws", [
     "lambda",
     "update-function-code",
@@ -552,11 +629,7 @@ function publishLambda(functionName, zipPath, description) {
     functionName === DEFAULT_FUNCTION_NAME
       ? DEFAULT_FUNCTION_ARN
       : API_FUNCTION_ARN;
-  assertFunctionContract(
-    latest,
-    baseArn,
-    functionName === DEFAULT_FUNCTION_NAME ? 3000 : 1024
-  );
+  assertFunctionContract(latest, baseArn, expectedMemory);
   if (latest.CodeSha256 !== expectedCodeSha) {
     throw new Error(
       `${functionName} code checksum differs from the reviewed zip.`
@@ -581,7 +654,22 @@ function publishLambda(functionName, zipPath, description) {
   if (published.FunctionArn !== arn) {
     throw new Error(`${functionName} returned an unexpected published ARN.`);
   }
-  return { arn, codeSha256: expectedCodeSha, version: published.Version };
+  const publishedConfiguration = functionConfiguration(
+    functionName,
+    published.Version
+  );
+  assertFunctionContract(publishedConfiguration, arn, expectedMemory);
+  if (publishedConfiguration.CodeSha256 !== expectedCodeSha) {
+    throw new Error(
+      `${functionName} published configuration checksum differs from the reviewed zip.`
+    );
+  }
+  return {
+    arn,
+    codeSha256: expectedCodeSha,
+    memorySize: publishedConfiguration.MemorySize,
+    version: published.Version
+  };
 }
 
 function getDistributionConfig() {
@@ -1305,6 +1393,17 @@ function assertDistributionContractWithRelease(
   apiVersionArn
 ) {
   assertDistributionContract(config, defaultVersionArn, apiVersionArn);
+  const nextDataBehavior = config.CacheBehaviors.Items.find(
+    behavior => behavior.PathPattern === "_next/data/*"
+  );
+  if (
+    config.DefaultCacheBehavior.DefaultTTL !== SSR_DEFAULT_TTL_SECONDS ||
+    nextDataBehavior.DefaultTTL !== SSR_DEFAULT_TTL_SECONDS
+  ) {
+    throw new Error(
+      "Production release did not apply the five-minute SSR TTL."
+    );
+  }
 }
 
 async function deploy() {
@@ -1342,16 +1441,31 @@ async function deploy() {
     expectedDefaultArn.split(":").pop()
   );
   // Baseline published version may predate the nodejs24 upgrade.
-  assertFunctionContract(baselineFunction, expectedDefaultArn, 3000, {
-    allowedRuntimes: ["nodejs12.x", "nodejs24.x"]
-  });
+  assertFunctionContract(
+    baselineFunction,
+    expectedDefaultArn,
+    DEFAULT_FUNCTION_MEMORY_MB,
+    {
+      allowedRuntimes: ["nodejs12.x", "nodejs24.x"],
+      allowedMemorySizes: [
+        DEFAULT_FUNCTION_MEMORY_MB,
+        LEGACY_DEFAULT_FUNCTION_MEMORY_MB
+      ]
+    }
+  );
   if (baselineFunction.CodeSha256 !== expectedDefaultCodeSha) {
     throw new Error("Baseline Lambda checksum changed after authorization.");
   }
   assertFunctionContract(
     functionConfiguration(DEFAULT_FUNCTION_NAME),
     DEFAULT_FUNCTION_ARN,
-    3000
+    DEFAULT_FUNCTION_MEMORY_MB,
+    {
+      allowedMemorySizes: [
+        DEFAULT_FUNCTION_MEMORY_MB,
+        LEGACY_DEFAULT_FUNCTION_MEMORY_MB
+      ]
+    }
   );
   assertFunctionContract(
     functionConfiguration(API_FUNCTION_NAME),
@@ -1511,9 +1625,18 @@ function rollback() {
     DEFAULT_FUNCTION_NAME,
     publishedVersionFromArn(rollbackVersionArn)
   );
-  assertFunctionContract(rollbackFunction, rollbackVersionArn, 3000, {
-    allowedRuntimes: ["nodejs12.x", "nodejs24.x"]
-  });
+  assertFunctionContract(
+    rollbackFunction,
+    rollbackVersionArn,
+    DEFAULT_FUNCTION_MEMORY_MB,
+    {
+      allowedRuntimes: ["nodejs12.x", "nodejs24.x"],
+      allowedMemorySizes: [
+        DEFAULT_FUNCTION_MEMORY_MB,
+        LEGACY_DEFAULT_FUNCTION_MEMORY_MB
+      ]
+    }
+  );
   if (rollbackFunction.CodeSha256 !== rollbackCodeSha) {
     throw new Error("Authorized rollback Lambda checksum changed.");
   }
@@ -1550,6 +1673,8 @@ if (require.main === module) {
 
 module.exports = {
   API_PATH,
+  DEFAULT_FUNCTION_MEMORY_MB,
+  SSR_DEFAULT_TTL_SECONDS,
   apiBehavior,
   assertDistributionContract,
   assertFunctionContract,
@@ -1560,6 +1685,7 @@ module.exports = {
   assertRemoteImageResponse,
   configureProductionDistribution,
   configureSanitizedRollback,
+  configureSsrCacheTtl,
   extractRemoteImageUrls,
   isApprovedBrowserRequest,
   parseJsonOutput,
