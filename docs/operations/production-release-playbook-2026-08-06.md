@@ -659,6 +659,108 @@ paths are listed.
 `~/.openclaw/workspace-tom-grok/deliverables/hecmedia/release-2026-08-06-playbook-exec/`
 (Command log, Gate 2–3 artifacts; **authoritative narrative remains this section after merge**.)
 
+### Attempt: cost-optimization rollout — 2026-08-31
+
+**Status: GATE 0 PENDING.** Yomi requested production deployment in the active operator
+session. That request establishes intent but is not being treated as the durable authorization
+for this attempt. No production workflow may be dispatched, and no knowledge-base resource may
+be created, until this exact amendment is merged with the signoffs below and authorization task
+`95042` is approved.
+
+#### Action envelope
+
+| Field | Frozen value |
+| --- | --- |
+| Commander | `yt-agent-tom-grok` (xAI / Grok); sole production dispatcher/mutator |
+| Right hand — OpenAI | `yt-agent-tom-gpt` — exact-input/evidence review and GO/NO-GO; non-dispatching |
+| Flagged provider | Anthropic is out of panel: `subscription_unavailable_pending_funding`, observed at Gate 0 on 2026-08-31 |
+| Authorization receipt | Queue task `95042`, approval-required and blocked pending Yomi approval |
+| Backend source | `ytadvisors/hectv-wp` `main` `16b20e81744aea79e5806de19a7769c7453b0db5` (includes #80 and #81) |
+| Frontend source | `ytadvisors/hecmedia` `master` `dac589727b9db8b716a94a5afff04f7c9626686f` (includes #308) |
+| Backend confirmation | `DEPLOY HEC BACKEND PRODUCTION` |
+| Frontend confirmation | `DEPLOY HEC FRONTEND PRODUCTION` |
+| Knowledge-base confirmation | `INGEST HEC S3 VECTORS KNOWLEDGE BASE` |
+| DDL | None |
+
+MBA Docker verification passed on every exact change head before merge:
+
+- WordPress invalidation #80 head `37640d29669506d8fd016ae18df5f4c750a76385`: production
+  Dockerfile build, PHP/contract checks, and a healthy WordPress + MySQL runtime that observed
+  exactly two wildcard invalidations for distribution `E2QXRSF2W55RTS`.
+- S3 Vectors knowledge base #81 head `7acf8c2ebeb9bc754f792698acd7cc02cddf45e0`:
+  Terraform 1.5.7 init, format, validate, contract tests, and the legacy-OpenSearch negative
+  control all passed without AWS credentials.
+- Edge optimization #308 head `97d67ae4783e6b6979c0c3c00331028f0134763e`: 84 suites / 515
+  tests, ESLint with zero errors, production Next.js build, HTTP cache-header runtime probe, and
+  both Lambda package integrity checks passed on MBA arm64.
+
+Evidence root:
+`~/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/`.
+
+#### Frozen recovery baselines
+
+| Surface | Baseline captured 2026-08-31 |
+| --- | --- |
+| Backend service | `hectv-wp-production`: 2 desired / 2 running / 0 pending; rollout `COMPLETED`; circuit breaker + rollback enabled |
+| Backend task definition | `arn:aws:ecs:us-east-2:850335719356:task-definition/hectv-wp-production-rollback-pr34-safe:17` |
+| Backend image | `sha256:b3708899e518cfe69c2743280ac36e21b2f7c9218047e0247d0aef20f8ff5269` |
+| CloudFront | Distribution `E2QXRSF2W55RTS`; ETag `E1CI41A2FQHFJ`; default TTL 60 seconds; `_next/data/*` TTL 0 |
+| Default edge Lambda | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:164`; code SHA `l5sQIU9UGYTiR5t5cZzFxmYRE+ONQzKCCV5y0pGnvgw=`; 3000 MB |
+| Newsletter API Lambda | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:19`; code SHA `FGHSbm6njd+UBZ4+0sthIaJIoQzYHixTBfQ3nKNF9RI=`; 1024 MB |
+| Public site | `https://hecmedia.org/` HTTP 200; response advertises `s-maxage=5` before this rollout |
+
+Each workflow must re-read its baseline immediately before dispatch. Any drift from these values,
+an active production workflow, a non-tip release SHA, or an unhealthy service is an automatic
+NO-GO; update this amendment through a new reviewed commit rather than substituting an input.
+
+#### Ordered execution and stop gates
+
+1. Deploy backend `16b20e8…` through `hectv-wp/.github/workflows/production-deploy.yml`.
+   Wait for Yomi's independent protected-environment approval, workflow success, ECS steady state,
+   public WordPress probes, and artifact verification.
+2. Prove the production ECS task-role path can submit and complete one CloudFront wildcard
+   invalidation with the reviewed `hectv-publish-` caller-reference prefix. Do not alter public
+   content merely to generate this proof. A missing task-role permission or failed invalidation is
+   a release stop.
+3. Only after steps 1–2 pass, deploy frontend `dac5897…` through
+   `hecmedia/.github/workflows/production-deploy.yml`. Wait for Yomi's separate environment
+   approval and require workflow success, CloudFront deployment, 1536 MB default Lambda memory,
+   the five-minute cache contract, fresh public probes, and cache-hit evidence.
+4. Only after edge verification, provision the additive S3 Vectors knowledge base from backend
+   `main` using the exact saved Terraform plan. The only acceptable plan is 7 additions, 0 changes,
+   and 0 destroys. Start exactly one ingestion job with receipt `95042`; require `COMPLETE`, zero
+   failed documents, non-empty vectors, and all five retrieval-parity queries at or above 0.30
+   source overlap.
+5. Preserve legacy knowledge base `ZKA5J7Y0WL`, its data source, and its OpenSearch Serverless
+   collection. This attempt does not authorize a consumer switch or legacy deletion. Those actions
+   require consumer discovery plus a separate reviewed rollback/decommission record.
+
+Step 4 is a narrow amendment to the workflow-only rule in §2 for this attempt. The merged,
+service-specific runbook at `hectv-wp/infra/knowledge-base/README.md` defines a local Terraform
+apply with profile `hecadmin`; no knowledge-base GitHub workflow exists. The commander may execute
+only that additive saved plan in account `850335719356`, region `us-east-1`, followed by the
+repository's guarded ingestion and parity scripts. This exception grants no direct ECS,
+CloudFront, Lambda, consumer-switch, or deletion authority.
+
+#### Signoff and receipt log
+
+| UTC | Event | Detail |
+| --- | --- | --- |
+| 2026-08-31 | User intent | Yomi requested deployment after the three implementation PRs merged |
+| 2026-08-31 | Gate 0 inventory | xAI and OpenAI unflagged; Anthropic flagged and out of panel; no active production workflows observed |
+| 2026-08-31 | Authorization staged | Queue task `95042` created as approval-required; status `blocked`, `approved=false` |
+| *pending* | xAI commander GO | `yt-agent-tom-grok` must affirm this exact amendment and frozen inputs |
+| *pending* | OpenAI right-hand GO | `yt-agent-tom-gpt` must independently review this exact amendment and MBA evidence |
+| *pending* | Yomi durable approval | Approve queue task `95042` and this exact amendment PR/commit |
+| *pending* | Backend receipt | Record workflow URL, environment approval, result, new task definition/image, and probes |
+| *pending* | Invalidation proof | Record invalidation ID, caller reference, timestamps, and completion status |
+| *pending* | Frontend receipt | Record workflow URL, environment approval, result, new Lambda versions/checksums, ETag, and probes |
+| *pending* | Knowledge-base receipt | Record plan summary, resource IDs, ingestion ID/stats, and parity artifact |
+
+**GO requires:** exact-head xAI and OpenAI model-family signoff, Yomi approval of task `95042`
+and this amendment, no baseline drift, and no active production workflow. Until then the decision
+is **NO-GO / wait**.
+
 ### Signoff block for this process amendment
 
 Reviewers of **this** commit should confirm:
