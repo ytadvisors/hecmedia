@@ -676,7 +676,7 @@ below and authorization task `95042` is approved.
 | Flagged provider | Anthropic is out of panel: `subscription_unavailable_pending_funding`, observed at Gate 0 on 2026-08-31 |
 | Authorization receipt | Queue task `95042`, approval-required and blocked pending Yomi approval |
 | Backend source | `ytadvisors/hectv-wp` `main` `16b20e81744aea79e5806de19a7769c7453b0db5` (includes #80 and #81) |
-| Frontend source | `ytadvisors/hecmedia` `master` `dac589727b9db8b716a94a5afff04f7c9626686f` (includes #308) |
+| Frontend application head | `dac589727b9db8b716a94a5afff04f7c9626686f` (includes #308); dispatch uses the exact post-amendment `master` tip after proving no later application change and repeating MBA Docker verification |
 | Backend confirmation | `DEPLOY HEC BACKEND PRODUCTION` |
 | Frontend confirmation | `DEPLOY HEC FRONTEND PRODUCTION` |
 | Knowledge-base confirmation | `INGEST HEC S3 VECTORS KNOWLEDGE BASE` |
@@ -713,6 +713,9 @@ Evidence root:
 Each workflow must re-read its baseline immediately before dispatch. Any drift from these values,
 an active production workflow, a non-tip release SHA, or an unhealthy service is an automatic
 NO-GO; update this amendment through a new reviewed commit rather than substituting an input.
+Because merging this durable amendment advances frontend `master`, the resulting exact merged
+tip must repeat the MBA Docker production test/build gate before frontend dispatch, even though
+this amendment changes documentation only.
 
 #### Ordered execution and stop gates
 
@@ -730,9 +733,11 @@ NO-GO; update this amendment through a new reviewed commit rather than substitut
    content merely to generate this proof. A missing task-role permission or failed invalidation is
    a release stop.
 4. Only after steps 1–3 pass, deploy frontend `dac5897…` through
-   `hecmedia/.github/workflows/production-deploy.yml`. Wait for Yomi's separate environment
-   approval and require workflow success, CloudFront deployment, 1536 MB default Lambda memory,
-   the five-minute cache contract, fresh public probes, and cache-hit evidence.
+   `hecmedia/.github/workflows/production-deploy.yml`, using the exact post-amendment `master` tip
+   that preserves `dac5897…` as an ancestor. First repeat the full MBA Docker production gate on
+   that exact tip. Then wait for Yomi's separate environment approval and require workflow success,
+   CloudFront deployment, 1536 MB default Lambda memory, the five-minute cache contract, fresh
+   public probes, and cache-hit evidence.
 5. Only after edge verification, provision the additive S3 Vectors knowledge base from backend
    `main` using the exact saved Terraform plan. The only acceptable plan is 7 additions, 0 changes,
    and 0 destroys. Start exactly one ingestion job with receipt `95042`; require `COMPLETE`, zero
