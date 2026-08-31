@@ -677,6 +677,8 @@ below and authorization task `95042` is approved.
 | Authorization receipt | Queue task `95042`, approval-required and blocked pending Yomi approval |
 | Backend source | `ytadvisors/hectv-wp` `main` `16b20e81744aea79e5806de19a7769c7453b0db5` (includes #80 and #81) |
 | Frontend application head | `dac589727b9db8b716a94a5afff04f7c9626686f` (includes #308); dispatch uses the exact post-amendment `master` tip after proving no later application change and repeating MBA Docker verification |
+| IAM saved plan | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hectv-task-cloudfront-policy.tfplan`; SHA-256 `67b84f5f7c5b09c28a40b4d5452d62fb51289fa2619e1817828bb82566bf2562` |
+| Knowledge-base saved plan | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hec-s3-vectors-kb.tfplan`; SHA-256 `f1c07f804fa534875a98f3f779f64407c2086afc28c00c0e2e6cd747a65ce5a5` |
 | Backend confirmation | `DEPLOY HEC BACKEND PRODUCTION` |
 | Frontend confirmation | `DEPLOY HEC FRONTEND PRODUCTION` |
 | Knowledge-base confirmation | `INGEST HEC S3 VECTORS KNOWLEDGE BASE` |
@@ -695,7 +697,7 @@ MBA Docker verification passed on every exact change head before merge:
   both Lambda package integrity checks passed on MBA arm64.
 
 Evidence root:
-`~/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/`.
+`/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/`.
 
 #### Frozen recovery baselines
 
@@ -719,12 +721,14 @@ this amendment changes documentation only.
 
 #### Ordered execution and stop gates
 
-1. From backend `16b20e8…`, regenerate a targeted saved Terraform plan for only
-   `aws_iam_role_policy.task_cloudfront_invalidation`. The pre-authorization plan was exactly
+1. Verify the frozen IAM saved-plan path and SHA-256 in the action envelope, then use
+   `terraform show -json` to prove it contains only
+   `aws_iam_role_policy.task_cloudfront_invalidation`. The preserved plan is exactly
    1 addition, 0 changes, and 0 destroys: inline policy `invalidate-hecmedia-cloudfront` on role
    `hectv-wp-production-task`, allowing only `cloudfront:CreateInvalidation` on distribution
-   `E2QXRSF2W55RTS`. Apply only the newly generated saved plan after its JSON is rechecked for that
-   exact contract; then verify the live role policy byte-for-byte. Any extra action is a stop.
+   `E2QXRSF2W55RTS`. Apply only that hashed saved plan; then verify the live role policy
+   byte-for-byte. A hash mismatch, state-serial failure, extra action, or attempted regeneration is
+   a stop requiring a new reviewed amendment.
 2. Deploy backend `16b20e8…` through `hectv-wp/.github/workflows/production-deploy.yml`.
    Wait for Yomi's independent protected-environment approval, workflow success, ECS steady state,
    public WordPress probes, and artifact verification.
@@ -739,12 +743,11 @@ this amendment changes documentation only.
    CloudFront deployment, 1536 MB default Lambda memory, the five-minute cache contract, fresh
    public probes, and cache-hit evidence.
 5. Only after edge verification, provision the additive S3 Vectors knowledge base from backend
-   `main` using the exact saved Terraform plan. The only acceptable plan is 7 additions, 0 changes,
-   and 0 destroys. Start exactly one ingestion job with receipt `95042`; require `COMPLETE`, zero
-   failed documents, non-empty vectors, and all five retrieval-parity queries at or above 0.30
-   source overlap. A real remote-state preflight from exact backend tip `16b20e8…` produced that
-   exact seven-create plan; its temporary plan file was deleted and must be regenerated after
-   approval so stale state cannot be applied.
+   `main` using only the frozen saved-plan path and SHA-256 in the action envelope. Recheck its JSON
+   as exactly the seven reviewed additions, 0 changes, and 0 destroys before apply; any hash
+   mismatch, state-serial failure, or attempted regeneration is a stop requiring a new amendment.
+   Start exactly one ingestion job with receipt `95042`; require `COMPLETE`, zero failed documents,
+   non-empty vectors, and all five retrieval-parity queries at or above 0.30 source overlap.
 6. Preserve legacy knowledge base `ZKA5J7Y0WL`, its data source, and its OpenSearch Serverless
    collection. This attempt does not authorize a consumer switch or legacy deletion. Those actions
    require consumer discovery plus a separate reviewed rollback/decommission record.
@@ -766,8 +769,8 @@ deletion authority.
 | 2026-08-31 | User intent | Yomi requested deployment after the three implementation PRs merged |
 | 2026-08-31 | Gate 0 inventory | xAI and OpenAI unflagged; Anthropic flagged and out of panel; no active production workflows observed |
 | 2026-08-31 | Authorization staged | Queue task `95042` created as approval-required; status `blocked`, `approved=false` |
-| 2026-08-31 | IAM preflight stop | Live task role lacks invalidation policy; targeted Terraform plan from backend `16b20e8…` is exactly 1 add / 0 change / 0 destroy; apply remains blocked pending this amendment |
-| 2026-08-31 | Knowledge-base preflight | Real remote-state plan from backend `16b20e8…` is exactly the seven reviewed creates / 0 change / 0 destroy; temporary plan deleted, no resources created |
+| 2026-08-31 | IAM preflight stop | Live task role lacks invalidation policy; frozen saved plan from backend `16b20e8…` is exactly 1 add / 0 change / 0 destroy with SHA-256 `67b84f5f…2562`; apply remains blocked |
+| 2026-08-31 | Knowledge-base preflight | Frozen remote-state plan from backend `16b20e8…` is exactly the seven reviewed creates / 0 change / 0 destroy with SHA-256 `f1c07f80…e5a5`; no resources created |
 | *pending* | xAI commander GO | `yt-agent-tom-grok` must affirm this exact amendment and frozen inputs |
 | *pending* | OpenAI right-hand GO | `yt-agent-tom-gpt` must independently review this exact amendment and MBA evidence |
 | *pending* | Yomi durable approval | Approve queue task `95042` and this exact amendment PR/commit |
@@ -778,8 +781,8 @@ deletion authority.
 | *pending* | Knowledge-base receipt | Record plan summary, resource IDs, ingestion ID/stats, and parity artifact |
 
 **GO requires:** exact-head xAI and OpenAI model-family signoff, Yomi approval of task `95042`
-and this amendment, no baseline drift, and no active production workflow. Until then the decision
-is **NO-GO / wait**.
+and this amendment, exact saved-plan hashes, no baseline drift, and no active production workflow.
+Until then the decision is **NO-GO / wait**.
 
 ### Signoff block for this process amendment
 
