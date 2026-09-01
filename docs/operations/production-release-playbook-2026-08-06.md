@@ -823,6 +823,7 @@ CloudFront, Lambda, consumer-switch, deletion, plan-substitution, or plan-regene
 | 2026-09-01T07:45:23Z | **Serial-1 recovery apply stop** | The serial-1 saved plan was applied exactly once. The vector-bucket policy was created, then Bedrock rejected `CreateKnowledgeBase` because Titan Embeddings G1 does not support configurable dimensions. State is serial `2` with five additive resources present; the replacement KB, data source, and ingestion remain absent. The plan was not retried and is permanently stale. |
 | 2026-09-01T08:07:44Z | Fixed-dimension backend correction merged | Backend PR #84 removed the unsupported optional dimensions block and added a regression assertion. Yomi and `yt-agent-kronos-grok` approved exact head `44542ea6238f6a01d210b17079cf9a9c90d80209`; both CI checks passed; squash merge `9c6bb1004e6363368b088c390d7ddb8654e0d162` is the sole source for the serial-2 plan. |
 | 2026-09-01T08:10Z | Serial-2 recovery plan preserved | Unapplied saved-plan SHA-256 `d3222bbbe1d434939b511344a2217630412a1420ab3de8587a6a55ef7ecd3b50`: exactly two creates, five no-ops, zero updates, zero deletes, bound to state serial `2` on the unchanged lineage. Recovery remains blocked on exact-head approval and merge of the serial-2 amendment below. |
+| 2026-09-01T08:28:58Z | **Serial-2 protected-review bridge stop** | PR #315 exact head `45d6305a6d2cd3f3c8cb3487189b5a2f7d74c171` received independent xAI approval and both jury checks passed, but fleet auto-merge completed as `aa2ee498c7529e36a48975ba14b82aede94badf2` before GitHub recorded a `ytwguru` review. Merge authorship and chat approval do not substitute. No serial-2 apply or ingestion followed; the bridge below is required. |
 
 PR #309 is immutable after merge, so GitHub cannot accept the missing Yomi review on its exact
 head. This follow-up is only a protected-review bridge to that unchanged amendment: an `APPROVED`
@@ -1072,6 +1073,17 @@ Only after those gates land may the commander perform this bounded sequence:
    `ZKA5J7Y0WL`.
 7. Preserve the legacy knowledge base, data source, and OpenSearch collection. This recovery grants
    no consumer switch, legacy deletion, destroy plan, or decommission authority.
+
+PR #315 is immutable after merge and cannot accept the missing Yomi review on exact head
+`45d6305a6d2cd3f3c8cb3487189b5a2f7d74c171`. This follow-up changes no recovery input, backend
+commit, state serial/lineage, saved-plan path or hash, resource action, confirmation, order, stop
+condition, or rollback boundary. It is only a protected-review bridge: an `APPROVED` review from
+`ytwguru` on this exact bridge head binds Yomi's approval to PR #315 head `45d6305a…`, merge
+`aa2ee498…`, independent xAI review `5075726565`, queue task `95042`, and the bounded serial-2
+recovery above. Chat approval, merge authorship, this text, or comments do not satisfy that gate.
+No Terraform apply or ingestion may occur until the exact Yomi review is visible through GitHub's
+review API, an independent xAI approval remains on this bridge head, all required checks pass, and
+the bridge has merged.
 
 ### Signoff block for this process amendment
 
