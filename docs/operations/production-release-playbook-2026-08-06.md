@@ -816,7 +816,9 @@ CloudFront, Lambda, consumer-switch, deletion, plan-substitution, or plan-regene
 | 2026-09-01T05:24Z | **Frontend IAM drift stop** | [Run `33473145980`](https://github.com/ytadvisors/hecmedia/actions/runs/33473145980) passed authorization, media preflight, all tests, packaging, browser setup, and scoped AWS identity after Yomi approved `production`, then failed on denied `lambda:UpdateFunctionConfiguration`. The workflow recorded `public-cutover-not-started`; details and the constrained recovery request follow below. |
 | 2026-09-01T05:42Z | xAI recovery approval | `yt-agent-kronos-grok` review `5074379458` approved exact recovery-amendment head `ca02a4931e773d0266bf9dcf14acf0a477d385fa`; mixed-jury and refresh-jury passed. |
 | 2026-09-01T05:43Z | **Protected-review bridge stop** | PR #312 merged as `973bd41bce878104e79f3f6aaa563006d1501882` before GitHub recorded a `ytwguru` review. The merge itself does not substitute for Yomi's exact-head protected approval. No IAM mutation or workflow retry followed; the bridge below is required. |
-| *blocked* | Knowledge-base receipt | No KB apply or ingestion may start until the frontend recovery run succeeds and edge verification closes. |
+| 2026-09-01T07:10Z | Frontend recovery success | [Run `33479477675`](https://github.com/ytadvisors/hecmedia/actions/runs/33479477675) succeeded at exact SHA `30e81cc4f26e4c4aff61d9beea36c375b553fc35`; default Lambda `165` is 1536 MB, API Lambda is `20`, invalidation `IBE6GSPPS4JR9ZLO6VVAIZ7627` completed, and public probes show `s-maxage=300` with cache hits. |
+| 2026-09-01T07:16Z | **Knowledge-base partial-apply stop** | The exact serial-0 `7/0/0` saved plan was applied once. Four additive resources were created, then S3 Vectors rejected the bucket policy with `Invalid principal in policy`. State is serial `1`; no replacement KB, data source, ingestion, switch, or deletion followed. The stale plan was not retried. |
+| 2026-09-01T07:18Z | Serial-1 recovery plan preserved | Unapplied saved-plan SHA-256 `4f54be83a12746830683af201f274f80659bdc4b6a70f119d6f6e58d0525b53a`: exactly three creates, four no-ops, zero updates, zero deletes. Recovery remains blocked on the exact-head reviews and merge defined below. |
 
 PR #309 is immutable after merge, so GitHub cannot accept the missing Yomi review on its exact
 head. This follow-up is only a protected-review bridge to that unchanged amendment: an `APPROVED`
@@ -915,6 +917,71 @@ Yomi's approval to PR #312 head `ca02a49…`, merge `973bd41…`, xAI review `50
 `95042`, and the constrained one-action IAM recovery above. Chat approval, merge authorship, this
 text, or comments do not satisfy that gate. No IAM mutation may occur until the exact review is
 visible through GitHub's review API and the bridge has then merged with the xAI approval intact.
+
+#### Knowledge-base serial-1 recovery amendment
+
+**Status: NO-GO pending exact-head approval of this recovery amendment.** Frontend run
+[`33479477675`](https://github.com/ytadvisors/hecmedia/actions/runs/33479477675) succeeded at exact
+release `30e81cc4f26e4c4aff61d9beea36c375b553fc35`: CloudFront is deployed on default Lambda `165`
+at 1536 MB and API Lambda `20`, invalidation `IBE6GSPPS4JR9ZLO6VVAIZ7627` completed, and public
+probes return the exact release with `s-maxage=300` and cache hits. This closed the prerequisite
+edge gate for step 5.
+
+At `2026-09-01T07:16:09Z`, the commander applied the exact serial-0 knowledge-base saved plan once.
+Its SHA-256 was `f1c07f804fa534875a98f3f779f64407c2086afc28c00c0e2e6cd747a65ce5a5`, and its
+reviewed contract was seven creates, zero updates, and zero deletes. Terraform created the
+encrypted vector bucket/index and least-privilege IAM role/inline policy, then AWS rejected
+`aws_s3vectors_vector_bucket_policy.transcripts` with
+`ValidationException: Invalid principal in policy` immediately after role creation. This is
+consistent with IAM principal propagation at the S3 Vectors policy boundary. The saved plan was
+not retried and is now permanently stale.
+
+The exact post-failure boundary is remote state serial `1`, lineage
+`2d770273-328d-3dc3-cb21-12e2034e86a3`, with only these four managed resources present:
+
+- `aws_s3vectors_vector_bucket.transcripts`
+- `aws_s3vectors_index.transcripts`
+- `aws_iam_role.bedrock_knowledge_base`
+- `aws_iam_role_policy.bedrock_knowledge_base`
+
+The vector-bucket policy, replacement Bedrock knowledge base, and replacement data source are
+absent. No ingestion job was started. Legacy knowledge base `ZKA5J7Y0WL`, data source
+`KFAYWAPL74`, and OpenSearch Serverless collection `rpkgmev0ubnlcppj5v11` remain active and
+unchanged; no consumer was switched and no deletion occurred. The durable partial-apply receipt is
+`/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/KNOWLEDGE-BASE-PARTIAL-APPLY-RECOVERY-2026-09-01.md`.
+
+From that inventoried serial-1 state, Terraform generated—but did not apply—a new immutable plan:
+
+- Path: `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hec-s3-vectors-kb-recovery-serial1.tfplan`
+- SHA-256: `4f54be83a12746830683af201f274f80659bdc4b6a70f119d6f6e58d0525b53a`
+- Creates: exactly `aws_s3vectors_vector_bucket_policy.transcripts`,
+  `aws_bedrockagent_knowledge_base.transcripts`, and
+  `aws_bedrockagent_data_source.transcripts`
+- No-ops: exactly the four present resources listed above
+- Updates: zero
+- Deletes: zero
+
+This amendment authorizes nothing merely by being written. Recovery requires an `APPROVED` review
+from `ytwguru` and an independent exact-head xAI GO through GitHub's protected review surface,
+followed by merge. Chat approval, a task number, PR authorship, or the earlier serial-0 approval is
+not a substitute. If those reviews land, the commander may perform only this sequence:
+
+1. Re-read task `95042`, provider flags, protected tips, active production workflows, frontend
+   release health, remote state, all four present resource configurations, the three absent
+   resources, and the active legacy rollback resources. Require state serial `1` and the exact
+   lineage above.
+2. Verify the recovery-plan path and SHA-256 above, and use `terraform show -json` to require
+   exactly three creates, four no-ops, zero updates, and zero deletes at the named addresses.
+3. Apply that saved recovery plan exactly once. Never retry or substitute the stale serial-0 plan.
+   Any state, hash, action, resource, identity, or legacy-status drift is a stop requiring another
+   reviewed amendment.
+4. Require the replacement knowledge base and data source to reach their active/available states,
+   then start exactly one ingestion job with queue receipt `95042` and confirmation
+   `INGEST HEC S3 VECTORS KNOWLEDGE BASE` through the guarded repository script.
+5. Require ingestion `COMPLETE`, zero failed documents, a non-empty vector index, and all five
+   fixed retrieval queries at or above `0.30` source overlap against legacy KB `ZKA5J7Y0WL`.
+6. Preserve the legacy knowledge base, data source, and OpenSearch collection. This recovery still
+   authorizes no consumer switch, deletion, destroy plan, or decommission action.
 
 ### Signoff block for this process amendment
 
