@@ -801,20 +801,28 @@ CloudFront, Lambda, consumer-switch, deletion, plan-substitution, or plan-regene
 | 2026-08-31 | External authorization pointer | Queue task `95042` recorded by ID only; this diff intentionally makes no claim about its live approval state |
 | 2026-08-31 | IAM preflight stop | Live task role lacks invalidation policy; frozen saved plan from backend `16b20e8…` is exactly 1 add / 0 change / 0 destroy with SHA-256 `67b84f5f…2562`; apply remains blocked |
 | 2026-08-31 | Knowledge-base preflight | Frozen remote-state plan from backend `16b20e8…` is exactly the seven reviewed creates / 0 change / 0 destroy with SHA-256 `f1c07f80…e5a5`; no resources created |
+| 2026-09-01 | Protected-review recovery | PR #309 merged from exact head `f905c69a79320dc9fd335fb28e64f3840c8b4952` as `d76bc59686af58c609eb94c506a90e2e7a2e8e0c` before a Yomi review was attached. This follow-up changes no rollout input or authority and remains NO-GO until Yomi approves its exact head through GitHub's protected review surface. |
 | *pending* | xAI commander GO | `yt-agent-tom-grok` must affirm this exact amendment and frozen inputs |
 | *pending* | OpenAI right-hand GO | `yt-agent-tom-gpt` must independently review this exact amendment and MBA evidence |
 | *pending* | Trusted external authorization check | Independently read task `95042` from the authenticated PG-backed queue API and bind the result to this exact attempt; PR text/comments do not count |
-| *pending* | Yomi amendment approval | Approve this exact amendment PR/commit through GitHub's protected review surface; the task reference does not substitute for PR approval |
+| *pending* | Yomi amendment approval | Approve this follow-up's exact head through GitHub's protected review surface; the task reference, chat approval, and PR comments do not substitute for the review |
 | *pending* | IAM receipt | Record saved-plan SHA-256, JSON contract, apply output, and live policy verification |
 | *pending* | Backend receipt | Record workflow URL, environment approval, result, new task definition/image, and probes |
 | *pending* | Invalidation proof | Record invalidation ID, caller reference, timestamps, and completion status |
 | *pending* | Frontend receipt | Record workflow URL, environment approval, result, new Lambda versions/checksums, ETag, and probes |
 | *pending* | Knowledge-base receipt | Record plan summary, resource IDs, ingestion ID/stats, and parity artifact |
 
+PR #309 is immutable after merge, so GitHub cannot accept the missing Yomi review on its exact
+head. This follow-up is only a protected-review bridge to that unchanged amendment: an `APPROVED`
+review from Yomi on this follow-up's exact head binds approval to PR #309 head `f905c69a…` and
+queue task `95042`. It changes no SHA, saved plan, confirmation, scope, order, stop condition, or
+production capability. This diff and its comments are not approval evidence; only the external
+GitHub review is.
+
 **GO requires:** exact-head xAI and OpenAI model-family signoff; independently authenticated,
 outside-diff verification of Yomi's approval and exact scope in task `95042`; Yomi approval of this
-exact amendment through GitHub's protected review surface; exact saved-plan hashes; no baseline
-drift; and no active production workflow. Until then the decision is **NO-GO / wait**.
+follow-up's exact head through GitHub's protected review surface; exact saved-plan hashes; no
+baseline drift; and no active production workflow. Until then the decision is **NO-GO / wait**.
 
 ### Signoff block for this process amendment
 
