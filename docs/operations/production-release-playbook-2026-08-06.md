@@ -808,13 +808,13 @@ CloudFront, Lambda, consumer-switch, deletion, plan-substitution, or plan-regene
 | 2026-09-01T04:08Z | IAM receipt | From backend `16b20e8…`, Terraform 1.5.7 applied saved-plan SHA-256 `67b84f5f…2562`: exactly 1 add / 0 change / 0 destroy. State advanced serial 9 → 10 on unchanged lineage. Live role `hectv-wp-production-task` now has the reviewed `invalidate-hecmedia-cloudfront` policy byte-for-byte: only `cloudfront:CreateInvalidation` on `E2QXRSF2W55RTS`. |
 | 2026-09-01T04:09Z | **Executor-boundary stop** | The IAM apply was performed from OpenAI right-hand lane `yt-agent-tom-gpt`, contrary to §2/§6 and this attempt's non-dispatching identity fence. No backend workflow was dispatched. OpenAI records **NO-GO**; only the named Grok commander may resume, unless Yomi reassigns command through a reviewed §18 amendment. |
 | 2026-09-01 | Commander reassignment directed | Yomi explicitly directed: “Reassign commander for task #95042 to `yt-agent-tom-gpt` and continue.” The reassignment remains inactive until Yomi and the xAI right hand approve this exact amended head through GitHub review. |
-| *pending* | xAI right-hand GO | `yt-agent-tom-grok` must affirm this exact amended head, frozen inputs, verified IAM state, and prospective non-dispatching xAI role. |
-| *pending* | Reassignment activation | `ytwguru` must approve this exact amended head through GitHub's protected review surface; chat direction does not substitute. |
+| 2026-09-01T04:31Z | xAI right-hand GO | `yt-agent-kronos-grok` review `5074027684` and `yt-agent-tom-grok` review `5074027909` approved exact reassignment head `21efb177374b414a3d26d946ff1b595bb26374a5`. |
+| 2026-09-01T04:32Z | Reassignment activated | `ytwguru` review `5074007592` approved exact head `21efb177374b414a3d26d946ff1b595bb26374a5`; PR #311 merged as `6426ab9417996f69fba339c5da6113a3e6d8d4ac`, activating `yt-agent-tom-gpt` as sole commander/dispatcher. |
 | **NO-GO recorded** | OpenAI right-hand decision | The 04:09Z stop remains part of the audit trail. If the reassignment is activated, `yt-agent-tom-gpt` may resume prospectively as commander only after a fresh Gate 0 read. |
-| *pending* | Backend receipt | Record workflow URL, environment approval, result, new task definition/image, and probes |
-| *pending* | Invalidation proof | Record invalidation ID, caller reference, timestamps, and completion status |
-| *pending* | Frontend receipt | Record workflow URL, environment approval, result, new Lambda versions/checksums, ETag, and probes |
-| *pending* | Knowledge-base receipt | Record plan summary, resource IDs, ingestion ID/stats, and parity artifact |
+| 2026-09-01T04:52Z | Backend receipt | [Run `33470566196`](https://github.com/ytadvisors/hectv-wp/actions/runs/33470566196) succeeded after Yomi's protected-environment approval. ECS is steady at task definition `hectv-wp-production-rollback-pr34-safe:19`, image digest `sha256:d22685afb626b63aef13c9f4b2a214748dfc0244c06244ce759baaab8b92f4c6`, 2 desired / 2 running / 0 pending / 0 failed; 20/20 public and GraphQL contract probes passed. |
+| 2026-09-01T05:06Z | Invalidation proof | One unchanged save of existing `Header Actions` menu term `26095` preserved normalized semantic SHA-256 `44102ab42f606dd0c67367a9ae681b087ec1e9888ea55d002f89375fcc7917f4` and produced completed invalidation `I3OC9RWJG5MLGD56WSH3NXL62N`, caller `hectv-publish-20260901-050630-c95866a1-0a70-4100-a90f-8e1a78d4b1c2`, exact path `/*`. |
+| 2026-09-01T05:24Z | **Frontend IAM drift stop** | [Run `33473145980`](https://github.com/ytadvisors/hecmedia/actions/runs/33473145980) passed authorization, media preflight, all tests, packaging, browser setup, and scoped AWS identity after Yomi approved `production`, then failed on denied `lambda:UpdateFunctionConfiguration`. The workflow recorded `public-cutover-not-started`; details and the constrained recovery request follow below. |
+| *blocked* | Knowledge-base receipt | No KB apply or ingestion may start until the frontend recovery run succeeds and edge verification closes. |
 
 PR #309 is immutable after merge, so GitHub cannot accept the missing Yomi review on its exact
 head. This follow-up is only a protected-review bridge to that unchanged amendment: an `APPROVED`
@@ -849,6 +849,61 @@ saved-plan, and live-baseline reads before resuming from the verified IAM state.
 verification of Yomi's approval and exact scope in task `95042`; Yomi approval of this amended
 head through GitHub's protected review surface; exact saved-plan hashes; no baseline drift; and no
 active production workflow. Until then the decision is **NO-GO / wait**.
+
+#### Frontend run `33473145980` — IAM drift stop and constrained recovery
+
+**Status: NO-GO pending exact-head approval of this recovery amendment.** This documentation does
+not authorize itself, and the failed workflow must not be rerun. The next frontend action, if this
+amendment is approved, is a new dispatch with freshly captured immutable inputs.
+
+Yomi approved the run's protected `production` environment, after which the job passed the full
+test/build/content/browser gates and assumed only role `hecmedia-production-deploy`. The deploy
+script then made its first production writes: a no-delete `aws s3 sync` created 92 latest object
+versions (one `BUILD_ID`, 31 `_next/*`, and 60 `static/*`) in versioned bucket
+`x2l4ew-k0m7umi`; it created zero delete markers. The latest `BUILD_ID` became
+`mHIDnhQIwYOGdFMjDmkvD`, while the captured pre-run value was `c7G4j5VcLTw0LWnK1sX-v`.
+
+The next operation, changing the unpublished default Lambda memory from 3000 MB to the reviewed
+1536 MB target, failed closed with `AccessDeniedException`. No Lambda code/configuration or
+published version changed; CloudFront remains deployed at ETag `E1CI41A2FQHFJ`, still associated
+only with default version `164` and API version `19`; no new invalidation exists; and the public
+site remains HTTP 200 on release `913b6d8090aba282a66a4d5ca307bac751886e90` with `s-maxage=5`.
+The workflow's immutable artifact records outcome `failed` and rollback outcome
+`public-cutover-not-started`. The candidate S3 objects are recoverable versions and are not
+referenced by the unchanged live Lambda/CloudFront release, so no direct rollback mutation is
+authorized at this boundary.
+
+Root cause is one-action live IAM drift. PR #308 reviewed and merged
+`infra/github-production/permissions-policy.json` with `lambda:UpdateFunctionConfiguration`
+scoped only to the two existing HEC Lambda functions, but the documented post-merge administrator
+apply did not occur. The protected file at `6426ab9…` has raw SHA-256
+`efd5cb0b6426edfe6af3f803eb034423ad4b45c4db745bb8035f7b2a1459f655` and canonical JSON SHA-256
+`e335822e0cc1e16086a3895ff089a73aa691f43280179c920003f8372f332082`. The live inline policy's
+canonical SHA-256 is `c4eab51cb1abc83e2b0702520e869e08d941a9c31b11e21bcf91d1e48aaff9e0`;
+a sorted JSON diff contains exactly the missing `lambda:UpdateFunctionConfiguration` action and
+nothing else. The role has exactly that one inline policy, no attached policies, the expected
+GitHub OIDC production-environment trust, and a 7200-second maximum session.
+
+If Yomi and the non-dispatching xAI right hand approve this amendment's exact head, the commander
+may perform only this recovery sequence:
+
+1. Re-read task `95042`, provider flags, protected tips, active production workflows, the live IAM
+   role/policy, CloudFront, Lambda versions/checksums, invalidations, ECS, and public health. Any
+   drift beyond the S3 versions recorded above is a stop.
+2. From the exact protected post-amendment tip, verify the policy file hashes above and prove a
+   canonical diff against live IAM contains exactly the one missing action. Apply that exact file
+   once with `aws iam put-role-policy` to role/policy `hecmedia-production-deploy`; do not edit the
+   JSON, add another policy, or broaden any resource.
+3. Read the role back and require the exact desired canonical hash, one inline policy, zero
+   attached policies, unchanged trust, and unchanged session duration. If readback differs, restore
+   the captured live baseline policy, verify its canonical hash, and stop.
+4. Because this amendment advances `master`, repeat the full MBA arm64 Docker production gate on
+   the exact merged tip and require `dac5897…` to remain its application ancestor with only rollout
+   documentation changed afterward.
+5. Recapture the unchanged live CloudFront/Lambda inputs and dispatch a new frontend workflow once.
+   Require a separate Yomi environment approval and full workflow/edge verification. Never rerun
+   failed run `33473145980`.
+6. Keep the knowledge-base apply and ingestion blocked until the new frontend run succeeds.
 
 ### Signoff block for this process amendment
 
