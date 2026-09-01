@@ -659,6 +659,163 @@ paths are listed.
 `~/.openclaw/workspace-tom-grok/deliverables/hecmedia/release-2026-08-06-playbook-exec/`
 (Command log, Gate 2–3 artifacts; **authoritative narrative remains this section after merge**.)
 
+### Attempt: cost-optimization rollout — 2026-08-31
+
+**Status: BLOCKED / NO-GO.** Yomi requested production deployment in the active operator session,
+and queue task `95042` is the external authorization reference for the attempt. Nothing asserted
+inside this diff proves that task's approval state or grants production authority. No production
+workflow may be dispatched, and no knowledge-base resource may be created or task-role policy
+applied, until this exact amendment is merged with the remaining signoffs below and the external
+authorization gate is independently verified.
+
+**Authority provenance:** this amendment records proposed identities, frozen inputs, and gates; it
+does not assign a role, grant a capability, verify an approval, or authorize its own exceptions.
+The already-merged controls in §2, §6, and Gate 0 define the commander/dispatcher boundary. Before
+any mutation, the operator must make an authenticated read from the canonical PG-backed queue API,
+outside this PR diff, and verify that task `95042` is approval-required, explicitly approved by
+Yomi, complete, and still describes these exact release SHAs, immutable plan paths and hashes,
+confirmations, order, and stop conditions. Yomi must also approve this exact PR head through
+GitHub's protected review surface. Missing or mismatched external evidence leaves every action
+below blocked; text in this amendment or its comments cannot satisfy that gate.
+
+#### Action envelope
+
+| Field | Frozen value |
+| --- | --- |
+| Proposed commander identity (inactive until external Gate 0 approval) | `yt-agent-tom-grok` (xAI / Grok); this row is an identity fence, not a role grant |
+| Proposed right hand — OpenAI (inactive until external Gate 0 approval) | `yt-agent-tom-gpt` — exact-input/evidence review and GO/NO-GO; non-dispatching |
+| Flagged provider | Anthropic is out of panel: `subscription_unavailable_pending_funding`, observed at Gate 0 on 2026-08-31 |
+| External authorization reference (not approval evidence) | Queue task `95042`; state must be read from the authenticated PG-backed queue API immediately before mutation |
+| Backend source | `ytadvisors/hectv-wp` `main` `16b20e81744aea79e5806de19a7769c7453b0db5` (includes #80 and #81) |
+| Frontend application head | `dac589727b9db8b716a94a5afff04f7c9626686f` (includes #308); dispatch uses the exact post-amendment `master` tip after proving no later application change and repeating MBA Docker verification |
+| IAM saved plan | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hectv-task-cloudfront-policy.tfplan`; SHA-256 `67b84f5f7c5b09c28a40b4d5452d62fb51289fa2619e1817828bb82566bf2562` |
+| Knowledge-base saved plan | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hec-s3-vectors-kb.tfplan`; SHA-256 `f1c07f804fa534875a98f3f779f64407c2086afc28c00c0e2e6cd747a65ce5a5` |
+| Backend confirmation | `DEPLOY HEC BACKEND PRODUCTION` |
+| Frontend confirmation | `DEPLOY HEC FRONTEND PRODUCTION` |
+| Knowledge-base confirmation | `INGEST HEC S3 VECTORS KNOWLEDGE BASE` |
+| DDL | None |
+
+MBA Docker verification passed on every exact change head before merge:
+
+- WordPress invalidation #80 head `37640d29669506d8fd016ae18df5f4c750a76385`: production
+  Dockerfile build, PHP/contract checks, and a healthy WordPress + MySQL runtime that observed
+  exactly two wildcard invalidations for distribution `E2QXRSF2W55RTS`.
+- S3 Vectors knowledge base #81 head `7acf8c2ebeb9bc754f792698acd7cc02cddf45e0`:
+  Terraform 1.5.7 init, format, validate, contract tests, and the legacy-OpenSearch negative
+  control all passed without AWS credentials.
+- Edge optimization #308 head `97d67ae4783e6b6979c0c3c00331028f0134763e`: 84 suites / 515
+  tests, ESLint with zero errors, production Next.js build, HTTP cache-header runtime probe, and
+  both Lambda package integrity checks passed on MBA arm64.
+
+Evidence root:
+`/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/`.
+
+#### Frozen recovery baselines
+
+| Surface | Baseline captured 2026-08-31 |
+| --- | --- |
+| Backend service | `hectv-wp-production`: 2 desired / 2 running / 0 pending; rollout `COMPLETED`; circuit breaker + rollback enabled |
+| Backend task definition | `arn:aws:ecs:us-east-2:850335719356:task-definition/hectv-wp-production-rollback-pr34-safe:17` |
+| Backend image | `sha256:b3708899e518cfe69c2743280ac36e21b2f7c9218047e0247d0aef20f8ff5269` |
+| Backend task-role IAM | `hectv-wp-production-task` has only inline policy `mount-production-uploads`; reviewed policy `invalidate-hecmedia-cloudfront` is absent |
+| CloudFront | Distribution `E2QXRSF2W55RTS`; ETag `E1CI41A2FQHFJ`; default TTL 60 seconds; `_next/data/*` TTL 0 |
+| Default edge Lambda | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:164`; code SHA `l5sQIU9UGYTiR5t5cZzFxmYRE+ONQzKCCV5y0pGnvgw=`; 3000 MB |
+| Newsletter API Lambda | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:19`; code SHA `FGHSbm6njd+UBZ4+0sthIaJIoQzYHixTBfQ3nKNF9RI=`; 1024 MB |
+| Public site | `https://hecmedia.org/` HTTP 200; response advertises `s-maxage=5` before this rollout |
+
+Each workflow must re-read its baseline immediately before dispatch. Any drift from these values,
+an active production workflow, a non-tip release SHA, or an unhealthy service is an automatic
+NO-GO; update this amendment through a new reviewed commit rather than substituting an input.
+Because merging this durable amendment advances frontend `master`, the resulting exact merged
+tip must repeat the MBA Docker production test/build gate before frontend dispatch, even though
+this amendment changes documentation only.
+
+#### Ordered execution and stop gates
+
+1. Only after the external authorization gate above passes, verify the frozen IAM saved-plan path
+   and SHA-256 in the action envelope, then use
+   `terraform show -json` to prove it contains only
+   `aws_iam_role_policy.task_cloudfront_invalidation`. The preserved plan is exactly
+   1 addition, 0 changes, and 0 destroys: inline policy `invalidate-hecmedia-cloudfront` on role
+   `hectv-wp-production-task`, allowing only `cloudfront:CreateInvalidation` on distribution
+   `E2QXRSF2W55RTS`. Apply only that hashed saved plan; then verify the live role policy
+   byte-for-byte. A hash mismatch, state-serial failure, extra action, or attempted regeneration is
+   a stop requiring a new reviewed amendment.
+2. Deploy backend `16b20e8…` through `hectv-wp/.github/workflows/production-deploy.yml`.
+   Wait for Yomi's independent protected-environment approval, workflow success, ECS steady state,
+   public WordPress probes, and artifact verification.
+3. Prove the production ECS task-role path with one controlled, no-content-change save of the
+   existing navigation menu assigned to registered location key `header_actions` (admin label
+   **Header Actions (Support / Subscribe)**; WPGraphQL location enum `HEADER_ACTIONS`). The
+   `header-actions` value is only the menu object's slug and must not be used as the location key.
+   Before the save, record the assigned menu term ID/name and a normalized semantic snapshot of
+   every item's ID, parent, order, label, URL, target, CSS classes, description, and XFN, plus the
+   public `menuItems(where: { location: HEADER_ACTIONS })` and `topbarCtas` responses. If
+   `header_actions` has no existing assigned menu, stop; do not create or assign one. In
+   WordPress's bundled admin save path, clicking **Save Menu** fires `wp_update_nav_menu` after a
+   successful save even when the submitted menu payload is unchanged; the merged MU plugin binds
+   that hook to one coalesced `/*` invalidation. Submit the identical menu with no edits while
+   keeping the **Header Actions (Support / Subscribe)** location checkbox checked. Then require the
+   same term ID to remain assigned to `header_actions` and require the normalized post-save menu,
+   `menuItems`, and `topbarCtas` snapshots to equal their pre-save values. Any semantic or location
+   drift is a stop and must be restored from the captured snapshot before proceeding.
+   Finally, require a new distribution `E2QXRSF2W55RTS` invalidation with the
+   `hectv-publish-` caller-reference prefix, exactly path `/*`, and terminal status `Completed`.
+   Record the menu identity, before/after hashes, invalidation ID, caller reference, and timestamps.
+   A missing task-role permission, content drift, or failed invalidation is a release stop.
+4. Only after steps 1–3 pass, deploy frontend `dac5897…` through
+   `hecmedia/.github/workflows/production-deploy.yml`, using the exact post-amendment `master` tip
+   that preserves `dac5897…` as an ancestor. First repeat the full MBA Docker production gate on
+   that exact tip. Then wait for Yomi's separate environment approval and require workflow success,
+   CloudFront deployment, 1536 MB default Lambda memory, the five-minute cache contract, fresh
+   public probes, and cache-hit evidence.
+5. Only after edge verification, provision the additive S3 Vectors knowledge base from backend
+   `main` using only the frozen saved-plan path and SHA-256 in the action envelope. Recheck its JSON
+   as exactly the seven reviewed additions, 0 changes, and 0 destroys before apply; any hash
+   mismatch, state-serial failure, or attempted regeneration is a stop requiring a new amendment.
+   Start exactly one ingestion job with receipt `95042`; require `COMPLETE`, zero failed documents,
+   non-empty vectors, and all five retrieval-parity queries at or above 0.30 source overlap.
+6. Preserve legacy knowledge base `ZKA5J7Y0WL`, its data source, and its OpenSearch Serverless
+   collection. This attempt does not authorize a consumer switch or legacy deletion. Those actions
+   require consumer discovery plus a separate reviewed rollback/decommission record.
+
+Steps 1 and 5 remain explicitly blocked by this document. A task number or approval claim copied
+into this diff cannot unlock either action. They may proceed only after the authenticated external
+queue check and exact-head Yomi GitHub approval required above are independently present. The
+production workflow role intentionally cannot modify IAM, while `hectv-wp/infra/production` owns
+the task role and the merged invalidation policy. If the external gate passes, step 1 remains
+limited to the targeted, one-addition saved plan described above. Separately, the merged
+service-specific runbook at
+`hectv-wp/infra/knowledge-base/README.md` defines a local Terraform apply with profile `hecadmin`;
+no knowledge-base GitHub workflow exists. If the external gate passes, step 5 remains limited to
+the seven-addition saved plan in account `850335719356`, region `us-east-1`, followed by the
+repository's guarded ingestion and parity scripts. This amendment grants no direct ECS,
+CloudFront, Lambda, consumer-switch, deletion, plan-substitution, or plan-regeneration authority.
+
+#### Signoff and receipt log
+
+| UTC | Event | Detail |
+| --- | --- | --- |
+| 2026-08-31 | User intent | Yomi requested deployment after the three implementation PRs merged |
+| 2026-08-31 | Gate 0 inventory | xAI and OpenAI unflagged; Anthropic flagged and out of panel; no active production workflows observed |
+| 2026-08-31 | External authorization pointer | Queue task `95042` recorded by ID only; this diff intentionally makes no claim about its live approval state |
+| 2026-08-31 | IAM preflight stop | Live task role lacks invalidation policy; frozen saved plan from backend `16b20e8…` is exactly 1 add / 0 change / 0 destroy with SHA-256 `67b84f5f…2562`; apply remains blocked |
+| 2026-08-31 | Knowledge-base preflight | Frozen remote-state plan from backend `16b20e8…` is exactly the seven reviewed creates / 0 change / 0 destroy with SHA-256 `f1c07f80…e5a5`; no resources created |
+| *pending* | xAI commander GO | `yt-agent-tom-grok` must affirm this exact amendment and frozen inputs |
+| *pending* | OpenAI right-hand GO | `yt-agent-tom-gpt` must independently review this exact amendment and MBA evidence |
+| *pending* | Trusted external authorization check | Independently read task `95042` from the authenticated PG-backed queue API and bind the result to this exact attempt; PR text/comments do not count |
+| *pending* | Yomi amendment approval | Approve this exact amendment PR/commit through GitHub's protected review surface; the task reference does not substitute for PR approval |
+| *pending* | IAM receipt | Record saved-plan SHA-256, JSON contract, apply output, and live policy verification |
+| *pending* | Backend receipt | Record workflow URL, environment approval, result, new task definition/image, and probes |
+| *pending* | Invalidation proof | Record invalidation ID, caller reference, timestamps, and completion status |
+| *pending* | Frontend receipt | Record workflow URL, environment approval, result, new Lambda versions/checksums, ETag, and probes |
+| *pending* | Knowledge-base receipt | Record plan summary, resource IDs, ingestion ID/stats, and parity artifact |
+
+**GO requires:** exact-head xAI and OpenAI model-family signoff; independently authenticated,
+outside-diff verification of Yomi's approval and exact scope in task `95042`; Yomi approval of this
+exact amendment through GitHub's protected review surface; exact saved-plan hashes; no baseline
+drift; and no active production workflow. Until then the decision is **NO-GO / wait**.
+
 ### Signoff block for this process amendment
 
 Reviewers of **this** commit should confirm:
