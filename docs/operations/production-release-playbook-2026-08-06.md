@@ -662,19 +662,28 @@ paths are listed.
 ### Attempt: cost-optimization rollout — 2026-08-31
 
 **Status: GATE 0 PENDING.** Yomi requested production deployment in the active operator
-session. That request establishes intent but is not being treated as the durable authorization
-for this attempt. No production workflow may be dispatched, and no knowledge-base resource may
-be created or task-role policy applied, until this exact amendment is merged with the signoffs
-below and authorization task `95042` is approved.
+session and independently approved queue authorization receipt `95042`; that receipt is now
+`approved=true`, `status=done`, with result `Acknowledged by Yomi at 2026-08-31
+19:12:05.846373-05`. No production workflow may be dispatched, and no knowledge-base resource may
+be created or task-role policy applied, until this exact amendment is merged with the remaining
+signoffs below.
+
+**Authority provenance:** this amendment records frozen inputs and gates; it does not assign a
+role, grant a capability, or authorize its own exceptions. The commander/dispatcher boundary comes
+from the already-merged controls in §2, §6, and Gate 0 of this playbook. The exact two local
+Terraform actions and the governed backend/frontend deployments come from the independently
+approved queue receipt `95042`, whose approved description names the immutable plan paths, hashes,
+release SHAs, confirmations, order, and stop conditions. Any action outside that combined policy
+and approval record remains unauthorized.
 
 #### Action envelope
 
 | Field | Frozen value |
 | --- | --- |
-| Commander | `yt-agent-tom-grok` (xAI / Grok); sole production dispatcher/mutator |
-| Right hand — OpenAI | `yt-agent-tom-gpt` — exact-input/evidence review and GO/NO-GO; non-dispatching |
+| Commander | Per already-merged §2 / §6 / Gate 0: `yt-agent-tom-grok` (xAI / Grok), the selected sole production dispatcher/mutator |
+| Right hand — OpenAI | Per already-merged §2 / §6 / Gate 0: `yt-agent-tom-gpt` — exact-input/evidence review and GO/NO-GO; non-dispatching |
 | Flagged provider | Anthropic is out of panel: `subscription_unavailable_pending_funding`, observed at Gate 0 on 2026-08-31 |
-| Authorization receipt | Queue task `95042`, approval-required and blocked pending Yomi approval |
+| Authorization receipt | Queue task `95042`: `approvalRequired=true`, `approved=true`, `status=done`; Yomi acknowledgement recorded 2026-09-01 00:12:05 UTC |
 | Backend source | `ytadvisors/hectv-wp` `main` `16b20e81744aea79e5806de19a7769c7453b0db5` (includes #80 and #81) |
 | Frontend application head | `dac589727b9db8b716a94a5afff04f7c9626686f` (includes #308); dispatch uses the exact post-amendment `master` tip after proving no later application change and repeating MBA Docker verification |
 | IAM saved plan | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hectv-task-cloudfront-policy.tfplan`; SHA-256 `67b84f5f7c5b09c28a40b4d5452d62fb51289fa2619e1817828bb82566bf2562` |
@@ -752,15 +761,16 @@ this amendment changes documentation only.
    collection. This attempt does not authorize a consumer switch or legacy deletion. Those actions
    require consumer discovery plus a separate reviewed rollback/decommission record.
 
-Steps 1 and 5 are narrow amendments to the workflow-only rule in §2 for this attempt. The
-production workflow role intentionally cannot modify IAM, while `hectv-wp/infra/production`
-owns the task role and the merged invalidation policy. The commander may apply only the targeted,
-one-addition saved plan described in step 1. Separately, the merged service-specific runbook at
+Approved queue receipt `95042` is the independent authorization for the two local Terraform actions
+in steps 1 and 5; this amendment does not create that authority. The production workflow role
+intentionally cannot modify IAM, while `hectv-wp/infra/production` owns the task role and the merged
+invalidation policy. The receipt limits step 1 to the targeted, one-addition saved plan described
+above. Separately, the merged service-specific runbook at
 `hectv-wp/infra/knowledge-base/README.md` defines a local Terraform apply with profile `hecadmin`;
-no knowledge-base GitHub workflow exists. The commander may apply only the seven-addition saved
-plan in account `850335719356`, region `us-east-1`, followed by the repository's guarded ingestion
-and parity scripts. These exceptions grant no direct ECS, CloudFront, Lambda, consumer-switch, or
-deletion authority.
+no knowledge-base GitHub workflow exists. The receipt limits step 5 to the seven-addition saved plan
+in account `850335719356`, region `us-east-1`, followed by the repository's guarded ingestion and
+parity scripts. Neither the existing playbook nor receipt `95042` grants direct ECS, CloudFront,
+Lambda, consumer-switch, deletion, plan-substitution, or plan-regeneration authority.
 
 #### Signoff and receipt log
 
@@ -768,12 +778,13 @@ deletion authority.
 | --- | --- | --- |
 | 2026-08-31 | User intent | Yomi requested deployment after the three implementation PRs merged |
 | 2026-08-31 | Gate 0 inventory | xAI and OpenAI unflagged; Anthropic flagged and out of panel; no active production workflows observed |
-| 2026-08-31 | Authorization staged | Queue task `95042` created as approval-required; status `blocked`, `approved=false` |
+| 2026-09-01 00:12:05 | Independent authorization | Queue task `95042`: `approvalRequired=true`, `approved=true`, `status=done`; result records Yomi acknowledgement at 2026-08-31 19:12:05.846373-05 |
 | 2026-08-31 | IAM preflight stop | Live task role lacks invalidation policy; frozen saved plan from backend `16b20e8…` is exactly 1 add / 0 change / 0 destroy with SHA-256 `67b84f5f…2562`; apply remains blocked |
 | 2026-08-31 | Knowledge-base preflight | Frozen remote-state plan from backend `16b20e8…` is exactly the seven reviewed creates / 0 change / 0 destroy with SHA-256 `f1c07f80…e5a5`; no resources created |
 | *pending* | xAI commander GO | `yt-agent-tom-grok` must affirm this exact amendment and frozen inputs |
 | *pending* | OpenAI right-hand GO | `yt-agent-tom-gpt` must independently review this exact amendment and MBA evidence |
-| *pending* | Yomi durable approval | Approve queue task `95042` and this exact amendment PR/commit |
+| 2026-09-01 00:12:05 | Yomi queue approval | Exact deployment and saved-plan scope in queue receipt `95042` approved and acknowledged |
+| *pending* | Yomi amendment approval | Approve this exact amendment PR/commit; queue approval does not substitute for PR approval |
 | *pending* | IAM receipt | Record saved-plan SHA-256, JSON contract, apply output, and live policy verification |
 | *pending* | Backend receipt | Record workflow URL, environment approval, result, new task definition/image, and probes |
 | *pending* | Invalidation proof | Record invalidation ID, caller reference, timestamps, and completion status |
