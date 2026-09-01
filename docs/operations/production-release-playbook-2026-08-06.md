@@ -682,8 +682,9 @@ below blocked; text in this amendment or its comments cannot satisfy that gate.
 
 | Field | Frozen value |
 | --- | --- |
-| Proposed commander identity (inactive until external Gate 0 approval) | `yt-agent-tom-grok` (xAI / Grok); this row is an identity fence, not a role grant |
-| Proposed right hand — OpenAI (inactive until external Gate 0 approval) | `yt-agent-tom-gpt` — exact-input/evidence review and GO/NO-GO; non-dispatching |
+| Reassigned commander identity (inactive until exact-head protected approval) | `yt-agent-tom-gpt` (OpenAI / GPT); Yomi explicitly directed this reassignment for task `95042` in the authenticated operator session. This row records the proposed identity fence but does not activate itself. |
+| Proposed right hand — xAI (inactive until exact-head protected approval) | `yt-agent-tom-grok` — exact-input/evidence review and GO/NO-GO; non-dispatching after reassignment |
+| OpenAI provider seat | Held by commander `yt-agent-tom-gpt` after reassignment activation |
 | Flagged provider | Anthropic is out of panel: `subscription_unavailable_pending_funding`, observed at Gate 0 on 2026-08-31 |
 | External authorization reference (not approval evidence) | Queue task `95042`; state must be read from the authenticated PG-backed queue API immediately before mutation |
 | Backend source | `ytadvisors/hectv-wp` `main` `16b20e81744aea79e5806de19a7769c7453b0db5` (includes #80 and #81) |
@@ -806,8 +807,10 @@ CloudFront, Lambda, consumer-switch, deletion, plan-substitution, or plan-regene
 | 2026-09-01T04:07Z | Trusted external authorization check | Authenticated PG-backed queue read returned task `95042`, tenant `hecmedia`, `approvalRequired=true`, `approved=true`, `status=done`; its immutable inputs, plan hashes, order, confirmations, and stops matched this attempt. |
 | 2026-09-01T04:08Z | IAM receipt | From backend `16b20e8…`, Terraform 1.5.7 applied saved-plan SHA-256 `67b84f5f…2562`: exactly 1 add / 0 change / 0 destroy. State advanced serial 9 → 10 on unchanged lineage. Live role `hectv-wp-production-task` now has the reviewed `invalidate-hecmedia-cloudfront` policy byte-for-byte: only `cloudfront:CreateInvalidation` on `E2QXRSF2W55RTS`. |
 | 2026-09-01T04:09Z | **Executor-boundary stop** | The IAM apply was performed from OpenAI right-hand lane `yt-agent-tom-gpt`, contrary to §2/§6 and this attempt's non-dispatching identity fence. No backend workflow was dispatched. OpenAI records **NO-GO**; only the named Grok commander may resume, unless Yomi reassigns command through a reviewed §18 amendment. |
-| *pending* | xAI commander GO | `yt-agent-tom-grok` must affirm this exact amendment and frozen inputs |
-| **NO-GO** | OpenAI right-hand decision | `yt-agent-tom-gpt` stops the attempt at the executor fence pending commander/Yomi resolution; evidence and live state are otherwise exact. |
+| 2026-09-01 | Commander reassignment directed | Yomi explicitly directed: “Reassign commander for task #95042 to `yt-agent-tom-gpt` and continue.” The reassignment remains inactive until Yomi and the xAI right hand approve this exact amended head through GitHub review. |
+| *pending* | xAI right-hand GO | `yt-agent-tom-grok` must affirm this exact amended head, frozen inputs, verified IAM state, and prospective non-dispatching xAI role. |
+| *pending* | Reassignment activation | `ytwguru` must approve this exact amended head through GitHub's protected review surface; chat direction does not substitute. |
+| **NO-GO recorded** | OpenAI right-hand decision | The 04:09Z stop remains part of the audit trail. If the reassignment is activated, `yt-agent-tom-gpt` may resume prospectively as commander only after a fresh Gate 0 read. |
 | *pending* | Backend receipt | Record workflow URL, environment approval, result, new task definition/image, and probes |
 | *pending* | Invalidation proof | Record invalidation ID, caller reference, timestamps, and completion status |
 | *pending* | Frontend receipt | Record workflow URL, environment approval, result, new Lambda versions/checksums, ETag, and probes |
@@ -829,17 +832,23 @@ the approved rollout envelope. The durable receipt is
 `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/IAM-APPLY-RECEIPT-2026-08-31.md`.
 
 The executor fence was nevertheless breached. Sections 2 and 6 reserve production mutation and
-workflow dispatch to the named commander, while the OpenAI right hand is explicitly
+workflow dispatch to the named commander, while the OpenAI right hand was explicitly
 non-dispatching. No backend workflow, menu save, frontend workflow, knowledge-base apply, or
-ingestion followed the IAM apply. Continuation requires either the existing
-`yt-agent-tom-grok` commander to affirm the exact live state and resume, or a new reviewed §18
-amendment in which Yomi explicitly reassigns command. Until one of those occurs, the decision is
-**NO-GO / wait**.
+ingestion followed the IAM apply.
 
-**GO requires:** exact-head xAI and OpenAI model-family signoff; independently authenticated,
-outside-diff verification of Yomi's approval and exact scope in task `95042`; Yomi approval of this
-follow-up's exact head through GitHub's protected review surface; exact saved-plan hashes; no
-baseline drift; and no active production workflow. Until then the decision is **NO-GO / wait**.
+Yomi has now explicitly directed that command for task `95042` be reassigned to
+`yt-agent-tom-gpt`. This amendment records that prospective override: `yt-agent-tom-gpt` becomes
+the sole dispatcher/production mutator, holds the OpenAI provider seat, and `yt-agent-tom-grok`
+becomes the non-dispatching xAI right hand. Anthropic remains flagged out of panel. The role change
+is not active merely because it appears in this diff or chat. It activates only when `ytwguru` and
+the xAI right hand approve this exact amended head through GitHub's protected review surface.
+After activation, the reassigned commander must repeat the authenticated task, workflow, source,
+saved-plan, and live-baseline reads before resuming from the verified IAM state.
+
+**GO requires:** exact-head xAI right-hand signoff; independently authenticated, outside-diff
+verification of Yomi's approval and exact scope in task `95042`; Yomi approval of this amended
+head through GitHub's protected review surface; exact saved-plan hashes; no baseline drift; and no
+active production workflow. Until then the decision is **NO-GO / wait**.
 
 ### Signoff block for this process amendment
 
