@@ -745,15 +745,20 @@ this amendment changes documentation only.
    Wait for Yomi's independent protected-environment approval, workflow success, ECS steady state,
    public WordPress probes, and artifact verification.
 3. Prove the production ECS task-role path with one controlled, no-content-change save of the
-   existing navigation menu assigned to the registered `header-actions` location. Before the save,
-   record the menu term ID/name and a normalized semantic snapshot of every item's ID, parent,
-   order, label, URL, target, CSS classes, description, and XFN, plus the public `topbarCtas`
-   response. If that location has no existing menu, stop; do not create one. In WordPress's bundled
-   admin save path, clicking **Save Menu** fires `wp_update_nav_menu` after a successful save even
-   when the submitted menu payload is unchanged; the merged MU plugin binds that hook to one
-   coalesced `/*` invalidation. Submit the identical menu with no edits, then require the normalized
-   post-save menu snapshot and public `topbarCtas` response to equal their pre-save values. Any
-   semantic drift is a stop and must be restored from the captured snapshot before proceeding.
+   existing navigation menu assigned to registered location key `header_actions` (admin label
+   **Header Actions (Support / Subscribe)**; WPGraphQL location enum `HEADER_ACTIONS`). The
+   `header-actions` value is only the menu object's slug and must not be used as the location key.
+   Before the save, record the assigned menu term ID/name and a normalized semantic snapshot of
+   every item's ID, parent, order, label, URL, target, CSS classes, description, and XFN, plus the
+   public `menuItems(where: { location: HEADER_ACTIONS })` and `topbarCtas` responses. If
+   `header_actions` has no existing assigned menu, stop; do not create or assign one. In
+   WordPress's bundled admin save path, clicking **Save Menu** fires `wp_update_nav_menu` after a
+   successful save even when the submitted menu payload is unchanged; the merged MU plugin binds
+   that hook to one coalesced `/*` invalidation. Submit the identical menu with no edits while
+   keeping the **Header Actions (Support / Subscribe)** location checkbox checked. Then require the
+   same term ID to remain assigned to `header_actions` and require the normalized post-save menu,
+   `menuItems`, and `topbarCtas` snapshots to equal their pre-save values. Any semantic or location
+   drift is a stop and must be restored from the captured snapshot before proceeding.
    Finally, require a new distribution `E2QXRSF2W55RTS` invalidation with the
    `hectv-publish-` caller-reference prefix, exactly path `/*`, and terminal status `Completed`.
    Record the menu identity, before/after hashes, invalidation ID, caller reference, and timestamps.
