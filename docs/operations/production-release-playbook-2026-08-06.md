@@ -814,6 +814,8 @@ CloudFront, Lambda, consumer-switch, deletion, plan-substitution, or plan-regene
 | 2026-09-01T04:52Z | Backend receipt | [Run `33470566196`](https://github.com/ytadvisors/hectv-wp/actions/runs/33470566196) succeeded after Yomi's protected-environment approval. ECS is steady at task definition `hectv-wp-production-rollback-pr34-safe:19`, image digest `sha256:d22685afb626b63aef13c9f4b2a214748dfc0244c06244ce759baaab8b92f4c6`, 2 desired / 2 running / 0 pending / 0 failed; 20/20 public and GraphQL contract probes passed. |
 | 2026-09-01T05:06Z | Invalidation proof | One unchanged save of existing `Header Actions` menu term `26095` preserved normalized semantic SHA-256 `44102ab42f606dd0c67367a9ae681b087ec1e9888ea55d002f89375fcc7917f4` and produced completed invalidation `I3OC9RWJG5MLGD56WSH3NXL62N`, caller `hectv-publish-20260901-050630-c95866a1-0a70-4100-a90f-8e1a78d4b1c2`, exact path `/*`. |
 | 2026-09-01T05:24Z | **Frontend IAM drift stop** | [Run `33473145980`](https://github.com/ytadvisors/hecmedia/actions/runs/33473145980) passed authorization, media preflight, all tests, packaging, browser setup, and scoped AWS identity after Yomi approved `production`, then failed on denied `lambda:UpdateFunctionConfiguration`. The workflow recorded `public-cutover-not-started`; details and the constrained recovery request follow below. |
+| 2026-09-01T05:42Z | xAI recovery approval | `yt-agent-kronos-grok` review `5074379458` approved exact recovery-amendment head `ca02a4931e773d0266bf9dcf14acf0a477d385fa`; mixed-jury and refresh-jury passed. |
+| 2026-09-01T05:43Z | **Protected-review bridge stop** | PR #312 merged as `973bd41bce878104e79f3f6aaa563006d1501882` before GitHub recorded a `ytwguru` review. The merge itself does not substitute for Yomi's exact-head protected approval. No IAM mutation or workflow retry followed; the bridge below is required. |
 | *blocked* | Knowledge-base receipt | No KB apply or ingestion may start until the frontend recovery run succeeds and edge verification closes. |
 
 PR #309 is immutable after merge, so GitHub cannot accept the missing Yomi review on its exact
@@ -904,6 +906,15 @@ may perform only this recovery sequence:
    Require a separate Yomi environment approval and full workflow/edge verification. Never rerun
    failed run `33473145980`.
 6. Keep the knowledge-base apply and ingestion blocked until the new frontend run succeeds.
+
+PR #312 is immutable after merge and cannot accept the missing Yomi review on exact head
+`ca02a4931e773d0266bf9dcf14acf0a477d385fa`. This follow-up changes no recovery input,
+permission, hash, resource, action, command, order, stop condition, or rollback boundary. It is
+only a protected-review bridge: an `APPROVED` review from `ytwguru` on this exact bridge head binds
+Yomi's approval to PR #312 head `ca02a49…`, merge `973bd41…`, xAI review `5074379458`, queue task
+`95042`, and the constrained one-action IAM recovery above. Chat approval, merge authorship, this
+text, or comments do not satisfy that gate. No IAM mutation may occur until the exact review is
+visible through GitHub's review API and the bridge has then merged with the xAI approval intact.
 
 ### Signoff block for this process amendment
 
