@@ -819,6 +819,10 @@ CloudFront, Lambda, consumer-switch, deletion, plan-substitution, or plan-regene
 | 2026-09-01T07:10Z | Frontend recovery success | [Run `33479477675`](https://github.com/ytadvisors/hecmedia/actions/runs/33479477675) succeeded at exact SHA `30e81cc4f26e4c4aff61d9beea36c375b553fc35`; default Lambda `165` is 1536 MB, API Lambda is `20`, invalidation `IBE6GSPPS4JR9ZLO6VVAIZ7627` completed, and public probes show `s-maxage=300` with cache hits. |
 | 2026-09-01T07:16Z | **Knowledge-base partial-apply stop** | The exact serial-0 `7/0/0` saved plan was applied once. Four additive resources were created, then S3 Vectors rejected the bucket policy with `Invalid principal in policy`. State is serial `1`; no replacement KB, data source, ingestion, switch, or deletion followed. The stale plan was not retried. |
 | 2026-09-01T07:18Z | Serial-1 recovery plan preserved | Unapplied saved-plan SHA-256 `4f54be83a12746830683af201f274f80659bdc4b6a70f119d6f6e58d0525b53a`: exactly three creates, four no-ops, zero updates, zero deletes. Recovery remains blocked on the exact-head reviews and merge defined below. |
+| 2026-09-01T07:42:59Z | Serial-1 amendment approved and merged | PR #314 head `0109c4397b294e9f9bc34f66ef9d0b3d824993cf` received exact-head approvals from `ytwguru` and independent xAI reviewer `yt-agent-kronos-grok`, then merged as `3c9d1b8a9c0ee0db7ad69d4031c9e834e300f572`. |
+| 2026-09-01T07:45:23Z | **Serial-1 recovery apply stop** | The serial-1 saved plan was applied exactly once. The vector-bucket policy was created, then Bedrock rejected `CreateKnowledgeBase` because Titan Embeddings G1 does not support configurable dimensions. State is serial `2` with five additive resources present; the replacement KB, data source, and ingestion remain absent. The plan was not retried and is permanently stale. |
+| 2026-09-01T08:07:44Z | Fixed-dimension backend correction merged | Backend PR #84 removed the unsupported optional dimensions block and added a regression assertion. Yomi and `yt-agent-kronos-grok` approved exact head `44542ea6238f6a01d210b17079cf9a9c90d80209`; both CI checks passed; squash merge `9c6bb1004e6363368b088c390d7ddb8654e0d162` is the sole source for the serial-2 plan. |
+| 2026-09-01T08:10Z | Serial-2 recovery plan preserved | Unapplied saved-plan SHA-256 `d3222bbbe1d434939b511344a2217630412a1420ab3de8587a6a55ef7ecd3b50`: exactly two creates, five no-ops, zero updates, zero deletes, bound to state serial `2` on the unchanged lineage. Recovery remains blocked on exact-head approval and merge of the serial-2 amendment below. |
 
 PR #309 is immutable after merge, so GitHub cannot accept the missing Yomi review on its exact
 head. This follow-up is only a protected-review bridge to that unchanged amendment: an `APPROVED`
@@ -982,6 +986,92 @@ not a substitute. If those reviews land, the commander may perform only this seq
    fixed retrieval queries at or above `0.30` source overlap against legacy KB `ZKA5J7Y0WL`.
 6. Preserve the legacy knowledge base, data source, and OpenSearch collection. This recovery still
    authorizes no consumer switch, deletion, destroy plan, or decommission action.
+
+#### Knowledge-base serial-2 recovery amendment
+
+**Status: NO-GO pending exact-head approval and merge of this amendment.** For the remaining
+knowledge-base step, this section supersedes the serial-0 and serial-1 execution instructions
+above. Both earlier saved plans have been applied once, stopped, and become permanently stale;
+neither may be retried or substituted.
+
+At `2026-09-01T07:45:23Z`, the commander applied serial-1 saved-plan SHA-256
+`4f54be83a12746830683af201f274f80659bdc4b6a70f119d6f6e58d0525b53a` exactly once. Terraform
+created `aws_s3vectors_vector_bucket_policy.transcripts`, then Bedrock `CreateKnowledgeBase`
+failed closed with:
+
+`ValidationException: ... arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v1 does not support configurable dimensions.`
+
+No retry followed. Titan Embeddings G1 has a fixed 1,536-dimension output; the optional
+`embedding_model_configuration` block was invalid for this model. Backend PR #84 removed only
+that block, documented the fixed-dimension contract, and added a credential-free regression
+assertion. Its exact head `44542ea6238f6a01d210b17079cf9a9c90d80209` received Yomi and independent
+xAI approval and passed both required checks before merging as
+`9c6bb1004e6363368b088c390d7ddb8654e0d162` at `2026-09-01T08:07:44Z`.
+
+Read-only production inventory after the stopped apply verified AWS account `850335719356`, state
+serial `2`, and unchanged lineage `2d770273-328d-3dc3-cb21-12e2034e86a3`. Exactly five managed
+resources are present:
+
+- `aws_s3vectors_vector_bucket.transcripts`
+- `aws_s3vectors_index.transcripts`
+- `aws_iam_role.bedrock_knowledge_base`
+- `aws_iam_role_policy.bedrock_knowledge_base`
+- `aws_s3vectors_vector_bucket_policy.transcripts`
+
+The live vector-bucket policy grants only role
+`arn:aws:iam::850335719356:role/hecmedia-bedrock-srt-kb-s3vectors` the five reviewed S3 Vectors
+index actions on only
+`arn:aws:s3vectors:us-east-1:850335719356:bucket/hecmedia-srt-vectors/index/srt-transcripts`.
+The replacement knowledge base and data source are absent, and no ingestion job was started.
+Legacy knowledge base `ZKA5J7Y0WL`, data source `KFAYWAPL74`, and OpenSearch Serverless collection
+`rpkgmev0ubnlcppj5v11` remain active and unchanged. No consumer was switched and no deletion
+occurred.
+
+From a detached worktree at exact backend merge `9c6bb1004e6363368b088c390d7ddb8654e0d162`, Terraform
+1.5.7 initialized against the production backend, passed format/validate and the repository KB
+contract test, re-read serial `2`, and generated exactly one new immutable saved plan:
+
+- Path: `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hec-s3-vectors-kb-recovery-serial2.tfplan`
+- SHA-256: `d3222bbbe1d434939b511344a2217630412a1420ab3de8587a6a55ef7ecd3b50`
+- Creates: exactly `aws_bedrockagent_knowledge_base.transcripts` and
+  `aws_bedrockagent_data_source.transcripts`
+- No-ops: exactly the five present resources listed above
+- Updates: zero
+- Deletes: zero
+- Knowledge-base contract: Titan G1 model ARN only; no configured dimensions block; the existing
+  S3 Vectors index remains `float32`, 1,536 dimensions, and Euclidean
+- Data-source contract: `s3://srtlibrary-hecmedia/vimeo_captions/`, fixed 300-token chunks with
+  20% overlap, and deletion policy `RETAIN`
+
+The durable second-stop receipt is
+`/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/KNOWLEDGE-BASE-SERIAL1-APPLY-FAILURE-2026-09-01.md`.
+This amendment authorizes nothing merely by being written. Recovery requires an `APPROVED` review
+from `ytwguru`, an independent exact-head xAI `APPROVED` review, all required checks on this exact
+head, and merge. Chat approval, the approvals on PR #314 or backend PR #84, task status, merge
+authorship, or comments do not substitute.
+
+Only after those gates land may the commander perform this bounded sequence:
+
+1. Run a fresh Gate 0: re-read task `95042`, provider flags, exact protected repository tips,
+   active production workflows, frontend release health, AWS account, remote state, all five
+   present configurations, the two absent replacement resources, and the active legacy rollback
+   resources. Require serial `2` and the exact lineage above.
+2. Re-hash the serial-2 plan and use `terraform show -json` to require exactly the two creates and
+   five no-ops named above, with zero updates and zero deletes. Any state, hash, action, resource,
+   identity, configuration, workflow, frontend-health, or legacy-status drift is a stop requiring
+   a new reviewed amendment.
+3. Apply that saved serial-2 plan exactly once. Never retry either stale plan, regenerate under this
+   authorization, or apply a substituted plan.
+4. Require the replacement knowledge base to reach `ACTIVE` and its data source to reach
+   `AVAILABLE`. If apply stops after another additive partial write, inventory state, preserve it,
+   and return through a new plan and amendment; do not retry.
+5. Start exactly one ingestion job through the guarded backend script with queue receipt `95042`
+   and exact confirmation `INGEST HEC S3 VECTORS KNOWLEDGE BASE`.
+6. Require ingestion `COMPLETE`, zero failed documents, non-empty ingestion/vector statistics, and
+   all five fixed retrieval queries at or above `0.30` source overlap against legacy KB
+   `ZKA5J7Y0WL`.
+7. Preserve the legacy knowledge base, data source, and OpenSearch collection. This recovery grants
+   no consumer switch, legacy deletion, destroy plan, or decommission authority.
 
 ### Signoff block for this process amendment
 
