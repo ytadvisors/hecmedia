@@ -9,13 +9,13 @@ Field data on this report is **origin-level** (not enough samples for the exact 
 
 ## What the report says (mobile, 16 Jul–12 Aug 2026)
 
-| Metric  |       p75 | Pass bar | Status          |
-| ------- | --------: | -------- | --------------- |
-| **LCP** | **4.5 s** | ≤ 2.5 s  | Fail (31% poor) |
-| **INP** |    128 ms | ≤ 200 ms | Pass            |
-| **CLS** |  **0.44** | ≤ 0.1    | Fail (33% poor) |
-| FCP     |     3.4 s | ≤ 1.8 s  | Fail            |
-| TTFB    | **2.9 s** | ≤ 0.8 s  | Fail (50% poor) |
+| Metric | p75 | Pass bar | Status |
+|---|---:|---|---|
+| **LCP** | **4.5 s** | ≤ 2.5 s | Fail (31% poor) |
+| **INP** | 128 ms | ≤ 200 ms | Pass |
+| **CLS** | **0.44** | ≤ 0.1 | Fail (33% poor) |
+| FCP | 3.4 s | ≤ 1.8 s | Fail |
+| TTFB | **2.9 s** | ≤ 0.8 s | Fail (50% poor) |
 
 Desktop is better and still fails (LCP 3.3 s, CLS 0.24, TTFB 1.7 s). **INP is not the problem.** Do not spend the first sprint on interaction polish.
 
@@ -59,12 +59,12 @@ flowchart LR
 After 28 days of real traffic:
 
 | Metric | Target p75 mobile |
-| ------ | ----------------- |
-| TTFB   | ≤ 0.8 s           |
-| LCP    | ≤ 2.5 s           |
-| CLS    | ≤ 0.1             |
-| FCP    | ≤ 1.8 s           |
-| INP    | keep ≤ 200 ms     |
+|---|---|
+| TTFB | ≤ 0.8 s |
+| LCP | ≤ 2.5 s |
+| CLS | ≤ 0.1 |
+| FCP | ≤ 1.8 s |
+| INP | keep ≤ 200 ms |
 
 Lab (Lighthouse mobile) is a gate, not the prize: homepage performance ≥ 80, LCP < 3 s, CLS < 0.1, no “image without dimensions.”
 
@@ -132,14 +132,14 @@ Owner: WordPress / `hectv-wp` + Apollo queries
 
 ## Suggested PR sequence
 
-| PR  | Repo                    | Scope                                                                   |
-| --- | ----------------------- | ----------------------------------------------------------------------- |
-| 1   | `hecmedia`              | MediaImage + logo dimensions; LCP not lazy; aspect-ratio tiles          |
-| 2   | `hecmedia`              | Move home `feedDesign` fallback to SSR; delete post-hydration REST swap |
-| 3   | `hecmedia`              | Recaptcha only on form mount; drop SEO global script                    |
-| 4   | CloudFront / deploy     | HTML cache policy, cookie/query normalization, SWR                      |
-| 5   | `hecmedia` + `hectv-wp` | Slim homepage GraphQL; WP reader cache / EP off                         |
-| 6   | `hecmedia`              | Responsive hero images + preload                                        |
+| PR | Repo | Scope |
+|---|---|---|
+| 1 | `hecmedia` | MediaImage + logo dimensions; LCP not lazy; aspect-ratio tiles |
+| 2 | `hecmedia` | Move home `feedDesign` fallback to SSR; delete post-hydration REST swap |
+| 3 | `hecmedia` | Recaptcha only on form mount; drop SEO global script |
+| 4 | CloudFront / deploy | HTML cache policy, cookie/query normalization, SWR |
+| 5 | `hecmedia` + `hectv-wp` | Slim homepage GraphQL; WP reader cache / EP off |
+| 6 | `hecmedia` | Responsive hero images + preload |
 
 Do **not** combine 4 with 5. Cache first so users stop paying for origin while WP is fixed.
 

@@ -11,13 +11,13 @@ Desktop is closer to a pass than mobile. Do **not** treat this as a separate rew
 
 ## What the report says (desktop, 16 Jul–12 Aug 2026)
 
-| Metric  |       p75 | Pass bar | Status                          |
-| ------- | --------: | -------- | ------------------------------- |
-| **LCP** | **3.3 s** | ≤ 2.5 s  | Fail (15% poor, 25% needs work) |
-| **INP** | **60 ms** | ≤ 200 ms | Pass (92% good)                 |
-| **CLS** |  **0.24** | ≤ 0.1    | Fail (only 37% good)            |
-| FCP     |     1.9 s | ≤ 1.8 s  | Barely fail (71% already good)  |
-| TTFB    | **1.7 s** | ≤ 0.8 s  | Fail (23% poor, 41% needs work) |
+| Metric | p75 | Pass bar | Status |
+|---|---:|---|---|
+| **LCP** | **3.3 s** | ≤ 2.5 s | Fail (15% poor, 25% needs work) |
+| **INP** | **60 ms** | ≤ 200 ms | Pass (92% good) |
+| **CLS** | **0.24** | ≤ 0.1 | Fail (only 37% good) |
+| FCP | 1.9 s | ≤ 1.8 s | Barely fail (71% already good) |
+| TTFB | **1.7 s** | ≤ 0.8 s | Fail (23% poor, 41% needs work) |
 
 Compare with [mobile](./PAGESPEED-MOBILE-FIX-PLAN-2026-08-14.md): LCP 4.5 s, CLS 0.44, TTFB 2.9 s. Desktop is ~1 s faster on LCP/TTFB and about half the CLS, and still fails the same three CWV-adjacent bars (LCP, CLS, TTFB). **INP is excellent — do not spend desktop time on click handlers.**
 
@@ -31,14 +31,14 @@ Live check 2026-08-14 (desktop UA, ORD CloudFront):
 
 ## How desktop differs from mobile
 
-| Topic         | Desktop-specific                                                                                                                                                                                                                           |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| LCP candidate | Wider Featured / wallpaper tile, often a **768px+** S3 JPEG or the educator promo. Mobile uses ~300px thumbs.                                                                                                                              |
-| CLS           | 0.24 vs 0.44. Still fail. Wide wallpaper/Featured rows jump more pixels when `feedDesign` hydrates or images have no box. 40% of loads sit in “needs improvement” (0.1–0.25) — reserving aspect ratio should pull most of those under 0.1. |
-| TTFB          | Same SSR/cache miss as mobile, but better networks hide it. Cache policy (workstream 1) is shared and is still the first desktop lever.                                                                                                    |
-| FCP           | 1.9 s — one cache/HTML win likely clears the 1.8 s bar without a CSS rewrite.                                                                                                                                                              |
-| JS            | Next **route prefetch on hover** fires from the homepage on desktop. Mobile barely hovers.                                                                                                                                                 |
-| Resize        | `ListOfPosts` uses `window.innerWidth <= 500` and a resize listener. Desktop layout is the wide branch (`getPostImgSrc(post)` without `"small"` for several tiles).                                                                        |
+| Topic | Desktop-specific |
+|---|---|
+| LCP candidate | Wider Featured / wallpaper tile, often a **768px+** S3 JPEG or the educator promo. Mobile uses ~300px thumbs. |
+| CLS | 0.24 vs 0.44. Still fail. Wide wallpaper/Featured rows jump more pixels when `feedDesign` hydrates or images have no box. 40% of loads sit in “needs improvement” (0.1–0.25) — reserving aspect ratio should pull most of those under 0.1. |
+| TTFB | Same SSR/cache miss as mobile, but better networks hide it. Cache policy (workstream 1) is shared and is still the first desktop lever. |
+| FCP | 1.9 s — one cache/HTML win likely clears the 1.8 s bar without a CSS rewrite. |
+| JS | Next **route prefetch on hover** fires from the homepage on desktop. Mobile barely hovers. |
+| Resize | `ListOfPosts` uses `window.innerWidth <= 500` and a resize listener. Desktop layout is the wide branch (`getPostImgSrc(post)` without `"small"` for several tiles). |
 
 ```mermaid
 flowchart LR
@@ -57,13 +57,13 @@ flowchart LR
 
 ## Target (desktop field p75)
 
-| Metric | Target                        |
-| ------ | ----------------------------- |
-| TTFB   | ≤ 0.8 s                       |
-| LCP    | ≤ 2.5 s                       |
-| CLS    | ≤ 0.1                         |
-| FCP    | ≤ 1.8 s                       |
-| INP    | keep ≤ 200 ms (already 60 ms) |
+| Metric | Target |
+|---|---|
+| TTFB | ≤ 0.8 s |
+| LCP | ≤ 2.5 s |
+| CLS | ≤ 0.1 |
+| FCP | ≤ 1.8 s |
+| INP | keep ≤ 200 ms (already 60 ms) |
 
 Lab gate: Lighthouse **desktop** on the same report id after each PR — LCP < 2.5 s, CLS < 0.1, performance ≥ 85.
 
@@ -117,14 +117,14 @@ Desktop benefits less per user (faster last mile) but still loses when CloudFron
 
 Use the **same six PRs** as the [mobile plan](./PAGESPEED-MOBILE-FIX-PLAN-2026-08-14.md). Desktop extras land inside those PRs, not as a seventh track:
 
-| PR  | Desktop-only add-on                                             |
-| --- | --------------------------------------------------------------- |
-| 1   | 16:9 reserved boxes for 768×430 tiles; logo/educator dimensions |
-| 2   | Assert wide feed geometry in Playwright at 1366px               |
-| 3   | `prefetch={false}` on home nav `Link`s                          |
-| 4   | Shared cache (no desktop fork)                                  |
-| 5   | Shared GraphQL/WP (no desktop fork)                             |
-| 6   | Preload the **desktop** LCP URL; `srcset` 768/1280/1920         |
+| PR | Desktop-only add-on |
+|---|---|
+| 1 | 16:9 reserved boxes for 768×430 tiles; logo/educator dimensions |
+| 2 | Assert wide feed geometry in Playwright at 1366px |
+| 3 | `prefetch={false}` on home nav `Link`s |
+| 4 | Shared cache (no desktop fork) |
+| 5 | Shared GraphQL/WP (no desktop fork) |
+| 6 | Preload the **desktop** LCP URL; `srcset` 768/1280/1920 |
 
 ## Verification
 

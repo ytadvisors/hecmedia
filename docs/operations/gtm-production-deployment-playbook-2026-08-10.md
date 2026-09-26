@@ -30,12 +30,12 @@ The current live Lambda description identifies source `76ff06f609dd…`, while t
 anchor on `master` is `81d0a59a60f38be55df353c0b98f59bc375bf4f9`. The governed workflow deploys
 the exact `master` tip, so the candidate includes every intervening change, not just GTM:
 
-| PR   | Surface                                                       | Required release proof                                               |
-| ---- | ------------------------------------------------------------- | -------------------------------------------------------------------- |
-| #268 | Production media URL and thumbnail repair                     | Media preflight, hydrated media checks, and production verifier pass |
-| #269 | Sanitized rollback repin                                      | Published version `150` and its exact checksum remain valid          |
-| #270 | Frontend staging publisher retirement and edge build refactor | No staging publish path is recreated; production package tests pass  |
-| #271 | Exact production GTM injection                                | Only `GTM-57RZPNN` is inlined, rendered, loaded, and observed        |
+| PR | Surface | Required release proof |
+| --- | --- | --- |
+| #268 | Production media URL and thumbnail repair | Media preflight, hydrated media checks, and production verifier pass |
+| #269 | Sanitized rollback repin | Published version `150` and its exact checksum remain valid |
+| #270 | Frontend staging publisher retirement and edge build refactor | No staging publish path is recreated; production package tests pass |
+| #271 | Exact production GTM injection | Only `GTM-57RZPNN` is inlined, rendered, loaded, and observed |
 
 The production workflow also republishes the existing frontend Lambda and newsletter API Lambda,
 syncs versioned frontend assets without `--delete`, and updates the existing CloudFront
@@ -61,26 +61,26 @@ a one-line GTM mutation.
 Observed independently on 2026-08-10 around 05:03 UTC. These values prove the starting state but
 **must be recaptured immediately before dispatch**; stale values are not valid workflow inputs.
 
-| Item                       | Planning observation                                                                                                                                                                                                      |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Repository planning anchor | `81d0a59a60f38be55df353c0b98f59bc375bf4f9` (`master`, merged PR #271)                                                                                                                                                     |
-| Public site                | `https://hecmedia.org/` returns HTTP 200 through CloudFront                                                                                                                                                               |
-| Public release metadata    | `76ff06f609dd…`                                                                                                                                                                                                           |
-| Public GTM evidence        | No `GTM-*`, `googletagmanager.com`, or `dataLayer` reference in raw homepage HTML                                                                                                                                         |
-| GTM endpoint               | `gtm.js?id=GTM-57RZPNN` returns HTTP 200; resource version `21` currently references `G-7HGHHBRHPT`, `UA-13018774-2`, `AW-866730806`, and `AW-123456789` (all informational and unapproved until owner classification)    |
-| CloudFront                 | `E2QXRSF2W55RTS`, status `Deployed`, ETag `E73C1MWIS7SM3`                                                                                                                                                                 |
-| Aliases and origin         | `hecmedia.org`, `www.hecmedia.org`; sole origin `x2l4ew-k0m7umi`                                                                                                                                                          |
-| Live default Lambda@Edge   | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:150`                                                                                                                                                       |
-| Live/rollback checksum     | `InGBmR1WRmFN+iojEtw/HdYER96Dlge410JFw3THEag=`                                                                                                                                                                            |
-| Lambda state               | Version `150`, Active, `nodejs24.x`; four owned SSR associations                                                                                                                                                          |
-| Newsletter API behavior    | Absent                                                                                                                                                                                                                    |
-| S3 versioning              | Enabled on `x2l4ew-k0m7umi`                                                                                                                                                                                               |
-| S3/Lambda residue          | `BUILD_ID` reflects failed candidate `0bb1055…`; unassociated default Lambda `:151` and API `:6` remain as evidence and must not be cleaned during this release                                                           |
-| Sanitized rollback         | The same immutable default Lambda version `150` and checksum above                                                                                                                                                        |
-| HEC TV production backend  | ECS service Active, desired/running/pending `4/4/0`, rollout Complete, task definition `hectv-wp-production-rollback-pr34-safe:6`, image digest `sha256:577e1d82c122de059dc0799ba17b5c1b50f98db60ef64783f15ddb37c9e92460` |
-| HEC TV public checks       | `prod-wp.hectv.org` root HTTP 200; read-only GraphQL title `HEC Media` with no errors                                                                                                                                     |
-| Decommission interlock     | Reversible quiescence is complete, but its 24-hour observation remains active until at least `2026-08-11T04:36:29Z`; destructive cleanup remains NO-GO                                                                    |
-| AWS budget                 | August unblended estimate through 2026-08-10 exclusive: `$624.5423053676`, below the `$1,000` escalation threshold; recapture before release                                                                              |
+| Item | Planning observation |
+| --- | --- |
+| Repository planning anchor | `81d0a59a60f38be55df353c0b98f59bc375bf4f9` (`master`, merged PR #271) |
+| Public site | `https://hecmedia.org/` returns HTTP 200 through CloudFront |
+| Public release metadata | `76ff06f609dd…` |
+| Public GTM evidence | No `GTM-*`, `googletagmanager.com`, or `dataLayer` reference in raw homepage HTML |
+| GTM endpoint | `gtm.js?id=GTM-57RZPNN` returns HTTP 200; resource version `21` currently references `G-7HGHHBRHPT`, `UA-13018774-2`, `AW-866730806`, and `AW-123456789` (all informational and unapproved until owner classification) |
+| CloudFront | `E2QXRSF2W55RTS`, status `Deployed`, ETag `E73C1MWIS7SM3` |
+| Aliases and origin | `hecmedia.org`, `www.hecmedia.org`; sole origin `x2l4ew-k0m7umi` |
+| Live default Lambda@Edge | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:150` |
+| Live/rollback checksum | `InGBmR1WRmFN+iojEtw/HdYER96Dlge410JFw3THEag=` |
+| Lambda state | Version `150`, Active, `nodejs24.x`; four owned SSR associations |
+| Newsletter API behavior | Absent |
+| S3 versioning | Enabled on `x2l4ew-k0m7umi` |
+| S3/Lambda residue | `BUILD_ID` reflects failed candidate `0bb1055…`; unassociated default Lambda `:151` and API `:6` remain as evidence and must not be cleaned during this release |
+| Sanitized rollback | The same immutable default Lambda version `150` and checksum above |
+| HEC TV production backend | ECS service Active, desired/running/pending `4/4/0`, rollout Complete, task definition `hectv-wp-production-rollback-pr34-safe:6`, image digest `sha256:577e1d82c122de059dc0799ba17b5c1b50f98db60ef64783f15ddb37c9e92460` |
+| HEC TV public checks | `prod-wp.hectv.org` root HTTP 200; read-only GraphQL title `HEC Media` with no errors |
+| Decommission interlock | Reversible quiescence is complete, but its 24-hour observation remains active until at least `2026-08-11T04:36:29Z`; destructive cleanup remains NO-GO |
+| AWS budget | August unblended estimate through 2026-08-10 exclusive: `$624.5423053676`, below the `$1,000` escalation threshold; recapture before release |
 
 ## Current NO-GO blockers
 
@@ -90,7 +90,8 @@ All blockers require evidence in the execution record before the release may mov
 
 The most recent cutover, Actions run `31209936363`, reached production and then failed because
 `scripts/verify-production.js` required literal `HEC-TV` on `/posts/hec-on-youtube`. The script
-automatically restored version `150`. The current live page is HTTP 200, has a valid `HEC on YouTube` title and release metadata, but correctly does not contain that literal. Current `master`
+automatically restored version `150`. The current live page is HTTP 200, has a valid `HEC on
+YouTube` title and release metadata, but correctly does not contain that literal. Current `master`
 retains the same assertion, so dispatching it would predictably cut over and roll back again.
 
 Both `scripts/verify-production.js` and the hydrated browser verifier in
@@ -279,12 +280,12 @@ new `master` tip has been reviewed.
 
 ## Roles and separation of duties
 
-| Role                                                        | Responsibility                                                                                                                                                                                                       |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Yomi / production owner                                     | Approves this playbook, prerequisite PRs, and the protected `production` environment                                                                                                                                 |
-| Deployment commander (`yt-agent-tom-gpt` unless reassigned) | Owns one attempt, records commands and timestamps, dispatches the workflow, and invokes rollback when required                                                                                                       |
-| Provider review panel                                       | One named right-hand representative from every unflagged provider family; independently re-reads the exact SHA, AWS inputs, workflow state, GTM evidence, backend/decommission interlock, and stop/rollback decision |
-| Grok right-hand verifier                                    | Required panel seat for xAI when unflagged; coordinates the independent GTM, baseline, and rollback read-back without sharing the commander's assumptions                                                            |
+| Role | Responsibility |
+| --- | --- |
+| Yomi / production owner | Approves this playbook, prerequisite PRs, and the protected `production` environment |
+| Deployment commander (`yt-agent-tom-gpt` unless reassigned) | Owns one attempt, records commands and timestamps, dispatches the workflow, and invokes rollback when required |
+| Provider review panel | One named right-hand representative from every unflagged provider family; independently re-reads the exact SHA, AWS inputs, workflow state, GTM evidence, backend/decommission interlock, and stop/rollback decision |
+| Grok right-hand verifier | Required panel seat for xAI when unflagged; coordinates the independent GTM, baseline, and rollback read-back without sharing the commander's assumptions |
 
 The dispatcher cannot approve their own protected-environment job. Only the commander dispatches
 or invokes rollback. At Gate 0, record each provider's health/flag state and named eligible seat.
@@ -335,13 +336,13 @@ as the workflow. Record full output or links.
 - [ ] Release-tag identity regression passes
 - [ ] GTM contract tests reject blank, wrong, duplicate, and `undefined` values
 - [ ] Governed hydrated verifier permits the exact GTM loader and approved first-party/media
-      origins while deny-by-default blocking and recording every other GTM-caused third-party request
+  origins while deny-by-default blocking and recording every other GTM-caused third-party request
 - [ ] Production package builds through `scripts/production-deploy.js build`
 - [ ] Packaged-Lambda/local SSR smoke against the read-only production CMS passes with writes
-      disabled
+  disabled
 - [ ] Built package/SSR artifact contains exactly `GTM-57RZPNN` and no other GTM ID
 - [ ] Cache-busting and exact-SHA verifier behavior passes against the local packaged candidate or
-      deterministic fixtures; production hostnames are not expected to serve the candidate yet
+  deterministic fixtures; production hostnames are not expected to serve the candidate yet
 - [ ] Uncompressed package contains no AWS access-key material
 - [ ] Prior failure route `/posts/hec-on-youtube` satisfies its corrected contract
 
@@ -389,16 +390,16 @@ Yomi approval, and all required provider-panel co-signs must refer to the same c
 
 Dispatch `.github/workflows/production-deploy.yml` from `master` with:
 
-| Input                                 | Required value                          |
-| ------------------------------------- | --------------------------------------- |
-| `action`                              | `deploy`                                |
-| `release_sha`                         | Final frozen 40-character `master` SHA  |
-| `expected_cloudfront_etag`            | Fresh ETag from Phase 4                 |
-| `expected_default_lambda_version_arn` | Fresh live version ARN from Phase 4     |
-| `expected_default_lambda_code_sha256` | Exact checksum for that live version    |
-| `expected_api_lambda_version_arn`     | Fresh live API ARN or `none`            |
-| `request_task_id`                     | Positive receipt for this exact attempt |
-| `confirmation`                        | `DEPLOY HEC FRONTEND PRODUCTION`        |
+| Input | Required value |
+| --- | --- |
+| `action` | `deploy` |
+| `release_sha` | Final frozen 40-character `master` SHA |
+| `expected_cloudfront_etag` | Fresh ETag from Phase 4 |
+| `expected_default_lambda_version_arn` | Fresh live version ARN from Phase 4 |
+| `expected_default_lambda_code_sha256` | Exact checksum for that live version |
+| `expected_api_lambda_version_arn` | Fresh live API ARN or `none` |
+| `request_task_id` | Positive receipt for this exact attempt |
+| `confirmation` | `DEPLOY HEC FRONTEND PRODUCTION` |
 
 Then:
 
@@ -423,23 +424,23 @@ a successful release.
 ### Public application checks
 
 - [ ] Corrected `scripts/verify-production.js` passes every route, exact release SHA, the B5-selected
-      forms/newsletter contract, and hydrated content/media check.
+  forms/newsletter contract, and hydrated content/media check.
 - [ ] Homepage plus representative content/category/event/newsletter routes return HTTP 200.
 - [ ] `/posts/hec-on-youtube` passes its reviewed route-specific contract.
 - [ ] No route shows `undefined`, broken media, SSR errors, or navigation regression.
 - [ ] Repeated cache-busted fresh-origin checks on both production hostnames and hydrated-browser
-      checks agree with the expected candidate.
+  checks agree with the expected candidate.
 
 ### GTM checks
 
 - [ ] Raw homepage and representative SEO/content HTML contain exactly `GTM-57RZPNN`.
 - [ ] No raw page or built asset contains another `GTM-*` container or an `undefined` ID.
 - [ ] Browser network loads
-      `https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN` successfully once.
+  `https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN` successfully once.
 - [ ] `window.dataLayer` exists and contains the initial `gtm.js` event once.
 - [ ] No GTM-related CSP or JavaScript console error occurs.
 - [ ] The post-cutover GTM resource version, complete tag/destination inventory, loader headers,
-      and fixed-client hash match the pre-approved frozen evidence.
+  and fixed-client hash match the pre-approved frozen evidence.
 
 The governed browser verifier must deny by default and record all GTM-caused third-party egress
 while allowing the exact GTM loader and approved first-party/media origins; an operator-only browser
@@ -451,21 +452,21 @@ property after technical acceptance.
 ### AWS and release checks
 
 - [ ] CloudFront returns to `Deployed` and all owned associations point to the newly published
-      reviewed versions.
+  reviewed versions.
 - [ ] If B5 selected retain/reactivate: the exact newsletter API association exists and the GET
-      405, invalid POST 400, origin/method, input-validation, no-secret, and no-unapproved-send security
-      contracts pass.
+  405, invalid POST 400, origin/method, input-validation, no-secret, and no-unapproved-send security
+  contracts pass.
 - [ ] If B5 selected omit: no newsletter API version is published or associated, the behavior
-      remains absent, and the reviewed forms-disabled/frontend verifier contract passes.
+  remains absent, and the reviewed forms-disabled/frontend verifier contract passes.
 - [ ] S3 versioning remains enabled; the upload manifest matches expectation; collision versions
-      remain recoverable; and no unrelated object/resource was deleted.
+  remain recoverable; and no unrelated object/resource was deleted.
 - [ ] HEC TV production DNS, ALB target health, ECS `4/4/0`, task definition/image, database, EFS,
-      WordPress/REST/GraphQL, admin, and media evidence is unchanged.
+  WordPress/REST/GraphQL, admin, and media evidence is unchanged.
 - [ ] The decommission observation/executor freeze remains intact and no decommission mutation
-      occurred during the release.
+  occurred during the release.
 - [ ] `hecmedia-production-<release_sha[0:12]>` exists and resolves to the exact release SHA.
 - [ ] Actions evidence includes before/after CloudFront state, build metadata, verification output,
-      invalidation ID, and final outcome.
+  invalidation ID, and final outcome.
 - [ ] A ten-minute soak produces no stop signal.
 
 ## Stop and rollback conditions
@@ -559,15 +560,15 @@ Actions artifacts, and release tag supplement the in-repository log; none replac
 
 ## Approval record
 
-| Gate                        | Required record                                                                                      | Status  |
-| --------------------------- | ---------------------------------------------------------------------------------------------------- | ------- |
-| Playbook review             | Named eligible panel, at least two independent model-family approvals, then Yomi approval            | Pending |
+| Gate | Required record | Status |
+| --- | --- | --- |
+| Playbook review | Named eligible panel, at least two independent model-family approvals, then Yomi approval | Pending |
 | B1–B10 remediation/decision | Separately approved PR URL(s), CI/config/S3/GTM/backend evidence, newsletter decision, merged SHA(s) | Pending |
-| Final candidate             | Exact SHA and complete live→candidate inventory                                                      | Pending |
-| Preflight                   | Tests/build/media/GTM artifact proof                                                                 | Pending |
-| Fresh baseline              | AWS/GitHub snapshots and rollback proof                                                              | Pending |
-| Independent GO              | Every required provider-panel seat signed the exact receipt                                          | Pending |
-| Environment approval        | Yomi approval on the exact workflow run                                                              | Pending |
-| Final acceptance            | Green run, tag, GTM proof, soak, co-sign                                                             | Pending |
+| Final candidate | Exact SHA and complete live→candidate inventory | Pending |
+| Preflight | Tests/build/media/GTM artifact proof | Pending |
+| Fresh baseline | AWS/GitHub snapshots and rollback proof | Pending |
+| Independent GO | Every required provider-panel seat signed the exact receipt | Pending |
+| Environment approval | Yomi approval on the exact workflow run | Pending |
+| Final acceptance | Green run, tag, GTM proof, soak, co-sign | Pending |
 
 No `Pending` row may be treated as implicit approval.

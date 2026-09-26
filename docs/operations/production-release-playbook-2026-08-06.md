@@ -13,11 +13,11 @@ is a named representative from **each unflagged provider** on the release
 
 **Commander's right hand (this trial) — one rep per unflagged provider:**
 
-| Provider           | Right-hand rep                               | Role on this attempt                            |
-| ------------------ | -------------------------------------------- | ----------------------------------------------- |
-| xAI / Grok         | `yt-agent-tom-grok`                          | Commander (also that provider's rep)            |
-| OpenAI / GPT       | `yt-agent-tom-gpt`                           | Right-hand rep — launch coordination + GO/NO-GO |
-| Anthropic / Claude | `yt-agent-kronos-grok` (or seated kronos-\*) | Right-hand rep — foreign co-sign / jury         |
+| Provider | Right-hand rep | Role on this attempt |
+| --- | --- | --- |
+| xAI / Grok | `yt-agent-tom-grok` | Commander (also that provider's rep) |
+| OpenAI / GPT | `yt-agent-tom-gpt` | Right-hand rep — launch coordination + GO/NO-GO |
+| Anthropic / Claude | `yt-agent-kronos-grok` (or seated kronos-*) | Right-hand rep — foreign co-sign / jury |
 
 **Systems:** `ytadvisors/hecmedia`, `ytadvisors/hectv-wp`, AWS account `850335719356`
 
@@ -74,31 +74,31 @@ the deployment stops at the last verified compatible pair.
 9. The backend release is expand/contract. It must preserve the schema used by the currently
    deployed frontend while exposing the new schema. Legacy fields are not removed today.
 10. Staging must exercise the same GraphQL compatibility profile as production. Environment-only
-    staging resolvers may not make an otherwise incompatible backend appear safe.
+   staging resolvers may not make an otherwise incompatible backend appear safe.
 11. Image integrity is verified independently of Docker/ECR success. The known-bad digest
-    `sha256:beba7812ee56969a4646d09c5afb01ccef4d525e8e5968e2307b140fab664a83`
-    is quarantined and must never be promoted.
+   `sha256:beba7812ee56969a4646d09c5afb01ccef4d525e8e5968e2307b140fab664a83`
+   is quarantined and must never be promoted.
 12. Static `/healthz` proves only that the container and Apache are reachable. It is not an
-    application release gate.
+   application release gate.
 13. No database DDL change is included in this release. The required additive GraphQL API-contract
-    expansion remains in scope. If database DDL becomes necessary, stop and follow the replicated-PG
-    subscriber-first invariant in a separate reviewed plan.## 3. Verified recovery baseline
+   expansion remains in scope. If database DDL becomes necessary, stop and follow the replicated-PG
+   subscriber-first invariant in a separate reviewed plan.## 3. Verified recovery baseline
 
 This is the state to preserve until the release reaches its next explicit gate.
 
-| Surface                      | Verified state at 2026-08-06 17:46 CT                                                                                                         |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public site                  | `https://hecmedia.org` returns HTTP 200 with title `HEC-TV \| Home`                                                                           |
-| Production frontend          | CloudFront `E2QXRSF2W55RTS`; ETag `E2YN27AV1NE3XR`; Lambda@Edge `x2l4ew-l5vb7pd:146`; code SHA `5CzpPZ0xXqsNoDJ+Nr8mzRuY9kUKNkIKF6bovFjKsS4=` |
-| Newsletter edge behavior     | Absent (`none`)                                                                                                                               |
-| Production frontend rollback | Immutable sanitized Lambda version `150`, verified by the governed workflow before cutover                                                    |
-| Production backend           | ECS task definition `hectv-wp-production-rollback-pr34-safe:3`; 4 desired / 4 running / 0 pending; rollout complete                           |
-| Production backend image     | `sha256:b0764544d2a46fa51e2a325b181d53bb66a251cb354090b10ba1d6955dc38d36`; source label `d0b939ec0186a23e4ce10014aeaf10c738af7b59`            |
-| Staging frontend             | `https://development.hecmedia.org`; Lambda@Edge `mf64oua-5ao6wt:172`; deployed SHA metadata `025a5b5b8b8217705fbe5478d026e75d56616142`        |
-| Staging backend              | Public and admin services on task definition revision `:32`; 1/1 each; rollout complete                                                       |
-| Staging backend image        | `sha256:e7a885f156a60e6e1425c1c7ef12682cf22383b23b2fb9d92c1b7ebbb3907bd3`; source label `f940fdfe94e595860198829cd6dfd50bb3f73f30`            |
-| Recovery evidence            | Production passed 20/20 cache-busting homepage requests; staging GraphQL, REST, and rendered frontend returned HTTP 200                       |
-| AWS month-to-date cost       | `$331.57` through 2026-08-05, below the `$1,250` cap                                                                                          |
+| Surface | Verified state at 2026-08-06 17:46 CT |
+| --- | --- |
+| Public site | `https://hecmedia.org` returns HTTP 200 with title `HEC-TV \| Home` |
+| Production frontend | CloudFront `E2QXRSF2W55RTS`; ETag `E2YN27AV1NE3XR`; Lambda@Edge `x2l4ew-l5vb7pd:146`; code SHA `5CzpPZ0xXqsNoDJ+Nr8mzRuY9kUKNkIKF6bovFjKsS4=` |
+| Newsletter edge behavior | Absent (`none`) |
+| Production frontend rollback | Immutable sanitized Lambda version `150`, verified by the governed workflow before cutover |
+| Production backend | ECS task definition `hectv-wp-production-rollback-pr34-safe:3`; 4 desired / 4 running / 0 pending; rollout complete |
+| Production backend image | `sha256:b0764544d2a46fa51e2a325b181d53bb66a251cb354090b10ba1d6955dc38d36`; source label `d0b939ec0186a23e4ce10014aeaf10c738af7b59` |
+| Staging frontend | `https://development.hecmedia.org`; Lambda@Edge `mf64oua-5ao6wt:172`; deployed SHA metadata `025a5b5b8b8217705fbe5478d026e75d56616142` |
+| Staging backend | Public and admin services on task definition revision `:32`; 1/1 each; rollout complete |
+| Staging backend image | `sha256:e7a885f156a60e6e1425c1c7ef12682cf22383b23b2fb9d92c1b7ebbb3907bd3`; source label `f940fdfe94e595860198829cd6dfd50bb3f73f30` |
+| Recovery evidence | Production passed 20/20 cache-busting homepage requests; staging GraphQL, REST, and rendered frontend returned HTTP 200 |
+| AWS month-to-date cost | `$331.57` through 2026-08-05, below the `$1,250` cap |
 
 Current repository tips before this documentation PR:
 
@@ -113,13 +113,13 @@ after all required fixes and documentation are reviewed and merged.
 Read-only checks on 2026-08-06 found enough raw disk capacity for a clean build, but the existing
 default Colima builder is quarantined:
 
-| Check                     | Observed                                                          | Decision                   |
-| ------------------------- | ----------------------------------------------------------------- | -------------------------- |
-| macOS data volume         | 40 GiB available of 228 GiB                                       | Capacity pass              |
-| Colima Docker data volume | 54 GiB available of 59 GiB                                        | Capacity pass              |
-| Docker images             | 2.691 GB total; 433.9 MB reclaimable                              | Informational              |
-| Docker build cache        | 2.538 GB total; 1.302 GB reclaimable                              | Do not reuse               |
-| Active Docker workload    | 0 containers and 0 volumes                                        | Capacity pass              |
+| Check | Observed | Decision |
+| --- | --- | --- |
+| macOS data volume | 40 GiB available of 228 GiB | Capacity pass |
+| Colima Docker data volume | 54 GiB available of 59 GiB | Capacity pass |
+| Docker images | 2.691 GB total; 433.9 MB reclaimable | Informational |
+| Docker build cache | 2.538 GB total; 1.302 GB reclaimable | Do not reuse |
+| Active Docker workload | 0 containers and 0 volumes | Capacity pass |
 | Default Colima filesystem | Prior I/O failure; ext4 marked as needing `e2fsck`; error count 3 | Builder fail / quarantined |
 
 Capacity is therefore **GO**, while the default Colima builder is **NO-GO**. The release build must
@@ -140,15 +140,15 @@ and the builder cache, preserve diagnostics, and restart Gate 2 on another prist
 
 ## 4. Known blockers that must be closed
 
-| ID  | Blocker                                                                           | Required closure evidence                                                                                                                                                                                                                                                                                                                                                                                  |
-| --- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B1  | Backend `f940fd…` removed fields still queried by the live frontend in production | A production-safe dual-schema compatibility PR plus consumer-contract tests                                                                                                                                                                                                                                                                                                                                |
-| B2  | Staging enabled a compatibility layer that production disabled                    | Identical explicit schema-profile configuration in staging and production, proven in task-definition evidence                                                                                                                                                                                                                                                                                              |
-| B3  | Candidate image `beba781…` contains zero-byte WordPress core files                | A new image built on a pristine builder; nonzero files and WordPress checksums verified before push and after pull                                                                                                                                                                                                                                                                                         |
-| B4  | ECS health checks only a static file                                              | Application probes must gate staging and production rollout; static health remains infrastructure-only                                                                                                                                                                                                                                                                                                     |
-| B5  | Current production frontend artifact has no trustworthy source-SHA metadata       | Record Lambda version `146` and checksum as the live/pre-cutover identity; verify sanitized version `150` and its pinned checksum as the sole rollback target; require source SHA metadata in the candidate                                                                                                                                                                                                |
-| B6  | Backend-first ordering broke SSR                                                  | Default path is four-way matrix pass + frontend-first. **Exception (this trial):** if Cell 2 (candidate FE × current production backend) fails because the candidate requires modern fields the recovery backend lacks, and Cells 1/3/4 pass with dual-schema expand, production may land the dual-schema **backend expand first**, then the candidate frontend — only after co-signed amendment + Yomi go |
-| B7  | Fresh requests can fail while cached requests look healthy                        | Verification uses unique query strings, multiple sequential requests, hydrated Chrome routes, and edge-log inspection                                                                                                                                                                                                                                                                                      |
+| ID | Blocker | Required closure evidence |
+| --- | --- | --- |
+| B1 | Backend `f940fd…` removed fields still queried by the live frontend in production | A production-safe dual-schema compatibility PR plus consumer-contract tests |
+| B2 | Staging enabled a compatibility layer that production disabled | Identical explicit schema-profile configuration in staging and production, proven in task-definition evidence |
+| B3 | Candidate image `beba781…` contains zero-byte WordPress core files | A new image built on a pristine builder; nonzero files and WordPress checksums verified before push and after pull |
+| B4 | ECS health checks only a static file | Application probes must gate staging and production rollout; static health remains infrastructure-only |
+| B5 | Current production frontend artifact has no trustworthy source-SHA metadata | Record Lambda version `146` and checksum as the live/pre-cutover identity; verify sanitized version `150` and its pinned checksum as the sole rollback target; require source SHA metadata in the candidate |
+| B6 | Backend-first ordering broke SSR | Default path is four-way matrix pass + frontend-first. **Exception (this trial):** if Cell 2 (candidate FE × current production backend) fails because the candidate requires modern fields the recovery backend lacks, and Cells 1/3/4 pass with dual-schema expand, production may land the dual-schema **backend expand first**, then the candidate frontend — only after co-signed amendment + Yomi go |
+| B7 | Fresh requests can fail while cached requests look healthy | Verification uses unique query strings, multiple sequential requests, hydrated Chrome routes, and edge-log inspection |
 
 ## 5. Release strategy
 
@@ -190,16 +190,16 @@ This is still expand/contract. It is **not** a blank backend-first for incompati
 
 ## 6. Roles and communications
 
-| Role                                    | Responsibility                                                                                                                                                                                                                                                                                                                                                                                                                |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Yomi                                    | Approves this plan, names the commander and the right-hand panel (one rep **per unflagged provider**), selects final go/no-go, and approves the protected production environments                                                                                                                                                                                                                                             |
-| Deployment commander                    | Owns dispatch authority for the attempt: command log, baselines, governed `workflow_dispatch`, rollout monitor, rollback invoke; for this trial Grok (`yt-agent-tom-grok`)                                                                                                                                                                                                                                                    |
-| Commander's right hand                  | **One named rep from each unflagged provider** on the release. Together they coordinate with the commander: pre-flight review, GO/NO-GO on each production receipt, §18 co-authorship, stop-condition calls. Right-hand reps do **not** dispatch production unless Yomi reassigns command. This trial (all unflagged): OpenAI `yt-agent-tom-gpt` + Anthropic `yt-agent-kronos-grok` (plus commander as xAI/Grok provider rep) |
-| Provider representatives                | Identical to the right-hand panel: every **unflagged** provider has exactly one named seat recorded at Gate 0 and in §18. Flagged providers are listed as out-of-panel with the flag reason                                                                                                                                                                                                                                   |
-| Backend change author                   | Implements the production-safe dual-schema layer and application-readiness check through branch → PR → merge                                                                                                                                                                                                                                                                                                                  |
-| Frontend change author                  | Ensures candidate operations tolerate both backend contracts and preserves no-write test behavior                                                                                                                                                                                                                                                                                                                             |
-| Independent reviewers / foreign co-sign | Review code, plan, immutable inputs, test evidence, and stop conditions; supply foreign-family approval for co-sign/jury; no production mutation                                                                                                                                                                                                                                                                              |
-| Incident scribe                         | Records timestamps, workflow URLs, SHAs, digests, task definitions, Lambda versions, invalidations, probe results, and decisions into **section 18** of this playbook (and the evidence package)                                                                                                                                                                                                                              |
+| Role | Responsibility |
+| --- | --- |
+| Yomi | Approves this plan, names the commander and the right-hand panel (one rep **per unflagged provider**), selects final go/no-go, and approves the protected production environments |
+| Deployment commander | Owns dispatch authority for the attempt: command log, baselines, governed `workflow_dispatch`, rollout monitor, rollback invoke; for this trial Grok (`yt-agent-tom-grok`) |
+| Commander's right hand | **One named rep from each unflagged provider** on the release. Together they coordinate with the commander: pre-flight review, GO/NO-GO on each production receipt, §18 co-authorship, stop-condition calls. Right-hand reps do **not** dispatch production unless Yomi reassigns command. This trial (all unflagged): OpenAI `yt-agent-tom-gpt` + Anthropic `yt-agent-kronos-grok` (plus commander as xAI/Grok provider rep) |
+| Provider representatives | Identical to the right-hand panel: every **unflagged** provider has exactly one named seat recorded at Gate 0 and in §18. Flagged providers are listed as out-of-panel with the flag reason |
+| Backend change author | Implements the production-safe dual-schema layer and application-readiness check through branch → PR → merge |
+| Frontend change author | Ensures candidate operations tolerate both backend contracts and preserves no-write test behavior |
+| Independent reviewers / foreign co-sign | Review code, plan, immutable inputs, test evidence, and stop conditions; supply foreign-family approval for co-sign/jury; no production mutation |
+| Incident scribe | Records timestamps, workflow URLs, SHAs, digests, task definitions, Lambda versions, invalidations, probe results, and decisions into **section 18** of this playbook (and the evidence package) |
 
 The commander and the right-hand **unflagged-provider reps coordinate the release** as a panel.
 One named commander still owns each dispatch call so concurrent executors cannot race. Parallel
@@ -349,7 +349,6 @@ Evidence from one pairing may not be reused as proof of another.
 
    If the effective CMS endpoints differ from the captured current production endpoints, stop;
    this matrix cell has not been tested.
-
 4. Register new public and admin backend task-definition revisions by changing only the image
    digest and reviewed explicit schema-profile variable. Diff the entire task definition against
    the baseline.
@@ -381,18 +380,17 @@ Evidence from one pairing may not be reused as proof of another.
 
    A unit-only contract suite is insufficient for this cell. The exact candidate build must render
    against the candidate staging backend.
-
 10. Inspect frontend staging, SSR-harness, and backend logs for schema, PHP, uncaught JavaScript,
     empty-body, and 5xx errors.
 
 ### Required compatibility matrix
 
-| Frontend                             | Backend                              | Required proof before Gate 3                                                                                                                   |
-| ------------------------------------ | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current production frontend baseline | Current production backend `d0b939…` | Fresh recovered-production probes and captured legacy operations pass                                                                          |
-| Candidate frontend                   | Current production backend `d0b939…` | Governed `development.hecmedia.org` deployment uses the verified read-only production CMS endpoints and passes SSR/hydration/20-request checks |
-| Current production frontend contract | Candidate dual-schema backend        | Immutable Lambda `146` operation bundle passes against candidate backend staging                                                               |
-| Candidate frontend                   | Candidate dual-schema backend        | Exact-candidate isolated production build passes SSR/hydration/20-request checks against candidate backend staging                             |
+| Frontend | Backend | Required proof before Gate 3 |
+| --- | --- | --- |
+| Current production frontend baseline | Current production backend `d0b939…` | Fresh recovered-production probes and captured legacy operations pass |
+| Candidate frontend | Current production backend `d0b939…` | Governed `development.hecmedia.org` deployment uses the verified read-only production CMS endpoints and passes SSR/hydration/20-request checks |
+| Current production frontend contract | Candidate dual-schema backend | Immutable Lambda `146` operation bundle passes against candidate backend staging |
+| Candidate frontend | Candidate dual-schema backend | Exact-candidate isolated production build passes SSR/hydration/20-request checks against candidate backend staging |
 
 The current production Lambda has no reliable source-SHA metadata, so its contract is represented
 by its immutable version/checksum plus captured operations and edge logs. The candidate must embed
@@ -441,6 +439,7 @@ recapture. Do not edit inputs in place or guess a replacement.
 
 ### Default: deploy frontend first
 
+
 1. The named deployment commander dispatches `.github/workflows/production-deploy.yml` from the
    exact protected `master` tip with the frozen inputs.
 2. Confirm authorization and the dedicated no-credential media preflight pass before approving the
@@ -485,6 +484,7 @@ Use only when §5 Exception path is co-signed and Gate 3 closed under that path.
    expanded backend).
 
 ## 13. Phase 6 — deploy backend second (default path only)
+
 
 1. Recapture production ECS task definition and image digest after the frontend soak.
 2. The named deployment commander dispatches the backend governed production workflow with the
@@ -567,14 +567,14 @@ Verify the local evidence directory with `ls -la` before reporting completion.
 
 ## 16. Same-day schedule estimate
 
-| Work                                                | Expected elapsed time after review starts |
-| --------------------------------------------------- | ----------------------------------------- |
-| Review, compatibility fix, and merge                | 45–90 minutes                             |
-| Pristine rebuild and independent image verification | 20–35 minutes                             |
-| Production-parity staging and compatibility matrix  | 35–60 minutes                             |
-| Frontend production workflow, propagation, and soak | 35–55 minutes                             |
-| Backend production rollout and soak                 | 25–40 minutes                             |
-| Evidence closeout                                   | 10–15 minutes                             |
+| Work | Expected elapsed time after review starts |
+| --- | --- |
+| Review, compatibility fix, and merge | 45–90 minutes |
+| Pristine rebuild and independent image verification | 20–35 minutes |
+| Production-parity staging and compatibility matrix | 35–60 minutes |
+| Frontend production workflow, propagation, and soak | 35–55 minutes |
+| Backend production rollout and soak | 25–40 minutes |
+| Evidence closeout | 10–15 minutes |
 
 Expected total: approximately 2.5–4 hours after reviewers begin, assuming every gate passes on the
 first attempt. A failed gate pauses the clock; it does not authorize a bypass.
@@ -608,46 +608,46 @@ paths are listed.
 
 ### Process (going forward)
 
-| Rule                                      | Requirement                                                                                                                                                              |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Rule | Requirement |
+| --- | --- |
 | Before any production `workflow_dispatch` | Co-signed playbook (or amendment) authorizes the step; **commander** named; **right-hand rep from each unflagged provider** listed; flagged providers noted out-of-panel |
-| Signoff                                   | Yomi + right-hand unflagged-provider panel (foreign-family coverage as required) on the authorizing commit                                                               |
-| Launch coordination                       | Commander + per-unflagged-provider right hand agree; each required right-hand GO/NO-GO on the receipt recorded on §18/PR before Yomi env                                 |
-| During deployment                         | Update this log for every receipt: inputs, run URL, waits, GO/NO-GO, env approvals, probes                                                                               |
-| After cutover or rollback                 | Closeout entry with SHAs, digests, probe summary, and stop/rollback decisions                                                                                            |
-| Forbidden                                 | Production mutation justified only in chat; silent progress; approving zombie or stale receipts                                                                          |
+| Signoff | Yomi + right-hand unflagged-provider panel (foreign-family coverage as required) on the authorizing commit |
+| Launch coordination | Commander + per-unflagged-provider right hand agree; each required right-hand GO/NO-GO on the receipt recorded on §18/PR before Yomi env |
+| During deployment | Update this log for every receipt: inputs, run URL, waits, GO/NO-GO, env approvals, probes |
+| After cutover or rollback | Closeout entry with SHAs, digests, probe summary, and stop/rollback decisions |
+| Forbidden | Production mutation justified only in chat; silent progress; approving zombie or stale receipts |
 
 ### Attempt: dual-schema backend expand first (Cell 2 exception) — 2026-08-07
 
-| Field                               | Value                                                                                                        |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Playbook path                       | §5 Exception · Phase 5 Exception (backend expand first)                                                      |
-| Commander                           | `yt-agent-tom-grok` (xAI / Grok)                                                                             |
-| Right hand (per unflagged provider) | xAI/Grok: commander · OpenAI: `yt-agent-tom-gpt` · Anthropic: `yt-agent-kronos-grok`                         |
-| Flagged providers (out-of-panel)    | none recorded for this attempt (confirm live via worker flags before launch)                                 |
-| Coordination                        | Commander + full right-hand panel of **unflagged** providers; no substitute that skips an unflagged provider |
-| Co-sign amendments                  | hecmedia #258 (executor-neutral), #259 (Cell 2 backend-first) MERGED                                         |
-| Gate 1                              | hectv-wp #61 merged → `bbac1c02b06b60aa3884734db9c9a476215f3820`                                             |
-| Gate 2 image                        | `sha256:12cf1fb5a0977b96987d2501f654b56d843f4e561288c57a2203ed893dcdb796` (WP 7.0.2 MD5 3501/3501)           |
-| Gate 3                              | Staging `:34`; Cell 2 FAIL; Cells 1/3/4 PASS                                                                 |
-| Auth task                           | `86661`                                                                                                      |
-| Confirmation                        | `DEPLOY HEC BACKEND PRODUCTION`                                                                              |
-| Expected prod baseline TD           | `arn:aws:ecs:us-east-2:850335719356:task-definition/hectv-wp-production-rollback-pr34-safe:3`                |
-| Expected prod baseline image        | `sha256:b0764544d2a46fa51e2a325b181d53bb66a251cb354090b10ba1d6955dc38d36`                                    |
+| Field | Value |
+| --- | --- |
+| Playbook path | §5 Exception · Phase 5 Exception (backend expand first) |
+| Commander | `yt-agent-tom-grok` (xAI / Grok) |
+| Right hand (per unflagged provider) | xAI/Grok: commander · OpenAI: `yt-agent-tom-gpt` · Anthropic: `yt-agent-kronos-grok` |
+| Flagged providers (out-of-panel) | none recorded for this attempt (confirm live via worker flags before launch) |
+| Coordination | Commander + full right-hand panel of **unflagged** providers; no substitute that skips an unflagged provider |
+| Co-sign amendments | hecmedia #258 (executor-neutral), #259 (Cell 2 backend-first) MERGED |
+| Gate 1 | hectv-wp #61 merged → `bbac1c02b06b60aa3884734db9c9a476215f3820` |
+| Gate 2 image | `sha256:12cf1fb5a0977b96987d2501f654b56d843f4e561288c57a2203ed893dcdb796` (WP 7.0.2 MD5 3501/3501) |
+| Gate 3 | Staging `:34`; Cell 2 FAIL; Cells 1/3/4 PASS |
+| Auth task | `86661` |
+| Confirmation | `DEPLOY HEC BACKEND PRODUCTION` |
+| Expected prod baseline TD | `arn:aws:ecs:us-east-2:850335719356:task-definition/hectv-wp-production-rollback-pr34-safe:3` |
+| Expected prod baseline image | `sha256:b0764544d2a46fa51e2a325b181d53bb66a251cb354090b10ba1d6955dc38d36` |
 
 #### Receipt log
 
-| UTC               | Event                           | Detail                                                                                                                                                                                                                                                                               |
-| ----------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-08-07T00:09Z | Stale expand cancelled          | Run `31133641279` cancelled after GPT NO-GO (missing co-sign / Gate2 checksum / zombie hygiene)                                                                                                                                                                                      |
-| 2026-08-07T00:45Z | Co-signs landed                 | #258, #259 merged on `master`                                                                                                                                                                                                                                                        |
-| 2026-08-07T00:56Z | Fresh backend expand dispatched | Run **[31136386999](https://github.com/ytadvisors/hectv-wp/actions/runs/31136386999)** · SHA `bbac1c02…` · digest `12cf1fb5…` · actor `yt-agent-tom-grok`                                                                                                                            |
-| 2026-08-07T00:57Z | Authorize success               | `deploy-and-verify` waiting on protected env `production` (reviewer: `ytwguru` only)                                                                                                                                                                                                 |
-| 2026-08-07T01:50Z | **OpenAI right-hand GO**        | `yt-agent-tom-gpt` on #260 head `2251475`: Launch coordination receipt **31136386999** → **GO** (env approve only that run; frozen SHA/digest)                                                                                                                                       |
-| 2026-08-07T01:53Z | Process policy on master        | hecmedia **#260 MERGED** (`1fba22a`)                                                                                                                                                                                                                                                 |
-| 2026-08-07T~now   | **Anthropic right-hand GO**     | `yt-agent-kronos-grok` revalidated run + staging dual-schema → **GO** on receipt **31136386999**                                                                                                                                                                                     |
-| _open_            | **Awaiting Yomi env approval**  | Right-hand panel (unflagged providers) **GO** complete. Yomi: Approve protected `production` on [31136386999](https://github.com/ytadvisors/hectv-wp/actions/runs/31136386999) **only**. Never zombie [31128179764](https://github.com/ytadvisors/hectv-wp/actions/runs/31128179764) |
-| _pending_         | FE production                   | After backend success + dual-schema GraphQL verify; separate receipt + section 18 entry                                                                                                                                                                                              |
+| UTC | Event | Detail |
+| --- | --- | --- |
+| 2026-08-07T00:09Z | Stale expand cancelled | Run `31133641279` cancelled after GPT NO-GO (missing co-sign / Gate2 checksum / zombie hygiene) |
+| 2026-08-07T00:45Z | Co-signs landed | #258, #259 merged on `master` |
+| 2026-08-07T00:56Z | Fresh backend expand dispatched | Run **[31136386999](https://github.com/ytadvisors/hectv-wp/actions/runs/31136386999)** · SHA `bbac1c02…` · digest `12cf1fb5…` · actor `yt-agent-tom-grok` |
+| 2026-08-07T00:57Z | Authorize success | `deploy-and-verify` waiting on protected env `production` (reviewer: `ytwguru` only) |
+| 2026-08-07T01:50Z | **OpenAI right-hand GO** | `yt-agent-tom-gpt` on #260 head `2251475`: Launch coordination receipt **31136386999** → **GO** (env approve only that run; frozen SHA/digest) |
+| 2026-08-07T01:53Z | Process policy on master | hecmedia **#260 MERGED** (`1fba22a`) |
+| 2026-08-07T~now | **Anthropic right-hand GO** | `yt-agent-kronos-grok` revalidated run + staging dual-schema → **GO** on receipt **31136386999** |
+| *open* | **Awaiting Yomi env approval** | Right-hand panel (unflagged providers) **GO** complete. Yomi: Approve protected `production` on [31136386999](https://github.com/ytadvisors/hectv-wp/actions/runs/31136386999) **only**. Never zombie [31128179764](https://github.com/ytadvisors/hectv-wp/actions/runs/31128179764) |
+| *pending* | FE production | After backend success + dual-schema GraphQL verify; separate receipt + section 18 entry |
 
 #### Never approve
 
@@ -680,21 +680,21 @@ below blocked; text in this amendment or its comments cannot satisfy that gate.
 
 #### Action envelope
 
-| Field                                                                        | Frozen value                                                                                                                                                                                                                                   |
-| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Reassigned commander identity (inactive until exact-head protected approval) | `yt-agent-tom-gpt` (OpenAI / GPT); Yomi explicitly directed this reassignment for task `95042` in the authenticated operator session. This row records the proposed identity fence but does not activate itself.                               |
-| Proposed right hand — xAI (inactive until exact-head protected approval)     | `yt-agent-tom-grok` — exact-input/evidence review and GO/NO-GO; non-dispatching after reassignment                                                                                                                                             |
-| OpenAI provider seat                                                         | Held by commander `yt-agent-tom-gpt` after reassignment activation                                                                                                                                                                             |
-| Flagged provider                                                             | Anthropic is out of panel: `subscription_unavailable_pending_funding`, observed at Gate 0 on 2026-08-31                                                                                                                                        |
-| External authorization reference (not approval evidence)                     | Queue task `95042`; state must be read from the authenticated PG-backed queue API immediately before mutation                                                                                                                                  |
-| Backend source                                                               | `ytadvisors/hectv-wp` `main` `16b20e81744aea79e5806de19a7769c7453b0db5` (includes #80 and #81)                                                                                                                                                 |
-| Frontend application head                                                    | `dac589727b9db8b716a94a5afff04f7c9626686f` (includes #308); dispatch uses the exact post-amendment `master` tip after proving no later application change and repeating MBA Docker verification                                                |
-| IAM saved plan                                                               | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hectv-task-cloudfront-policy.tfplan`; SHA-256 `67b84f5f7c5b09c28a40b4d5452d62fb51289fa2619e1817828bb82566bf2562` |
-| Knowledge-base saved plan                                                    | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hec-s3-vectors-kb.tfplan`; SHA-256 `f1c07f804fa534875a98f3f779f64407c2086afc28c00c0e2e6cd747a65ce5a5`            |
-| Backend confirmation                                                         | `DEPLOY HEC BACKEND PRODUCTION`                                                                                                                                                                                                                |
-| Frontend confirmation                                                        | `DEPLOY HEC FRONTEND PRODUCTION`                                                                                                                                                                                                               |
-| Knowledge-base confirmation                                                  | `INGEST HEC S3 VECTORS KNOWLEDGE BASE`                                                                                                                                                                                                         |
-| DDL                                                                          | None                                                                                                                                                                                                                                           |
+| Field | Frozen value |
+| --- | --- |
+| Reassigned commander identity (inactive until exact-head protected approval) | `yt-agent-tom-gpt` (OpenAI / GPT); Yomi explicitly directed this reassignment for task `95042` in the authenticated operator session. This row records the proposed identity fence but does not activate itself. |
+| Proposed right hand — xAI (inactive until exact-head protected approval) | `yt-agent-tom-grok` — exact-input/evidence review and GO/NO-GO; non-dispatching after reassignment |
+| OpenAI provider seat | Held by commander `yt-agent-tom-gpt` after reassignment activation |
+| Flagged provider | Anthropic is out of panel: `subscription_unavailable_pending_funding`, observed at Gate 0 on 2026-08-31 |
+| External authorization reference (not approval evidence) | Queue task `95042`; state must be read from the authenticated PG-backed queue API immediately before mutation |
+| Backend source | `ytadvisors/hectv-wp` `main` `16b20e81744aea79e5806de19a7769c7453b0db5` (includes #80 and #81) |
+| Frontend application head | `dac589727b9db8b716a94a5afff04f7c9626686f` (includes #308); dispatch uses the exact post-amendment `master` tip after proving no later application change and repeating MBA Docker verification |
+| IAM saved plan | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hectv-task-cloudfront-policy.tfplan`; SHA-256 `67b84f5f7c5b09c28a40b4d5452d62fb51289fa2619e1817828bb82566bf2562` |
+| Knowledge-base saved plan | `/Users/ytwguru/.openclaw/workspace-root/deliverables/hecmedia/hec-cost-optimization-2026-08-31/production-rollout-2026-08-31/hec-s3-vectors-kb.tfplan`; SHA-256 `f1c07f804fa534875a98f3f779f64407c2086afc28c00c0e2e6cd747a65ce5a5` |
+| Backend confirmation | `DEPLOY HEC BACKEND PRODUCTION` |
+| Frontend confirmation | `DEPLOY HEC FRONTEND PRODUCTION` |
+| Knowledge-base confirmation | `INGEST HEC S3 VECTORS KNOWLEDGE BASE` |
+| DDL | None |
 
 MBA Docker verification passed on every exact change head before merge:
 
@@ -713,16 +713,16 @@ Evidence root:
 
 #### Frozen recovery baselines
 
-| Surface                 | Baseline captured 2026-08-31                                                                                                             |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Backend service         | `hectv-wp-production`: 2 desired / 2 running / 0 pending; rollout `COMPLETED`; circuit breaker + rollback enabled                        |
-| Backend task definition | `arn:aws:ecs:us-east-2:850335719356:task-definition/hectv-wp-production-rollback-pr34-safe:17`                                           |
-| Backend image           | `sha256:b3708899e518cfe69c2743280ac36e21b2f7c9218047e0247d0aef20f8ff5269`                                                                |
-| Backend task-role IAM   | `hectv-wp-production-task` has only inline policy `mount-production-uploads`; reviewed policy `invalidate-hecmedia-cloudfront` is absent |
-| CloudFront              | Distribution `E2QXRSF2W55RTS`; ETag `E1CI41A2FQHFJ`; default TTL 60 seconds; `_next/data/*` TTL 0                                        |
-| Default edge Lambda     | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:164`; code SHA `l5sQIU9UGYTiR5t5cZzFxmYRE+ONQzKCCV5y0pGnvgw=`; 3000 MB    |
-| Newsletter API Lambda   | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:19`; code SHA `FGHSbm6njd+UBZ4+0sthIaJIoQzYHixTBfQ3nKNF9RI=`; 1024 MB         |
-| Public site             | `https://hecmedia.org/` HTTP 200; response advertises `s-maxage=5` before this rollout                                                   |
+| Surface | Baseline captured 2026-08-31 |
+| --- | --- |
+| Backend service | `hectv-wp-production`: 2 desired / 2 running / 0 pending; rollout `COMPLETED`; circuit breaker + rollback enabled |
+| Backend task definition | `arn:aws:ecs:us-east-2:850335719356:task-definition/hectv-wp-production-rollback-pr34-safe:17` |
+| Backend image | `sha256:b3708899e518cfe69c2743280ac36e21b2f7c9218047e0247d0aef20f8ff5269` |
+| Backend task-role IAM | `hectv-wp-production-task` has only inline policy `mount-production-uploads`; reviewed policy `invalidate-hecmedia-cloudfront` is absent |
+| CloudFront | Distribution `E2QXRSF2W55RTS`; ETag `E1CI41A2FQHFJ`; default TTL 60 seconds; `_next/data/*` TTL 0 |
+| Default edge Lambda | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-l5vb7pd:164`; code SHA `l5sQIU9UGYTiR5t5cZzFxmYRE+ONQzKCCV5y0pGnvgw=`; 3000 MB |
+| Newsletter API Lambda | `arn:aws:lambda:us-east-1:850335719356:function:x2l4ew-api:19`; code SHA `FGHSbm6njd+UBZ4+0sthIaJIoQzYHixTBfQ3nKNF9RI=`; 1024 MB |
+| Public site | `https://hecmedia.org/` HTTP 200; response advertises `s-maxage=5` before this rollout |
 
 Each workflow must re-read its baseline immediately before dispatch. Any drift from these values,
 an active production workflow, a non-tip release SHA, or an unhealthy service is an automatic
@@ -795,35 +795,35 @@ CloudFront, Lambda, consumer-switch, deletion, plan-substitution, or plan-regene
 
 #### Signoff and receipt log
 
-| UTC                  | Event                                     | Detail                                                                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-08-31           | User intent                               | Yomi requested deployment after the three implementation PRs merged                                                                                                                                                                                                                                                                                                                                              |
-| 2026-08-31           | Gate 0 inventory                          | xAI and OpenAI unflagged; Anthropic flagged and out of panel; no active production workflows observed                                                                                                                                                                                                                                                                                                            |
-| 2026-08-31           | External authorization pointer            | Queue task `95042` recorded by ID only; this diff intentionally makes no claim about its live approval state                                                                                                                                                                                                                                                                                                     |
-| 2026-08-31           | IAM preflight stop                        | Live task role lacks invalidation policy; frozen saved plan from backend `16b20e8…` is exactly 1 add / 0 change / 0 destroy with SHA-256 `67b84f5f…2562`; apply remains blocked                                                                                                                                                                                                                                  |
-| 2026-08-31           | Knowledge-base preflight                  | Frozen remote-state plan from backend `16b20e8…` is exactly the seven reviewed creates / 0 change / 0 destroy with SHA-256 `f1c07f80…e5a5`; no resources created                                                                                                                                                                                                                                                 |
-| 2026-09-01           | Protected-review recovery                 | PR #309 merged from exact head `f905c69a79320dc9fd335fb28e64f3840c8b4952` as `d76bc59686af58c609eb94c506a90e2e7a2e8e0c` before a Yomi review was attached. This follow-up changes no rollout input or authority and remains NO-GO until Yomi approves its exact head through GitHub's protected review surface.                                                                                                  |
-| 2026-09-01T03:59:46Z | Yomi protected approval                   | `ytwguru` submitted `APPROVED` review `5073887627` on bridge head `9b7620ef850c5db13bb2cca447f3fd27e844ddc2`; mixed-jury and refresh-jury passed, and PR #310 merged as `8cae2ea46a8456138d96ae811efd67a7106953bc`.                                                                                                                                                                                              |
-| 2026-09-01T04:07Z    | Trusted external authorization check      | Authenticated PG-backed queue read returned task `95042`, tenant `hecmedia`, `approvalRequired=true`, `approved=true`, `status=done`; its immutable inputs, plan hashes, order, confirmations, and stops matched this attempt.                                                                                                                                                                                   |
-| 2026-09-01T04:08Z    | IAM receipt                               | From backend `16b20e8…`, Terraform 1.5.7 applied saved-plan SHA-256 `67b84f5f…2562`: exactly 1 add / 0 change / 0 destroy. State advanced serial 9 → 10 on unchanged lineage. Live role `hectv-wp-production-task` now has the reviewed `invalidate-hecmedia-cloudfront` policy byte-for-byte: only `cloudfront:CreateInvalidation` on `E2QXRSF2W55RTS`.                                                         |
-| 2026-09-01T04:09Z    | **Executor-boundary stop**                | The IAM apply was performed from OpenAI right-hand lane `yt-agent-tom-gpt`, contrary to §2/§6 and this attempt's non-dispatching identity fence. No backend workflow was dispatched. OpenAI records **NO-GO**; only the named Grok commander may resume, unless Yomi reassigns command through a reviewed §18 amendment.                                                                                         |
-| 2026-09-01           | Commander reassignment directed           | Yomi explicitly directed: “Reassign commander for task #95042 to `yt-agent-tom-gpt` and continue.” The reassignment remains inactive until Yomi and the xAI right hand approve this exact amended head through GitHub review.                                                                                                                                                                                    |
-| 2026-09-01T04:31Z    | xAI right-hand GO                         | `yt-agent-kronos-grok` review `5074027684` and `yt-agent-tom-grok` review `5074027909` approved exact reassignment head `21efb177374b414a3d26d946ff1b595bb26374a5`.                                                                                                                                                                                                                                              |
-| 2026-09-01T04:32Z    | Reassignment activated                    | `ytwguru` review `5074007592` approved exact head `21efb177374b414a3d26d946ff1b595bb26374a5`; PR #311 merged as `6426ab9417996f69fba339c5da6113a3e6d8d4ac`, activating `yt-agent-tom-gpt` as sole commander/dispatcher.                                                                                                                                                                                          |
-| **NO-GO recorded**   | OpenAI right-hand decision                | The 04:09Z stop remains part of the audit trail. If the reassignment is activated, `yt-agent-tom-gpt` may resume prospectively as commander only after a fresh Gate 0 read.                                                                                                                                                                                                                                      |
-| 2026-09-01T04:52Z    | Backend receipt                           | [Run `33470566196`](https://github.com/ytadvisors/hectv-wp/actions/runs/33470566196) succeeded after Yomi's protected-environment approval. ECS is steady at task definition `hectv-wp-production-rollback-pr34-safe:19`, image digest `sha256:d22685afb626b63aef13c9f4b2a214748dfc0244c06244ce759baaab8b92f4c6`, 2 desired / 2 running / 0 pending / 0 failed; 20/20 public and GraphQL contract probes passed. |
-| 2026-09-01T05:06Z    | Invalidation proof                        | One unchanged save of existing `Header Actions` menu term `26095` preserved normalized semantic SHA-256 `44102ab42f606dd0c67367a9ae681b087ec1e9888ea55d002f89375fcc7917f4` and produced completed invalidation `I3OC9RWJG5MLGD56WSH3NXL62N`, caller `hectv-publish-20260901-050630-c95866a1-0a70-4100-a90f-8e1a78d4b1c2`, exact path `/*`.                                                                       |
-| 2026-09-01T05:24Z    | **Frontend IAM drift stop**               | [Run `33473145980`](https://github.com/ytadvisors/hecmedia/actions/runs/33473145980) passed authorization, media preflight, all tests, packaging, browser setup, and scoped AWS identity after Yomi approved `production`, then failed on denied `lambda:UpdateFunctionConfiguration`. The workflow recorded `public-cutover-not-started`; details and the constrained recovery request follow below.            |
-| 2026-09-01T05:42Z    | xAI recovery approval                     | `yt-agent-kronos-grok` review `5074379458` approved exact recovery-amendment head `ca02a4931e773d0266bf9dcf14acf0a477d385fa`; mixed-jury and refresh-jury passed.                                                                                                                                                                                                                                                |
-| 2026-09-01T05:43Z    | **Protected-review bridge stop**          | PR #312 merged as `973bd41bce878104e79f3f6aaa563006d1501882` before GitHub recorded a `ytwguru` review. The merge itself does not substitute for Yomi's exact-head protected approval. No IAM mutation or workflow retry followed; the bridge below is required.                                                                                                                                                 |
-| 2026-09-01T07:10Z    | Frontend recovery success                 | [Run `33479477675`](https://github.com/ytadvisors/hecmedia/actions/runs/33479477675) succeeded at exact SHA `30e81cc4f26e4c4aff61d9beea36c375b553fc35`; default Lambda `165` is 1536 MB, API Lambda is `20`, invalidation `IBE6GSPPS4JR9ZLO6VVAIZ7627` completed, and public probes show `s-maxage=300` with cache hits.                                                                                         |
-| 2026-09-01T07:16Z    | **Knowledge-base partial-apply stop**     | The exact serial-0 `7/0/0` saved plan was applied once. Four additive resources were created, then S3 Vectors rejected the bucket policy with `Invalid principal in policy`. State is serial `1`; no replacement KB, data source, ingestion, switch, or deletion followed. The stale plan was not retried.                                                                                                       |
-| 2026-09-01T07:18Z    | Serial-1 recovery plan preserved          | Unapplied saved-plan SHA-256 `4f54be83a12746830683af201f274f80659bdc4b6a70f119d6f6e58d0525b53a`: exactly three creates, four no-ops, zero updates, zero deletes. Recovery remains blocked on the exact-head reviews and merge defined below.                                                                                                                                                                     |
-| 2026-09-01T07:42:59Z | Serial-1 amendment approved and merged    | PR #314 head `0109c4397b294e9f9bc34f66ef9d0b3d824993cf` received exact-head approvals from `ytwguru` and independent xAI reviewer `yt-agent-kronos-grok`, then merged as `3c9d1b8a9c0ee0db7ad69d4031c9e834e300f572`.                                                                                                                                                                                             |
-| 2026-09-01T07:45:23Z | **Serial-1 recovery apply stop**          | The serial-1 saved plan was applied exactly once. The vector-bucket policy was created, then Bedrock rejected `CreateKnowledgeBase` because Titan Embeddings G1 does not support configurable dimensions. State is serial `2` with five additive resources present; the replacement KB, data source, and ingestion remain absent. The plan was not retried and is permanently stale.                             |
-| 2026-09-01T08:07:44Z | Fixed-dimension backend correction merged | Backend PR #84 removed the unsupported optional dimensions block and added a regression assertion. Yomi and `yt-agent-kronos-grok` approved exact head `44542ea6238f6a01d210b17079cf9a9c90d80209`; both CI checks passed; squash merge `9c6bb1004e6363368b088c390d7ddb8654e0d162` is the sole source for the serial-2 plan.                                                                                      |
-| 2026-09-01T08:10Z    | Serial-2 recovery plan preserved          | Unapplied saved-plan SHA-256 `d3222bbbe1d434939b511344a2217630412a1420ab3de8587a6a55ef7ecd3b50`: exactly two creates, five no-ops, zero updates, zero deletes, bound to state serial `2` on the unchanged lineage. Recovery remains blocked on exact-head approval and merge of the serial-2 amendment below.                                                                                                    |
-| 2026-09-01T08:28:58Z | **Serial-2 protected-review bridge stop** | PR #315 exact head `45d6305a6d2cd3f3c8cb3487189b5a2f7d74c171` received independent xAI approval and both jury checks passed, but fleet auto-merge completed as `aa2ee498c7529e36a48975ba14b82aede94badf2` before GitHub recorded a `ytwguru` review. Merge authorship and chat approval do not substitute. No serial-2 apply or ingestion followed; the bridge below is required.                                |
+| UTC | Event | Detail |
+| --- | --- | --- |
+| 2026-08-31 | User intent | Yomi requested deployment after the three implementation PRs merged |
+| 2026-08-31 | Gate 0 inventory | xAI and OpenAI unflagged; Anthropic flagged and out of panel; no active production workflows observed |
+| 2026-08-31 | External authorization pointer | Queue task `95042` recorded by ID only; this diff intentionally makes no claim about its live approval state |
+| 2026-08-31 | IAM preflight stop | Live task role lacks invalidation policy; frozen saved plan from backend `16b20e8…` is exactly 1 add / 0 change / 0 destroy with SHA-256 `67b84f5f…2562`; apply remains blocked |
+| 2026-08-31 | Knowledge-base preflight | Frozen remote-state plan from backend `16b20e8…` is exactly the seven reviewed creates / 0 change / 0 destroy with SHA-256 `f1c07f80…e5a5`; no resources created |
+| 2026-09-01 | Protected-review recovery | PR #309 merged from exact head `f905c69a79320dc9fd335fb28e64f3840c8b4952` as `d76bc59686af58c609eb94c506a90e2e7a2e8e0c` before a Yomi review was attached. This follow-up changes no rollout input or authority and remains NO-GO until Yomi approves its exact head through GitHub's protected review surface. |
+| 2026-09-01T03:59:46Z | Yomi protected approval | `ytwguru` submitted `APPROVED` review `5073887627` on bridge head `9b7620ef850c5db13bb2cca447f3fd27e844ddc2`; mixed-jury and refresh-jury passed, and PR #310 merged as `8cae2ea46a8456138d96ae811efd67a7106953bc`. |
+| 2026-09-01T04:07Z | Trusted external authorization check | Authenticated PG-backed queue read returned task `95042`, tenant `hecmedia`, `approvalRequired=true`, `approved=true`, `status=done`; its immutable inputs, plan hashes, order, confirmations, and stops matched this attempt. |
+| 2026-09-01T04:08Z | IAM receipt | From backend `16b20e8…`, Terraform 1.5.7 applied saved-plan SHA-256 `67b84f5f…2562`: exactly 1 add / 0 change / 0 destroy. State advanced serial 9 → 10 on unchanged lineage. Live role `hectv-wp-production-task` now has the reviewed `invalidate-hecmedia-cloudfront` policy byte-for-byte: only `cloudfront:CreateInvalidation` on `E2QXRSF2W55RTS`. |
+| 2026-09-01T04:09Z | **Executor-boundary stop** | The IAM apply was performed from OpenAI right-hand lane `yt-agent-tom-gpt`, contrary to §2/§6 and this attempt's non-dispatching identity fence. No backend workflow was dispatched. OpenAI records **NO-GO**; only the named Grok commander may resume, unless Yomi reassigns command through a reviewed §18 amendment. |
+| 2026-09-01 | Commander reassignment directed | Yomi explicitly directed: “Reassign commander for task #95042 to `yt-agent-tom-gpt` and continue.” The reassignment remains inactive until Yomi and the xAI right hand approve this exact amended head through GitHub review. |
+| 2026-09-01T04:31Z | xAI right-hand GO | `yt-agent-kronos-grok` review `5074027684` and `yt-agent-tom-grok` review `5074027909` approved exact reassignment head `21efb177374b414a3d26d946ff1b595bb26374a5`. |
+| 2026-09-01T04:32Z | Reassignment activated | `ytwguru` review `5074007592` approved exact head `21efb177374b414a3d26d946ff1b595bb26374a5`; PR #311 merged as `6426ab9417996f69fba339c5da6113a3e6d8d4ac`, activating `yt-agent-tom-gpt` as sole commander/dispatcher. |
+| **NO-GO recorded** | OpenAI right-hand decision | The 04:09Z stop remains part of the audit trail. If the reassignment is activated, `yt-agent-tom-gpt` may resume prospectively as commander only after a fresh Gate 0 read. |
+| 2026-09-01T04:52Z | Backend receipt | [Run `33470566196`](https://github.com/ytadvisors/hectv-wp/actions/runs/33470566196) succeeded after Yomi's protected-environment approval. ECS is steady at task definition `hectv-wp-production-rollback-pr34-safe:19`, image digest `sha256:d22685afb626b63aef13c9f4b2a214748dfc0244c06244ce759baaab8b92f4c6`, 2 desired / 2 running / 0 pending / 0 failed; 20/20 public and GraphQL contract probes passed. |
+| 2026-09-01T05:06Z | Invalidation proof | One unchanged save of existing `Header Actions` menu term `26095` preserved normalized semantic SHA-256 `44102ab42f606dd0c67367a9ae681b087ec1e9888ea55d002f89375fcc7917f4` and produced completed invalidation `I3OC9RWJG5MLGD56WSH3NXL62N`, caller `hectv-publish-20260901-050630-c95866a1-0a70-4100-a90f-8e1a78d4b1c2`, exact path `/*`. |
+| 2026-09-01T05:24Z | **Frontend IAM drift stop** | [Run `33473145980`](https://github.com/ytadvisors/hecmedia/actions/runs/33473145980) passed authorization, media preflight, all tests, packaging, browser setup, and scoped AWS identity after Yomi approved `production`, then failed on denied `lambda:UpdateFunctionConfiguration`. The workflow recorded `public-cutover-not-started`; details and the constrained recovery request follow below. |
+| 2026-09-01T05:42Z | xAI recovery approval | `yt-agent-kronos-grok` review `5074379458` approved exact recovery-amendment head `ca02a4931e773d0266bf9dcf14acf0a477d385fa`; mixed-jury and refresh-jury passed. |
+| 2026-09-01T05:43Z | **Protected-review bridge stop** | PR #312 merged as `973bd41bce878104e79f3f6aaa563006d1501882` before GitHub recorded a `ytwguru` review. The merge itself does not substitute for Yomi's exact-head protected approval. No IAM mutation or workflow retry followed; the bridge below is required. |
+| 2026-09-01T07:10Z | Frontend recovery success | [Run `33479477675`](https://github.com/ytadvisors/hecmedia/actions/runs/33479477675) succeeded at exact SHA `30e81cc4f26e4c4aff61d9beea36c375b553fc35`; default Lambda `165` is 1536 MB, API Lambda is `20`, invalidation `IBE6GSPPS4JR9ZLO6VVAIZ7627` completed, and public probes show `s-maxage=300` with cache hits. |
+| 2026-09-01T07:16Z | **Knowledge-base partial-apply stop** | The exact serial-0 `7/0/0` saved plan was applied once. Four additive resources were created, then S3 Vectors rejected the bucket policy with `Invalid principal in policy`. State is serial `1`; no replacement KB, data source, ingestion, switch, or deletion followed. The stale plan was not retried. |
+| 2026-09-01T07:18Z | Serial-1 recovery plan preserved | Unapplied saved-plan SHA-256 `4f54be83a12746830683af201f274f80659bdc4b6a70f119d6f6e58d0525b53a`: exactly three creates, four no-ops, zero updates, zero deletes. Recovery remains blocked on the exact-head reviews and merge defined below. |
+| 2026-09-01T07:42:59Z | Serial-1 amendment approved and merged | PR #314 head `0109c4397b294e9f9bc34f66ef9d0b3d824993cf` received exact-head approvals from `ytwguru` and independent xAI reviewer `yt-agent-kronos-grok`, then merged as `3c9d1b8a9c0ee0db7ad69d4031c9e834e300f572`. |
+| 2026-09-01T07:45:23Z | **Serial-1 recovery apply stop** | The serial-1 saved plan was applied exactly once. The vector-bucket policy was created, then Bedrock rejected `CreateKnowledgeBase` because Titan Embeddings G1 does not support configurable dimensions. State is serial `2` with five additive resources present; the replacement KB, data source, and ingestion remain absent. The plan was not retried and is permanently stale. |
+| 2026-09-01T08:07:44Z | Fixed-dimension backend correction merged | Backend PR #84 removed the unsupported optional dimensions block and added a regression assertion. Yomi and `yt-agent-kronos-grok` approved exact head `44542ea6238f6a01d210b17079cf9a9c90d80209`; both CI checks passed; squash merge `9c6bb1004e6363368b088c390d7ddb8654e0d162` is the sole source for the serial-2 plan. |
+| 2026-09-01T08:10Z | Serial-2 recovery plan preserved | Unapplied saved-plan SHA-256 `d3222bbbe1d434939b511344a2217630412a1420ab3de8587a6a55ef7ecd3b50`: exactly two creates, five no-ops, zero updates, zero deletes, bound to state serial `2` on the unchanged lineage. Recovery remains blocked on exact-head approval and merge of the serial-2 amendment below. |
+| 2026-09-01T08:28:58Z | **Serial-2 protected-review bridge stop** | PR #315 exact head `45d6305a6d2cd3f3c8cb3487189b5a2f7d74c171` received independent xAI approval and both jury checks passed, but fleet auto-merge completed as `aa2ee498c7529e36a48975ba14b82aede94badf2` before GitHub recorded a `ytwguru` review. Merge authorship and chat approval do not substitute. No serial-2 apply or ingestion followed; the bridge below is required. |
 
 PR #309 is immutable after merge, so GitHub cannot accept the missing Yomi review on its exact
 head. This follow-up is only a protected-review bridge to that unchanged amendment: an `APPROVED`

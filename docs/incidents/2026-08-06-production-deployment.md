@@ -61,21 +61,21 @@ Monitoring did not alert because:
 
 ## Timeline (America/Chicago)
 
-| Time   | Event                                                                                             |
-| ------ | ------------------------------------------------------------------------------------------------- |
-| ~16:59 | First confirmed Lambda@Edge schema/render errors during the backend rollout                       |
-| 17:06  | ECS reported the new production backend rollout steady, despite consumer incompatibility          |
-| 17:26  | User captured and reported a public `404 not found` response                                      |
-| ~17:28 | Cache-busting probes reproduced 404/500 responses; Lambda logs confirmed missing GraphQL fields   |
-| ~17:29 | Production backend rollback to task definition revision `:3` initiated                            |
-| 17:31  | Incompatible revision `:4` reached zero running tasks; baseline revision `:3` served all traffic  |
-| 17:34  | CloudFront invalidation `ID3MOBT87FD3HR3WGDF6TFK48B` created for `/*`                             |
-| ~17:34 | Post-rollback cache-busting probe passed 20/20 requests                                           |
-| ~17:35 | Both staging services began rollback from candidate revision `:33` to known-good `:32`            |
-| 17:37  | Bad staging tasks stopped; both staging services returned to one healthy `:32` task               |
-| ~17:38 | Staging GraphQL, REST, and rendered frontend checks returned real HTTP 200 responses              |
-| ~17:39 | CloudFront invalidation verified complete; final production and staging checks returned HTTP 200  |
-| 17:46  | Read-only image comparison confirmed zero-byte WordPress core files in the rejected staging image |
+| Time | Event |
+| --- | --- |
+| ~16:59 | First confirmed Lambda@Edge schema/render errors during the backend rollout |
+| 17:06 | ECS reported the new production backend rollout steady, despite consumer incompatibility |
+| 17:26 | User captured and reported a public `404 not found` response |
+| ~17:28 | Cache-busting probes reproduced 404/500 responses; Lambda logs confirmed missing GraphQL fields |
+| ~17:29 | Production backend rollback to task definition revision `:3` initiated |
+| 17:31 | Incompatible revision `:4` reached zero running tasks; baseline revision `:3` served all traffic |
+| 17:34 | CloudFront invalidation `ID3MOBT87FD3HR3WGDF6TFK48B` created for `/*` |
+| ~17:34 | Post-rollback cache-busting probe passed 20/20 requests |
+| ~17:35 | Both staging services began rollback from candidate revision `:33` to known-good `:32` |
+| 17:37 | Bad staging tasks stopped; both staging services returned to one healthy `:32` task |
+| ~17:38 | Staging GraphQL, REST, and rendered frontend checks returned real HTTP 200 responses |
+| ~17:39 | CloudFront invalidation verified complete; final production and staging checks returned HTTP 200 |
+| 17:46 | Read-only image comparison confirmed zero-byte WordPress core files in the rejected staging image |
 
 Times prefixed with `~` are bounded by command/log observations rather than a single authoritative
 event record.
@@ -159,12 +159,12 @@ had reused damaged layer content.
 
 A post-pull comparison established:
 
-| File                               | File-integrity reference `e7a885…` (not production-contract safe) | Rejected image `beba781…` |
-| ---------------------------------- | ----------------------------------------------------------------: | ------------------------: |
-| `/var/www/html/index.php`          |                                                         405 bytes |                   0 bytes |
-| `/var/www/html/wp-blog-header.php` |                                                         351 bytes |                   0 bytes |
-| `/var/www/html/wp-load.php`        |                                                       3,937 bytes |                   0 bytes |
-| `/var/www/html/wp-settings.php`    |                                                      32,650 bytes |                   0 bytes |
+| File | File-integrity reference `e7a885…` (not production-contract safe) | Rejected image `beba781…` |
+| --- | ---: | ---: |
+| `/var/www/html/index.php` | 405 bytes | 0 bytes |
+| `/var/www/html/wp-blog-header.php` | 351 bytes | 0 bytes |
+| `/var/www/html/wp-load.php` | 3,937 bytes | 0 bytes |
+| `/var/www/html/wp-settings.php` | 32,650 bytes | 0 bytes |
 
 Apache executed the zero-byte `index.php`, returned HTTP 200 with an empty body, and reported no PHP
 fatal error. The static `/healthz` file remained non-empty, so ECS again reported green. ECR and
@@ -310,11 +310,11 @@ though the browser could not load the object.
 
 ### Follow-up corrective controls
 
-| Control                                                                                                                                                                      | Failure class covered                                                                    |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Canonicalize staging and production WordPress upload URLs to the public S3 archive                                                                                           | Incomplete environment-specific upload origins                                           |
-| Use a finite component fallback chain: public archive → active WordPress origin → local placeholder                                                                          | New media awaiting archive propagation without retry loops                               |
-| Before protected-environment approval, resolve the real Spotlight and representative category-card URLs, perform ranged GETs, and require successful `image/*` responses     | Valid metadata pointing to missing or non-image content                                  |
+| Control                                                                                                                                                          | Failure class covered                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Canonicalize staging and production WordPress upload URLs to the public S3 archive                                                                               | Incomplete environment-specific upload origins                                           |
+| Use a finite component fallback chain: public archive → active WordPress origin → local placeholder                                                              | New media awaiting archive propagation without retry loops                               |
+| Before protected-environment approval, resolve the real Spotlight and representative category-card URLs, perform ranged GETs, and require successful `image/*` responses | Valid metadata pointing to missing or non-image content                                  |
 | After cutover, extract every remote `src` and `srcset` candidate, require managed upload media on content routes, probe each unique remote URL, and save the route inventory | Rendering changes that bypass the shared resolver or expose route-specific broken assets |
 
 This follow-up changes the acceptance criterion from “the page and query returned 200” to “the
@@ -327,38 +327,38 @@ newsletter may have an empty remote-media inventory.
 
 ### P0 — required before the next production attempt
 
-| Action                                                                  | Owner                     | Completion evidence                                                           |
-| ----------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------- |
-| Assign exactly one approved production deployment commander per attempt | Yomi / Tom                | Co-signed playbook, named executor, and other lanes confirmed read-only       |
-| Add production-safe dual-schema compatibility                           | Backend owner             | Reviewed PR and legacy + modern consumer tests                                |
-| Remove staging-only contract drift                                      | Backend owner             | Identical schema-profile evidence in staging and production candidate configs |
-| Rebuild on a pristine no-cache builder                                  | Selected executor         | New SHA-tagged digest plus builder provenance                                 |
-| Add non-empty core-file and WordPress checksum tests                    | Backend owner             | Pre-push and post-pull results                                                |
-| Add real GraphQL, REST, and SSR release gates                           | Frontend + backend owners | Four-way compatibility matrix and 20/20 fresh probes                          |
-| Add pre-approval and post-cutover media-object gates                    | Frontend owner            | Live GraphQL-selected media probes plus hydrated route-to-image evidence      |
-| Prove immutable rollback targets                                        | Selected executor         | Lambda version/checksum and ECS task definition/digest evidence               |
+| Action | Owner | Completion evidence |
+| --- | --- | --- |
+| Assign exactly one approved production deployment commander per attempt | Yomi / Tom | Co-signed playbook, named executor, and other lanes confirmed read-only |
+| Add production-safe dual-schema compatibility | Backend owner | Reviewed PR and legacy + modern consumer tests |
+| Remove staging-only contract drift | Backend owner | Identical schema-profile evidence in staging and production candidate configs |
+| Rebuild on a pristine no-cache builder | Selected executor | New SHA-tagged digest plus builder provenance |
+| Add non-empty core-file and WordPress checksum tests | Backend owner | Pre-push and post-pull results |
+| Add real GraphQL, REST, and SSR release gates | Frontend + backend owners | Four-way compatibility matrix and 20/20 fresh probes |
+| Add pre-approval and post-cutover media-object gates | Frontend owner | Live GraphQL-selected media probes plus hydrated route-to-image evidence |
+| Prove immutable rollback targets | Selected executor | Lambda version/checksum and ECS task definition/digest evidence |
 
 ### P1 — within 24 hours
 
-| Action                                                                    | Owner             | Completion evidence                                                  |
-| ------------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------- |
-| Separate liveness from readiness; make readiness boot WordPress read-only | Backend owner     | ECS/ALB config and failure-mode test                                 |
-| Add backend post-cutover consumer contract and automatic rollback         | Backend owner     | Workflow test that rejects a missing frontend field                  |
-| Add cache-busting public availability monitor                             | Platform owner    | Alarm and synthetic route results                                    |
-| Enable suitable CloudFront access/error observability                     | Platform owner    | Reviewed logging/metrics configuration and retention                 |
-| Record source SHA in every production SSR response                        | Frontend owner    | Verified metadata on all required routes                             |
-| Quarantine the damaged Docker cache and rejected digest                   | Platform owner    | Builder replacement evidence and denylist/runbook entry              |
-| Keep the default Colima builder out of the release path                   | Selected executor | New isolated/remote builder identity and healthy filesystem evidence |
+| Action | Owner | Completion evidence |
+| --- | --- | --- |
+| Separate liveness from readiness; make readiness boot WordPress read-only | Backend owner | ECS/ALB config and failure-mode test |
+| Add backend post-cutover consumer contract and automatic rollback | Backend owner | Workflow test that rejects a missing frontend field |
+| Add cache-busting public availability monitor | Platform owner | Alarm and synthetic route results |
+| Enable suitable CloudFront access/error observability | Platform owner | Reviewed logging/metrics configuration and retention |
+| Record source SHA in every production SSR response | Frontend owner | Verified metadata on all required routes |
+| Quarantine the damaged Docker cache and rejected digest | Platform owner | Builder replacement evidence and denylist/runbook entry |
+| Keep the default Colima builder out of the release path | Selected executor | New isolated/remote builder identity and healthy filesystem evidence |
 
 ### P2 — within 7 days
 
-| Action                                                     | Owner                                    | Completion evidence                                                                      |
-| ---------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Upgrade the production Lambda@Edge runtime from Node.js 12 | Frontend owner                           | Staging soak and governed production plan                                                |
-| Add canary/weighted backend validation before full rollout | Platform/backend owners                  | Proven rollback test and consumer probe                                                  |
-| Add a cross-repository release manifest                    | Platform owner                           | One signed record of frontend SHA, backend SHA/digest, schema profile, and rollback pair |
-| Exercise a game-day rollback                               | Selected executor + independent reviewer | Timed evidence without customer impact                                                   |
-| Add disk-capacity and builder-filesystem alarms            | Platform owner                           | Alert test and cache quarantine behavior                                                 |
+| Action | Owner | Completion evidence |
+| --- | --- | --- |
+| Upgrade the production Lambda@Edge runtime from Node.js 12 | Frontend owner | Staging soak and governed production plan |
+| Add canary/weighted backend validation before full rollout | Platform/backend owners | Proven rollback test and consumer probe |
+| Add a cross-repository release manifest | Platform owner | One signed record of frontend SHA, backend SHA/digest, schema profile, and rollback pair |
+| Exercise a game-day rollback | Selected executor + independent reviewer | Timed evidence without customer impact |
+| Add disk-capacity and builder-filesystem alarms | Platform owner | Alert test and cache quarantine behavior |
 
 ## Evidence references
 
