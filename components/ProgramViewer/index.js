@@ -4,7 +4,6 @@ import $ from "jquery";
 import SideNavigation from "../SideNavigation";
 import TrendingNow from "../TrendingNow";
 import ListOfFeaturedPosts from "../ListOfFeaturedPosts";
-import "./styles.scss";
 
 export default class extends Component {
   componentDidMount() {
@@ -19,6 +18,11 @@ export default class extends Component {
       newestVideos,
       trendingNowLoading,
       trendingNowError,
+      trendingMaxVideos,
+      railPromo,
+      trendingTitle = "Trending Now",
+      spotlightTitle = "Spotlight STL",
+      railFirstOnMobile = false,
       children
     } = this.props;
     return (
@@ -27,24 +31,31 @@ export default class extends Component {
           className="container no-padding program-viewer-container"
           style={style}
         >
-          <div className="row">
-            <div className="col-lg-9 no-padding list-container">
+          <div
+            className={`row program-viewer-row${
+              railFirstOnMobile ? " program-viewer-row--rail-first-mobile" : ""
+            }`}
+          >
+            <div className="col-lg-9 no-padding list-container program-viewer-main">
               <div className="clearfix">{children}</div>
             </div>
-            <div className="col-lg-3 no-padding">
-              <SideNavigation>
+            <div className="col-lg-3 no-padding program-viewer-rail">
+              <SideNavigation railPromo={railPromo}>
                 <div className="row">
-                  <div className="col-lg-12 no-padding">
+                  <div className="col-lg-12 no-padding program-viewer-trending">
                     <TrendingNow
                       featuredVideos={featuredVideos}
                       newestVideos={newestVideos}
+                      maxItems={trendingMaxVideos}
                       loading={trendingNowLoading}
                       error={trendingNowError}
+                      title={trendingTitle}
                     />
                   </div>
-                  <div className="col-lg-12 no-padding">
+                  <div className="col-lg-12 no-padding program-viewer-spotlight">
                     <ListOfFeaturedPosts
-                      title="HEC-TV SPOTLIGHT"
+                      title={spotlightTitle}
+                      titleHref={null}
                       spotLightPosts={spotLightPosts}
                       maxItems={5}
                     />

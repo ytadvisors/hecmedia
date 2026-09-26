@@ -2,7 +2,6 @@ import React from "react";
 import _ from "lodash";
 import ContentBlock from "../../ContentBlock";
 import VideoPlayer from "../../VideoPlayer";
-import "./styles.scss";
 
 export default props => {
   const {

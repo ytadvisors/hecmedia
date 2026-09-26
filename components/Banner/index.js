@@ -4,8 +4,6 @@ import Link from "next/link";
 import { getExcerpt, cleanUrl } from "../../lib/updateFunctions";
 import { isServer } from "../../lib/serverFunctions";
 
-import "./styles.scss";
-
 const playButton = "/static/assets/play-button.png";
 
 export default class Banner extends Component {

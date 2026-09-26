@@ -27,6 +27,22 @@ test("an Anthropic-authored PR requires an OpenAI approval", () => {
   ).toBe(true);
 });
 
+test("a Grok-authored PR requires an OpenAI or Anthropic approval", () => {
+  expect(authorFamily("yt-agent-tom-grok")).toBe("grok");
+  expect(
+    evaluateMixedJury([[review("yt-agent-kronos-gpt")]], "yt-agent-tom-grok")
+      .satisfied
+  ).toBe(true);
+  expect(
+    evaluateMixedJury([[review("yt-agent-kronos")]], "yt-agent-tom-grok")
+      .satisfied
+  ).toBe(true);
+  expect(
+    evaluateMixedJury([[review("yt-agent-kronos-grok")]], "yt-agent-tom-grok")
+      .satisfied
+  ).toBe(false);
+});
+
 test("the latest standing verdict replaces an earlier approval", () => {
   const result = evaluateMixedJury(
     [

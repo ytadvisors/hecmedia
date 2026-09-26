@@ -1,0 +1,1695 @@
+#!/usr/bin/env node
+
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+const { execFileSync, spawnSync } = require("child_process");
+const { build: buildDefaultEdgePackage } = require("./edge-package-build");
+const {
+  assertOnlyApprovedGtmIds,
+  assertRenderedSiteIdentity,
+  expectedGtmContainerId
+} = require("./verify-production");
+const { HYDRATED_MEDIA_REQUIREMENTS } = require("./production-route-contract");
+
+const REGION = "us-east-1";
+const ACCOUNT_ID = "850335719356";
+const DISTRIBUTION_ID = "E2QXRSF2W55RTS";
+const BUCKET_NAME = "x2l4ew-k0m7umi";
+const ORIGIN_ID = "x2l4ew-k0m7umi";
+const DEFAULT_FUNCTION_NAME = "x2l4ew-l5vb7pd";
+const API_FUNCTION_NAME = "x2l4ew-api";
+const DEFAULT_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${DEFAULT_FUNCTION_NAME}`;
+const API_FUNCTION_ARN = `arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${API_FUNCTION_NAME}`;
+const EDGE_EXECUTION_ROLE = "arn:aws:iam::850335719356:role/x2l4ew-0kb1zus";
+const API_PATH = "api/newsletter/subscribe";
+const DEFAULT_FUNCTION_MEMORY_MB = 1536;
+const LEGACY_DEFAULT_FUNCTION_MEMORY_MB = 3000;
+const SSR_DEFAULT_TTL_SECONDS = 300;
+const REPO_ROOT = path.join(__dirname, "..");
+const BUILD_DIR = path.join(REPO_ROOT, ".serverless_nextjs");
+const ASSETS_DIR = path.join(BUILD_DIR, "assets");
+const DEFAULT_LAMBDA_DIR = path.join(BUILD_DIR, "default-lambda");
+const RELEASE_DIR = path.join(REPO_ROOT, ".production-release");
+const DEFAULT_ZIP = path.join(RELEASE_DIR, "default-lambda.zip");
+const API_ZIP = path.join(RELEASE_DIR, "api-lambda.zip");
+const API_EDGE_SOURCE = path.join(
+  REPO_ROOT,
+  "scripts",
+  "edge-handlers",
+  "newsletter-api-edge.js"
+);
+const EVIDENCE_PATH = path.join(
+  REPO_ROOT,
+  process.env.EVIDENCE_PATH || "production-deploy-evidence.json"
+);
+const APPROVED_PUBLISHERS = new Set([
+  "ytwguru",
+  "yt-agent-tom",
+  "yt-agent-tom-gpt",
+  "yt-agent-tom-grok"
+]);
+
+function run(command, args, options = {}) {
+  console.log(`+ ${command} ${args.join(" ")}`);
+  return execFileSync(command, args, {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+    stdio: options.inherit ? "inherit" : "pipe",
+    ...options
+  });
+}
+
+/**
+ * Parse AWS CLI JSON stdout.
+ * `aws s3api get-bucket-versioning` returns empty body when versioning has
+ * never been configured — treat that as {} so deploy can enable versioning.
+ */
+function parseJsonOutput(text, options = {}) {
+  const trimmed = String(text == null ? "" : text).trim();
+  if (!trimmed) {
+    if (options.allowEmptyObject) {
+      return {};
+    }
+    throw new Error("Expected JSON output but command returned empty stdout");
+  }
+  try {
+    return JSON.parse(trimmed);
+  } catch (err) {
+    const message = err && err.message ? err.message : String(err);
+    throw new Error(`Expected JSON output but parse failed: ${message}`);
+  }
+}
+
+function runJson(command, args, options = {}) {
+  return parseJsonOutput(run(command, args), options);
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function versionedArn(baseArn, version) {
+  const arn = `${baseArn}:${version}`;
+  if (
+    !/^arn:aws:lambda:us-east-1:\d{12}:function:[A-Za-z0-9-_]+:[1-9][0-9]*$/.test(
+      arn
+    )
+  ) {
+    throw new Error(`Invalid published Lambda@Edge ARN: ${arn}`);
+  }
+  return arn;
+}
+
+function publishedVersionFromArn(arn) {
+  const match = String(arn || "").match(/:([1-9][0-9]*)$/);
+  if (!match) {
+    throw new Error(`Invalid published Lambda@Edge ARN: ${arn}`);
+  }
+  return match[1];
+}
+
+function zipCodeSha256(zipPath) {
+  return crypto
+    .createHash("sha256")
+    .update(fs.readFileSync(zipPath))
+    .digest("base64");
+}
+
+function fileSha256(filePath) {
+  return crypto
+    .createHash("sha256")
+    .update(fs.readFileSync(filePath))
+    .digest("hex");
+}
+
+function listFiles(directory) {
+  const entries = fs.readdirSync(directory, { withFileTypes: true });
+  return entries.flatMap(entry => {
+    if (!entry || typeof entry.name !== "string") return [];
+    const entryPath = path.join(directory, entry.name);
+    try {
+      if (entry.isDirectory()) return listFiles(entryPath);
+      if (entry.isFile()) return [entryPath];
+      return [];
+    } catch (err) {
+      throw new Error(
+        `listFiles failed on ${entryPath}: ${
+          err && err.message ? err.message : err
+        }`
+      );
+    }
+  });
+}
+
+function assertNoEmbeddedAccessKeys(directory) {
+  const leaked = listFiles(directory).filter(file =>
+    /(?:AKIA|ASIA)[0-9A-Z]{16}/.test(fs.readFileSync(file).toString("latin1"))
+  );
+  if (leaked.length > 0) {
+    throw new Error(
+      `Build contains embedded AWS access-key material in ${leaked.length} file(s); refusing production package.`
+    );
+  }
+}
+
+function assertFunctionContract(
+  config,
+  expectedArn,
+  expectedMemory,
+  options = {}
+) {
+  // Published Lambda@Edge versions are immutable. Live CloudFront still pins
+  // historical :146 which was published on nodejs12.x; $LATEST and new
+  // publishes must be nodejs24.x. Allow both for baseline version checks.
+  const allowedRuntimes = options.allowedRuntimes || ["nodejs24.x"];
+  const allowedMemorySizes = options.allowedMemorySizes || [expectedMemory];
+  if (
+    !config ||
+    config.FunctionArn !== expectedArn ||
+    !allowedRuntimes.includes(config.Runtime) ||
+    config.Handler !== "index.handler" ||
+    config.Role !== EDGE_EXECUTION_ROLE ||
+    config.Timeout !== 30 ||
+    !allowedMemorySizes.includes(config.MemorySize) ||
+    config.PackageType !== "Zip" ||
+    config.State !== "Active" ||
+    config.LastUpdateStatus !== "Successful" ||
+    JSON.stringify(config.Architectures || []) !== JSON.stringify(["x86_64"])
+  ) {
+    throw new Error(
+      `Lambda runtime contract drifted for ${expectedArn}` +
+        ` (runtime=${config && config.Runtime}, allowed=${allowedRuntimes.join(
+          ","
+        )}, memory=${config &&
+          config.MemorySize}, allowedMemory=${allowedMemorySizes.join(",")}).`
+    );
+  }
+}
+
+function requireBuildContract(env = process.env) {
+  const exact = {
+    APOLLO_CLIENT_URI: "https://prod-wp.hectv.org/graphql",
+    WP_HOST: "https://prod-wp.hectv.org",
+    SITE_HOST: "https://hecmedia.org",
+    HECMEDIA_NO_SEND_FORMS: "false",
+    HECMEDIA_EDGE_API: "true",
+    HECMEDIA_DISABLE_IMAGE_OPTIMIZER: "true",
+    HECMEDIA_MODERN_WPGRAPHQL: "true"
+  };
+  Object.entries(exact).forEach(([name, value]) => {
+    if (env[name] !== value) {
+      throw new Error(`${name} must equal ${value} for production.`);
+    }
+  });
+  if (!/^[0-9a-f]{40}$/.test(env.DEPLOY_SHA || "")) {
+    throw new Error("DEPLOY_SHA must be an exact 40-character commit SHA.");
+  }
+  if (!/^6L[A-Za-z0-9_-]{30,}$/.test(env.RE_CAPTCHA_SITE_KEY || "")) {
+    throw new Error(
+      "RE_CAPTCHA_SITE_KEY must be the public production site key."
+    );
+  }
+  // GTM container ids are public (emitted in HTML). Fail closed on both missing
+  // and wrong container so non-workflow / misconfigured paths cannot ship a
+  // different GTM than the approved production property (GTM-57RZPNN).
+  const productionGtmContainerId = "GTM-57RZPNN";
+  if (env.GA_TAGMANAGER_ID !== productionGtmContainerId) {
+    throw new Error(
+      `GA_TAGMANAGER_ID must equal ${productionGtmContainerId} for production.`
+    );
+  }
+}
+
+function assertGovernedDeployContext(env = process.env, action = "deploy") {
+  if (
+    env.GITHUB_ACTIONS !== "true" ||
+    env.GITHUB_EVENT_NAME !== "workflow_dispatch" ||
+    !String(env.GITHUB_WORKFLOW_REF || "").includes(
+      "/.github/workflows/production-deploy.yml@"
+    )
+  ) {
+    throw new Error(
+      "Production mutation is allowed only through the governed production-deploy workflow_dispatch."
+    );
+  }
+  if (!APPROVED_PUBLISHERS.has(env.GITHUB_ACTOR)) {
+    throw new Error(
+      "GitHub actor is not an approved HEC production publisher."
+    );
+  }
+  if (!/^[1-9][0-9]*$/.test(env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID || "")) {
+    throw new Error(
+      "A positive HEC production queue-task receipt is required."
+    );
+  }
+  const confirmation =
+    action === "rollback"
+      ? "ROLLBACK HEC FRONTEND PRODUCTION"
+      : "DEPLOY HEC FRONTEND PRODUCTION";
+  if (env.PRODUCTION_CONFIRMATION !== confirmation) {
+    throw new Error("Production confirmation phrase does not match.");
+  }
+  if (!/^[0-9a-f]{40}$/.test(env.DEPLOY_SHA || "")) {
+    throw new Error("DEPLOY_SHA must be an exact 40-character commit SHA.");
+  }
+}
+
+function behaviorItems(config) {
+  return [
+    config.DefaultCacheBehavior,
+    ...((config.CacheBehaviors && config.CacheBehaviors.Items) || [])
+  ];
+}
+
+function defaultAssociations(config) {
+  return behaviorItems(config).flatMap(behavior => {
+    const items =
+      behavior &&
+      behavior.LambdaFunctionAssociations &&
+      behavior.LambdaFunctionAssociations.Items;
+    return items || [];
+  });
+}
+
+function assertVersionArn(arn, expectedBase) {
+  if (
+    !new RegExp(
+      `^${expectedBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\d+$`
+    ).test(arn || "")
+  ) {
+    throw new Error(`Expected a published version of ${expectedBase}.`);
+  }
+}
+
+function assertDistributionContract(
+  config,
+  expectedDefaultVersionArn,
+  expectedApiVersionArn = "none"
+) {
+  if (!config || !config.DefaultCacheBehavior) {
+    throw new Error("Production CloudFront default behavior is missing.");
+  }
+  const aliases = ((config.Aliases && config.Aliases.Items) || [])
+    .slice()
+    .sort();
+  if (aliases.join(",") !== "hecmedia.org,www.hecmedia.org") {
+    throw new Error("Production CloudFront aliases changed; refusing release.");
+  }
+  if (config.DefaultCacheBehavior.TargetOriginId !== ORIGIN_ID) {
+    throw new Error("Production CloudFront origin changed; refusing release.");
+  }
+  const origins = (config.Origins && config.Origins.Items) || [];
+  if (
+    origins.length !== 1 ||
+    origins[0].Id !== ORIGIN_ID ||
+    origins[0].DomainName !== `${BUCKET_NAME}.s3.us-east-1.amazonaws.com`
+  ) {
+    throw new Error("Production S3 origin contract changed; refusing release.");
+  }
+
+  const ownedAssociations = defaultAssociations(config).filter(association =>
+    String(association.LambdaFunctionARN || "").startsWith(
+      `${DEFAULT_FUNCTION_ARN}:`
+    )
+  );
+  if (ownedAssociations.length !== 4) {
+    throw new Error(
+      `Expected four production SSR Lambda associations, found ${ownedAssociations.length}.`
+    );
+  }
+  if (
+    ownedAssociations.some(
+      association => association.LambdaFunctionARN !== expectedDefaultVersionArn
+    )
+  ) {
+    throw new Error(
+      "Production SSR Lambda version drifted after authorization."
+    );
+  }
+  const liveApiBehavior = (
+    (config.CacheBehaviors && config.CacheBehaviors.Items) ||
+    []
+  ).find(behavior => behavior.PathPattern === API_PATH);
+  const nextDataBehavior = (
+    (config.CacheBehaviors && config.CacheBehaviors.Items) ||
+    []
+  ).find(behavior => behavior.PathPattern === "_next/data/*");
+  if (!nextDataBehavior) {
+    throw new Error("Production Next data cache behavior is missing.");
+  }
+  const ttlContract = `${config.DefaultCacheBehavior.DefaultTTL},${nextDataBehavior.DefaultTTL}`;
+  if (ttlContract !== "60,0" && ttlContract !== "300,300") {
+    throw new Error(
+      `Production SSR cache TTL contract drifted (${ttlContract}).`
+    );
+  }
+  if (expectedApiVersionArn === "none") {
+    if (liveApiBehavior) {
+      throw new Error(
+        "Newsletter API behavior is present but the authorized baseline says none."
+      );
+    }
+  } else {
+    assertVersionArn(expectedApiVersionArn, API_FUNCTION_ARN);
+    const apiAssociations =
+      liveApiBehavior && liveApiBehavior.LambdaFunctionAssociations
+        ? liveApiBehavior.LambdaFunctionAssociations.Items || []
+        : [];
+    if (
+      apiAssociations.length !== 1 ||
+      apiAssociations[0].LambdaFunctionARN !== expectedApiVersionArn ||
+      apiAssociations[0].EventType !== "origin-request" ||
+      apiAssociations[0].IncludeBody !== true
+    ) {
+      throw new Error("Newsletter API baseline drifted after authorization.");
+    }
+  }
+  return ownedAssociations.length;
+}
+
+function apiBehavior(defaultBehavior, apiVersionArn) {
+  assertVersionArn(apiVersionArn, API_FUNCTION_ARN);
+  const behavior = clone(defaultBehavior);
+  behavior.PathPattern = API_PATH;
+  behavior.TargetOriginId = ORIGIN_ID;
+  behavior.AllowedMethods = {
+    Quantity: 7,
+    Items: ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"],
+    CachedMethods: { Quantity: 2, Items: ["HEAD", "GET"] }
+  };
+  behavior.LambdaFunctionAssociations = {
+    Quantity: 1,
+    Items: [
+      {
+        LambdaFunctionARN: apiVersionArn,
+        EventType: "origin-request",
+        IncludeBody: true
+      }
+    ]
+  };
+  behavior.MinTTL = 0;
+  behavior.DefaultTTL = 0;
+  behavior.MaxTTL = 0;
+  behavior.Compress = true;
+  behavior.ForwardedValues = {
+    QueryString: false,
+    Cookies: { Forward: "none" },
+    Headers: { Quantity: 0 },
+    QueryStringCacheKeys: { Quantity: 0 }
+  };
+  return behavior;
+}
+
+function replaceDefaultAssociations(config, replacementArn) {
+  let replaced = 0;
+  behaviorItems(config).forEach(behavior => {
+    const associationBlock = behavior.LambdaFunctionAssociations;
+    if (!associationBlock || !associationBlock.Items) return;
+    associationBlock.Items = associationBlock.Items.map(association => {
+      if (
+        String(association.LambdaFunctionARN || "").startsWith(
+          `${DEFAULT_FUNCTION_ARN}:`
+        )
+      ) {
+        replaced += 1;
+        return { ...association, LambdaFunctionARN: replacementArn };
+      }
+      return association;
+    });
+    associationBlock.Quantity = associationBlock.Items.length;
+  });
+  return replaced;
+}
+
+function configureSsrCacheTtl(config, defaultTtlSeconds) {
+  const next = clone(config);
+  const nextDataBehavior = (
+    (next.CacheBehaviors && next.CacheBehaviors.Items) ||
+    []
+  ).find(behavior => behavior.PathPattern === "_next/data/*");
+  if (!nextDataBehavior) {
+    throw new Error("Production Next data cache behavior is missing.");
+  }
+
+  [next.DefaultCacheBehavior, nextDataBehavior].forEach(behavior =>
+    Object.assign(behavior, {
+      MinTTL: 0,
+      DefaultTTL: defaultTtlSeconds,
+      MaxTTL: Math.max(Number(behavior.MaxTTL) || 0, defaultTtlSeconds)
+    })
+  );
+  return next;
+}
+
+function configureProductionDistribution(
+  config,
+  expectedDefaultVersionArn,
+  expectedApiVersionArn,
+  newDefaultVersionArn,
+  newApiVersionArn
+) {
+  assertVersionArn(expectedDefaultVersionArn, DEFAULT_FUNCTION_ARN);
+  assertVersionArn(newDefaultVersionArn, DEFAULT_FUNCTION_ARN);
+  assertDistributionContract(
+    config,
+    expectedDefaultVersionArn,
+    expectedApiVersionArn
+  );
+
+  const next = configureSsrCacheTtl(config, SSR_DEFAULT_TTL_SECONDS);
+  const replaced = replaceDefaultAssociations(next, newDefaultVersionArn);
+  if (replaced !== 4) {
+    throw new Error(
+      `Expected to replace four SSR associations, replaced ${replaced}.`
+    );
+  }
+
+  const existing = (next.CacheBehaviors && next.CacheBehaviors.Items) || [];
+  const unmanaged = existing.filter(
+    behavior => behavior.PathPattern !== API_PATH
+  );
+  next.CacheBehaviors = {
+    Quantity: unmanaged.length + 1,
+    Items: [
+      apiBehavior(next.DefaultCacheBehavior, newApiVersionArn),
+      ...unmanaged
+    ]
+  };
+  return next;
+}
+
+function configureSanitizedRollback(config, rollbackVersionArn) {
+  assertVersionArn(rollbackVersionArn, DEFAULT_FUNCTION_ARN);
+  const next = configureSsrCacheTtl(config, 60);
+  const nextDataBehavior = next.CacheBehaviors.Items.find(
+    behavior => behavior.PathPattern === "_next/data/*"
+  );
+  nextDataBehavior.DefaultTTL = 0;
+  const replaced = replaceDefaultAssociations(next, rollbackVersionArn);
+  if (replaced !== 4) {
+    throw new Error(
+      `Sanitized rollback expected four SSR associations, found ${replaced}.`
+    );
+  }
+  const existing = (next.CacheBehaviors && next.CacheBehaviors.Items) || [];
+  const kept = existing.filter(behavior => behavior.PathPattern !== API_PATH);
+  next.CacheBehaviors = { Quantity: kept.length, Items: kept };
+  return next;
+}
+
+function zipDirectory(directory, zipPath) {
+  // Node 24 on GHA: fs.rmSync(zipPath, { force: true }) can throw
+  // TypeError: Cannot read properties of undefined (reading 'uid')
+  // when the target does not exist (seen in FE prod run 31145148944).
+  // Prefer exists + unlink for a single file path.
+  try {
+    if (fs.existsSync(zipPath)) {
+      fs.unlinkSync(zipPath);
+    }
+  } catch (err) {
+    throw new Error(
+      `Failed to remove existing zip ${zipPath}: ${
+        err && err.message ? err.message : err
+      }`
+    );
+  }
+  run("zip", ["-r", "-X", "-q", zipPath, "."], { cwd: directory });
+}
+
+function packageApiEdge() {
+  const apiDir = path.join(RELEASE_DIR, "api-edge");
+  fs.mkdirSync(apiDir, { recursive: true });
+  fs.copyFileSync(API_EDGE_SOURCE, path.join(apiDir, "index.js"));
+  assertNoEmbeddedAccessKeys(apiDir);
+  zipDirectory(apiDir, API_ZIP);
+}
+
+async function build() {
+  requireBuildContract();
+  fs.rmSync(RELEASE_DIR, { recursive: true, force: true });
+  fs.mkdirSync(RELEASE_DIR, { recursive: true });
+  console.log("production-deploy: starting edge package build");
+  await buildDefaultEdgePackage();
+  console.log("production-deploy: edge package build finished");
+  if (!fs.existsSync(DEFAULT_LAMBDA_DIR) || !fs.existsSync(ASSETS_DIR)) {
+    throw new Error(
+      "Lambda@Edge build did not produce default-lambda and assets."
+    );
+  }
+  console.log("production-deploy: scanning for embedded access keys");
+  assertNoEmbeddedAccessKeys(BUILD_DIR);
+  console.log("production-deploy: zipping default-lambda");
+  zipDirectory(DEFAULT_LAMBDA_DIR, DEFAULT_ZIP);
+  console.log("production-deploy: packaging api edge");
+  packageApiEdge();
+  const metadata = {
+    release_sha: process.env.DEPLOY_SHA,
+    default_zip_code_sha256: zipCodeSha256(DEFAULT_ZIP),
+    api_zip_code_sha256: zipCodeSha256(API_ZIP),
+    built_at: new Date().toISOString()
+  };
+  fs.writeFileSync(
+    path.join(RELEASE_DIR, "build-metadata.json"),
+    JSON.stringify(metadata, null, 2)
+  );
+  console.log(JSON.stringify(metadata));
+}
+
+function functionConfiguration(functionName, qualifier) {
+  return runJson("aws", [
+    "lambda",
+    "get-function-configuration",
+    "--region",
+    REGION,
+    "--function-name",
+    functionName,
+    ...(qualifier ? ["--qualifier", qualifier] : [])
+  ]);
+}
+
+function configureFunctionMemory(functionName, expectedMemory) {
+  const baseArn =
+    functionName === DEFAULT_FUNCTION_NAME
+      ? DEFAULT_FUNCTION_ARN
+      : API_FUNCTION_ARN;
+  const current = functionConfiguration(functionName);
+  if (current.MemorySize !== expectedMemory) {
+    run("aws", [
+      "lambda",
+      "update-function-configuration",
+      "--region",
+      REGION,
+      "--function-name",
+      functionName,
+      "--memory-size",
+      String(expectedMemory)
+    ]);
+    run("aws", [
+      "lambda",
+      "wait",
+      "function-updated",
+      "--region",
+      REGION,
+      "--function-name",
+      functionName
+    ]);
+  }
+  const configured = functionConfiguration(functionName);
+  assertFunctionContract(configured, baseArn, expectedMemory);
+  return configured;
+}
+
+function publishLambda(functionName, zipPath, description) {
+  const expectedMemory =
+    functionName === DEFAULT_FUNCTION_NAME ? DEFAULT_FUNCTION_MEMORY_MB : 1024;
+  configureFunctionMemory(functionName, expectedMemory);
+  run("aws", [
+    "lambda",
+    "update-function-code",
+    "--region",
+    REGION,
+    "--function-name",
+    functionName,
+    "--zip-file",
+    `fileb://${zipPath}`
+  ]);
+  run("aws", [
+    "lambda",
+    "wait",
+    "function-updated",
+    "--region",
+    REGION,
+    "--function-name",
+    functionName
+  ]);
+  const expectedCodeSha = zipCodeSha256(zipPath);
+  const latest = functionConfiguration(functionName);
+  const baseArn =
+    functionName === DEFAULT_FUNCTION_NAME
+      ? DEFAULT_FUNCTION_ARN
+      : API_FUNCTION_ARN;
+  assertFunctionContract(latest, baseArn, expectedMemory);
+  if (latest.CodeSha256 !== expectedCodeSha) {
+    throw new Error(
+      `${functionName} code checksum differs from the reviewed zip.`
+    );
+  }
+  const published = runJson("aws", [
+    "lambda",
+    "publish-version",
+    "--region",
+    REGION,
+    "--function-name",
+    functionName,
+    "--description",
+    description
+  ]);
+  if (published.CodeSha256 !== expectedCodeSha) {
+    throw new Error(
+      `${functionName} published version checksum differs from the reviewed zip.`
+    );
+  }
+  const arn = versionedArn(baseArn, published.Version);
+  if (published.FunctionArn !== arn) {
+    throw new Error(`${functionName} returned an unexpected published ARN.`);
+  }
+  const publishedConfiguration = functionConfiguration(
+    functionName,
+    published.Version
+  );
+  assertFunctionContract(publishedConfiguration, arn, expectedMemory);
+  if (publishedConfiguration.CodeSha256 !== expectedCodeSha) {
+    throw new Error(
+      `${functionName} published configuration checksum differs from the reviewed zip.`
+    );
+  }
+  return {
+    arn,
+    codeSha256: expectedCodeSha,
+    memorySize: publishedConfiguration.MemorySize,
+    version: published.Version
+  };
+}
+
+function getDistributionConfig() {
+  return runJson("aws", [
+    "cloudfront",
+    "get-distribution-config",
+    "--id",
+    DISTRIBUTION_ID
+  ]);
+}
+
+function updateDistribution(config, etag, configPath) {
+  fs.writeFileSync(configPath, JSON.stringify(config));
+  run("aws", [
+    "cloudfront",
+    "update-distribution",
+    "--id",
+    DISTRIBUTION_ID,
+    "--if-match",
+    etag,
+    "--distribution-config",
+    `file://${configPath}`
+  ]);
+  run("aws", [
+    "cloudfront",
+    "wait",
+    "distribution-deployed",
+    "--id",
+    DISTRIBUTION_ID
+  ]);
+}
+
+function invalidate(paths = ["/*"]) {
+  const id = run("aws", [
+    "cloudfront",
+    "create-invalidation",
+    "--distribution-id",
+    DISTRIBUTION_ID,
+    "--paths",
+    ...paths,
+    "--query",
+    "Invalidation.Id",
+    "--output",
+    "text"
+  ]).trim();
+  if (!id) throw new Error("CloudFront did not return an invalidation ID.");
+  run("aws", [
+    "cloudfront",
+    "wait",
+    "invalidation-completed",
+    "--distribution-id",
+    DISTRIBUTION_ID,
+    "--id",
+    id
+  ]);
+  return id;
+}
+
+function syncAssets() {
+  run(
+    "aws",
+    ["s3", "sync", ASSETS_DIR, `s3://${BUCKET_NAME}`, "--region", REGION],
+    { inherit: true }
+  );
+}
+
+function captureObject(key, destination) {
+  try {
+    run("aws", [
+      "s3api",
+      "get-object",
+      "--bucket",
+      BUCKET_NAME,
+      "--key",
+      key,
+      destination
+    ]);
+    return fs.readFileSync(destination, "utf8").trim();
+  } catch (error) {
+    return null;
+  }
+}
+
+function captureHomepage(destination) {
+  run("curl", [
+    "--fail",
+    "--silent",
+    "--show-error",
+    "--location",
+    "--retry",
+    "5",
+    "--retry-all-errors",
+    "--output",
+    destination,
+    "https://hecmedia.org/"
+  ]);
+  const body = fs.readFileSync(destination, "utf8");
+  const title = (body.match(/<title>(.*?)<\/title>/i) || [])[1] || "";
+  if (!/HEC-TV/.test(title) || /undefined/i.test(title)) {
+    throw new Error(
+      `Production baseline homepage is not healthy: ${title || "missing title"}`
+    );
+  }
+  return { title, sha256: fileSha256(destination) };
+}
+
+function assertHydratedNavigation(dom, route) {
+  const navigation = String(dom || "").match(
+    /<ul\b[^>]*class="[^"]*\btop-navigation\b[^"]*"[^>]*>([\s\S]*?)<\/ul>/i
+  );
+  if (!navigation || !/<li\b/i.test(navigation[1])) {
+    throw new Error(
+      `Hydrated production route ${route} has no primary navigation items.`
+    );
+  }
+}
+
+const PRODUCTION_MEDIA_HOSTS = new Set([
+  "prd-hectv-wp-media.s3.us-east-2.amazonaws.com",
+  "prod-wp.hectv.org",
+  "prod-wp-ecs.hectv.org"
+]);
+function extractRemoteImageUrls(dom) {
+  const urls = [];
+  // Chrome's --dump-dom output retains <noscript> fallback markup even though
+  // that markup is not rendered when JavaScript is enabled. Only inventory
+  // images from the hydrated document that the production verifier exercises.
+  const content = String(dom || "").replace(
+    /<noscript\b[^>]*>[\s\S]*?<\/noscript\s*>/gi,
+    ""
+  );
+  const imagePattern = /<img\b[^>]*>/gi;
+  let image = imagePattern.exec(content);
+
+  while (image) {
+    const attributePattern = /\b(src|srcset)=["']([^"']+)["']/gi;
+    let attribute = attributePattern.exec(image[0]);
+    while (attribute) {
+      const rawValue = attribute[2].replace(/&amp;/g, "&");
+      const candidates =
+        attribute[1].toLowerCase() === "srcset"
+          ? rawValue.split(",").map(value => value.trim().split(/\s+/)[0])
+          : [rawValue.trim()];
+      candidates.forEach(source => {
+        if (/^https?:\/\//i.test(source) && !urls.includes(source)) {
+          urls.push(source);
+        }
+      });
+      attribute = attributePattern.exec(image[0]);
+    }
+    image = imagePattern.exec(content);
+  }
+
+  return urls;
+}
+
+function extractMediaVerificationSurface(dom, surface) {
+  const content = String(dom || "");
+  const escapedSurface = String(surface).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const openingPattern = new RegExp(
+    `<([a-z][\\w:-]*)\\b[^>]*\\bdata-media-verification=["']${escapedSurface}["'][^>]*>`,
+    "i"
+  );
+  const opening = openingPattern.exec(content);
+  if (!opening) return "";
+
+  const tagPattern = new RegExp(`<\\/?${opening[1]}\\b[^>]*>`, "gi");
+  tagPattern.lastIndex = opening.index + opening[0].length;
+  let depth = 1;
+  let tag = tagPattern.exec(content);
+  while (tag) {
+    if (/^<\//.test(tag[0])) depth -= 1;
+    else if (!/\/>$/.test(tag[0])) depth += 1;
+
+    if (depth === 0) {
+      return content.slice(opening.index, tagPattern.lastIndex);
+    }
+    tag = tagPattern.exec(content);
+  }
+
+  return "";
+}
+
+function isProductionMediaUrl(url) {
+  try {
+    const candidate = new URL(url);
+    return (
+      /^https?:$/.test(candidate.protocol) &&
+      PRODUCTION_MEDIA_HOSTS.has(candidate.hostname) &&
+      candidate.pathname.startsWith("/wp-content/uploads/")
+    );
+  } catch (error) {
+    return false;
+  }
+}
+
+function assertHydratedImageSources(dom, route) {
+  const requirement = HYDRATED_MEDIA_REQUIREMENTS[route] || { minimum: 0 };
+  const verificationDom = requirement.surface
+    ? extractMediaVerificationSurface(dom, requirement.surface)
+    : dom;
+  const imageUrls = extractRemoteImageUrls(dom);
+  const mediaImageUrls = extractRemoteImageUrls(verificationDom).filter(
+    isProductionMediaUrl
+  );
+
+  if (mediaImageUrls.length < requirement.minimum) {
+    throw new Error(
+      `Hydrated production route ${route} has ${
+        mediaImageUrls.length
+      } production media image candidate(s) in ${requirement.surface ||
+        "the document"}; requires at least ${requirement.minimum}.`
+    );
+  }
+
+  return {
+    route,
+    imageUrls,
+    mediaImageUrls,
+    minimumMediaImages: requirement.minimum,
+    verificationSurface: requirement.surface || "document"
+  };
+}
+
+function assertRemoteImageResponse(url, route, result) {
+  const detail = String(result.stderr || "")
+    .trim()
+    .slice(0, 500);
+  if (result.status !== 0) {
+    throw new Error(
+      `Hydrated production route ${route} has a broken image ${url}${
+        detail ? `: ${detail}` : ""
+      }`
+    );
+  }
+
+  const [, contentType = ""] = String(result.stdout || "")
+    .trim()
+    .split("\t");
+  if (!/^image\//i.test(contentType)) {
+    throw new Error(
+      `Hydrated production route ${route} image ${url} returned non-image content type ${contentType ||
+        "unknown"}.`
+    );
+  }
+}
+
+function verifyRemoteImage(url, route) {
+  const result = spawnSync(
+    "curl",
+    [
+      "--fail",
+      "--silent",
+      "--show-error",
+      "--location",
+      "--retry",
+      "2",
+      "--retry-all-errors",
+      "--max-time",
+      "20",
+      "--range",
+      "0-0",
+      "--output",
+      "/dev/null",
+      "--write-out",
+      "%{http_code}\t%{content_type}",
+      url
+    ],
+    { encoding: "utf8", timeout: 30000, maxBuffer: 1024 * 1024 }
+  );
+  assertRemoteImageResponse(url, route, result);
+}
+
+function isApprovedBrowserRequest(rawUrl) {
+  let target;
+  try {
+    target = new URL(rawUrl);
+  } catch (error) {
+    return false;
+  }
+  if (target.protocol === "data:" || target.protocol === "blob:") return true;
+  if (target.protocol !== "https:") return false;
+  const hostname = target.hostname.toLowerCase();
+  if (
+    hostname === "hecmedia.org" ||
+    hostname === "www.hecmedia.org" ||
+    PRODUCTION_MEDIA_HOSTS.has(hostname)
+  ) {
+    return true;
+  }
+  if (hostname === "asset.ytadvisors.com") {
+    return target.pathname.startsWith(
+      "/client-documents/hecmedia/media-library/"
+    );
+  }
+  if (hostname === "maxcdn.bootstrapcdn.com") {
+    return target.pathname.startsWith("/bootstrap/3.3.7/");
+  }
+  if (hostname === "cdnjs.cloudflare.com") {
+    return target.pathname.startsWith("/ajax/libs/slick-carousel/1.8.1/");
+  }
+  if (hostname === "www.google.com" || hostname === "www.gstatic.com") {
+    return target.pathname.startsWith("/recaptcha/");
+  }
+  if (hostname === "www.paypalobjects.com") {
+    return (
+      target.search === "" &&
+      (target.pathname === "/donate/sdk/donate-sdk.js" ||
+        target.pathname === "/en_US/i/btn/btn_donateCC_LG.gif")
+    );
+  }
+  if (hostname !== "www.googletagmanager.com") return false;
+  if (target.pathname === "/gtm.js") {
+    return (
+      target.search === `?id=${expectedGtmContainerId}` &&
+      [...target.searchParams.keys()].length === 1
+    );
+  }
+  return (
+    target.pathname === "/ns.html" &&
+    target.search === `?id=${expectedGtmContainerId}` &&
+    [...target.searchParams.keys()].length === 1
+  );
+}
+
+function browserEvidenceUrl(rawUrl) {
+  try {
+    const target = new URL(rawUrl);
+    return `${target.origin}${target.pathname}`;
+  } catch (error) {
+    return "invalid-url";
+  }
+}
+
+function assertBrowserAcceptanceEvidence(evidence) {
+  if (!evidence || !evidence.route) {
+    throw new Error("Browser acceptance evidence is missing its route.");
+  }
+  const { route } = evidence;
+  if (evidence.statusCode !== 200) {
+    throw new Error(
+      `Browser production route ${route} returned HTTP ${evidence.statusCode}.`
+    );
+  }
+  if (
+    !Array.isArray(evidence.gtmLoaderUrls) ||
+    evidence.gtmLoaderUrls.length !== 1 ||
+    evidence.gtmLoaderUrls[0] !==
+      `https://www.googletagmanager.com/gtm.js?id=${expectedGtmContainerId}`
+  ) {
+    throw new Error(
+      `Browser production route ${route} did not request exactly one approved GTM loader.`
+    );
+  }
+  if (
+    !Array.isArray(evidence.gtmLoaderResponses) ||
+    evidence.gtmLoaderResponses.length !== 1 ||
+    evidence.gtmLoaderResponses[0].url !==
+      `https://www.googletagmanager.com/gtm.js?id=${expectedGtmContainerId}` ||
+    evidence.gtmLoaderResponses[0].status !== 200
+  ) {
+    throw new Error(
+      `Browser production route ${route} did not load the exact approved GTM resource with HTTP 200.`
+    );
+  }
+  if (
+    !evidence.dataLayer ||
+    evidence.dataLayer.gtmJsEvents !== 1 ||
+    evidence.dataLayer.gtmStartEvents !== 1
+  ) {
+    throw new Error(
+      `Browser production route ${route} did not bootstrap window.dataLayer exactly once.`
+    );
+  }
+  if (!evidence.hasHecYoutubeLink) {
+    throw new Error(
+      `Browser production route ${route} lost the HEC on YouTube navigation link.`
+    );
+  }
+  if (route === "/newsletter") {
+    const form = evidence.newsletterForm;
+    if (
+      !form ||
+      form.formCount !== 1 ||
+      form.emailCount !== 1 ||
+      form.consentCount !== 1 ||
+      form.submitCount !== 1 ||
+      !form.formVisible ||
+      !form.emailVisible ||
+      !form.emailEditable ||
+      !form.consentVisible ||
+      !form.consentEnabled ||
+      !form.submitVisible ||
+      !form.submitEnabled
+    ) {
+      throw new Error(
+        "Browser production newsletter route did not render visible, send-enabled form controls."
+      );
+    }
+  }
+  if (
+    (evidence.consoleErrors && evidence.consoleErrors.length > 0) ||
+    (evidence.pageErrors && evidence.pageErrors.length > 0)
+  ) {
+    throw new Error(
+      `Browser production route ${route} emitted a console, CSP, or runtime error.`
+    );
+  }
+}
+
+function verifyHydratedRoutes(browserPath) {
+  if (!browserPath || !fs.existsSync(browserPath)) {
+    throw new Error(
+      "BROWSER_BIN must name an installed Chrome or Chromium binary."
+    );
+  }
+  const routes = Object.keys(HYDRATED_MEDIA_REQUIREMENTS);
+  const verifiedImages = new Set();
+  const mediaEvidence = [];
+  routes.forEach((route, index) => {
+    const result = spawnSync(
+      browserPath,
+      [
+        "--headless",
+        "--no-sandbox",
+        "--disable-gpu",
+        "--enable-logging=stderr",
+        "--v=1",
+        "--window-size=1920,12000",
+        "--run-all-compositor-stages-before-draw",
+        "--virtual-time-budget=7000",
+        "--dump-dom",
+        `https://hecmedia.org${route}`
+      ],
+      { encoding: "utf8", timeout: 60000, maxBuffer: 20 * 1024 * 1024 }
+    );
+    const slug =
+      index === 0 ? "home" : route.replace(/^\//, "").replace(/\//g, "-");
+    fs.writeFileSync(
+      path.join(RELEASE_DIR, `hydrated-${slug}.html`),
+      result.stdout || ""
+    );
+    fs.writeFileSync(
+      path.join(RELEASE_DIR, `browser-${slug}.log`),
+      result.stderr || ""
+    );
+    if (result.status !== 0) {
+      throw new Error(
+        `Hydrated production route ${route} exited ${result.status}.`
+      );
+    }
+    const dom = result.stdout || "";
+    const logs = result.stderr || "";
+    assertRenderedSiteIdentity(dom, route);
+    assertHydratedNavigation(dom, route);
+    const routeMediaEvidence = assertHydratedImageSources(dom, route);
+    routeMediaEvidence.imageUrls.forEach(url => {
+      if (!verifiedImages.has(url)) {
+        verifyRemoteImage(url, route);
+        verifiedImages.add(url);
+      }
+    });
+    mediaEvidence.push(routeMediaEvidence);
+    if (/incompatible-href-as|provided .as. value.*incompatible/i.test(logs)) {
+      throw new Error(
+        `Hydrated production route ${route} emitted a dynamic-route error.`
+      );
+    }
+    if (
+      /Uncaught (\(in promise\) )?TypeError|TypeError:|Uncaught Error/i.test(
+        logs
+      )
+    ) {
+      throw new Error(
+        `Hydrated production route ${route} emitted an uncaught JavaScript error.`
+      );
+    }
+  });
+  fs.writeFileSync(
+    path.join(RELEASE_DIR, "hydrated-media.json"),
+    JSON.stringify(
+      {
+        checkedAt: new Date().toISOString(),
+        uniqueImageCount: verifiedImages.size,
+        routes: mediaEvidence
+      },
+      null,
+      2
+    )
+  );
+}
+
+async function verifyBrowserAcceptance(browserPath) {
+  if (!browserPath || !fs.existsSync(browserPath)) {
+    throw new Error(
+      "BROWSER_BIN must name an installed Chrome or Chromium binary."
+    );
+  }
+  // Required by the production workflow after an exact frozen install. Keeping
+  // this lazy lets pure deploy-contract tests run without launching a browser.
+  // eslint-disable-next-line import/no-extraneous-dependencies
+  const { chromium } = require("@playwright/test");
+  const browser = await chromium.launch({ executablePath: browserPath });
+  const context = await browser.newContext();
+  const evidence = [];
+  const browserRoutes = ["/", "/posts/hec-on-youtube", "/newsletter"];
+  try {
+    await browserRoutes.reduce(
+      (pendingRoute, route) =>
+        pendingRoute.then(async () => {
+          const page = await context.newPage();
+          const gtmLoaderUrls = [];
+          const gtmLoaderResponses = [];
+          const blockedThirdPartyRequests = [];
+          const blockedResourceErrors = [];
+          const consoleErrors = [];
+          const pageErrors = [];
+          await page.route("**/*", async intercepted => {
+            const requestUrl = intercepted.request().url();
+            if (!isApprovedBrowserRequest(requestUrl)) {
+              blockedThirdPartyRequests.push(browserEvidenceUrl(requestUrl));
+              await intercepted.abort("blockedbyclient");
+              return;
+            }
+            await intercepted.continue();
+          });
+          page.on("request", request => {
+            let target;
+            try {
+              target = new URL(request.url());
+            } catch (error) {
+              return;
+            }
+            if (
+              target.hostname === "www.googletagmanager.com" &&
+              target.pathname === "/gtm.js"
+            ) {
+              gtmLoaderUrls.push(target.href);
+            }
+          });
+          page.on("response", response => {
+            let target;
+            try {
+              target = new URL(response.url());
+            } catch (error) {
+              return;
+            }
+            if (
+              target.hostname === "www.googletagmanager.com" &&
+              target.pathname === "/gtm.js"
+            ) {
+              gtmLoaderResponses.push({
+                status: response.status(),
+                url: target.href
+              });
+            }
+          });
+          page.on("console", message => {
+            if (message.type() !== "error") return;
+            if (/net::ERR_BLOCKED_BY_CLIENT/.test(message.text())) {
+              blockedResourceErrors.push(message.text());
+              return;
+            }
+            consoleErrors.push(message.text());
+          });
+          page.on("pageerror", error => pageErrors.push(error.message));
+
+          const response = await page.goto(`https://hecmedia.org${route}`, {
+            timeout: 60000,
+            waitUntil: "domcontentloaded"
+          });
+          await page.waitForFunction(
+            () =>
+              Array.isArray(window.dataLayer) &&
+              window.dataLayer.some(entry => entry && entry.event === "gtm.js"),
+            null,
+            { timeout: 15000 }
+          );
+          await page.waitForTimeout(2000);
+          const dom = await page.content();
+          assertRenderedSiteIdentity(dom, route);
+          assertOnlyApprovedGtmIds(dom, route);
+          assertHydratedNavigation(dom, route);
+          if (
+            Object.prototype.hasOwnProperty.call(
+              HYDRATED_MEDIA_REQUIREMENTS,
+              route
+            )
+          ) {
+            assertHydratedImageSources(dom, route);
+          }
+          let newsletterForm = null;
+          if (route === "/newsletter") {
+            const form = page.locator("form.newsletter-signup-form");
+            const email = form.locator("#newsletter-email");
+            const consent = form.locator("#newsletter-consent");
+            const submit = form.locator('button[type="submit"]');
+            newsletterForm = {
+              formCount: await form.count(),
+              emailCount: await email.count(),
+              consentCount: await consent.count(),
+              submitCount: await submit.count()
+            };
+            if (
+              newsletterForm.formCount === 1 &&
+              newsletterForm.emailCount === 1 &&
+              newsletterForm.consentCount === 1 &&
+              newsletterForm.submitCount === 1
+            ) {
+              Object.assign(newsletterForm, {
+                formVisible: await form.isVisible(),
+                emailVisible: await email.isVisible(),
+                emailEditable: await email.isEditable(),
+                consentVisible: await consent.isVisible(),
+                consentEnabled: await consent.isEnabled(),
+                submitVisible: await submit.isVisible(),
+                submitEnabled: await submit.isEnabled()
+              });
+            }
+          }
+          const routeEvidence = {
+            blockedResourceErrors,
+            blockedThirdPartyRequests,
+            consoleErrors,
+            dataLayer: await page.evaluate(() => {
+              const entries = Array.isArray(window.dataLayer)
+                ? window.dataLayer
+                : [];
+              const gtmEvents = entries.filter(
+                entry => entry && entry.event === "gtm.js"
+              );
+              return {
+                entryCount: entries.length,
+                gtmJsEvents: gtmEvents.length,
+                gtmStartEvents: gtmEvents.filter(entry =>
+                  Number.isFinite(entry["gtm.start"])
+                ).length
+              };
+            }),
+            gtmLoaderResponses,
+            gtmLoaderUrls,
+            hasHecYoutubeLink:
+              (await page.locator('a[href="/posts/hec-on-youtube"]').count()) >
+              0,
+            newsletterForm,
+            pageErrors,
+            route,
+            statusCode: response ? response.status() : 0
+          };
+          evidence.push(routeEvidence);
+          assertBrowserAcceptanceEvidence(routeEvidence);
+          await page.close();
+        }),
+      Promise.resolve()
+    );
+  } finally {
+    fs.writeFileSync(
+      path.join(RELEASE_DIR, "browser-acceptance.json"),
+      JSON.stringify(
+        {
+          checkedAt: new Date().toISOString(),
+          routes: evidence
+        },
+        null,
+        2
+      )
+    );
+    await context.close();
+    await browser.close();
+  }
+  return evidence;
+}
+
+function writeEvidence(state) {
+  fs.writeFileSync(EVIDENCE_PATH, JSON.stringify(state, null, 2));
+}
+
+function applySanitizedRollback(state, rollbackVersionArn) {
+  const nextState = { ...state };
+  const current = getDistributionConfig();
+  const rollbackConfig = configureSanitizedRollback(
+    current.DistributionConfig,
+    rollbackVersionArn
+  );
+  const rollbackPath = path.join(
+    RELEASE_DIR,
+    "cloudfront-sanitized-rollback.json"
+  );
+  updateDistribution(rollbackConfig, current.ETag, rollbackPath);
+  nextState.rollback_invalidation_id = invalidate(["/*"]);
+  const rollbackHome = path.join(RELEASE_DIR, "rollback-home.html");
+  nextState.rollback_home = captureHomepage(rollbackHome);
+  nextState.rollback_outcome = "sanitized-authorized-baseline-restored";
+  writeEvidence(nextState);
+  return nextState;
+}
+
+function ensureBuildArtifacts() {
+  [DEFAULT_ZIP, API_ZIP, ASSETS_DIR].forEach(entry => {
+    if (!fs.existsSync(entry))
+      throw new Error(`Production build artifact is missing: ${entry}`);
+  });
+  const metadata = JSON.parse(
+    fs.readFileSync(path.join(RELEASE_DIR, "build-metadata.json"), "utf8")
+  );
+  if (
+    metadata.release_sha !== process.env.DEPLOY_SHA ||
+    metadata.default_zip_code_sha256 !== zipCodeSha256(DEFAULT_ZIP) ||
+    metadata.api_zip_code_sha256 !== zipCodeSha256(API_ZIP)
+  ) {
+    throw new Error(
+      "Production build metadata does not match the release artifacts."
+    );
+  }
+  return metadata;
+}
+
+function assertDistributionContractWithRelease(
+  config,
+  defaultVersionArn,
+  apiVersionArn
+) {
+  assertDistributionContract(config, defaultVersionArn, apiVersionArn);
+  const nextDataBehavior = config.CacheBehaviors.Items.find(
+    behavior => behavior.PathPattern === "_next/data/*"
+  );
+  if (
+    config.DefaultCacheBehavior.DefaultTTL !== SSR_DEFAULT_TTL_SECONDS ||
+    nextDataBehavior.DefaultTTL !== SSR_DEFAULT_TTL_SECONDS
+  ) {
+    throw new Error(
+      "Production release did not apply the five-minute SSR TTL."
+    );
+  }
+}
+
+async function deploy() {
+  assertGovernedDeployContext(process.env, "deploy");
+  requireBuildContract();
+  const metadata = ensureBuildArtifacts();
+  const expectedEtag = process.env.EXPECTED_CLOUDFRONT_ETAG || "";
+  const expectedDefaultArn =
+    process.env.EXPECTED_DEFAULT_LAMBDA_VERSION_ARN || "";
+  const expectedDefaultCodeSha =
+    process.env.EXPECTED_DEFAULT_LAMBDA_CODE_SHA256 || "";
+  const expectedApiArn = process.env.EXPECTED_API_LAMBDA_VERSION_ARN || "";
+  assertVersionArn(expectedDefaultArn, DEFAULT_FUNCTION_ARN);
+  if (expectedApiArn !== "none") {
+    assertVersionArn(expectedApiArn, API_FUNCTION_ARN);
+  }
+  if (!/^[-A-Za-z0-9+/]{20,}={0,2}$/.test(expectedDefaultCodeSha)) {
+    throw new Error("EXPECTED_DEFAULT_LAMBDA_CODE_SHA256 is invalid.");
+  }
+
+  fs.mkdirSync(RELEASE_DIR, { recursive: true });
+  const baseline = getDistributionConfig();
+  if (baseline.ETag !== expectedEtag) {
+    throw new Error(
+      "CloudFront ETag changed after authorization; refusing release."
+    );
+  }
+  assertDistributionContract(
+    baseline.DistributionConfig,
+    expectedDefaultArn,
+    expectedApiArn
+  );
+  const baselineFunction = functionConfiguration(
+    DEFAULT_FUNCTION_NAME,
+    expectedDefaultArn.split(":").pop()
+  );
+  // Baseline published version may predate the nodejs24 upgrade.
+  assertFunctionContract(
+    baselineFunction,
+    expectedDefaultArn,
+    DEFAULT_FUNCTION_MEMORY_MB,
+    {
+      allowedRuntimes: ["nodejs12.x", "nodejs24.x"],
+      allowedMemorySizes: [
+        DEFAULT_FUNCTION_MEMORY_MB,
+        LEGACY_DEFAULT_FUNCTION_MEMORY_MB
+      ]
+    }
+  );
+  if (baselineFunction.CodeSha256 !== expectedDefaultCodeSha) {
+    throw new Error("Baseline Lambda checksum changed after authorization.");
+  }
+  assertFunctionContract(
+    functionConfiguration(DEFAULT_FUNCTION_NAME),
+    DEFAULT_FUNCTION_ARN,
+    DEFAULT_FUNCTION_MEMORY_MB,
+    {
+      allowedMemorySizes: [
+        DEFAULT_FUNCTION_MEMORY_MB,
+        LEGACY_DEFAULT_FUNCTION_MEMORY_MB
+      ]
+    }
+  );
+  assertFunctionContract(
+    functionConfiguration(API_FUNCTION_NAME),
+    API_FUNCTION_ARN,
+    1024
+  );
+  const baselineConfigPath = path.join(RELEASE_DIR, "cloudfront-before.json");
+  fs.writeFileSync(baselineConfigPath, JSON.stringify(baseline, null, 2));
+  // Empty stdout = never-configured (not an error); Status absent → enable below.
+  const bucketVersioning = runJson(
+    "aws",
+    ["s3api", "get-bucket-versioning", "--bucket", BUCKET_NAME],
+    { allowEmptyObject: true }
+  );
+  const baselineBuildId = captureObject(
+    "BUILD_ID",
+    path.join(RELEASE_DIR, "s3-build-id-before.txt")
+  );
+  const baselineHomepage = captureHomepage(
+    path.join(RELEASE_DIR, "homepage-before.html")
+  );
+  let state = {
+    target: "https://hecmedia.org",
+    outcome: "in_progress",
+    release_sha: process.env.DEPLOY_SHA,
+    request_task_id: process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID,
+    dispatch_actor: process.env.GITHUB_ACTOR,
+    baseline_cloudfront_etag: baseline.ETag,
+    baseline_default_lambda_arn: expectedDefaultArn,
+    baseline_default_lambda_code_sha256: expectedDefaultCodeSha,
+    baseline_api_lambda_arn: expectedApiArn,
+    sanitized_rollback_lambda_arn: expectedDefaultArn,
+    sanitized_rollback_code_sha256: expectedDefaultCodeSha,
+    baseline_bucket_versioning: bucketVersioning.Status || "Disabled",
+    baseline_s3_build_id: baselineBuildId,
+    baseline_homepage: baselineHomepage,
+    build: metadata,
+    rollback_outcome: "not-needed",
+    generated_at: new Date().toISOString()
+  };
+  writeEvidence(state);
+
+  let cloudFrontMutationAttempted = false;
+  try {
+    if (bucketVersioning.Status !== "Enabled") {
+      run("aws", [
+        "s3api",
+        "put-bucket-versioning",
+        "--bucket",
+        BUCKET_NAME,
+        "--versioning-configuration",
+        "Status=Enabled"
+      ]);
+    }
+    const enabled = runJson(
+      "aws",
+      ["s3api", "get-bucket-versioning", "--bucket", BUCKET_NAME],
+      { allowEmptyObject: true }
+    );
+    if (enabled.Status !== "Enabled") {
+      throw new Error("Production S3 versioning did not become enabled.");
+    }
+
+    syncAssets();
+    const shortSha = process.env.DEPLOY_SHA.slice(0, 12);
+    const defaultPublished = publishLambda(
+      DEFAULT_FUNCTION_NAME,
+      DEFAULT_ZIP,
+      `HEC production ${shortSha} task ${process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID}`
+    );
+    const apiPublished = publishLambda(
+      API_FUNCTION_NAME,
+      API_ZIP,
+      `HEC newsletter ${shortSha} task ${process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID}`
+    );
+    state.new_default_lambda = defaultPublished;
+    state.new_api_lambda = apiPublished;
+    writeEvidence(state);
+
+    const beforeCutover = getDistributionConfig();
+    if (
+      beforeCutover.ETag !== baseline.ETag ||
+      JSON.stringify(beforeCutover.DistributionConfig) !==
+        JSON.stringify(baseline.DistributionConfig)
+    ) {
+      throw new Error(
+        "CloudFront changed while artifacts were publishing; refusing cutover."
+      );
+    }
+    const productionConfig = configureProductionDistribution(
+      beforeCutover.DistributionConfig,
+      expectedDefaultArn,
+      expectedApiArn,
+      defaultPublished.arn,
+      apiPublished.arn
+    );
+    cloudFrontMutationAttempted = true;
+    updateDistribution(
+      productionConfig,
+      beforeCutover.ETag,
+      path.join(RELEASE_DIR, "cloudfront-release.json")
+    );
+    state.invalidation_id = invalidate(["/*"]);
+
+    run("node", [path.join(REPO_ROOT, "scripts", "verify-production.js")], {
+      env: {
+        ...process.env,
+        PRODUCTION_SITE_URL: "https://hecmedia.org",
+        CLOUDFRONT_ALIASES: "hecmedia.org,www.hecmedia.org"
+      }
+    });
+    verifyHydratedRoutes(process.env.BROWSER_BIN);
+    await verifyBrowserAcceptance(process.env.BROWSER_BIN);
+
+    const live = getDistributionConfig();
+    assertDistributionContractWithRelease(
+      live.DistributionConfig,
+      defaultPublished.arn,
+      apiPublished.arn
+    );
+    state.live_cloudfront_etag = live.ETag;
+    state.outcome = "success";
+    state.completed_at = new Date().toISOString();
+    writeEvidence(state);
+    console.log(
+      `HEC frontend production release verified: ${defaultPublished.arn} + ${apiPublished.arn}`
+    );
+  } catch (error) {
+    state.outcome = "failed";
+    state.error = error.message || String(error);
+    if (cloudFrontMutationAttempted) {
+      try {
+        state = applySanitizedRollback(state, expectedDefaultArn);
+      } catch (rollbackError) {
+        state.rollback_outcome = "rollback-failed";
+        state.rollback_error = rollbackError.message || String(rollbackError);
+      }
+    } else {
+      state.rollback_outcome = "public-cutover-not-started";
+    }
+    state.completed_at = new Date().toISOString();
+    writeEvidence(state);
+    throw error;
+  }
+}
+
+function rollback() {
+  assertGovernedDeployContext(process.env, "rollback");
+  const rollbackVersionArn =
+    process.env.EXPECTED_DEFAULT_LAMBDA_VERSION_ARN || "";
+  const rollbackCodeSha = process.env.EXPECTED_DEFAULT_LAMBDA_CODE_SHA256 || "";
+  assertVersionArn(rollbackVersionArn, DEFAULT_FUNCTION_ARN);
+  if (!/^[-A-Za-z0-9+/]{20,}={0,2}$/.test(rollbackCodeSha)) {
+    throw new Error("EXPECTED_DEFAULT_LAMBDA_CODE_SHA256 is invalid.");
+  }
+  const rollbackFunction = functionConfiguration(
+    DEFAULT_FUNCTION_NAME,
+    publishedVersionFromArn(rollbackVersionArn)
+  );
+  assertFunctionContract(
+    rollbackFunction,
+    rollbackVersionArn,
+    DEFAULT_FUNCTION_MEMORY_MB,
+    {
+      allowedRuntimes: ["nodejs12.x", "nodejs24.x"],
+      allowedMemorySizes: [
+        DEFAULT_FUNCTION_MEMORY_MB,
+        LEGACY_DEFAULT_FUNCTION_MEMORY_MB
+      ]
+    }
+  );
+  if (rollbackFunction.CodeSha256 !== rollbackCodeSha) {
+    throw new Error("Authorized rollback Lambda checksum changed.");
+  }
+  fs.mkdirSync(RELEASE_DIR, { recursive: true });
+  let state = {};
+  if (fs.existsSync(EVIDENCE_PATH)) {
+    state = JSON.parse(fs.readFileSync(EVIDENCE_PATH, "utf8"));
+  }
+  state.outcome = "manual_rollback";
+  state.release_sha = process.env.DEPLOY_SHA;
+  state.request_task_id = process.env.HECMEDIA_PRODUCTION_REQUEST_TASK_ID;
+  state.sanitized_rollback_lambda_arn = rollbackVersionArn;
+  state.sanitized_rollback_code_sha256 = rollbackCodeSha;
+  state = applySanitizedRollback(state, rollbackVersionArn);
+  return state;
+}
+
+async function main() {
+  const command = process.argv[2];
+  if (command === "build") return build();
+  if (command === "deploy") return deploy();
+  if (command === "rollback") return rollback();
+  throw new Error(
+    `Unknown command "${command}". Use build, deploy, or rollback.`
+  );
+}
+
+if (require.main === module) {
+  main().catch(error => {
+    console.error(error && error.stack ? error.stack : error);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  API_PATH,
+  DEFAULT_FUNCTION_MEMORY_MB,
+  SSR_DEFAULT_TTL_SECONDS,
+  apiBehavior,
+  assertDistributionContract,
+  assertFunctionContract,
+  assertGovernedDeployContext,
+  assertBrowserAcceptanceEvidence,
+  assertHydratedImageSources,
+  assertHydratedNavigation,
+  assertRemoteImageResponse,
+  configureProductionDistribution,
+  configureSanitizedRollback,
+  configureSsrCacheTtl,
+  extractRemoteImageUrls,
+  isApprovedBrowserRequest,
+  parseJsonOutput,
+  publishedVersionFromArn,
+  requireBuildContract,
+  verifyBrowserAcceptance
+};

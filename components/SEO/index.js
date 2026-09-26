@@ -12,7 +12,10 @@ export default ({
   pathname,
   twitterHandle = "@hec_tv",
   categories,
-  url
+  url,
+  preloadImage,
+  preloadImageSrcSet,
+  preloadImageSizes
 }) => (
   <>
     <Head>
@@ -46,11 +49,15 @@ export default ({
       <meta name="twitter:creator" content={twitterHandle || ""} />
       <meta charSet="utf-8" />
       <meta httpEquiv="x-ua-compatible" content="ie=edge" />
-      <script
-        src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit"
-        async
-        defer
-      />
+      {preloadImage ? (
+        <link
+          rel="preload"
+          as="image"
+          href={preloadImage}
+          imageSrcSet={preloadImageSrcSet}
+          imageSizes={preloadImageSizes}
+        />
+      ) : null}
       <link
         rel="stylesheet"
         href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
@@ -108,7 +115,6 @@ export default ({
           }}
         />
       )}
-      <script type="text/javascript">{`function onloadCallback() {}`}</script>
     </Head>
 
     <TagManager />

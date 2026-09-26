@@ -2,7 +2,6 @@ import React from "react";
 import { FaPlayCircle } from "react-icons/fa";
 
 import { getCurrentPrograms } from "../../lib/getFunctions";
-import "./styles.scss";
 
 export default ({ programs = {} }) => {
   const { scheduleDetails: { schedulePrograms } = {} } = programs || {};

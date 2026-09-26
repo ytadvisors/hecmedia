@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import ReactPlayer from "react-player";
 import { Button } from "react-bootstrap";
-import "./styles.scss";
 
 export default class VideoPlayer extends Component {
   constructor(props) {

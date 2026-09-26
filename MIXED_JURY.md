@@ -3,7 +3,8 @@
 Every pull request to `master` must receive an approving review from a model
 provider family different from the author's family. OpenAI-authored changes
 require an Anthropic approval; Anthropic-authored changes require an OpenAI
-approval. Human-authored changes require an agent-family approval.
+approval; Grok-authored changes require an OpenAI or Anthropic approval.
+Human-authored changes require an agent-family approval.
 
 The `Jury diversity / mixed-jury` check evaluates the latest standing verdict
 from each reviewer and fails closed when an agent identity is unmapped. Review

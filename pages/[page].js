@@ -10,6 +10,7 @@ import Template1 from "../containers/_templates/template-1";
 import Template2 from "../containers/_templates/template-2";
 import Template3 from "../containers/_templates/template-3";
 import { GET_PAGE_TEMPLATE } from "../lib/graphql";
+import pageDetailQueryOptions from "../lib/pageDetailQueryOptions";
 
 export default props => {
   const router = useRouter();
@@ -18,11 +19,8 @@ export default props => {
 
   if (page === "favicon.ico") return "";
 
-  const variables = { uri: page };
   const { data } = page
-    ? useQuery(GET_PAGE_TEMPLATE, {
-        variables
-      })
+    ? useQuery(GET_PAGE_TEMPLATE, pageDetailQueryOptions(page))
     : {};
 
   const { pageInfo } = data || {};

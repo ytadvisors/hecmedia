@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+
+# Builds, lint and coverage run in AWS CodeBuild. Keep the existing
+# branch-protection check solely as a non-deploying retirement guard.
+jobs:
+  # Preserve the historical check name for branch-protection compatibility.
+  # The job now fails closed if a staging deployment entrypoint is reintroduced.
+  preview-deploy:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify staging publishing remains retired
+        run: |
+          set -euo pipefail
+          test ! -e .github/workflows/staging-deploy.yml
+          test ! -e scripts/staging-deploy.js
+          test ! -e scripts/verify-staging.js
+          test -f scripts/edge-package-build.js
+          grep -q 'require("./edge-package-build")' scripts/production-deploy.js
+          echo "Staging publishing remains retired; production uses the build-only helper."

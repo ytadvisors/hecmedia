@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import validator from "validator";
 import Recaptcha from "react-recaptcha";
-import "./styles.scss";
+import { loadRecaptchaScript } from "../../lib/loadRecaptcha";
 
 const STATUS = {
   IDLE: "idle",
@@ -10,6 +10,10 @@ const STATUS = {
   SUCCESS: "success",
   ERROR: "error"
 };
+
+// react-recaptcha requires an onload callback before it will render in the
+// explicit mode used by the site-wide Google API script.
+const handleCaptchaLoad = () => {};
 
 function validate({ firstName, lastName, email, consent }) {
   const errors = {};
@@ -27,6 +31,7 @@ function validate({ firstName, lastName, email, consent }) {
 export default function NewsletterSignupForm({
   onSubscribe,
   captchaSiteKey,
+  captchaRequired,
   onSuccess
 }) {
   const [values, setValues] = useState({
@@ -39,8 +44,20 @@ export default function NewsletterSignupForm({
   const [status, setStatus] = useState(STATUS.IDLE);
   const [serverError, setServerError] = useState(null);
   const [captchaToken, setCaptchaToken] = useState(null);
+  const captchaRef = useRef(null);
 
   const captchaAvailable = Boolean(captchaSiteKey);
+
+  useEffect(() => {
+    if (captchaRequired && captchaAvailable) loadRecaptchaScript();
+  }, [captchaRequired, captchaAvailable]);
+
+  const resetCaptcha = () => {
+    setCaptchaToken(null);
+    if (captchaRef.current && captchaRef.current.reset) {
+      captchaRef.current.reset();
+    }
+  };
 
   const handleChange = field => event => {
     const { value, type, checked } = event.target;
@@ -56,7 +73,7 @@ export default function NewsletterSignupForm({
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) return;
-    if (!captchaToken) {
+    if (captchaRequired && !captchaToken) {
       setStatus(STATUS.ERROR);
       setServerError("Please complete spam verification.");
       return;
@@ -66,17 +83,22 @@ export default function NewsletterSignupForm({
     setServerError(null);
 
     try {
-      const result = await onSubscribe({ ...values, captchaToken });
+      const result = await onSubscribe({
+        ...values,
+        ...(captchaRequired ? { captchaToken } : {})
+      });
       if (result && result.ok) {
         setStatus(STATUS.SUCCESS);
         onSuccess();
       } else {
         setStatus(STATUS.ERROR);
         setServerError((result && result.error) || "Something went wrong.");
+        resetCaptcha();
       }
     } catch (err) {
       setStatus(STATUS.ERROR);
       setServerError("Something went wrong. Please try again.");
+      resetCaptcha();
     }
   };
 
@@ -84,7 +106,7 @@ export default function NewsletterSignupForm({
     return (
       <div className="newsletter-signup-form" data-testid="newsletter-success">
         <p className="success-message">
-          You&rsquo;re subscribed! Thanks for signing up for HEC Media updates.
+          Thanks! Check your inbox to confirm your HEC Media subscription.
         </p>
       </div>
     );
@@ -94,7 +116,7 @@ export default function NewsletterSignupForm({
 
   return (
     <form className="newsletter-signup-form" onSubmit={handleSubmit} noValidate>
-      <div className="field">
+      <div className="field field--first-name">
         <label htmlFor="newsletter-first-name">First name</label>
         <input
           id="newsletter-first-name"
@@ -102,13 +124,19 @@ export default function NewsletterSignupForm({
           value={values.firstName}
           onChange={handleChange("firstName")}
           disabled={isLoading}
+          aria-invalid={Boolean(errors.firstName)}
+          aria-describedby={
+            errors.firstName ? "newsletter-first-name-error" : undefined
+          }
         />
         {errors.firstName && (
-          <div className="field-error">{errors.firstName}</div>
+          <div id="newsletter-first-name-error" className="field-error">
+            {errors.firstName}
+          </div>
         )}
       </div>
 
-      <div className="field">
+      <div className="field field--last-name">
         <label htmlFor="newsletter-last-name">Last name</label>
         <input
           id="newsletter-last-name"
@@ -116,13 +144,19 @@ export default function NewsletterSignupForm({
           value={values.lastName}
           onChange={handleChange("lastName")}
           disabled={isLoading}
+          aria-invalid={Boolean(errors.lastName)}
+          aria-describedby={
+            errors.lastName ? "newsletter-last-name-error" : undefined
+          }
         />
         {errors.lastName && (
-          <div className="field-error">{errors.lastName}</div>
+          <div id="newsletter-last-name-error" className="field-error">
+            {errors.lastName}
+          </div>
         )}
       </div>
 
-      <div className="field">
+      <div className="field field--email">
         <label htmlFor="newsletter-email">Email</label>
         <input
           id="newsletter-email"
@@ -130,11 +164,17 @@ export default function NewsletterSignupForm({
           value={values.email}
           onChange={handleChange("email")}
           disabled={isLoading}
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? "newsletter-email-error" : undefined}
         />
-        {errors.email && <div className="field-error">{errors.email}</div>}
+        {errors.email && (
+          <div id="newsletter-email-error" className="field-error">
+            {errors.email}
+          </div>
+        )}
       </div>
 
-      <div className="field consent">
+      <div className="field field--wide consent">
         <label htmlFor="newsletter-consent">
           <input
             id="newsletter-consent"
@@ -142,29 +182,53 @@ export default function NewsletterSignupForm({
             checked={values.consent}
             onChange={handleChange("consent")}
             disabled={isLoading}
+            aria-invalid={Boolean(errors.consent)}
+            aria-describedby={
+              errors.consent ? "newsletter-consent-error" : undefined
+            }
           />
           I agree to receive email updates from HEC Media.
         </label>
-        {errors.consent && <div className="field-error">{errors.consent}</div>}
+        {errors.consent && (
+          <div id="newsletter-consent-error" className="field-error">
+            {errors.consent}
+          </div>
+        )}
       </div>
 
-      {captchaAvailable ? (
-        <div className="field captcha-slot" data-testid="captcha-slot">
+      {captchaRequired && captchaAvailable && (
+        <div
+          className="field field--wide captcha-slot"
+          data-testid="captcha-slot"
+        >
           <Recaptcha
+            ref={captchaRef}
             sitekey={captchaSiteKey}
+            render="explicit"
+            onloadCallback={handleCaptchaLoad}
+            elementID="newsletter-recaptcha"
             verifyCallback={setCaptchaToken}
             expiredCallback={() => setCaptchaToken(null)}
           />
         </div>
-      ) : (
-        <div className="captcha-unavailable" data-testid="captcha-unavailable">
+      )}
+
+      {captchaRequired && !captchaAvailable && (
+        <div
+          className="field--wide captcha-unavailable"
+          data-testid="captcha-unavailable"
+        >
           Spam verification is unavailable. Newsletter signup cannot be
           completed right now.
         </div>
       )}
 
       {status === STATUS.ERROR && (
-        <div className="form-error" role="alert" data-testid="form-error">
+        <div
+          className="field--wide form-error"
+          role="alert"
+          data-testid="form-error"
+        >
           {serverError}
         </div>
       )}
@@ -179,10 +243,12 @@ export default function NewsletterSignupForm({
 NewsletterSignupForm.propTypes = {
   onSubscribe: PropTypes.func.isRequired,
   captchaSiteKey: PropTypes.string,
+  captchaRequired: PropTypes.bool,
   onSuccess: PropTypes.func
 };
 
 NewsletterSignupForm.defaultProps = {
   captchaSiteKey: undefined,
+  captchaRequired: true,
   onSuccess: () => {}
 };

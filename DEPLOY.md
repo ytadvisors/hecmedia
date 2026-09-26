@@ -1,82 +1,138 @@
 # Deploy & Rollback
 
-## Stack
+Before the next HEC Media production release, review and approve the
+[2026-08-06 production release playbook](docs/operations/production-release-playbook-2026-08-06.md)
+and its [incident report/RCA](docs/incidents/2026-08-06-production-deployment.md). The playbook's
+cross-repository compatibility gates and stop conditions supplement this workflow reference.
+
+The current GTM restoration release is governed by the
+[2026-08-10 GTM production deployment playbook](docs/operations/gtm-production-deployment-playbook-2026-08-10.md).
+Its [living deployment log](docs/operations/gtm-production-deployment-log-2026-08-10.md) records
+the exact gate and execution receipts.
+For this release, the owner narrowed execution to the merged media and GTM changes plus the
+route-verifier, immutable-tag, and live browser acceptance corrections described below. The
+larger proposed external recovery/preimage architecture remains deferred and must not be inferred
+from this release. The protected environment and exact green workflow remain mandatory.
+
+> **NEXT 12 DEPLOYMENT BOUNDARY — PRODUCTION WORKFLOW ONLY**
+>
+> The `upgrade/next16` compatibility checkpoint upgrades the application runtime to
+> Next.js 12, but this repository still packages Lambda@Edge with the Next-9-era
+> `@sls-next/serverless-component@1.19.1-patch.1` /
+> `@sls-next/lambda-at-edge@1.4.1-alpha.2` stack. Do not run `yarn deploy`,
+> `serverless`, or any full-stack production deployment from that checkpoint.
+>
+> Frontend staging publishing is retired. This repository has no staging deploy
+> workflow, deployment script, or rollback entrypoint, and those paths must not be
+> recreated. Existing staging cloud resources remain live until the separately
+> approved Phase 2 teardown is executed and verified; their continued existence is
+> not permission to publish to them.
+>
+> Production uses `.github/workflows/production-deploy.yml` from the exact protected
+> `master` tip. GitHub's `production` environment requires an independent owner
+> approval, prevents self-review, and permits only `master`. The workflow compares the
+> authorized CloudFront ETag, versioned Lambda ARN, and Lambda checksum before any
+> public cutover; scans the uncompressed package for AWS access keys; enables S3
+> versioning; updates only existing production resources; verifies rendered and
+> hydrated routes; and automatically restores the immutable sanitized Lambda version
+> `157` if post-cutover verification fails. Version `157` is the verified
+> `eb3714d80f12` release from governed run `32730847923`. Direct workstation
+> production mutation is not an approved workaround. A green build or test alone is
+> not permission to ship.
+
+## Legacy full-stack deployment (blocked)
 
 This site deploys via the **Serverless Components** framework (`serverless.yml` uses the
 `@sls-next/serverless-component@1.19.1-patch.1` component, not the classic Serverless Framework
-CloudFormation stack). Deploy is:
+CloudFormation stack). Its historical deploy command is:
 
 ```shell
-yarn deploy   # = yarn install && serverless
+yarn deploy   # BLOCKED at the Next 12 checkpoint
 ```
 
 This builds the Next.js app and pushes Lambda@Edge functions + a CloudFront distribution + S3
 static assets, driven by env vars `APOLLO_CLIENT_URI`, `SUBDOMAIN`, `DOMAIN` (see `serverless.yml`).
-Credentials are human-gated. The CI preview job skips deployment unless a human has configured
-the deploy secrets and Yomi has approved that deployment.
+It is not approved while the checkpoint above remains active. Production publishes
+only through its governed existing-resource workflow; staging has no repository deploy path.
 
 **Important distinction:** Serverless Components does not use CloudFormation stacks. There is
 **no `serverless rollback -t <timestamp>` command** for `@sls-next` deployments — that command only
-exists for the classic (v1/v2) Serverless Framework, which this repo does not use. Any rollback
-here means **redeploying an older commit**, not reverting a stack.
+exists for the classic (v1/v2) Serverless Framework, which this repo does not use. The governed
+production rollback is an explicit CloudFront reassociation to the exact, checksum-verified
+Lambda version in the authorized pre-release baseline, with the newsletter API behavior removed;
+the historical Serverless path has no supported rollback operation.
 
-## Rollback: redeploy an older commit
+## Governed production publish and rollback
 
-Because there's no native rollback command, "rolling back" is just running the normal deploy
-against the last known-good commit:
+Dispatch `.github/workflows/production-deploy.yml` only from `master`. A deploy requires the
+exact `master` SHA, the CloudFront ETag captured immediately before approval, the exact live
+default Lambda@Edge version ARN and `CodeSha256`, the exact live newsletter API version ARN (or
+`none` when the behavior is absent), a positive HEC Media queue-task receipt, and the literal
+confirmation `DEPLOY HEC FRONTEND PRODUCTION`.
 
-1. Identify the last known-good ref — prefer a tagged release (see convention below) over a raw
-   SHA, so there's no ambiguity about what "good" means.
-   ```shell
-   git tag --sort=-creatordate | head -5
-   ```
-2. Check it out on a clean tree (don't do this on top of uncommitted changes):
-   ```shell
-   git fetch origin --tags
-   git checkout <tag-or-sha>
-   ```
-3. Redeploy from that commit:
-   ```shell
-   yarn install
-   yarn deploy
-   ```
-4. Smoke-test the deployed domain before declaring the rollback complete. Use the same
-   `SUBDOMAIN` and `DOMAIN` values supplied to the deploy, and verify both the home page and a
-   known dynamic route return successful HTTP responses after CloudFront propagation:
-   ```shell
-   SITE_URL="https://${SUBDOMAIN}.${DOMAIN}"
-   curl --fail --silent --show-error --location --retry 12 --retry-all-errors \
-     --retry-delay 10 --output /dev/null "$SITE_URL/"
-   curl --fail --silent --show-error --location --retry 12 --retry-all-errors \
-     --retry-delay 10 --output /dev/null "$SITE_URL/events"
-   ```
-5. Return to `master` locally once the rollback is confirmed live — the checkout in step 2 only
-   affects your local working tree, not what's deployed, until step 3 runs.
+The workflow packages before receiving AWS credentials. Its OIDC role can update only S3 bucket
+`x2l4ew-k0m7umi`, Lambda functions `x2l4ew-l5vb7pd` and `x2l4ew-api`, and CloudFront distribution
+`E2QXRSF2W55RTS`. It cannot create infrastructure, modify IAM or Route 53, read Secrets Manager,
+or delete S3 objects. A successful release receives an immutable
+`hecmedia-production-<12-character-sha>` annotated tag, written with the deterministic
+`yt-agent-tom-grok` automation identity and verified through its exact remote tag object and peeled
+40-character release SHA. An exact existing tag is accepted idempotently; lightweight, wrong-SHA,
+wrong-message, or wrong-identity tags fail closed. The workflow also uploads release evidence.
 
-**Caveats:**
+For a deploy action, the protected-environment approval prompt appears only after a separate
+no-credential media preflight resolves the candidate's live Spotlight and representative category
+image URLs and confirms that they return images. The protected job reruns the full tests before it
+receives AWS credentials or mutates production. After cutover, hydrated content routes must contain
+managed upload media, all rendered remote `src` and `srcset` candidates must return images, and
+utility routes may record an empty media inventory.
 
-- This redeploys forward to an old commit's code — it does not undo any data/schema changes (there
-  are none in this stack; the site has no server-side DB writes) and does not instantly evict
-  CloudFront's edge cache. Expect a few minutes for the new Lambda@Edge version to propagate.
-- If the bad deploy changed env vars/domain config in `serverless.yml` itself, make sure those are
-  also reverted before redeploying — the "older commit" needs to include the older config, not just
-  older application code.
+Post-cutover acceptance also launches the pinned real Chrome binary through Playwright on the
+homepage, `/posts/hec-on-youtube`, and `/newsletter`. It requires hydrated route-appropriate
+identity, primary navigation, representative content/media, the HEC on YouTube link, and exactly
+one visible newsletter form with a visible/editable email input plus visible/enabled consent and
+submit controls, without submitting the form. On every representative route
+it requires exactly one request for
+`https://www.googletagmanager.com/gtm.js?id=GTM-57RZPNN`, requires that exact resource to return
+HTTP 200, and requires exactly one `window.dataLayer` `gtm.js` bootstrap with a numeric `gtm.start`.
+It permits no other/undefined GTM ID and no console, CSP, or runtime error. The verifier permits the
+exact GTM loader plus reviewed first-party, media, stylesheet, and
+reCAPTCHA resources; it aborts and records every other third-party request so acceptance does not
+manufacture analytics, advertising, popup, or social-pixel events. Expected blocked-resource
+messages are recorded separately and do not mask CSP, console, or runtime errors. Raw HTTP/HTML
+checks remain supporting fail-closed evidence, not a substitute for the browser result. The browser
+evidence is uploaded as
+`.production-release/browser-acceptance.json`.
 
-## Tagged-release convention (new — adopt before Phase 4 / any production deploy)
+Manual rollback uses the same workflow with `action=rollback` and the literal confirmation
+`ROLLBACK HEC FRONTEND PRODUCTION`. It verifies the authorized pre-release default Lambda ARN and
+immutable checksum, moves all four owned SSR associations to that exact version, removes the
+newsletter API behavior, waits for CloudFront and invalidation completion, and verifies the public
+homepage. The rollback target is always the explicitly authorized live baseline; it is never
+inferred. Never infer a rollback target as version N-1 or pin it to an unassociated historic
+Lambda@Edge version that AWS may delete after replication cleanup.
 
-Tag every production deploy at the commit that was actually deployed, immediately after a
-successful `yarn deploy` + smoke test:
+**Accepted S3 rollback limitation for this release:** the current automatic rollback restores
+Lambda/CloudFront but does not restore objects overwritten by the preceding `aws s3 sync`. The
+owner explicitly accepted that existing governed rollback for this narrowly scoped GTM/media
+release; this is not approval of the deferred S3 preimage or external recovery design. Preserve the
+captured baseline and release artifacts, stop on any gate failure, and do not improvise workstation
+or inferred-VersionId recovery.
 
-```shell
-git tag -a deploy-$(date +%Y-%m-%d)-<short-desc> -m "Production deploy: <short-desc>"
-git push origin --tags
-```
+## Staging publishing retired
 
-Example: `deploy-2026-07-12-nav-restructure`. Use a dated, descriptive tag rather than semver —
-this is a single client site, not a versioned package, so "what was live on what date" is the
-useful lookup, not a version number.
+There is no supported dispatch, script, release tag, or rollback action for frontend staging.
+Do not restore the former staging workflow, invoke the legacy full-stack deployment, or infer
+that a live staging resource is an approved release target. Any temporary recovery or evidence
+capture must be explicitly authorized by the Phase 2 execution playbook and must not recreate a
+general-purpose staging publisher.
 
-This repo currently has **zero tags**. Start the convention at the next production deploy (Phase 4,
-gated behind #57952/#57953/#57954 per the Phase 2 rescope plan) so the rollback procedure above
-always has a same-command target (`git checkout <tag>`) instead of hunting through `git log` for
-the right SHA.
+## Legacy full-stack rollback (blocked)
+
+The historical rollback was another full Serverless Components deployment from an older commit.
+That procedure remains blocked and is not a recovery option. Do not run `yarn deploy`, do not
+select version N-1, and do not move a release tag. Use the protected rollback action above; its
+target and checksum are reviewed in source and the workflow records the result.
+
+Production tags are written only after the governed verifier succeeds. The deterministic tag
+`hecmedia-production-<12-character-sha>` identifies the exact commit that reached production; it
+is evidence, not the rollback selector.

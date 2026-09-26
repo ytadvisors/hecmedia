@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Recaptcha from "react-recaptcha";
-import "./styles.scss";
+import { loadRecaptchaScript } from "../../../lib/loadRecaptcha";
 
 export default props => {
   const {
@@ -16,6 +16,10 @@ export default props => {
 
   const callback = () => {};
   const captchaSiteKey = process.env.RE_CAPTCHA_SITE_KEY;
+
+  useEffect(() => {
+    if (captchaSiteKey) loadRecaptchaScript();
+  }, [captchaSiteKey]);
 
   return (
     <div className="captcha">

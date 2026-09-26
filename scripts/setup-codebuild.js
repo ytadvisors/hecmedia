@@ -18,7 +18,6 @@ function aws(args) {
 }
 
 function upsertProject(name, buildspec, environmentVariables = []) {
-  const isStaging = name.endsWith("-staging");
   const project = {
     name,
     description: `${name} — AWS-native replacement for GitHub Actions`,
@@ -29,16 +28,7 @@ function upsertProject(name, buildspec, environmentVariables = []) {
       buildspec,
       reportBuildStatus: true
     },
-    artifacts: isStaging
-      ? {
-          type: "S3",
-          location: "openclaw-backup-ytadvisors",
-          path: "hecmedia/codebuild",
-          namespaceType: "BUILD_ID",
-          packaging: "ZIP",
-          name: "staging-evidence"
-        }
-      : { type: "NO_ARTIFACTS" },
+    artifacts: { type: "NO_ARTIFACTS" },
     environment: {
       type: "LINUX_CONTAINER",
       computeType: "BUILD_GENERAL1_SMALL",
@@ -47,7 +37,7 @@ function upsertProject(name, buildspec, environmentVariables = []) {
       environmentVariables
     },
     serviceRole: role,
-    timeoutInMinutes: isStaging ? 60 : 30,
+    timeoutInMinutes: 30,
     queuedTimeoutInMinutes: 60,
     cache: {
       type: "LOCAL",
@@ -92,35 +82,7 @@ upsertProject("hecmedia-ci", "ci/buildspec.yml", [
   }
 ]);
 
-upsertProject("hecmedia-staging", "ci/buildspec.staging.yml", [
-  {
-    name: "HECMEDIA_STAGING_APOLLO_CLIENT_URI",
-    value: "hecmedia/staging:apollo_client_uri",
-    type: "SECRETS_MANAGER"
-  },
-  {
-    name: "HECMEDIA_STAGING_WP_HOST",
-    value: "hecmedia/staging:wp_host",
-    type: "SECRETS_MANAGER"
-  },
-  {
-    name: "HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID",
-    value: "hecmedia/staging:cloudfront_distribution_id",
-    type: "SECRETS_MANAGER"
-  },
-  {
-    name: "HECMEDIA_STAGING_RECAPTCHA_SITE_KEY",
-    value: "hecmedia/staging:recaptcha_site_key",
-    type: "SECRETS_MANAGER"
-  },
-  {
-    name: "HECMEDIA_STAGING_TOPBAR_CTAS_JSON",
-    value: "hecmedia/staging:topbar_ctas_json",
-    type: "SECRETS_MANAGER"
-  }
-]);
-
-console.log("CodeBuild projects configured: hecmedia-ci, hecmedia-staging");
+console.log("CodeBuild project configured: hecmedia-ci");
 console.log(
   "Create the hecmedia-ci webhook only after its first manual build succeeds."
 );

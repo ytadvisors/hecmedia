@@ -3,8 +3,6 @@ import VideoPlayer from "../VideoPlayer";
 import ShareSocialLinks from "../ShareSocialLinks";
 import { cleanUrl } from "../../lib/updateFunctions";
 
-import "./styles.scss";
-
 export default ({
   post: { title, videoUrl, link, content },
   children,

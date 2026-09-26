@@ -7,6 +7,7 @@ import * as eventTypes from "../types/eventTypes";
 import * as pageTypes from "../types/pageTypes";
 import { getUserToken } from "../../lib/session";
 import { getNumAPIResults } from "../../lib/getFunctions";
+import getPublicMediaUrl, { rewritePublicMediaHtml } from "../../lib/mediaUrl";
 
 function validateUser() {
   if (getUserToken() === undefined || getUserToken() === "") {
@@ -22,7 +23,7 @@ function mapSubcategories(result) {
   return response;
 }
 
-function mapPost(result) {
+export function mapPost(result) {
   const response = {};
   if (result) {
     response.excerpt = "";
@@ -45,7 +46,7 @@ function mapPost(result) {
     }
 
     if (result.content) {
-      response.content = result.content.rendered;
+      response.content = rewritePublicMediaHtml(result.content.rendered);
       response.content = response.content
         .replace(/http:\/\/s3(.+amazon)/g, "https://s3$1")
         .replace(/srcset="[^"]+/g, "");
@@ -53,13 +54,21 @@ function mapPost(result) {
 
     if (result.acf) {
       if (result.acf.videoImage) {
-        response.thumbnail = result.acf.videoImage.sizes.mediumLarge;
-        response.smallThumbnail = result.acf.videoImage.sizes.medium;
+        response.thumbnail = getPublicMediaUrl(
+          result.acf.videoImage.sizes.mediumLarge
+        );
+        response.smallThumbnail = getPublicMediaUrl(
+          result.acf.videoImage.sizes.medium
+        );
         response.format = "video";
       }
       if (result.acf.postHeader) {
-        response.thumbnail = result.acf.postHeader.sizes.mediumLarge;
-        response.smallThumbnail = result.acf.postHeader.sizes.medium;
+        response.thumbnail = getPublicMediaUrl(
+          result.acf.postHeader.sizes.mediumLarge
+        );
+        response.smallThumbnail = getPublicMediaUrl(
+          result.acf.postHeader.sizes.medium
+        );
         response.smallThumbnail = response.smallThumbnail.replace(
           /http:\/\/s3(.+amazon)/g,
           "https://s3$1"

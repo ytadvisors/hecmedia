@@ -1,7 +1,6 @@
 import React from "react";
 import _ from "lodash";
 import { CardElement } from "react-stripe-elements";
-import "./styles.scss";
 
 export default ({
   input,

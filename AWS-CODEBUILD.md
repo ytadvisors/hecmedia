@@ -1,49 +1,22 @@
-# HECMedia AWS-native CI and staging release
+# HECMedia AWS-native CI
 
-GitHub Actions does not build or deploy HECMedia. AWS CodeBuild owns CI and the
-manually authorized staging release. Production is not changed by this path.
+AWS CodeBuild runs lint, Jest coverage, and optional read-only API contracts.
+The existing GitHub Actions `preview-deploy` check remains only as a staging
+retirement guard for branch-protection compatibility. Jury checks and the
+separately governed production workflow remain unchanged.
 
-## Projects
+Staging publishing was retired on the base branch. This change preserves that
+retirement: it creates no staging project or release entrypoint.
 
-- `hecmedia-ci`: lint, Jest coverage, and optional read-only API contracts.
-- `hecmedia-staging`: exact-SHA build, staging-only deployment, verification, and evidence.
+## Activation prerequisites
 
-Both projects use the existing GitHub repository as source. The CI project may use
-a GitHub webhook after a successful manual validation; this consumes AWS CodeBuild,
-not GitHub-hosted runner minutes. The staging project has no webhook.
+Activation is separate from this source change. Configure
+`HECMEDIA_CODEBUILD_SERVICE_ROLE_ARN` with permission to read the existing
+`hecmedia/staging` endpoint secret and write CodeBuild logs. CI does not need
+Lambda, S3 publishing, or CloudFront mutation permissions. The secret supplies
+`apollo_client_uri` and `wp_host` for optional read-only contract tests.
 
-## Required AWS configuration
-
-Create one Secrets Manager JSON secret named `hecmedia/staging` with:
-
-- `apollo_client_uri`
-- `wp_host`
-- `cloudfront_distribution_id`
-- `recaptcha_site_key`
-- `topbar_ctas_json`
-
-Set `HECMEDIA_CODEBUILD_SERVICE_ROLE_ARN` to a role that can read that secret,
-write CodeBuild logs/artifacts, and perform only the existing staging Lambda,
-S3, and CloudFront updates. Then run:
-
-```bash
-node scripts/setup-codebuild.js
-aws codebuild start-build --project-name hecmedia-ci --source-version master
-```
-
-Only after the first CI build succeeds should an administrator create the
-`hecmedia-ci` GitHub webhook for `PULL_REQUEST_CREATED`,
-`PULL_REQUEST_UPDATED`, and pushes to `master`/`develop`.
-
-## Staging release
-
-Merge and verify the intended revision, then invoke the exact SHA:
-
-```bash
-HECMEDIA_RELEASE_AUTHORIZED_BY=ytwguru \
-  node scripts/staging-release-codebuild.js <40-character-merged-sha>
-```
-
-The build deploys only `https://development.hecmedia.org`. It never targets
-HECMedia production. Rollback remains an explicit exact-SHA staging build using
-the prior verified SHA from the CodeBuild evidence artifact.
+After approval of the AWS configuration, run `node scripts/setup-codebuild.js`
+and manually validate `hecmedia-ci` against the reviewed merged SHA. Only after
+that succeeds should an administrator enable its pull-request and branch webhook.
+This conflict resolution does not provision resources or activate a webhook.

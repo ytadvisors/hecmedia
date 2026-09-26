@@ -1,6 +1,5 @@
 import React from "react";
 import Content from "../../Content";
-import "./styles.scss";
 
 export default ({ pageContent = {} }) => (
   <section className="template-2">

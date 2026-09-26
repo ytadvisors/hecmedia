@@ -7,7 +7,7 @@ jest.mock("@apollo/react-hooks", () => ({
 }));
 
 describe("ProgramViewer", () => {
-  it("stacks the home rail in mock order without Playing Now", () => {
+  it("keeps page content before the rail by default", () => {
     render(
       <ProgramViewer>
         <div>content</div>
@@ -18,14 +18,61 @@ describe("ProgramViewer", () => {
     expect(document.getElementById("subscribe")).not.toBeInTheDocument();
     expect(screen.queryByText("HEC-TV NewsLetter")).not.toBeInTheDocument();
     expect(screen.getByText("Trending Now")).toBeInTheDocument();
-    expect(screen.getByText("HEC-TV SPOTLIGHT")).toBeInTheDocument();
+    expect(screen.getByText("Spotlight STL")).toBeInTheDocument();
     expect(screen.queryByText("Playing Now")).toBeNull();
 
     const railText = screen
       .getByText("Trending Now")
       .closest(".side-navigation").textContent;
     expect(railText.indexOf("Trending Now")).toBeLessThan(
-      railText.indexOf("HEC-TV SPOTLIGHT")
+      railText.indexOf("Spotlight STL")
     );
+
+    const main = screen.getByText("content").closest(".program-viewer-main");
+    const rail = screen
+      .getByText("Trending Now")
+      .closest(".program-viewer-rail");
+    expect(main).toBeInTheDocument();
+    expect(rail).toBeInTheDocument();
+    expect(main.nextElementSibling).toBe(rail);
+    expect(main.closest(".program-viewer")).toHaveClass("program-viewer");
+  });
+
+  it("marks feed pages to prioritize rail content around the feed on mobile", () => {
+    render(
+      <ProgramViewer
+        railFirstOnMobile
+        railPromo={{
+          url: "/educators",
+          alt: "For Educators",
+          image: { sourceUrl: "/for-educators.jpg" }
+        }}
+      >
+        <div>feed</div>
+      </ProgramViewer>
+    );
+
+    expect(
+      screen.getByRole("img", { name: "For Educators" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Trending Now")).toBeInTheDocument();
+    expect(screen.getByText("Spotlight STL")).toBeInTheDocument();
+    expect(screen.getByText("feed").closest(".program-viewer-row")).toHaveClass(
+      "program-viewer-row--rail-first-mobile"
+    );
+  });
+
+  it("passes editor-controlled rail headings to both lists", () => {
+    render(
+      <ProgramViewer
+        trendingTitle="Popular Today"
+        spotlightTitle="Around St. Louis"
+      >
+        <div>content</div>
+      </ProgramViewer>
+    );
+
+    expect(screen.getByText("Popular Today")).toBeInTheDocument();
+    expect(screen.getByText("Around St. Louis")).toBeInTheDocument();
   });
 });

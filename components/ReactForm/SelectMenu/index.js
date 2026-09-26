@@ -1,8 +1,6 @@
 import React from "react";
 import Select from "react-select";
 
-import "./styles.scss";
-
 export default ({
   label,
   input,

@@ -1,7 +1,6 @@
 import React from "react";
 import ContentBlock from "../../ContentBlock";
 import ContactForm from "../../Forms/ContactForm";
-import "./styles.scss";
 
 export default ({
   phoneNumber,

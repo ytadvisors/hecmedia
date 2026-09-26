@@ -18,7 +18,6 @@ import SocialLoginButton from "../../../components/SocialLoginButton";
 import SocialLinks from "../../../components/SocialLinks";
 import SignUpForm from "../../../components/Forms/SignUpForm";
 import RegisterForm from "../../../components/Forms/RegisterForm";
-import "./styles.scss";
 
 const logo = "/static/assets/blue_hec.png";
 

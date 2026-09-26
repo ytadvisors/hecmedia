@@ -1,8 +1,6 @@
 import React from "react";
 import shortid from "shortid";
 
-import "./styles.scss";
-
 const getPodcastListItem = ({ label, url }) => {
   let listClass = "";
   switch (label) {

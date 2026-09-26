@@ -1,16 +1,26 @@
 import React from "react";
 import toTrendingNowItems from "../../lib/trendingNow";
-import "./styles.scss";
+import getPublicMediaUrl, {
+  getWordPressMediaFallbackUrl
+} from "../../lib/mediaUrl";
+import MediaImage from "../MediaImage";
 
 const fallbackThumbnail = "/static/assets/spotlight-img.jpg";
 
-const TrendingNow = ({ featuredVideos, newestVideos, loading, error }) => {
-  const items = toTrendingNowItems(featuredVideos, newestVideos);
+const TrendingNow = ({
+  featuredVideos,
+  newestVideos,
+  maxItems,
+  loading,
+  error,
+  title = "Trending Now"
+}) => {
+  const items = toTrendingNowItems(featuredVideos, newestVideos, maxItems);
 
   return (
     <section className="trending-now" aria-labelledby="trending-now-title">
       <div className="title">
-        <b id="trending-now-title">Trending Now</b>
+        <b id="trending-now-title">{title}</b>
       </div>
       {loading && <p className="status">Loading trending stories…</p>}
       {!loading && error && (
@@ -23,19 +33,24 @@ const TrendingNow = ({ featuredVideos, newestVideos, loading, error }) => {
       )}
       {!loading && !error && items.length > 0 && (
         <ul className="trending-list">
-          {items.map(item => (
-            <li key={item.id}>
-              <a href={item.href}>
-                <img
-                  src={item.image || fallbackThumbnail}
-                  alt=""
-                  loading="lazy"
-                  aria-hidden="true"
-                />
-                <span>{item.title}</span>
-              </a>
-            </li>
-          ))}
+          {items.map(item => {
+            const source = getPublicMediaUrl(item.image) || fallbackThumbnail;
+            return (
+              <li key={item.id}>
+                <a href={item.href}>
+                  <MediaImage
+                    src={source}
+                    fallbackSrc={getWordPressMediaFallbackUrl(source)}
+                    finalSrc={fallbackThumbnail}
+                    alt=""
+                    loading="lazy"
+                    aria-hidden="true"
+                  />
+                  <span>{item.title}</span>
+                </a>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

@@ -1,6 +1,5 @@
 import React from "react";
 import moment from "moment";
-import "./styles.scss";
 
 export default ({ video: { url, title, startDate } = {} }) => (
   <article className="live-video">

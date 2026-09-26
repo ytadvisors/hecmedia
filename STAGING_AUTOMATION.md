@@ -1,69 +1,26 @@
-# Staging deployment controller
+# Staging deployment controller — retired
 
-The manual `HEC Media staging deployment` workflow can target only
-`https://development.hecmedia.org`. It serializes runs, uses the protected
-`hecmedia-staging` environment, runs lint, Jest coverage, read-only contracts,
-a production build, deployment, and post-deploy verification. Forms are forced
-into no-send mode. A successful verification updates the
-`staging-last-known-good` tag; selecting `rollback` redeploys that exact SHA.
+The repository-side controller for publishing the frontend to
+`development.hecmedia.org` is retired as part of HEC Media Phase 2. The manual
+workflow, its deployment script, and its staging verifier have been removed so
+this repository cannot recreate or update that staging surface.
 
-Every dispatch must be initiated by Yomi's `ytwguru` GitHub account. The
-authorization job runs before the environment-bearing deployment job, so an
-unauthorized actor cannot reach the staging secrets or AWS credential step.
-This repository's current GitHub plan does not expose required-reviewer rules
-for its private environments; the actor gate is the enforceable compensating
-control. If the plan later supports environment reviewers, add `ytwguru` as the
-required reviewer with self-review prevention and retain this gate as defense
-in depth.
+This code change does not delete or disable cloud resources. The staging
+CloudFront distribution, Lambda@Edge function, S3 bucket, IAM role, Route 53
+record, GitHub environment, and environment secrets remain live until their
+separate inventory, approvals, execution, and verification gates are complete.
+Do not interpret merging this change as authorization to mutate those resources.
 
-Production domains, CMS write credentials, mail credentials, invoices, and
-client-send configuration are neither requested nor accepted by this workflow.
-Because forms are forced into no-send mode, the staging package temporarily
-omits `pages/api` while building and restores it immediately afterward. This
-keeps the deployment on the existing single Lambda@Edge function; send-enabled
-and production builds retain the API routes.
-The legacy packager still emits an `api-lambda` directory in this mode. The
-deploy script discards it only when the directory is completely file-empty, or
-after its manifest contains zero routes and its compiled `pages/api` tree
-contains no files. A manifest-less directory containing any file, a malformed
-manifest, or non-empty API output fails before AWS authentication.
+Read-only acceptance and smoke tooling may remain temporarily for observation
+and final negative verification. It is not a supported deployment path and must
+not be extended to publish, roll back, or recreate staging infrastructure.
 
-The legacy packager emits a separate image-optimizer Lambda even when staging
-selects the non-optimizing Akamai loader. Staging sets
-`HECMEDIA_DISABLE_IMAGE_OPTIMIZER=true`; the deploy script discards that legacy
-bundle only when the flag is present and a recursive source scan confirms there
-are zero `next/image` imports. An unset flag or any future `next/image` usage
-fails before AWS access. Other builds keep Next's default loader.
+Production is unchanged. All production publishing and rollback continues only
+through `.github/workflows/production-deploy.yml` and its protected environment.
+The legacy full-stack Serverless Components deployment remains blocked.
 
-## Least-privilege environment configuration
-
-The staging package job runs on Node 24, matching the supported runtime selected
-for the existing Lambda@Edge function. The application uses Dart Sass with
-`sass-loader@10` in place of the retired native `node-sass` binding. Because
-Next.js 9 still bundles webpack 4, `NODE_OPTIONS=--openssl-legacy-provider` is
-scoped to the package step for its MD4 build hash; that option is not present in
-the deployed Lambda environment.
-
-The `hecmedia-staging` environment contains only these environment secrets:
-
-- `HECMEDIA_STAGING_AWS_ROLE_ARN` — OIDC role for this workflow.
-- `HECMEDIA_STAGING_APOLLO_CLIENT_URI` — the site is SSR-only and has no
-  separate staging WPGraphQL backend; per Yomi (2026-07-20) this reads
-  production read-only: `https://prod-wp.hectv.org/graphql`.
-- `HECMEDIA_STAGING_WP_HOST` — same read-only-production basis:
-  `https://prod-wp.hectv.org`.
-- `HECMEDIA_STAGING_CLOUDFRONT_DISTRIBUTION_ID` — distribution serving only
-  `development.hecmedia.org`.
-
-The workflow authenticates with GitHub OIDC via `HECMEDIA_STAGING_AWS_ROLE_ARN`;
-it does not accept static AWS access keys or a static region secret. Its OIDC
-trust policy must allow only `repo:ytadvisors/hecmedia:environment:hecmedia-staging`
-with audience `sts.amazonaws.com`. Permissions are limited to the three existing
-staging resources only — the named S3 bucket, the named Lambda@Edge function and
-its versions, and the named CloudFront distribution and its invalidations. The
-role has no IAM action of any kind, no Route 53, SES, or billing access, no
-production resource ARNs, and no wildcard resources. The CloudFront distribution
-must list exactly `development.hecmedia.org` as its alias.
-
-Related work: #68041, #68042, #68043, #68044, #68045, #68046, #68047, #68048,
-#68049, #68050, #68051. Staging directive: `phase0-D3-access-and-preview.md`.
+The controlling plan is
+[`ytadvisors/openclaw#1505`](https://github.com/ytadvisors/openclaw/pull/1505).
+Repository retirement is a preparation gate in that plan; live teardown still
+requires the exact written Yomi and HEC approvals recorded in the shared Phase 2
+execution playbook.

@@ -1,7 +1,6 @@
 import React from "react";
 import LazyLoad from "react-lazyload";
-
-import "./styles.scss";
+import getPublicMediaUrl from "../../lib/mediaUrl";
 
 export default ({ featuredMagazines }) => (
   <section className="list-of-magazines">
@@ -33,7 +32,10 @@ export default ({ featuredMagazines }) => (
                     <div className="magazine-img col-xs-4 ">
                       <LazyLoad height={150}>
                         <img
-                          src={sourceUrl.replace(/^https?:\/\//, "https://")}
+                          src={getPublicMediaUrl(sourceUrl).replace(
+                            /^https?:\/\//,
+                            "https://"
+                          )}
                           className="img-responsive"
                           alt="cover"
                         />

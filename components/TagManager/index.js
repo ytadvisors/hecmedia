@@ -1,6 +1,9 @@
 import React from "react";
 
 export default ({ noScript }) => {
+  const containerId = process.env.GA_TAGMANAGER_ID;
+  if (!containerId) return null;
+
   if (!noScript) {
     const params =
       process.env.GA_TAGMANAGER_ENV_AUTH_STRING &&
@@ -16,7 +19,7 @@ export default ({ noScript }) => {
       new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       'https://www.googletagmanager.com/gtm.js?id='+i+dl${params};f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','${process.env.GA_TAGMANAGER_ID}');`
+    })(window,document,'script','dataLayer','${containerId}');`
         }}
       />
     );
@@ -24,7 +27,7 @@ export default ({ noScript }) => {
   return (
     <noscript
       dangerouslySetInnerHTML={{
-        __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${process.env.GA_TAGMANAGER_ID}"
+        __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${containerId}"
                       height="0" width="0" style="display:none;visibility:hidden"></iframe>`
       }}
     />

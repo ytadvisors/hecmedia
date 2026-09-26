@@ -28,3 +28,8 @@ env.yml
 .env.local
 .serverless_nextjs/
 .staging-disabled-pages-api/
+.newsletter-export/
+.newsletter-production/
+.production-release/
+production-deploy-evidence.json
+out/

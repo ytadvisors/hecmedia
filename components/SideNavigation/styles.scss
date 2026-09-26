@@ -8,18 +8,28 @@
     color: #fff;
   }
   .rail-promo {
-    background: #32ae9f;
+    padding-top: 12px;
+    background: #fff;
     display: block;
 
     img {
       display: block;
       height: 180px;
-      object-fit: cover;
+      object-fit: contain;
       width: 100%;
     }
   }
   .header {
     padding: 10px 15px;
     background: #0065bc !important;
+  }
+}
+
+@media (max-width: 991px) {
+  .side-navigation .rail-promo {
+    img {
+      height: auto;
+      object-fit: contain;
+    }
   }
 }

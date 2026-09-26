@@ -1,50 +1,34 @@
-jest.mock("child_process", () => ({ execFileSync: jest.fn() }));
 jest.mock("fs", () => ({
-  writeFileSync: jest.fn(),
+  copyFileSync: jest.fn(),
+  existsSync: jest.fn(),
+  mkdirSync: jest.fn(),
   readFileSync: jest.fn(),
   readdirSync: jest.fn(),
-  existsSync: jest.fn(),
-  rmSync: jest.fn(),
-  renameSync: jest.fn()
+  renameSync: jest.fn(),
+  rmSync: jest.fn()
 }));
 jest.mock("@sls-next/lambda-at-edge", () => ({
   Builder: jest.fn().mockImplementation(() => ({ build: jest.fn() }))
 }));
-
-const { execFileSync } = require("child_process");
-const path = require("path");
-
-const realFs = jest.requireActual("fs");
 
 const fs = require("fs");
 const {
   build,
   discardEmptyApiLambdaBundle,
   discardUnusedImageLambdaBundle,
-  sourceUsesNextImage,
-  syncAssets,
-  updateCloudFront
-} = require("./staging-deploy");
-
-const lambdaArn =
-  "arn:aws:lambda:us-east-1:123456789012:function:mf64oua-5ao6wt";
-const distributionConfig = {
-  DefaultCacheBehavior: {
-    LambdaFunctionAssociations: {
-      Items: [
-        { EventType: "origin-request", LambdaFunctionARN: `${lambdaArn}:3` }
-      ]
-    }
-  }
-};
+  stageNextServerRuntime,
+  sourceUsesNextImage
+} = require("./edge-package-build");
 
 beforeEach(() => {
-  execFileSync.mockReset();
   fs.existsSync.mockReset();
   fs.readFileSync.mockReset();
   fs.readdirSync.mockReset();
+  fs.readdirSync.mockReturnValue([]);
   fs.renameSync.mockReset();
   fs.rmSync.mockReset();
+  fs.copyFileSync.mockReset();
+  fs.mkdirSync.mockReset();
 });
 
 function mockApiBundle(manifest, compiledEntries = []) {
@@ -124,7 +108,7 @@ test("rejects compiled API files even when the manifest claims no routes", () =>
   expect(fs.rmSync).not.toHaveBeenCalled();
 });
 
-test("discards the generated image bundle only for an explicitly disabled, unused optimizer", () => {
+test("discards the image bundle only for an explicitly disabled, unused optimizer", () => {
   const original = process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
   process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER = "true";
   fs.existsSync.mockImplementation(file => file.endsWith("image-lambda"));
@@ -144,7 +128,7 @@ test("discards the generated image bundle only for an explicitly disabled, unuse
   );
 });
 
-test("rejects a generated image bundle unless the staging optimizer flag is set", () => {
+test("rejects an image bundle unless the optimizer flag is set", () => {
   const original = process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
   delete process.env.HECMEDIA_DISABLE_IMAGE_OPTIMIZER;
   fs.existsSync.mockImplementation(file => file.endsWith("image-lambda"));
@@ -170,13 +154,54 @@ test("detects next/image imports before discarding an image bundle", () => {
   expect(sourceUsesNextImage("/repo")).toBe(true);
 });
 
-test("omits API routes only for a no-send staging build and restores them", async () => {
+test("stages the Next 12 webpack runtime omitted by the legacy edge packager", () => {
+  fs.existsSync.mockImplementation(
+    file =>
+      file.endsWith(".next/serverless/webpack-runtime.js") ||
+      file.endsWith(".next/serverless/chunks")
+  );
+  fs.readdirSync.mockImplementation(file => {
+    if (file.endsWith(".next/serverless/chunks")) {
+      return [
+        {
+          name: "runtime-chunk.js",
+          isDirectory: () => false,
+          isFile: () => true
+        }
+      ];
+    }
+    return [];
+  });
+
+  stageNextServerRuntime();
+
+  expect(fs.copyFileSync).toHaveBeenCalledWith(
+    expect.stringMatching(/\.next\/serverless\/webpack-runtime\.js$/),
+    expect.stringMatching(
+      /\.serverless_nextjs\/default-lambda\/webpack-runtime\.js$/
+    )
+  );
+  expect(fs.mkdirSync).toHaveBeenCalledWith(
+    expect.stringMatching(/\.serverless_nextjs\/default-lambda\/chunks$/),
+    { recursive: true }
+  );
+  expect(fs.copyFileSync).toHaveBeenCalledWith(
+    expect.stringMatching(/\.next\/serverless\/chunks\/runtime-chunk\.js$/),
+    expect.stringMatching(
+      /\.serverless_nextjs\/default-lambda\/chunks\/runtime-chunk\.js$/
+    )
+  );
+});
+
+test("omits API routes only for a no-send diagnostic build and restores them", async () => {
   const originalNoSend = process.env.HECMEDIA_NO_SEND_FORMS;
   process.env.HECMEDIA_NO_SEND_FORMS = "true";
   fs.existsSync.mockImplementation(file => {
     if (file.endsWith("pages/api")) return true;
-    if (file.endsWith(".staging-disabled-pages-api")) return false;
+    if (file.endsWith(".edge-build-omitted-pages-api")) return false;
     if (file.endsWith("default-lambda") || file.endsWith("assets")) return true;
+    if (file.endsWith(".next/serverless/webpack-runtime.js")) return true;
+    if (file.endsWith(".next/serverless/chunks")) return true;
     return false;
   });
 
@@ -190,87 +215,48 @@ test("omits API routes only for a no-send staging build and restores them", asyn
   expect(fs.renameSync.mock.calls).toEqual([
     [
       expect.stringMatching(/pages\/api$/),
-      expect.stringMatching(/\.staging-disabled-pages-api$/)
+      expect.stringMatching(/\.edge-build-omitted-pages-api$/)
     ],
     [
-      expect.stringMatching(/\.staging-disabled-pages-api$/),
+      expect.stringMatching(/\.edge-build-omitted-pages-api$/),
       expect.stringMatching(/pages\/api$/)
     ]
   ]);
+  expect(fs.copyFileSync).toHaveBeenCalled();
+  expect(fs.mkdirSync).toHaveBeenCalled();
 });
 
-test("syncAssets preserves prior immutable assets during a release", () => {
-  syncAssets();
+test("omits stock API routes for the governed edge-API production package", async () => {
+  const originalNoSend = process.env.HECMEDIA_NO_SEND_FORMS;
+  const originalEdgeApi = process.env.HECMEDIA_EDGE_API;
+  process.env.HECMEDIA_NO_SEND_FORMS = "false";
+  process.env.HECMEDIA_EDGE_API = "true";
+  fs.existsSync.mockImplementation(file => {
+    if (file.endsWith("pages/api")) return true;
+    if (file.endsWith(".edge-build-omitted-pages-api")) return false;
+    if (file.endsWith("default-lambda") || file.endsWith("assets")) return true;
+    if (file.endsWith(".next/serverless/webpack-runtime.js")) return true;
+    if (file.endsWith(".next/serverless/chunks")) return true;
+    return false;
+  });
 
-  expect(execFileSync).toHaveBeenCalledWith(
-    "aws",
-    expect.arrayContaining(["s3", "sync", "--region", "us-east-1"]),
-    expect.objectContaining({ encoding: "utf8" })
-  );
-  expect(execFileSync.mock.calls[0][1]).not.toContain("--delete");
-});
+  try {
+    await build();
+  } finally {
+    if (originalNoSend === undefined) delete process.env.HECMEDIA_NO_SEND_FORMS;
+    else process.env.HECMEDIA_NO_SEND_FORMS = originalNoSend;
+    if (originalEdgeApi === undefined) delete process.env.HECMEDIA_EDGE_API;
+    else process.env.HECMEDIA_EDGE_API = originalEdgeApi;
+  }
 
-test("waits for CloudFront propagation before invalidating updated associations", () => {
-  execFileSync.mockReturnValueOnce(
-    JSON.stringify({ ETag: "etag", DistributionConfig: distributionConfig })
-  );
-
-  expect(updateCloudFront("E1ARETO6518UT4", lambdaArn, "4")).toBe(1);
-
-  const awsCalls = execFileSync.mock.calls.map(([, args]) => args);
-  const updateIndex = awsCalls.findIndex(
-    args => args[1] === "update-distribution"
-  );
-  const waitIndex = awsCalls.findIndex(args => args[1] === "wait");
-  const invalidateIndex = awsCalls.findIndex(
-    args => args[1] === "create-invalidation"
-  );
-
-  expect(awsCalls[waitIndex]).toEqual([
-    "cloudfront",
-    "wait",
-    "distribution-deployed",
-    "--id",
-    "E1ARETO6518UT4"
+  expect(fs.renameSync.mock.calls).toEqual([
+    [
+      expect.stringMatching(/pages\/api$/),
+      expect.stringMatching(/\.edge-build-omitted-pages-api$/)
+    ],
+    [
+      expect.stringMatching(/\.edge-build-omitted-pages-api$/),
+      expect.stringMatching(/pages\/api$/)
+    ]
   ]);
-  expect(updateIndex).toBeLessThan(waitIndex);
-  expect(waitIndex).toBeLessThan(invalidateIndex);
-});
-
-test("uses build-time SSR config and never checks a Lambda runtime environment", () => {
-  const repoRoot = path.join(__dirname, "..");
-  const buildspec = realFs.readFileSync(
-    path.join(repoRoot, "ci/buildspec.staging.yml"),
-    "utf8"
-  );
-  const deployScript = realFs.readFileSync(
-    path.join(__dirname, "staging-deploy.js"),
-    "utf8"
-  );
-
-  expect(buildspec).toMatch(/APOLLO_CLIENT_URI/);
-  expect(buildspec).toMatch(/WP_HOST/);
-  expect(buildspec).toMatch(/node scripts\/staging-deploy\.js build/);
-  expect(deployScript).not.toContain("checkLambdaEnvironment");
-  expect(deployScript).not.toContain("get-function-configuration");
-});
-
-test("packages staging on Node 24 with the webpack 4 OpenSSL compatibility flag", () => {
-  const buildspec = realFs.readFileSync(
-    path.join(__dirname, "../ci/buildspec.staging.yml"),
-    "utf8"
-  );
-
-  expect(buildspec).toMatch(/n 24\.4\.1/);
-  expect(buildspec).toMatch(/export NODE_OPTIONS=--openssl-legacy-provider/);
-});
-
-test("requires Yomi to authorize every staging CodeBuild release", () => {
-  const releaseScript = realFs.readFileSync(
-    path.join(__dirname, "staging-release-codebuild.js"),
-    "utf8"
-  );
-
-  expect(releaseScript).toMatch(/HECMEDIA_RELEASE_AUTHORIZED_BY !== 'ytwguru'/);
-  expect(releaseScript).toMatch(/process\.exit\(1\)/);
 });

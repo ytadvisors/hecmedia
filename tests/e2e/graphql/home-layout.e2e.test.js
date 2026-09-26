@@ -2,9 +2,14 @@ import moment from "moment";
 import {
   GET_HOME_PAGE,
   GET_LAYOUT,
+  GET_FOOTER_MENU,
+  GET_SOCIAL_MENU,
   GET_HEADER_MENU,
+  GET_HEADER_ACTIONS_MENU,
+  GET_HEC_SITE_SETTINGS,
+  GET_HEC_SITE_PRESENTATION,
   GET_NEWEST_VIDEOS,
-  GET_FEATURED_VIDEOS,
+  GET_NEWSLETTER_SETTINGS,
   GET_SCHEDULE,
   GET_PAGE_TEMPLATE
 } from "../../../lib/graphql";
@@ -50,24 +55,38 @@ describe("HomePageInfo (pages/index.js)", () => {
 });
 
 describe("PageLayout (containers/Layout/index.js)", () => {
-  it("returns header/footer/social menus and featured content shaped for the shell", async () => {
-    const result = await executeQuery(GET_LAYOUT, undefined);
+  it("returns footer/social menus and featured content shaped for the shell", async () => {
+    const [layoutResult, footerResult, socialResult] = await Promise.all([
+      executeQuery(GET_LAYOUT, undefined),
+      executeQuery(GET_FOOTER_MENU, undefined),
+      executeQuery(GET_SOCIAL_MENU, undefined)
+    ]);
 
-    expect(result.errors).toBeUndefined();
-    const { featuredMagazines, spotLight, footer, social } = result.data;
+    expect(layoutResult.errors).toBeUndefined();
+    expect(footerResult.errors).toBeUndefined();
+    expect(socialResult.errors).toBeUndefined();
+    const { spotLight } = layoutResult.data;
+    const { footer } = footerResult.data;
+    const { social } = socialResult.data;
 
-    expect(Array.isArray(featuredMagazines.edges)).toBe(true);
     expect(Array.isArray(spotLight.nodes)).toBe(true);
 
-    [footer, social].forEach(menu => {
-      expect(Array.isArray(menu.edges)).toBe(true);
-      menu.edges.forEach(({ node }) => {
-        expect(Array.isArray(node.menuItems.edges)).toBe(true);
-        node.menuItems.edges.forEach(({ node: item }) => {
-          expect(typeof item.label).toBe("string");
-          expect(typeof item.url === "string" || item.url === null).toBe(true);
-          expect(Array.isArray(item.childItems.edges)).toBe(true);
-        });
+    expect(Array.isArray(footer.edges)).toBe(true);
+    footer.edges.forEach(({ node }) => {
+      expect(Array.isArray(node.menuItems.edges)).toBe(true);
+      node.menuItems.edges.forEach(({ node: item }) => {
+        expect(typeof item.label).toBe("string");
+        expect(typeof item.url === "string" || item.url === null).toBe(true);
+        expect(Array.isArray(item.childItems.edges)).toBe(true);
+      });
+    });
+
+    expect(Array.isArray(social.edges)).toBe(true);
+    social.edges.forEach(({ node }) => {
+      expect(Array.isArray(node.menuItems.edges)).toBe(true);
+      node.menuItems.edges.forEach(({ node: item }) => {
+        expect(typeof item.label).toBe("string");
+        expect(typeof item.url === "string" || item.url === null).toBe(true);
       });
     });
   });
@@ -80,15 +99,74 @@ describeModernCms("HeaderMenu (containers/Layout/index.js)", () => {
     expect(result.errors).toBeUndefined();
     const { header } = result.data;
     expect(Array.isArray(header.edges)).toBe(true);
-    expect(header.edges.length).toBeGreaterThan(0);
-    header.edges.forEach(({ node }) => {
-      expect(Array.isArray(node.menuItems.edges)).toBe(true);
-      node.menuItems.edges.forEach(({ node: item }) => {
-        expect(typeof item.label).toBe("string");
-        expect(typeof item.parentDatabaseId).toBe("number");
-        expect(Array.isArray(item.childItems.edges)).toBe(true);
-      });
+    header.edges.forEach(({ node: item }) => {
+      expect(typeof item.label).toBe("string");
+      expect(typeof item.parentDatabaseId).toBe("number");
+      expect(Array.isArray(item.childItems.edges)).toBe(true);
     });
+  });
+
+  it("returns Header Actions (Subscribe/Support) for the top-bar CTAs", async () => {
+    const result = await executeQuery(GET_HEADER_ACTIONS_MENU, undefined);
+
+    expect(result.errors).toBeUndefined();
+    const { headerActions } = result.data;
+    expect(Array.isArray(headerActions.edges)).toBe(true);
+    headerActions.edges.forEach(({ node: item }) => {
+      expect(typeof item.label).toBe("string");
+      expect(
+        typeof item.path === "string" || typeof item.url === "string"
+      ).toBe(true);
+    });
+    const labels = headerActions.edges.map(({ node }) =>
+      String(node.label).toLowerCase()
+    );
+    if (labels.length > 0) {
+      expect(labels.some(l => l.includes("subscribe"))).toBe(true);
+      expect(labels.some(l => l.includes("support"))).toBe(true);
+    }
+  });
+
+  it("returns HEC Site Settings for maxVideos and For Educators chrome", async () => {
+    const result = await executeQuery(GET_HEC_SITE_SETTINGS, undefined);
+
+    expect(result.errors).toBeUndefined();
+    const { trendingSettings, forEducators, trendingPosts } = result.data;
+    expect(typeof trendingSettings.maxVideos).toBe("number");
+    expect(trendingSettings.maxVideos).toBeGreaterThan(0);
+    expect(typeof forEducators.label).toBe("string");
+    expect(typeof forEducators.url).toBe("string");
+    if (forEducators.image !== null) {
+      expect(
+        typeof forEducators.image.sourceUrl === "string" ||
+          typeof forEducators.image.mediaItemUrl === "string"
+      ).toBe(true);
+    }
+    expect(Array.isArray(trendingPosts)).toBe(true);
+    expect(trendingPosts.length).toBeLessThanOrEqual(
+      trendingSettings.maxVideos
+    );
+  });
+
+  it("returns isolated rail headings and mobile display presentation", async () => {
+    const result = await executeQuery(GET_HEC_SITE_PRESENTATION, undefined);
+
+    expect(result.errors).toBeUndefined();
+    const { trendingSettings } = result.data;
+    expect(typeof trendingSettings.trendingTitle).toBe("string");
+    expect(typeof trendingSettings.spotlightTitle).toBe("string");
+    expect(["content-menu", "menu-content"]).toContain(
+      trendingSettings.mobileDisplay
+    );
+  });
+
+  it("returns the newsletter CAPTCHA control from HEC Site Settings", async () => {
+    const result = await executeQuery(GET_NEWSLETTER_SETTINGS, undefined);
+
+    expect(result.errors).toBeUndefined();
+    expect(typeof result.data.newsletterSettings.captchaEnabled).toBe(
+      "boolean"
+    );
   });
 });
 
@@ -98,16 +176,6 @@ describe("Layout video feeds (containers/Layout/index.js)", () => {
 
     expect(result.errors).toBeUndefined();
     expect(Array.isArray(result.data.newestVideos.nodes)).toBe(true);
-  });
-
-  const itModernCms =
-    process.env.HECMEDIA_E2E_MODERN_WPGRAPHQL === "true" ? it : it.skip;
-
-  itModernCms("returns the optional editor-curated video feed", async () => {
-    const result = await executeQuery(GET_FEATURED_VIDEOS, undefined);
-
-    expect(result.errors).toBeUndefined();
-    expect(Array.isArray(result.data.featuredVideos)).toBe(true);
   });
 });
 

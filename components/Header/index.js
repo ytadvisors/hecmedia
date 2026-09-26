@@ -12,15 +12,22 @@ import {
   getHref
 } from "../../lib/getFunctions";
 import { isServer } from "../../lib/serverFunctions";
-import "./styles.scss";
+
+import { resolveNavUrl } from "../../lib/navUrl";
 
 const logo = "/static/assets/white_hec.png";
 const TAGLINE = "St. Louis' Home of Education Arts, and Culture";
-const toRelativeCtaUrl = url =>
-  url.replace(
-    /^https?:\/\/(?:www\.)?(?:hecmedia\.org|hectv\.org)(?=\/|$)/i,
-    ""
-  ) || "/";
+
+export const getMenuItemEdges = connection => {
+  const edges = (connection && connection.edges) || [];
+  const nestedEdges =
+    edges[0] &&
+    edges[0].node &&
+    edges[0].node.menuItems &&
+    edges[0].node.menuItems.edges;
+
+  return nestedEdges || edges;
+};
 
 export default class Header extends Component {
   constructor(props) {
@@ -101,6 +108,26 @@ export default class Header extends Component {
     }
   };
 
+  handleTopDropdownToggle = (url, isOpen, event, eventDetails = {}) => {
+    const clickedInsideNavigationDropdown =
+      event &&
+      event.target &&
+      typeof event.target.closest === "function" &&
+      event.target.closest(".top-navigation > li.dropdown");
+
+    // React-Bootstrap 0.32 treats the toggle's mousedown as a root-close
+    // before its click handler runs. Ignoring that inside event lets the
+    // subsequent click genuinely toggle an already-open menu closed.
+    if (
+      eventDetails.source === "rootClose" &&
+      clickedInsideNavigationDropdown
+    ) {
+      return;
+    }
+
+    this.setActiveDropdown(url, isOpen);
+  };
+
   setNestedDropdown = (url, isOpen) => {
     if (this.mounted) {
       this.setState(prevState => ({
@@ -152,7 +179,7 @@ export default class Header extends Component {
 
   getDropdownItem = link => {
     const { url, label, children = [] } = link;
-    const { open } = this.state;
+    const { open, isMobile } = this.state;
     const isOpen = open[url] === true;
     const hasChildren = children.length > 0;
 
@@ -164,20 +191,40 @@ export default class Header extends Component {
       <li
         key={`${label} ${url}`}
         className={`dropdown-submenu${isOpen ? " open" : ""}`}
-        onMouseEnter={() => this.setNestedDropdown(url, true)}
-        onMouseLeave={() => this.setNestedDropdown(url, false)}
+        onMouseEnter={() => !isMobile && this.setNestedDropdown(url, true)}
+        onMouseLeave={() => !isMobile && this.setNestedDropdown(url, false)}
       >
-        <div className="dropdown-submenu__item">
+        <div
+          className="dropdown-submenu__item"
+          onClickCapture={event => {
+            const clickedParentLink =
+              event.target &&
+              typeof event.target.closest === "function" &&
+              event.target.closest("a");
+
+            if (isMobile && clickedParentLink) {
+              event.preventDefault();
+              event.stopPropagation();
+              this.setNestedDropdown(url, !isOpen);
+            }
+          }}
+        >
           {this.getLink(link)}
           <button
             type="button"
             className="dropdown-submenu__toggle"
             aria-label={`Show ${label} submenu`}
             aria-expanded={isOpen}
-            onClick={() => this.setNestedDropdown(url, !isOpen)}
+            onClick={event => {
+              event.preventDefault();
+              event.stopPropagation();
+              this.setNestedDropdown(url, !isOpen);
+            }}
             onKeyDown={event => this.handleNestedDropdownKeyDown(event, url)}
           >
-            <span aria-hidden="true">▸</span>
+            <span className="dropdown-submenu__caret" aria-hidden="true">
+              ▸
+            </span>
           </button>
         </div>
         <ul className="dropdown-menu">{children.map(this.getDropdownItem)}</ul>
@@ -196,8 +243,10 @@ export default class Header extends Component {
         className={`btn ${btnDisplay}`}
         title={label}
         id={url}
+        rootCloseEvent="mousedown"
         open={activeDropdown === url}
-        onToggle={isOpen => this.setActiveDropdown(url, isOpen)}
+        onToggle={(isOpen, event, eventDetails) =>
+          this.handleTopDropdownToggle(url, isOpen, event, eventDetails)}
         onKeyDown={event => this.handleTopDropdownKeyDown(event, url)}
       >
         {link.children.map(this.getDropdownItem)}
@@ -206,10 +255,12 @@ export default class Header extends Component {
   };
 
   getLink = link => {
-    const { url, label, buttonClick } = link;
-    const cleanUrl = url && url.replace(/https?:\/\/[^/]+/, "");
-    const isRedirect = url && url.match(/^\/\//);
-    const actualLink = getHref(cleanUrl);
+    const { url, label, buttonClick, external } = link;
+    // hectv.org / hecmedia.org / WP hosts → path-only in-app; others external.
+    const resolved = resolveNavUrl(url);
+    const cleanUrl = resolved.href;
+    const isExternal = external === true || resolved.external;
+    const actualLink = isExternal ? "" : getHref(cleanUrl);
 
     if (buttonClick) {
       return (
@@ -224,7 +275,7 @@ export default class Header extends Component {
         />
       );
     }
-    if (isRedirect) {
+    if (isExternal) {
       return (
         <a
           aria-labelledby="redirect"
@@ -253,7 +304,7 @@ export default class Header extends Component {
       );
     }
     return (
-      <Link href={actualLink} as={cleanUrl}>
+      <Link href={actualLink} as={cleanUrl} prefetch={false}>
         <a>
           <div
             onKeyPress={() => {}}
@@ -274,16 +325,18 @@ export default class Header extends Component {
   getNavItem = link => {
     const { currentPage } = this.props;
     const { url, icon, label, iconPlacement, btnClass, toggle, onClick } = link;
-    const cleanUrl = url.replace(/https?:\/\/[^/]+/, "");
+    const resolved = resolveNavUrl(url);
+    const cleanUrl = resolved.href;
     const btnDisplay = btnClass || "btn-secondary";
     const clickFunction = toggle ? () => {} : onClick;
     const { open } = this.state;
+    const activeKey = resolved.external ? "" : cleanUrl.replace(/\//g, "");
 
     return open[url] ? (
       <NavWrap
         key={`${label} ${url}`}
         className={`${
-          currentPage === cleanUrl.replace(/\//g, "")
+          currentPage === activeKey
             ? `btn show ${btnDisplay}`
             : `btn  ${btnDisplay}`
         }`}
@@ -295,7 +348,7 @@ export default class Header extends Component {
       <NavWrap
         key={`${label} ${url}`}
         className={`${
-          currentPage === cleanUrl.replace(/\//g, "")
+          currentPage === activeKey
             ? `btn show ${btnDisplay}`
             : `btn  ${btnDisplay}`
         }`}
@@ -317,11 +370,8 @@ export default class Header extends Component {
     const style = isMobile
       ? { width: `${window.innerWidth - 50}px`, right: "12px" }
       : {};
-    const { node: { menuItems: { edges: headerList = [] } = {} } = {} } =
-      (header && header.edges && header.edges[0]) || {};
-    const { node: { menuItems: { edges: socialList = [] } = {} } = {} } = social
-      ? social.edges[0]
-      : {};
+    const headerList = getMenuItemEdges(header);
+    const socialList = getMenuItemEdges(social);
 
     const topLinks =
       headerList.length > 0 ? getHeaderMenuObject(headerList) : [];
@@ -404,8 +454,13 @@ export default class Header extends Component {
               <div className="top-logo">
                 <Navbar.Brand className="navbar-brand-class">
                   <div className="navbar-brand-class navbar-brand">
-                    <Link as="/" href="/">
-                      <img src={logo} alt="HECTV logo" />
+                    <Link as="/" href="/" prefetch={false}>
+                      <img
+                        src={logo}
+                        alt="HECTV logo"
+                        width={180}
+                        height={48}
+                      />
                     </Link>
                   </div>
                 </Navbar.Brand>
@@ -415,28 +470,37 @@ export default class Header extends Component {
                     <SocialLinks links={socialLinks} />
                     {ctas.length > 0 && (
                       <nav
-                        className="top-bar-actions"
+                        className={`top-bar-actions top-bar-actions--${ctas.length}`}
                         aria-label="Featured actions"
                       >
-                        {ctas.map(cta => (
-                          <a
-                            key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
-                            className="top-bar-cta"
-                            href={toRelativeCtaUrl(cta.url)}
-                          >
-                            {cta.label}
-                          </a>
-                        ))}
+                        {ctas.map(cta => {
+                          const resolved = resolveNavUrl(cta.url);
+                          return (
+                            <a
+                              key={`${cta.url}-${cta.label}-${cta.sourceIndex}`}
+                              className="top-bar-cta"
+                              href={resolved.href}
+                              {...(resolved.external
+                                ? {
+                                    target: "_blank",
+                                    rel: "noopener noreferrer"
+                                  }
+                                : {})}
+                            >
+                              {cta.label}
+                            </a>
+                          );
+                        })}
                       </nav>
                     )}
                   </div>
                 </div>
               </div>
               <div className="header-top-actions">
-                <Navbar.Toggle className="nav-toggle " />
                 <Nav onSelect={this.closeNav} className="user-admin">
                   {this.getLinks(userAdmin)}
                 </Nav>
+                <Navbar.Toggle className="nav-toggle " />
               </div>
             </div>
           </Navbar.Header>

@@ -2,8 +2,6 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import DatePicker from "react-datepicker";
 
-import "./styles.scss";
-
 export default class CalendarSelector extends Component {
   constructor(props) {
     super(props);

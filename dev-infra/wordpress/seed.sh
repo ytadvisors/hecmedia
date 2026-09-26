@@ -71,6 +71,23 @@ wpcli menu item add-custom bottomnav "Programs" "http://localhost:8091/programs"
 echo "== categories + sample posts =="
 wpcli term create category "Programs" --slug=programs || true
 wpcli term create category "Events" --slug=events || true
+wpcli term create category "Arts" --slug=arts || true
+
+# WPGraphQL 2.x exposes each child's parent reliably, but its nested
+# Category.children connection can be empty. Keep real hierarchy in the fixture
+# so the frontend's parent-filtered subgenre query is exercised end to end.
+arts_category_id=$(wpcli term list category --slug=arts --field=term_id | head -n 1)
+for child_spec in "dance:Dance" "music:Music" "theater:Theater"; do
+  child_slug=${child_spec%%:*}
+  child_name=${child_spec#*:}
+  child_category_id=$(wpcli term list category --slug="$child_slug" --field=term_id | head -n 1)
+  if [ -n "${child_category_id:-}" ]; then
+    wpcli term update category "$child_category_id" --name="$child_name" --parent="$arts_category_id"
+  else
+    wpcli term create category "$child_name" --slug="$child_slug" --parent="$arts_category_id"
+  fi
+done
+
 wpcli post create \
   --post_type=post \
   --post_title="Dev Seed Post 1" \

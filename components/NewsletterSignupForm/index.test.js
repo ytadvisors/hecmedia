@@ -2,11 +2,33 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import NewsletterSignupForm from "./index";
 
-jest.mock("react-recaptcha", () => ({ verifyCallback }) => (
-  <button type="button" onClick={() => verifyCallback("captcha-token")}>
-    Complete spam verification
-  </button>
-));
+const mockResetCaptcha = jest.fn();
+
+jest.mock("react-recaptcha", () => {
+  const MockReact = require("react");
+  return MockReact.forwardRef(
+    (
+      { elementID, onloadCallback, render: captchaRenderMode, verifyCallback },
+      ref
+    ) => {
+      MockReact.useEffect(() => {
+        onloadCallback();
+      }, [onloadCallback]);
+
+      MockReact.useImperativeHandle(ref, () => ({ reset: mockResetCaptcha }));
+      return MockReact.createElement(
+        "button",
+        {
+          "data-element-id": elementID,
+          "data-render": captchaRenderMode,
+          type: "button",
+          onClick: () => verifyCallback("captcha-token")
+        },
+        "Complete spam verification"
+      );
+    }
+  );
+});
 
 function fillValidForm() {
   fireEvent.change(screen.getByLabelText("First name"), {
@@ -28,6 +50,10 @@ function completeCaptcha() {
 }
 
 describe("NewsletterSignupForm", () => {
+  beforeEach(() => {
+    mockResetCaptcha.mockClear();
+  });
+
   it("shows the captcha-unavailable notice when no site key is configured", () => {
     render(<NewsletterSignupForm onSubscribe={jest.fn()} />);
     expect(screen.getByTestId("captcha-unavailable")).toBeInTheDocument();
@@ -40,6 +66,31 @@ describe("NewsletterSignupForm", () => {
     );
     expect(screen.getByTestId("captcha-slot")).toBeInTheDocument();
     expect(screen.queryByTestId("captcha-unavailable")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /complete spam verification/i })
+    ).toHaveAttribute("data-render", "explicit");
+    expect(
+      screen.getByRole("button", { name: /complete spam verification/i })
+    ).toHaveAttribute("data-element-id", "newsletter-recaptcha");
+  });
+
+  it("submits without CAPTCHA when the caller says it is not required", async () => {
+    const onSubscribe = jest.fn().mockResolvedValue({ ok: true });
+    render(
+      <NewsletterSignupForm onSubscribe={onSubscribe} captchaRequired={false} />
+    );
+
+    fillValidForm();
+    fireEvent.click(screen.getByRole("button", { name: /^subscribe$/i }));
+
+    expect(await screen.findByTestId("newsletter-success")).toBeInTheDocument();
+    expect(screen.queryByTestId("captcha-slot")).not.toBeInTheDocument();
+    expect(onSubscribe).toHaveBeenCalledWith({
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "reader@example.com",
+      consent: true
+    });
   });
 
   it("blocks submission and shows field errors when required fields are missing", async () => {
@@ -53,6 +104,22 @@ describe("NewsletterSignupForm", () => {
     expect(
       screen.getByText("You must agree to receive email updates")
     ).toBeInTheDocument();
+    expect(screen.getByLabelText("First name")).toHaveAttribute(
+      "aria-describedby",
+      "newsletter-first-name-error"
+    );
+    expect(screen.getByLabelText("First name")).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
+    expect(screen.getByLabelText("Email")).toHaveAttribute(
+      "aria-describedby",
+      "newsletter-email-error"
+    );
+    expect(screen.getByLabelText("Email")).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
     expect(onSubscribe).not.toHaveBeenCalled();
   });
 
@@ -128,6 +195,7 @@ describe("NewsletterSignupForm", () => {
     expect(await screen.findByTestId("form-error")).toHaveTextContent(
       "Subscribe failed"
     );
+    expect(mockResetCaptcha).toHaveBeenCalledTimes(1);
   });
 
   it("shows an error state when onSubscribe rejects", async () => {
@@ -144,6 +212,7 @@ describe("NewsletterSignupForm", () => {
     fireEvent.click(screen.getByRole("button", { name: /subscribe/i }));
 
     expect(await screen.findByTestId("form-error")).toBeInTheDocument();
+    expect(mockResetCaptcha).toHaveBeenCalledTimes(1);
   });
 
   it("does not submit until spam verification is complete", () => {

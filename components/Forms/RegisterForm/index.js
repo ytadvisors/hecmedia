@@ -5,7 +5,6 @@ import PropTypes from "prop-types";
 import $ from "jquery";
 import ReactForm from "../../ReactForm";
 import Validator from "../../ReactForm/Validator";
-import "./styles.scss";
 
 const fields = [
   {

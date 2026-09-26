@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { reduxForm } from "redux-form";
-import "./styles.scss";
 import Validator from "../../ReactForm/Validator";
 import ReactForm from "../../ReactForm";
 

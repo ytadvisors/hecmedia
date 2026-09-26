@@ -5,8 +5,6 @@ import { reduxForm } from "redux-form";
 import ReactForm from "../../ReactForm";
 import Validator from "../../ReactForm/Validator";
 
-import "./styles.scss";
-
 const fields = [
   [
     {

@@ -4,7 +4,6 @@ import { useQuery } from "@apollo/react-hooks";
 import moment from "moment";
 import { GET_LAYOUT, GET_HOME_PAGE } from "../../lib/graphql";
 import withApollo from "../../lib/withApollo";
-import "./styles.scss";
 
 const mDay = moment(new Date());
 const currentMonth = moment(mDay)

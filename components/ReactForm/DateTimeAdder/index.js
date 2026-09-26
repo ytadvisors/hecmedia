@@ -5,7 +5,6 @@ import { FaPlusCircle } from "react-icons/fa";
 import _ from "lodash";
 import DefaultInput from "../DefaultInput";
 import DefaultDatePicker from "../DefaultDatePicker";
-import "./styles.scss";
 
 export default class DateTimeAdder extends Component {
   constructor(props) {

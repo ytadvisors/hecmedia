@@ -4,8 +4,6 @@ import Link from "next/link";
 import { Button } from "react-bootstrap";
 import CommentForm from "../Forms/CommentForm";
 
-import "./styles.scss";
-
 export default ({
   tabs,
   callbackFunc,

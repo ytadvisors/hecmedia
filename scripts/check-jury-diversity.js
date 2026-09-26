@@ -6,7 +6,9 @@ const LOGIN_FAMILY = Object.freeze({
   "yt-agent-kronos": "anthropic",
   jerome593: "anthropic",
   "yt-agent-tom-gpt": "openai",
-  "yt-agent-kronos-gpt": "openai"
+  "yt-agent-kronos-gpt": "openai",
+  "yt-agent-tom-grok": "grok",
+  "yt-agent-kronos-grok": "grok"
 });
 
 const UNRELIABLE_AUTHOR_FAMILY = new Set(["jerome593"]);

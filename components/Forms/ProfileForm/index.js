@@ -6,7 +6,6 @@ import { reduxForm, SubmissionError } from "redux-form";
 import Validator from "../../ReactForm/Validator";
 import ReactForm from "../../ReactForm";
 
-import "./styles.scss";
 import countries from "../countries.json";
 
 const fields = [
