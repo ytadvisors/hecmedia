@@ -1,0 +1,32 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    commands:
+      - npm install -g n
+      - n 24.4.1
+      - hash -r
+      - corepack enable
+      - yarn install --frozen-lockfile
+  pre_build:
+    commands:
+      - node --version
+      - yarn lint
+      - yarn test
+  build:
+    commands:
+      - |
+        if [ -n "${HECMEDIA_E2E_APOLLO_CLIENT_URI:-}" ] && [ -n "${HECMEDIA_E2E_WP_HOST:-}" ]; then
+          APOLLO_CLIENT_URI="$HECMEDIA_E2E_APOLLO_CLIENT_URI" \
+          GATSBY_WP_HOST="$HECMEDIA_E2E_WP_HOST" \
+          E2E_ALLOW_WRITES=0 yarn test:e2e
+        else
+          echo "HECMedia read-only E2E endpoints are not configured; lint and unit gates completed."
+        fi
+
+cache:
+  paths:
+    - /root/.cache/yarn/**/*

@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [master, develop]
 
+# Retain GHA quality gates until CodeBuild reports on PRs and is required.
+# Remove these jobs only in a follow-up after the documented cutover.
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -56,13 +58,13 @@ jobs:
             echo "::warning::HECMEDIA_E2E_APOLLO_CLIENT_URI and HECMEDIA_E2E_WP_HOST are required; skipping e2e contracts."
             exit 0
           fi
-          yarn test:e2e
+          E2E_ALLOW_WRITES=0 yarn test:e2e
 
   # Preserve the historical check name for branch-protection compatibility.
   # The job now fails closed if a staging deployment entrypoint is reintroduced.
   preview-deploy:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
-    needs: [test, e2e]
+    needs: [lint, test, e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
