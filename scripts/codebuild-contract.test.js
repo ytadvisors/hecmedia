@@ -10,7 +10,10 @@ test("uses AWS CodeBuild for lint, coverage and read-only API contracts", () => 
   expect(setup).toMatch(/hecmedia-ci/);
   expect(setup).toMatch(/SECRETS_MANAGER/);
   expect(setup).not.toMatch(/upsertProject\("hecmedia-staging"/);
-  expect(workflow).not.toMatch(/yarn (install|lint|test)|setup-node/);
+  expect(workflow).toMatch(/yarn lint/);
+  expect(workflow).toMatch(/yarn test/);
+  expect(workflow).toMatch(/E2E_ALLOW_WRITES=0 yarn test:e2e/);
+  expect(workflow).toMatch(/needs: \[lint, test, e2e\]/);
   expect(fs.existsSync("ci/buildspec.staging.yml")).toBe(false);
   expect(fs.existsSync("scripts/staging-release-codebuild.js")).toBe(false);
 });

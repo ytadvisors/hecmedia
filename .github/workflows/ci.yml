@@ -6,13 +6,65 @@ on:
   pull_request:
     branches: [master, develop]
 
-# Builds, lint and coverage run in AWS CodeBuild. Keep the existing
-# branch-protection check solely as a non-deploying retirement guard.
+# Retain GHA quality gates until CodeBuild reports on PRs and is required.
+# Remove these jobs only in a follow-up after the documented cutover.
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "yarn"
+      # `yarn test` runs Jest with `collectCoverage: true` and a `coverageThreshold`
+      # (package.json `jest` block) — Jest itself exits non-zero when a threshold
+      # is missed, so a coverage regression fails this job with no extra wiring.
+      # See TESTING.md "Coverage policy: the ratchet".
+      - run: yarn install --frozen-lockfile
+      - run: yarn test
+
+  # E2E contracts hit a live WPGraphQL/REST target.  Fork PRs and repositories
+  # without the protected endpoint secrets must remain green without silently
+  # falling back to the production defaults, so the step explicitly no-ops
+  # unless both endpoints are configured.
+  e2e:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      APOLLO_CLIENT_URI: ${{ secrets.HECMEDIA_E2E_APOLLO_CLIENT_URI }}
+      GATSBY_WP_HOST: ${{ secrets.HECMEDIA_E2E_WP_HOST }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
+      - name: Run read-only API contracts when endpoints are configured
+        run: |
+          if [ -z "$APOLLO_CLIENT_URI" ] || [ -z "$GATSBY_WP_HOST" ]; then
+            echo "::warning::HECMEDIA_E2E_APOLLO_CLIENT_URI and HECMEDIA_E2E_WP_HOST are required; skipping e2e contracts."
+            exit 0
+          fi
+          E2E_ALLOW_WRITES=0 yarn test:e2e
+
   # Preserve the historical check name for branch-protection compatibility.
   # The job now fails closed if a staging deployment entrypoint is reintroduced.
   preview-deploy:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+    needs: [lint, test, e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
